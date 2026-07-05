@@ -1,0 +1,92 @@
+# Rust
+/target/
+# Detached zkVM crate builds into its own target dir (RISC Zero toolchain output)
+crates/agent-receipts-zkvm/target/
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+.venv-audit/
+venv/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage
+.coverage
+.coverage.*
+coverage.json
+coverage.xml
+htmlcov/
+lcov.info
+target/llvm-cov/
+dashboard/coverage/
+
+# Backend identity service
+backend/.venv/
+backend/.venv-test/
+backend/agents.db
+backend/audit.jsonl
+backend/.env
+
+# Node / dashboard
+dashboard/node_modules/
+dashboard/dist/
+
+# Local dev
+.env
+*.db
+*.sqlite
+.audit/
+/receipts/
+*.redacted.json
+config/partner.yaml
+certs/*.pem
+certs/*.json
+!certs/.gitkeep
+
+# IDE / misc
+.idea/
+.vscode/
+.cursor/mcp.json
+*.swp
+*.log
+.DS_Store
+
+# Local experiment outputs (Devin red-team runs, gate JSON, clones)
+artifacts/
+
+# Proving artifacts and generated key caches (large)
+/proofs/
+/keys/*.bin
+/keys/**/*.bin
+/keys/*.sha256
+/keys/**/*.sha256
+!/keys/.gitkeep
+
+# Generated compliance scratch fixtures
+/compliance/fixtures/*.generated.json
+/compliance/fixtures/*.tmp.json
+
+# Local caches
+.cache/
+.vendor/
+
+# Signing private keys — never commit
+keys/signing/
+*.key
+**/keys/*.pem
+**/.agentauth/keys/
+*.ed25519.pem
+*_private.pem
+
+# Claude Code session/tooling
+.claude/
+SECURITY_AUDIT.md

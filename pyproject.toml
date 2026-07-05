@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentauth-capabilities"
+version = "0.3.0"
+description = "AgentAuth layer 2 — dynamic capability tokens, leases, commit tokens, mandates"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "agentauth-identity @ git+https://github.com/pberlizov/agentauth-identity.git@v0.3.0",
+  "cryptography>=42.0",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentauth"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
+pythonpath = ["."]
