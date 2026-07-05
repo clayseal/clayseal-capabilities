@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentauth-capabilities"
-version = "0.3.1"
+version = "0.4.0"
 description = "AgentAuth layer 2 — dynamic capability tokens, leases, commit tokens, mandates"
 readme = "README.md"
 license = { text = "MIT" }

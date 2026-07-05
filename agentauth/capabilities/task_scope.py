@@ -193,12 +193,15 @@ def attenuate_biscuit_for_scope(
     root_public_hex: str,
     scope: TaskScope,
     capabilities: list[dict] | None = None,
+    backend: Any | None = None,
 ) -> str:
     """Narrow a Biscuit token to a compiled task scope (SM-7)."""
-    from agentauth.identity._capabilities import attenuate_biscuit
+    if backend is None:
+        from agentauth.capabilities.integration import default_biscuit_backend
 
-    return attenuate_biscuit(
-        token_b64=token_b64,
+        backend = default_biscuit_backend()
+    return backend.attenuate(
+        token_b64,
         root_public_hex=root_public_hex,
         capabilities=capabilities,
         path_patterns=list(scope.allowed_paths) or None,

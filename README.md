@@ -13,3 +13,15 @@ python examples/03_commit_token.py
 Depends on [agentauth-identity](https://github.com/pberlizov/agentauth-identity) v0.3.1+.
 
 Import identity types with `from agentauth.identity import AgentAuth` when using this layer alone.
+
+## Cross-provider identity (5 built-in adapters)
+
+Layer 2 works with **any** of these L1 stacks via `get_identity_provider(name)`:
+
+- `agentauth` — native AgentAuth credentials
+- `spiffe_jwt` — SPIRE / SPIFFE JWT-SVID
+- `oidc` — generic OIDC access tokens
+- `auth0` — Auth0 M2M client-credentials
+- `aws_sts` — AWS STS / IAM role sessions
+
+See [docs/cross_layer_integration.md](docs/cross_layer_integration.md) and `examples/04_cross_provider_commit.py`.
