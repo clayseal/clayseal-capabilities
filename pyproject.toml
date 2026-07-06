@@ -9,6 +9,11 @@ description = "AgentAuth layer 2 — dynamic capability tokens, leases, commit t
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.14"
+dependencies = [
+  "agentauth-identity @ git+https://github.com/pberlizov/agentauth-identity.git@v0.4.0",
+  "cryptography>=42.0",
+  "pyyaml>=6.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/pberlizov/agentauth-capabilities"
@@ -16,12 +21,6 @@ Documentation = "https://github.com/pberlizov/agentauth-capabilities/blob/main/d
 Repository = "https://github.com/pberlizov/agentauth-capabilities"
 Issues = "https://github.com/pberlizov/agentauth-capabilities/issues"
 Changelog = "https://github.com/pberlizov/agentauth-capabilities/blob/main/CHANGELOG.md"
-
-dependencies = [
-  "agentauth-identity @ git+https://github.com/pberlizov/agentauth-identity.git@v0.4.0",
-  "cryptography>=42.0",
-  "pyyaml>=6.0",
-]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
