@@ -27,7 +27,10 @@ Changelog = "https://github.com/pberlizov/agentauth-capabilities/blob/main/CHANG
 # identity is otherwise NOT required to use this layer (bring your own
 # CapabilityTokenBackend via the agentauth.capability_backends entry point).
 biscuit-service = ["agentauth-identity>=0.5,<0.6"]
-dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service]"]
+# Verifying identity adapters (VerifyingOidcProvider, EntraAgentIdProvider):
+# live JWT verification against OIDC discovery/JWKS.
+oidc = ["PyJWT>=2.8,<3.0", "httpx>=0.27"]
+dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc]"]
 
 # Ship ONLY the capabilities subpackage in the shared `agentauth` namespace.
 # `agentauth.core` comes from the agentauth-core wheel.

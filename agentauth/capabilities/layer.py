@@ -6,7 +6,6 @@ from typing import Any
 
 from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
 from agentauth.capabilities.task_scope import compile_task_scope
-from agentauth.core.identity_protocol import CapabilityLayer
 
 
 @dataclass

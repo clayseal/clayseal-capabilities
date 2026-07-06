@@ -4,7 +4,7 @@ import re
 
 from agentauth.capabilities.scoping.closure import ClosurePolicy, compute_file_closure
 from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.scoping.models import CapabilityLease, RepoChunk, RepoChunkIndex, SensitivityLabel
+from agentauth.capabilities.scoping.models import CapabilityLease, RepoChunk, RepoChunkIndex
 from agentauth.capabilities.scoping.retrieval.ann import HashingEmbedder, TextEmbedder, build_ann_index
 from agentauth.capabilities.scoping.retrieval.bm25 import BM25Index
 from agentauth.capabilities.scoping.retrieval.mmr import maximal_marginal_relevance
