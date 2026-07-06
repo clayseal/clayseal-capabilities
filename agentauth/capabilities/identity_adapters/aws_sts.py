@@ -35,7 +35,7 @@ def claims_from_aws_sts(raw: dict[str, Any]) -> dict[str, Any]:
 class AwsStsIdentityProvider:
     name: str = "aws_sts"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_aws_sts(raw)
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -49,7 +49,7 @@ class AwsStsIdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),

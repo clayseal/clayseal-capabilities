@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
 from agentauth.core.runtime import ExecutionContext
@@ -10,6 +11,59 @@ from agentauth.core.hash_util import hash_canonical_json
 from agentauth.core.signing import SigningKey, signature_key_id_matches, verify
 
 COMMIT_TOKEN_SCHEMA = "agent-receipts.commit-token.v1"
+
+
+@runtime_checkable
+class UsedTokenStore(Protocol):
+    """Swappable single-use ledger for commit tokens (replay defense).
+
+    A commit token authorizes exactly ONE irreversible side effect. Without a
+    store, a captured/valid token can be replayed until it expires. Implement
+    this seam over whatever your deployment already runs:
+
+    - single-instance / dev: :class:`InMemoryUsedTokenStore` (the default);
+    - multi-instance AWS: a shared/distributed store (e.g. Redis ``SET NX PX``
+      or a DynamoDB conditional put with a TTL attribute) so a token consumed
+      on one instance is rejected on every other.
+    """
+
+    def mark_used(self, token_id: str, expires_at: datetime) -> bool:
+        """Atomically record ``token_id`` as consumed until ``expires_at``.
+
+        Returns ``True`` when this is the first time the token is seen (the
+        caller may proceed), or ``False`` when the token was already recorded
+        and has not yet expired (a replay — the caller MUST reject).
+        """
+        ...
+
+
+class InMemoryUsedTokenStore:
+    """Process-local, thread-safe :class:`UsedTokenStore` with TTL eviction.
+
+    WARNING: this only defends against replay WITHIN a single process. On a
+    multi-instance deployment (e.g. several AWS tasks behind a load balancer) a
+    token consumed on one instance is NOT visible to the others — back
+    :func:`verify_commit_token` with a shared/distributed store instead.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._seen: dict[str, datetime] = {}
+
+    def mark_used(self, token_id: str, expires_at: datetime) -> bool:
+        now = _utc_now()
+        with self._lock:
+            self._evict(now)
+            existing = self._seen.get(token_id)
+            if existing is not None and existing > now:
+                return False
+            self._seen[token_id] = expires_at
+            return True
+
+    def _evict(self, now: datetime) -> None:
+        expired = [tid for tid, exp in self._seen.items() if exp <= now]
+        for tid in expired:
+            del self._seen[tid]
 
 
 def _utc_now() -> datetime:
@@ -127,7 +181,19 @@ def verify_commit_token(
     *,
     ctx: ExecutionContext,
     at: datetime | None = None,
+    used_token_store: UsedTokenStore | None = None,
 ) -> tuple[bool, str | None]:
+    """Verify a signed commit token against ``ctx``.
+
+    Single-use enforcement is a swappable seam: pass ``used_token_store`` and a
+    ``token_id`` that has already been consumed (before its expiry) is rejected
+    as a replay. PRODUCTION CALLERS MUST PASS A STORE — without one a captured,
+    still-valid token can be replayed until it expires. Use
+    :class:`InMemoryUsedTokenStore` for a single instance, or a shared /
+    distributed :class:`UsedTokenStore` for a multi-instance AWS deployment.
+    The store is consulted only after every other check passes, so a rejected
+    token never burns a ``token_id`` slot.
+    """
     at = at or _utc_now()
     token_dict = signed.token.to_dict()
     if not signature_key_id_matches(signed.signature):
@@ -155,5 +221,12 @@ def verify_commit_token(
         return False, "commit token epoch mismatch"
     if signed.token.query_id != ctx.query_id:
         return False, "commit token query_id mismatch"
+
+    # Single-use enforcement (replay defense). Reached only once the token is
+    # otherwise valid, so a rejected token never consumes a token_id slot.
+    if used_token_store is not None and not used_token_store.mark_used(
+        signed.token.token_id, expires_at
+    ):
+        return False, "commit token already used (replay)"
 
     return True, None

@@ -79,7 +79,15 @@ def default_biscuit_backend() -> CapabilityTokenBackend:
     return _BiscuitBackend()
 
 
-def binding_for_provider(provider: str, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+def binding_for_provider(
+    provider: str, raw: dict[str, Any], *, evidence_verified: bool = False
+) -> AuthorityBinding:
+    """Map ``raw`` provider claims to a binding via the named adapter.
+
+    ``evidence_verified`` defaults to ``False``: a claim-mapping adapter trusts
+    the caller to have verified the credential, so the caller must explicitly
+    opt in to stamp the binding as verified.
+    """
     from agentauth.capabilities.identity_adapters import get_identity_provider
 
     return get_identity_provider(provider).to_binding(raw, evidence_verified=evidence_verified)

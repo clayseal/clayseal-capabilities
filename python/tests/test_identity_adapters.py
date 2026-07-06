@@ -77,12 +77,22 @@ def test_five_identity_providers_registered():
 
 
 def test_each_provider_produces_verified_binding():
+    # Claim-mapping adapters trust the caller's verification, so the caller must
+    # opt in explicitly to stamp the binding as verified.
     for name, raw in PROVIDER_FIXTURES.items():
-        binding = get_identity_provider(name).to_binding(raw)
+        binding = get_identity_provider(name).to_binding(raw, evidence_verified=True)
         assert binding.evidence_verified
         assert binding.subject_id
         assert binding.authority_id
         assert binding.issuer
+
+
+def test_claim_mapping_adapters_default_unverified():
+    # spiffe_jwt/oidc/auth0/aws_sts must NOT stamp evidence_verified without an
+    # explicit opt-in (they do no cryptographic verification themselves).
+    for name in ("spiffe_jwt", "oidc", "auth0", "aws_sts"):
+        binding = get_identity_provider(name).to_binding(PROVIDER_FIXTURES[name])
+        assert binding.evidence_verified is False, name
 
 
 @pytest.mark.parametrize("provider", list(PROVIDER_FIXTURES))

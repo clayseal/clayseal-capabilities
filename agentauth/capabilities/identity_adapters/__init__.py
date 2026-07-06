@@ -1,7 +1,10 @@
 """Pluggable L1 identity provider adapters.
 
 Claim-mapping adapters (trust the caller's verification): ``agentauth``,
-``spiffe_jwt``, ``oidc``, ``auth0``, ``aws_sts``. Verifying adapters (do the
+``spiffe_jwt``, ``oidc``, ``auth0``, ``aws_sts``. Because these do NOT verify
+the credential themselves, ``spiffe_jwt``/``oidc``/``auth0``/``aws_sts`` default
+``evidence_verified=False`` — a caller that has already verified the credential
+out-of-band must opt in explicitly. Verifying adapters (do the
 cryptography themselves): ``VerifyingOidcProvider`` (any OIDC discovery/JWKS
 issuer, ``[oidc]`` extra), ``EntraAgentIdProvider`` (Entra Agent ID tokens,
 facet-claim gated, ``[oidc]``), ``A2AAgentCardProvider`` (A2A signed

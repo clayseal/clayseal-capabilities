@@ -20,6 +20,7 @@ returned claims are ``evidence_verified``.
 
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from agentauth.core.authority_binding import AuthorityBinding
@@ -35,9 +36,11 @@ class SpiffeWorkloadProvider:
     """IdentityProvider that live-fetches JWT-SVIDs from the SPIFFE Workload API.
 
     ``workload_client`` is injectable (anything with
-    ``fetch_jwt_svid(audience: set) -> svid``); when omitted, a
-    ``spiffe.WorkloadApiClient`` is created per fetch against ``socket_path``
-    (or ``SPIFFE_ENDPOINT_SOCKET``).
+    ``fetch_jwt_svid(audience: set) -> svid``); when omitted, a single
+    ``spiffe.WorkloadApiClient`` is created lazily against ``socket_path`` (or
+    ``SPIFFE_ENDPOINT_SOCKET``) and REUSED across fetches — a client per fetch
+    leaks a gRPC channel every call. Use as a context manager, or call
+    :meth:`close`, to release the owned client's channel.
     """
 
     def __init__(
@@ -56,21 +59,46 @@ class SpiffeWorkloadProvider:
         self.audiences = set(audiences) if audiences else {DEFAULT_AUDIENCE}
         self.workload_client = workload_client
         self.timeout = timeout
+        # A client we created ourselves (and are therefore responsible for
+        # closing). Left None when the caller injected ``workload_client``.
+        self._owned_client: Any | None = None
+        self._client_lock = threading.Lock()
+
+    def _client(self) -> Any:
+        if self.workload_client is not None:
+            return self.workload_client
+        if self._owned_client is not None:
+            return self._owned_client
+        with self._client_lock:
+            if self._owned_client is None:
+                try:
+                    from spiffe import WorkloadApiClient
+                except ImportError as exc:  # pragma: no cover
+                    raise ImportError(
+                        "SpiffeWorkloadProvider needs py-spiffe. Install with: "
+                        "pip install 'agentauth-capabilities[spiffe]'"
+                    ) from exc
+                self._owned_client = WorkloadApiClient(
+                    socket_path=self.socket_path, default_timeout=self.timeout
+                )
+        return self._owned_client
+
+    def close(self) -> None:
+        """Release the owned Workload API client's gRPC channel (if any)."""
+        with self._client_lock:
+            client = self._owned_client
+            self._owned_client = None
+        if client is not None and hasattr(client, "close"):
+            client.close()
+
+    def __enter__(self) -> SpiffeWorkloadProvider:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
 
     def _fetch(self, audiences: set[str]) -> dict[str, Any]:
-        client = self.workload_client
-        if client is None:
-            try:
-                from spiffe import WorkloadApiClient
-            except ImportError as exc:  # pragma: no cover
-                raise ImportError(
-                    "SpiffeWorkloadProvider needs py-spiffe. Install with: "
-                    "pip install 'agentauth-capabilities[spiffe]'"
-                ) from exc
-            client = WorkloadApiClient(
-                socket_path=self.socket_path, default_timeout=self.timeout
-            )
-        svid = client.fetch_jwt_svid(audience=set(audiences))
+        svid = self._client().fetch_jwt_svid(audience=set(audiences))
         claims = dict(svid.claims or {})
         claims.setdefault("sub", str(svid.spiffe_id))
         claims["token"] = svid.token

@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from agentauth.core.runtime import SideEffectLevel
 from agentauth.capabilities.scoping.enforcement import check_repo_path_allowed
 from agentauth.capabilities.scoping.models import CapabilityLease
 from agentauth.capabilities.task_scope import action_path_candidates
+
+# See tool_lease_enforcement.LEASE_STRICT_ENV -- shared opt-in strict flag.
+LEASE_STRICT_ENV = "AGENTAUTH_LEASE_STRICT"
+
+
+def _strict_default() -> bool:
+    return os.getenv(LEASE_STRICT_ENV, "").strip().lower() in {"1", "true", "yes"}
 
 _WRITE_TOOL_MARKERS = (
     "write",
@@ -45,9 +53,24 @@ def capability_lease_violations(
     arguments: dict[str, Any],
     side_effect: SideEffectLevel,
     resource_ref: str | None,
+    strict: bool | None = None,
 ) -> list[str]:
-    """Fail closed when an active lease denies the resolved repo path."""
+    """Fail closed when an active lease denies the resolved repo path.
+
+    ``strict`` (default from ``AGENTAUTH_LEASE_STRICT``) also fails closed when
+    NO lease is present for a gated write: without a lease there is nothing to
+    bound the write, so a strict deployment reports a violation rather than
+    letting the write through unscoped.
+    """
+    if strict is None:
+        strict = _strict_default()
+
     if lease is None:
+        if strict and is_write_tool(tool_name, side_effect):
+            return [
+                f"capability lease required but absent (strict): "
+                f"tool={tool_name!r}, resource_ref={resource_ref!r}"
+            ]
         return []
 
     paths = action_path_candidates(resource_ref=resource_ref)

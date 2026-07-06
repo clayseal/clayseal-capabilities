@@ -5,6 +5,32 @@ import fnmatch
 from agentauth.capabilities.scoping.models import CapabilityLease
 
 
+def _path_glob_match(path: str, pattern: str) -> bool:
+    """Segment-aware glob match: ``*``/``?``/``[...]`` are bounded to a single
+    path segment (they do NOT cross ``/``), while a ``**`` segment spans zero or
+    more segments. This stops ``src/*`` matching ``src/deep/secret.py`` — plain
+    :func:`fnmatch.fnmatch` lets ``*`` swallow ``/`` and over-grants. Inputs are
+    already normalized (repo-relative, no ``.``/``..``) by ``normalize_repo_path``.
+    """
+    return _match_segments(path.split("/"), pattern.split("/"))
+
+
+def _match_segments(path_segs: list[str], pat_segs: list[str]) -> bool:
+    if not pat_segs:
+        return not path_segs
+    head, *rest = pat_segs
+    if head == "**":
+        # ** matches zero or more path segments.
+        return any(_match_segments(path_segs[i:], rest) for i in range(len(path_segs) + 1))
+    if not path_segs:
+        return False
+    # Neither a single pattern segment nor a single path segment contains '/',
+    # so fnmatch's '*'/'?' cannot cross a directory boundary here.
+    if fnmatch.fnmatchcase(path_segs[0], head):
+        return _match_segments(path_segs[1:], rest)
+    return False
+
+
 def normalize_repo_path(file_path: str) -> str | None:
     """Canonical repo-relative path, or None when traversal/absolute paths are attempted."""
     if not file_path or "\x00" in file_path:
@@ -50,7 +76,7 @@ def check_repo_path_allowed(
     for explicit in lease.explicit_allow_resources:
         target = resource_ref_to_repo_path(explicit) or explicit
         target_norm = normalize_repo_path(target.replace("repo://", ""))
-        if target_norm and fnmatch.fnmatch(normalized, target_norm):
+        if target_norm and _path_glob_match(normalized, target_norm):
             return True, "explicit_allow"
     if write:
         allowed = set(lease.write_files)
@@ -60,6 +86,6 @@ def check_repo_path_allowed(
         return True, "lease_allowlist"
     for pattern in allowed:
         pattern_norm = normalize_repo_path(pattern)
-        if pattern_norm and fnmatch.fnmatch(normalized, pattern_norm):
+        if pattern_norm and _path_glob_match(normalized, pattern_norm):
             return True, "lease_glob"
     return False, "out_of_scope"

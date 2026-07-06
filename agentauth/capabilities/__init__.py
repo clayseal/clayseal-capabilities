@@ -1,6 +1,8 @@
 from agentauth.capabilities.commit import (
     CommitToken,
+    InMemoryUsedTokenStore,
     SignedCommitToken,
+    UsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
@@ -36,7 +38,11 @@ from agentauth.capabilities.scoping import (
     build_repo_chunk_index,
 )
 from agentauth.capabilities.task_scope import TaskScope, compile_task_scope
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from agentauth.capabilities.value_budget import (
+    SessionValueBudget,
+    ValueBudgetConfig,
+    ValueReservation,
+)
 
 __all__ = [
     "AgentAuthCapabilityLayer",
@@ -44,11 +50,14 @@ __all__ = [
     "CommitToken",
     "DelegationToken",
     "GoalSpec",
+    "InMemoryUsedTokenStore",
     "Mandate",
     "SessionValueBudget",
     "SignedCommitToken",
     "TaskScope",
+    "UsedTokenStore",
     "ValueBudgetConfig",
+    "ValueReservation",
     "build_capability_lease",
     "build_repo_chunk_index",
     "capability_allows",

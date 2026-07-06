@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import sys
 import types
 
 import pytest
@@ -82,6 +83,36 @@ def test_workload_provider_passes_core_conformance_kit():
 
 def test_workload_provider_registered_by_name():
     assert isinstance(get_identity_provider("spiffe_workload"), SpiffeWorkloadProvider)
+
+
+def test_owned_workload_client_is_reused_and_closed(monkeypatch):
+    """A client per fetch leaks a gRPC channel each call -- the owned client is
+    created once and reused, and close() releases it."""
+    created: list = []
+
+    class _FakeOwnedClient:
+        def __init__(self, **kwargs):
+            created.append(self)
+            self.closed = False
+
+        def fetch_jwt_svid(self, audience):
+            return types.SimpleNamespace(
+                spiffe_id=SPIFFE_ID, token="t", claims={"sub": SPIFFE_ID}
+            )
+
+        def close(self):
+            self.closed = True
+
+    fake_spiffe = types.ModuleType("spiffe")
+    fake_spiffe.WorkloadApiClient = _FakeOwnedClient
+    monkeypatch.setitem(sys.modules, "spiffe", fake_spiffe)
+
+    provider = SpiffeWorkloadProvider(audiences={"https://api.mine.example"})
+    provider.build_session()
+    provider.build_session()
+    assert len(created) == 1  # single client reused across fetches
+    provider.close()
+    assert created[0].closed is True
 
 
 # --- A2A signed AgentCards --------------------------------------------------- #

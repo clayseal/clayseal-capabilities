@@ -12,7 +12,7 @@ from agentauth.capabilities.scoping import (
     compute_file_closure,
 )
 from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.scoping.models import SensitivityLabel
+from agentauth.capabilities.scoping.models import CapabilityLease, SensitivityLabel
 
 
 @pytest.fixture()
@@ -100,6 +100,32 @@ def test_capability_lease_resource_scope_uses_repo_uri(sample_repo: Path) -> Non
     entries = lease.resource_scope_entries()
     assert any(entry.startswith("repo://swe_triage/parser.py") for entry in entries)
     assert not any(entry.startswith("file:") for entry in entries)
+
+
+def test_glob_does_not_cross_directory_boundary() -> None:
+    """``src/*`` must match a file directly in ``src/`` but NOT one nested deeper
+    -- plain fnmatch would let ``*`` swallow the ``/`` and over-grant."""
+    lease = CapabilityLease(
+        query_id="q",
+        repo_sha="sha",
+        seed_chunk_ids=[],
+        read_files={"src/*"},
+    )
+    ok, reason = check_repo_path_allowed("src/main.py", lease, write=False)
+    assert ok and reason == "lease_glob"
+    denied, reason2 = check_repo_path_allowed("src/deep/secret.py", lease, write=False)
+    assert not denied and reason2 == "out_of_scope"
+
+
+def test_double_star_glob_spans_directories() -> None:
+    lease = CapabilityLease(
+        query_id="q",
+        repo_sha="sha",
+        seed_chunk_ids=[],
+        read_files={"src/**"},
+    )
+    ok, _ = check_repo_path_allowed("src/deep/nested/secret.py", lease, write=False)
+    assert ok
 
 
 def test_compute_file_closure_respects_protected_write_cap() -> None:

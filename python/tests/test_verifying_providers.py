@@ -120,6 +120,33 @@ def test_provider_passes_conformance_kit(provider):
     assert check_identity_provider(provider, samples) == []
 
 
+def test_audience_is_mandatory(jwks):
+    # Verifying signature+issuer without pinning the audience would accept
+    # tokens minted for a different relying party -- refuse to construct.
+    with pytest.raises(ValueError, match="audience is required"):
+        VerifyingOidcProvider(issuer=ISSUER, jwks=jwks)
+
+
+def test_token_without_exp_rejected(provider, keypair):
+    _, private_pem = keypair
+    token = jwt.encode(
+        {"iss": ISSUER, "aud": AUDIENCE, "sub": "x", "iat": int(time.time())},  # no exp
+        private_pem, algorithm="RS256", headers={"kid": KID},
+    )
+    with pytest.raises(jwt.MissingRequiredClaimError):
+        provider.verify(token)
+
+
+def test_token_without_iss_rejected(provider, keypair):
+    _, private_pem = keypair
+    token = jwt.encode(
+        {"aud": AUDIENCE, "sub": "x", "iat": int(time.time()), "exp": int(time.time()) + 300},
+        private_pem, algorithm="RS256", headers={"kid": KID},
+    )
+    with pytest.raises(jwt.MissingRequiredClaimError):
+        provider.verify(token)
+
+
 # --- Entra Agent ID ---------------------------------------------------------- #
 
 AGENT_CLAIMS = {

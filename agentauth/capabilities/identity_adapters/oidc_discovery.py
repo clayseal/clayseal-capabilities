@@ -24,6 +24,7 @@ dog food through the same seam a third-party IdP would use.
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -65,6 +66,13 @@ class VerifyingOidcProvider:
     ) -> None:
         if discovery_url is None and (issuer is None or jwks is None):
             raise ValueError("provide discovery_url, or both issuer and a static jwks")
+        # ``audience`` is mandatory: verifying signature+issuer without pinning
+        # the audience accepts tokens minted for a *different* relying party.
+        if not audience:
+            raise ValueError(
+                "audience is required: a verifying OIDC provider must pin the "
+                "expected audience or it will accept tokens issued for other apps"
+            )
         self.name = name
         self.discovery_url = discovery_url
         self.audience = audience
@@ -73,6 +81,9 @@ class VerifyingOidcProvider:
         self._issuer = issuer
         self._jwks = jwks
         self._jwks_fetched_at = time.monotonic() if jwks is not None else 0.0
+        # Guards the _jwks/_issuer/_jwks_fetched_at refresh so a TTL expiry does
+        # not stampede the IdP (single-flight).
+        self._refresh_lock = threading.Lock()
 
     # --- verification ------------------------------------------------------ #
     def _load_discovery(self) -> None:
@@ -85,11 +96,36 @@ class VerifyingOidcProvider:
         self._jwks = httpx.get(jwks_uri, timeout=10.0).raise_for_status().json()
         self._jwks_fetched_at = time.monotonic()
 
+    def _needs_refresh(self) -> bool:
+        if self._jwks is None:
+            return True
+        if not self.discovery_url:
+            return False
+        return time.monotonic() - self._jwks_fetched_at > self.jwks_ttl_seconds
+
     def _current_jwks(self) -> tuple[str, dict[str, Any]]:
-        stale = time.monotonic() - self._jwks_fetched_at > self.jwks_ttl_seconds
-        if self._jwks is None or (self.discovery_url and stale):
-            self._load_discovery()
+        if self._needs_refresh():
+            with self._refresh_lock:
+                # Double-checked under the lock: another thread may have just
+                # refreshed, so only one request hits the IdP per TTL window.
+                if self._needs_refresh():
+                    self._load_discovery()
         return self._issuer, self._jwks
+
+    @staticmethod
+    def _key_for_kid(jwks: dict[str, Any], kid: str | None) -> dict[str, Any] | None:
+        return next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+
+    def _refresh_for_kid(self, kid: str | None) -> dict[str, Any] | None:
+        """Single-flight forced refresh to pick up a rotated ``kid``."""
+        if not self.discovery_url:
+            return None
+        with self._refresh_lock:
+            existing = self._key_for_kid(self._jwks or {}, kid)
+            if existing is not None:  # another thread already refreshed it in
+                return existing
+            self._load_discovery()
+            return self._key_for_kid(self._jwks, kid)
 
     def verify(self, token: str) -> dict[str, Any]:
         """Verify signature/issuer/audience/expiry → verified claims dict."""
@@ -100,18 +136,13 @@ class VerifyingOidcProvider:
         header = pyjwt.get_unverified_header(token)
         if header.get("alg") not in self.allowed_algs:
             raise ValueError(f"token alg {header.get('alg')!r} not in {self.allowed_algs}")
-        key = next((k for k in jwks.get("keys", []) if k.get("kid") == header.get("kid")), None)
+        kid = header.get("kid")
+        key = self._key_for_kid(jwks, kid)
         if key is None:
             # one forced refresh handles rotation between cache windows
-            if self.discovery_url:
-                self._load_discovery()
-                _, jwks = self._issuer, self._jwks
-                key = next(
-                    (k for k in jwks.get("keys", []) if k.get("kid") == header.get("kid")),
-                    None,
-                )
+            key = self._refresh_for_kid(kid)
             if key is None:
-                raise ValueError(f"no JWKS key matches kid {header.get('kid')!r}")
+                raise ValueError(f"no JWKS key matches kid {kid!r}")
         public_key = pyjwt.PyJWK(key).key
         return pyjwt.decode(
             token,
@@ -119,7 +150,9 @@ class VerifyingOidcProvider:
             algorithms=list(self.allowed_algs),
             issuer=issuer,
             audience=self.audience,
-            options={"verify_aud": self.audience is not None},
+            # exp + iss are mandatory; a token with no expiry is rejected, and
+            # verify_aud is always on since audience is required.
+            options={"require": ["exp", "iss"], "verify_aud": True},
         )
 
     # --- IdentityProvider protocol ----------------------------------------- #

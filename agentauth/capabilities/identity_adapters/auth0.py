@@ -29,7 +29,7 @@ def claims_from_auth0(claims: dict[str, Any]) -> dict[str, Any]:
 class Auth0IdentityProvider:
     name: str = "auth0"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_auth0(raw) if "iss" in raw and "auth0.com" in str(raw.get("iss", "")) else raw
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -43,7 +43,7 @@ class Auth0IdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),

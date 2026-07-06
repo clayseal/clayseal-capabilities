@@ -160,10 +160,14 @@ def build_ann_index(
 ) -> CosineAnnIndex | HnswAnnIndex:
     """
     Prefer HNSW when available, fall back to brute-force cosine.
+
+    Only the "HNSW unavailable" signals (missing hnswlib/numpy) trigger the
+    fallback; a genuine build error (e.g. a shape/dimension ``ValueError`` from
+    a misbehaving embedder) propagates instead of being silently masked.
     """
     try:
         return HnswAnnIndex.from_texts(chunk_ids=chunk_ids, texts=texts, embedder=embedder)
-    except Exception:
+    except (ImportError, RuntimeError):
         return CosineAnnIndex.from_texts(chunk_ids=chunk_ids, texts=texts, embedder=embedder)
 
 

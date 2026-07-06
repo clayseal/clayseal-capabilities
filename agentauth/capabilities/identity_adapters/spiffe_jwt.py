@@ -30,7 +30,7 @@ def claims_from_spiffe_jwt(claims: dict[str, Any]) -> dict[str, Any]:
 class SpiffeJwtIdentityProvider:
     name: str = "spiffe_jwt"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_spiffe_jwt(raw) if "sub" in raw else raw
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -44,7 +44,7 @@ class SpiffeJwtIdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),

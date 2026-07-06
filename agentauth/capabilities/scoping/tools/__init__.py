@@ -14,7 +14,11 @@ from agentauth.capabilities.scoping.tools.target_closure import (
     TargetClosurePolicy,
     compute_target_closure,
 )
-from agentauth.capabilities.scoping.tools.tool_call_budget import ToolCallBudget, ToolCallBudgetConfig
+from agentauth.capabilities.scoping.tools.tool_call_budget import (
+    ToolCallBudget,
+    ToolCallBudgetConfig,
+    ToolCallReservation,
+)
 from agentauth.capabilities.scoping.tools.tool_capability_scope import (
     build_tool_capability_lease,
     score_targets_for_goal,
@@ -22,6 +26,8 @@ from agentauth.capabilities.scoping.tools.tool_capability_scope import (
 from agentauth.capabilities.scoping.tools.tool_enforcement import check_tool_call_allowed
 from agentauth.capabilities.scoping.tools.tool_lease_enforcement import (
     commit_tool_call_budget,
+    release_tool_call_budget,
+    reserve_tool_call_budget,
     target_entity_from_arguments,
     tool_capability_lease_violations,
 )
@@ -33,6 +39,7 @@ __all__ = [
     "TargetClosurePolicy",
     "ToolCallBudget",
     "ToolCallBudgetConfig",
+    "ToolCallReservation",
     "ToolCapabilityLease",
     "ToolEntityIndex",
     "ToolSpec",
@@ -41,6 +48,8 @@ __all__ = [
     "check_tool_call_allowed",
     "commit_tool_call_budget",
     "compute_target_closure",
+    "release_tool_call_budget",
+    "reserve_tool_call_budget",
     "resolve_target_entities",
     "score_targets_for_goal",
     "target_entity_from_arguments",

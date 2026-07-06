@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import threading
+from decimal import Decimal
+
 from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 
 _TRACKED = {
@@ -103,3 +106,58 @@ def test_supersession_ignored_when_tool_not_eligible():
     b.commit("issue_payroll_bonus", {"bonus_amount": 7000.0, "_idempotency_key": "k"})
     # Not eligible -> the key is ignored, so it accumulates.
     assert b.spent["usd_payout"] == 15000.0
+
+
+def test_money_uses_decimal_not_float():
+    """Three $0.10 payments sum to EXACTLY $0.30 -- with binary floats
+    0.1+0.1+0.1 = 0.30000000000000004 would wrongly trip a $0.30 ceiling."""
+    b = SessionValueBudget(
+        config=ValueBudgetConfig(
+            tracked={"pay": ("amt", "cents")}, ceilings={"cents": "0.30"}
+        )
+    )
+    for _ in range(2):
+        assert b.would_allow("pay", {"amt": 0.10})[0]
+        b.commit("pay", {"amt": 0.10})
+    allowed, _ = b.would_allow("pay", {"amt": 0.10})  # third fits exactly
+    assert allowed
+    b.commit("pay", {"amt": 0.10})
+    assert b.spent["cents"] == Decimal("0.30")
+    assert not b.would_allow("pay", {"amt": 0.01})[0]
+
+
+def test_reserve_is_atomic_gate_and_release_restores():
+    b = _budget(20000.0)
+    r1 = b.reserve("issue_payroll_bonus", {"bonus_amount": 15000.0})
+    assert r1.allowed
+    # Reservation counts against the ceiling even before commit.
+    r2 = b.reserve("issue_payroll_bonus", {"bonus_amount": 6000.0})
+    assert not r2.allowed and r2.reason == "value_budget_exceeded"
+    # Rolling back the first reservation frees the headroom again.
+    r1.release()
+    r3 = b.reserve("issue_payroll_bonus", {"bonus_amount": 6000.0})
+    assert r3.allowed
+    r3.commit()
+    assert b.spent["usd_payout"] == Decimal("6000.00")
+
+
+def test_parallel_reserve_cannot_exceed_ceiling():
+    """The TOCTOU fix: N concurrent reservations of $100 against a $1000 ceiling
+    let exactly 10 through, no matter the interleaving."""
+    b = _budget(1000.0)
+    results: list[bool] = []
+    lock = threading.Lock()
+    barrier = threading.Barrier(50)
+
+    def worker():
+        barrier.wait()
+        r = b.reserve("issue_payroll_bonus", {"bonus_amount": 100.0})
+        with lock:
+            results.append(r.allowed)
+
+    threads = [threading.Thread(target=worker) for _ in range(50)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert results.count(True) == 10

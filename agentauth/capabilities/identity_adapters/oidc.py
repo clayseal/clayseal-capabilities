@@ -26,7 +26,7 @@ def claims_from_oidc(claims: dict[str, Any]) -> dict[str, Any]:
 class OidcIdentityProvider:
     name: str = "oidc"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_oidc(raw) if "sub" in raw and "iss" in raw else raw
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -40,7 +40,7 @@ class OidcIdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),
