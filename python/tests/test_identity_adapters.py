@@ -46,12 +46,33 @@ PROVIDER_FIXTURES = {
         "UserId": "AROAEXAMPLE:session",
         "scopes": ["s3:read"],
     },
+    "azure_ad": {
+        "oid": "obj-123",
+        "tid": "tenant-123",
+        "iss": "https://sts.windows.net/tenant-123/",
+        "scp": "api.read",
+        "roles": ["Agent.Executor"],
+        "appid": "app-123",
+    },
+    "gcp_service_account": {
+        "email": "agent@project.iam.gserviceaccount.com",
+        "project_id": "project-1",
+        "scope": "cloud-platform",
+    },
 }
 
 
 def test_five_identity_providers_registered():
     names = list_identity_providers()
-    for expected in ("agentauth", "spiffe_jwt", "oidc", "auth0", "aws_sts"):
+    for expected in (
+        "agentauth",
+        "spiffe_jwt",
+        "oidc",
+        "auth0",
+        "aws_sts",
+        "azure_ad",
+        "gcp_service_account",
+    ):
         assert expected in names
 
 

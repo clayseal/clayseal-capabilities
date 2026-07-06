@@ -1,17 +1,73 @@
-from agentauth.capabilities.commit import CommitToken, SignedCommitToken, issue_commit_token, verify_commit_token
-from agentauth.capabilities.delegation import DelegationToken, issue_delegation, sign_delegation, verify_delegation_chain
+from agentauth.capabilities.commit import (
+    CommitToken,
+    SignedCommitToken,
+    issue_commit_token,
+    verify_commit_token,
+)
+from agentauth.capabilities.delegation import (
+    DelegationToken,
+    issue_delegation,
+    sign_delegation,
+    verify_delegation_chain,
+)
+from agentauth.capabilities.layer import (
+    AgentAuthCapabilityLayer,
+    default_capability_layer,
+    get_capability_layer,
+    list_capability_layers,
+    register_capability_layer,
+)
+from agentauth.capabilities.authorizers import (
+    cedar_authorizer,
+    external_authorizer,
+    opa_authorizer,
+    openfga_authorizer,
+)
 from agentauth.capabilities.mandate import Mandate, issue_mandate, verify_mandate_signature
+from agentauth.capabilities.operations import (
+    capability_allows,
+    operation_for_action,
+    operation_for_mcp_tool,
+)
+from agentauth.capabilities.scoping import (
+    CapabilityLease,
+    GoalSpec,
+    build_capability_lease,
+    build_repo_chunk_index,
+)
 from agentauth.capabilities.task_scope import TaskScope, compile_task_scope
 from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-from agentauth.capabilities.scoping import GoalSpec, CapabilityLease, build_capability_lease, build_repo_chunk_index
-from agentauth.capabilities.operations import capability_allows, operation_for_action, operation_for_mcp_tool
 
 __all__ = [
-    "CommitToken", "SignedCommitToken", "issue_commit_token", "verify_commit_token",
-    "DelegationToken", "issue_delegation", "sign_delegation", "verify_delegation_chain",
-    "Mandate", "issue_mandate", "verify_mandate_signature",
-    "TaskScope", "compile_task_scope",
-    "SessionValueBudget", "ValueBudgetConfig",
-    "GoalSpec", "CapabilityLease", "build_capability_lease", "build_repo_chunk_index",
-    "capability_allows", "operation_for_action", "operation_for_mcp_tool",
+    "AgentAuthCapabilityLayer",
+    "CapabilityLease",
+    "CommitToken",
+    "DelegationToken",
+    "GoalSpec",
+    "Mandate",
+    "SessionValueBudget",
+    "SignedCommitToken",
+    "TaskScope",
+    "ValueBudgetConfig",
+    "build_capability_lease",
+    "build_repo_chunk_index",
+    "capability_allows",
+    "cedar_authorizer",
+    "compile_task_scope",
+    "default_capability_layer",
+    "external_authorizer",
+    "get_capability_layer",
+    "issue_commit_token",
+    "issue_delegation",
+    "issue_mandate",
+    "list_capability_layers",
+    "opa_authorizer",
+    "openfga_authorizer",
+    "operation_for_action",
+    "operation_for_mcp_tool",
+    "register_capability_layer",
+    "sign_delegation",
+    "verify_commit_token",
+    "verify_delegation_chain",
+    "verify_mandate_signature",
 ]

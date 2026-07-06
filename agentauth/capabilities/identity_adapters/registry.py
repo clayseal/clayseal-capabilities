@@ -44,9 +44,11 @@ def _ensure_loaded() -> None:
     from agentauth.capabilities.identity_adapters import agentauth as _a
     from agentauth.capabilities.identity_adapters import auth0 as _auth0
     from agentauth.capabilities.identity_adapters import aws_sts as _aws
+    from agentauth.capabilities.identity_adapters import azure_ad as _azure
+    from agentauth.capabilities.identity_adapters import gcp as _gcp
     from agentauth.capabilities.identity_adapters import oidc as _oidc
     from agentauth.capabilities.identity_adapters import spiffe_jwt as _spiffe
 
-    for mod in (_a, _spiffe, _oidc, _auth0, _aws):
+    for mod in (_a, _spiffe, _oidc, _auth0, _aws, _azure, _gcp):
         register_identity_provider(mod.provider)
     _BUILTINS_LOADED = True

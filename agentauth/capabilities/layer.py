@@ -1,4 +1,4 @@
-"""Default L2 capability layer for receipts integration."""
+"""Pluggable L2 capability layers for receipts and framework integration."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,3 +23,19 @@ class AgentAuthCapabilityLayer:
 
 
 default_capability_layer = AgentAuthCapabilityLayer()
+
+_LAYERS: dict[str, CapabilityLayer] = {default_capability_layer.name: default_capability_layer}
+
+
+def register_capability_layer(layer: CapabilityLayer) -> None:
+    _LAYERS[layer.name] = layer
+
+
+def get_capability_layer(name: str = "agentauth") -> CapabilityLayer:
+    if name not in _LAYERS:
+        raise KeyError(f"unknown capability layer {name!r}; known: {', '.join(sorted(_LAYERS))}")
+    return _LAYERS[name]
+
+
+def list_capability_layers() -> list[str]:
+    return sorted(_LAYERS)
