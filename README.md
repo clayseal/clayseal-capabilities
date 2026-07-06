@@ -10,7 +10,7 @@ pip install -e ".[dev]"
 python examples/03_commit_token.py
 ```
 
-Depends on [agentauth-identity](https://github.com/pberlizov/agentauth-identity) v0.3.1+.
+Depends on [agentauth-identity](https://github.com/pberlizov/agentauth-identity) v0.4.0+.
 
 Import identity types with `from agentauth.identity import AgentAuth` when using this layer alone.
 
@@ -24,4 +24,4 @@ Layer 2 works with **any** of these L1 stacks via `get_identity_provider(name)`:
 - `auth0` — Auth0 M2M client-credentials
 - `aws_sts` — AWS STS / IAM role sessions
 
-See [docs/cross_layer_integration.md](docs/cross_layer_integration.md) and `examples/04_cross_provider_commit.py`.
+See [docs/cross_layer_integration.md](docs/cross_layer_integration.md), [docs/DEV_GUIDE.md](docs/DEV_GUIDE.md), and `examples/04_cross_provider_commit.py`.

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: pberlizov/agentauth-identity
+          path: deps/agentauth-identity
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install layer 1 + layer 2
+        run: |
+          pip install "./deps/agentauth-identity[dev]"
+          pip install -e ".[dev]"
+      - name: Run tests
+        run: pytest python/tests -q
