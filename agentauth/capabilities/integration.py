@@ -29,7 +29,30 @@ def execution_context_from_session(
 
 
 def default_biscuit_backend() -> CapabilityTokenBackend:
-    from agentauth.identity import _capabilities as caps
+    """Resolve the capability-token backend.
+
+    Resolution order: an explicitly registered/entry-point plugin named
+    ``biscuit`` in the ``agentauth.capability_backends`` group wins; otherwise
+    fall back to the built-in backend over the identity layer's Biscuit
+    primitives (optional extra — identity is not a hard dependency of this
+    layer).
+    """
+    from agentauth.core.plugins import get_plugin
+
+    try:
+        return get_plugin("capability_backends", "biscuit")
+    except KeyError:
+        pass
+
+    try:
+        from agentauth.identity import _capabilities as caps
+    except ImportError as exc:
+        raise ImportError(
+            "The default Biscuit backend needs the identity layer. Install with: "
+            "pip install 'agentauth-capabilities[biscuit-service]' — or register "
+            "your own CapabilityTokenBackend under the "
+            "'agentauth.capability_backends' entry-point group as 'biscuit'."
+        ) from exc
 
     class _BiscuitBackend:
         def attenuate(self, token_b64, *, root_public_hex, capabilities=None, path_patterns=None, denied_paths=None, expires_at=None):
