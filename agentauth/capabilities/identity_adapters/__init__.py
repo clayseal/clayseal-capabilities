@@ -2,9 +2,11 @@
 
 Claim-mapping adapters (trust the caller's verification): ``agentauth``,
 ``spiffe_jwt``, ``oidc``, ``auth0``, ``aws_sts``. Verifying adapters (do the
-cryptography themselves, need the ``[oidc]`` extra):
-``VerifyingOidcProvider`` (any OIDC discovery/JWKS issuer) and
-``EntraAgentIdProvider`` (Entra Agent ID tokens, facet-claim gated).
+cryptography themselves): ``VerifyingOidcProvider`` (any OIDC discovery/JWKS
+issuer, ``[oidc]`` extra), ``EntraAgentIdProvider`` (Entra Agent ID tokens,
+facet-claim gated, ``[oidc]``), ``A2AAgentCardProvider`` (A2A signed
+AgentCards, ``[a2a]``). Live-fetch: ``SpiffeWorkloadProvider`` pulls fresh
+JWT-SVIDs from a SPIFFE agent's Workload API (``[spiffe]``).
 
 Third parties add providers via the ``agentauth.identity_providers``
 entry-point group or ``register_identity_provider`` — see
@@ -12,6 +14,10 @@ entry-point group or ``register_identity_provider`` — see
 """
 from __future__ import annotations
 
+from agentauth.capabilities.identity_adapters.a2a_agentcard import (
+    A2AAgentCardProvider,
+    verify_agent_card,
+)
 from agentauth.capabilities.identity_adapters.entra_agent_id import (
     EntraAgentIdProvider,
     is_agent_token,
@@ -22,6 +28,7 @@ from agentauth.capabilities.identity_adapters.registry import (
     list_identity_providers,
     register_identity_provider,
 )
+from agentauth.capabilities.identity_adapters.spiffe_workload import SpiffeWorkloadProvider
 
 __all__ = [
     "get_identity_provider",
@@ -30,4 +37,7 @@ __all__ = [
     "VerifyingOidcProvider",
     "EntraAgentIdProvider",
     "is_agent_token",
+    "A2AAgentCardProvider",
+    "verify_agent_card",
+    "SpiffeWorkloadProvider",
 ]

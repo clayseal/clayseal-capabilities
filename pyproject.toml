@@ -30,7 +30,11 @@ biscuit-service = ["agentauth-identity>=0.5,<0.6"]
 # Verifying identity adapters (VerifyingOidcProvider, EntraAgentIdProvider):
 # live JWT verification against OIDC discovery/JWKS.
 oidc = ["PyJWT>=2.8,<3.0", "httpx>=0.27"]
-dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc]"]
+# SPIFFE Workload API live-fetch (SpiffeWorkloadProvider): py-spiffe + grpcio.
+spiffe = ["spiffe>=0.3"]
+# A2A signed AgentCard verification (A2AAgentCardProvider): JWS over RFC 8785 JCS.
+a2a = ["rfc8785>=0.1.4", "PyJWT>=2.8,<3.0"]
+dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc,a2a]"]
 
 # Ship ONLY the capabilities subpackage in the shared `agentauth` namespace.
 # `agentauth.core` comes from the agentauth-core wheel.
