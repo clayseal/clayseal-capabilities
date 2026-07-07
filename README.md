@@ -1,4 +1,9 @@
-# AgentAuth Capabilities (layer 2)
+# Clay Seal Capabilities (layer 2)
+
+<img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
+
+Clay Seal Capabilities is currently published as `agentauth-capabilities` under
+the `agentauth.capabilities` Python namespace for compatibility.
 
 Dynamic capability narrowing: Biscuit attenuation (via identity), commit tokens,
 delegation, mandates, goal-bound leases, session value budgets.
@@ -19,7 +24,7 @@ Import identity types with `from agentauth.identity import AgentAuth` when using
 
 Layer 2 works with **any** of these L1 stacks via `get_identity_provider(name)`:
 
-- `agentauth` — native AgentAuth credentials
+- `agentauth` — native Clay Seal credentials
 - `spiffe_jwt` — SPIRE / SPIFFE JWT-SVID
 - `oidc` — generic OIDC access tokens
 - `auth0` — Auth0 M2M client-credentials

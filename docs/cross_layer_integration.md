@@ -16,7 +16,7 @@ Layer 2 and Layer 3 share a **provider-neutral authority contract** so you can s
 
 | Provider | `get_identity_provider(...)` | Typical source |
 |----------|------------------------------|----------------|
-| AgentAuth | `agentauth` | `Credential.to_binding_dict()` |
+| Clay Seal | `agentauth` | `Credential.to_binding_dict()` |
 | SPIFFE / SPIRE | `spiffe_jwt` | JWT-SVID (`sub: spiffe://…`) |
 | Generic OIDC | `oidc` | OAuth2 access token claims |
 | Auth0 M2M | `auth0` | Client-credentials JWT |

@@ -1,6 +1,6 @@
-# Developer guide — AgentAuth Capabilities (Layer 2)
+# Developer guide — Clay Seal Capabilities (Layer 2)
 
-This guide explains how to **use and operate** the capabilities layer: dynamic, attenuated authorization that sits between identity (layer 1) and verifiable receipts (layer 3). Read it end-to-end if you are wiring AgentAuth into an agent runtime, an MCP gateway, or an enterprise IdP you already run.
+This guide explains how to **use and operate** the capabilities layer: dynamic, attenuated authorization that sits between identity (layer 1) and verifiable receipts (layer 3). Read it end-to-end if you are wiring Clay Seal into an agent runtime, an MCP gateway, or an enterprise IdP you already run.
 
 ---
 
@@ -130,7 +130,7 @@ Pluggable attenuation (default: Biscuit). Lets you swap macaroon-style backends 
 
 ## Day-to-day operations
 
-### Native AgentAuth path (L1 + L2)
+### Native Clay Seal path (L1 + L2)
 
 The common case when you control both identity and capabilities:
 
@@ -167,11 +167,11 @@ Run the full script: `python examples/03_commit_token.py`.
 
 ### Cross-provider path (any of 5 IdPs)
 
-You **do not** need AgentAuth identity if you already have one of the supported stacks:
+You **do not** need Clay Seal identity if you already have one of the supported stacks:
 
 | Provider name | Typical source |
 |---------------|----------------|
-| `agentauth` | Native AgentAuth credential |
+| `agentauth` | Native Clay Seal credential |
 | `spiffe_jwt` | SPIRE / SPIFFE JWT-SVID |
 | `oidc` | Generic OAuth2 access token claims |
 | `auth0` | Auth0 M2M JWT |
