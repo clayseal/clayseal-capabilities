@@ -88,12 +88,12 @@ class VerifyingOidcProvider:
     # --- verification ------------------------------------------------------ #
     def _load_discovery(self) -> None:
         _require_deps()
-        import httpx
+        from agentauth.core.safe_http import safe_http_get_json
 
-        doc = httpx.get(self.discovery_url, timeout=10.0).raise_for_status().json()
+        doc = safe_http_get_json(self.discovery_url, timeout=10.0)
         self._issuer = doc["issuer"]
         jwks_uri = doc["jwks_uri"]
-        self._jwks = httpx.get(jwks_uri, timeout=10.0).raise_for_status().json()
+        self._jwks = safe_http_get_json(jwks_uri, timeout=10.0)
         self._jwks_fetched_at = time.monotonic()
 
     def _needs_refresh(self) -> bool:
@@ -157,13 +157,18 @@ class VerifyingOidcProvider:
 
     # --- IdentityProvider protocol ----------------------------------------- #
     def to_binding(
-        self, raw: dict[str, Any] | str, *, evidence_verified: bool = True
+        self, raw: dict[str, Any] | str, *, evidence_verified: bool = False
     ) -> AuthorityBinding:
         if isinstance(raw, str):
             claims = self.verify(raw)
             evidence_verified = True
         else:
             claims = raw
+            if evidence_verified:
+                raise ValueError(
+                    "cannot set evidence_verified=True for unverified OIDC claim dicts; "
+                    "pass a JWT string or verify the token first"
+                )
         return AuthorityBinding.from_verified_credential(
             claims,
             attestation_type="oidc",
@@ -176,7 +181,7 @@ class VerifyingOidcProvider:
         raw: dict[str, Any] | str,
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         binding = self.to_binding(raw, evidence_verified=evidence_verified)
         return IdentitySession(
