@@ -3,7 +3,9 @@
 Backed by the shared plugin registry (``agentauth.core.plugins``,
 entry-point group ``agentauth.identity_providers``): third-party packages add
 providers by declaring an entry point — no edits to this package needed. The
-five built-in adapters are registered lazily on first use.
+five built-in adapters are registered lazily on first use. Optional verifying
+adapters (``entra_agent_id``, ``VerifyingOidcProvider``) register when their
+extras are installed.
 """
 
 from __future__ import annotations
@@ -52,4 +54,10 @@ def _ensure_loaded() -> None:
 
     for mod in (_a, _spiffe, _workload, _oidc, _auth0, _aws, _azure, _gcp):
         register_identity_provider(mod.provider)
+    try:
+        from agentauth.capabilities.identity_adapters import entra_agent_id as _entra
+
+        register_identity_provider(_entra.provider)
+    except ImportError:
+        pass
     _BUILTINS_LOADED = True

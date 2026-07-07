@@ -12,7 +12,12 @@ Layer 1 answers *who* is acting. Real agent systems also need to answer:
 - Can a sub-agent receive **strictly narrower** rights than its parent?
 - How do we enforce **mandates** and **budgets** without calling home on every tool invocation?
 
-**agentauth-capabilities** implements that middle layer. It takes verified identity facts and produces **action-scoped capability artifacts** — commit tokens, leases, attenuated Biscuits — that verifiers and runtimes can check offline.
+**Clay Seal Capabilities** implements that middle layer. Its package name is
+still `agentauth-capabilities`, and its Python namespace is still
+`agentauth.capabilities`, but the product name developers and customers should
+see is Clay Seal. It takes verified identity facts and produces
+**action-scoped capability artifacts** — commit tokens, leases, attenuated
+Biscuits — that verifiers and runtimes can check offline.
 
 Without this layer, you either over-trust the agent’s static IAM role or under-protect individual tool calls. With it, authorization becomes **per-action, per-resource, and cryptographically constrained**.
 
@@ -64,13 +69,13 @@ pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
 ### Editable development
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-identity.git ../agentauth-identity
-git clone https://github.com/pberlizov/clay-seal-core.git ../agentauth-core
+git clone https://github.com/pberlizov/clay-seal-identity.git ../clay-seal-identity
+git clone https://github.com/pberlizov/clay-seal-core.git ../clay-seal-core
 git clone https://github.com/pberlizov/clay-seal-capabilities.git
-cd agentauth-capabilities
+cd clay-seal-capabilities
 python -m venv .venv && source .venv/bin/activate
-pip install -e "../agentauth-core[dev]"
-pip install -e "../agentauth-identity[dev]"
+pip install -e "../clay-seal-core[dev]"
+pip install -e "../clay-seal-identity[dev]"
 pip install -e ".[dev]"
 ```
 
@@ -165,9 +170,10 @@ assert verify_commit_token(signed, key=signing_key.public_key()).valid
 
 Run the full script: `python examples/03_commit_token.py`.
 
-### Cross-provider path (any of 5 IdPs)
+### Cross-provider path
 
-You **do not** need Clay Seal identity if you already have one of the supported stacks:
+You **do not** need Clay Seal Identity if you already have one of the supported
+stacks:
 
 | Provider name | Typical source |
 |---------------|----------------|
@@ -176,6 +182,9 @@ You **do not** need Clay Seal identity if you already have one of the supported 
 | `oidc` | Generic OAuth2 access token claims |
 | `auth0` | Auth0 M2M JWT |
 | `aws_sts` | AWS STS / IAM session |
+| `entra_agent_id` | Microsoft Entra Agent ID |
+| `azure_ad` | Azure AD workload identity |
+| `gcp` | Google Cloud service account / workload identity |
 
 Example with SPIFFE:
 
@@ -330,6 +339,22 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 
 ---
 
+## Privacy and data handling
+
+Layer 2 handles authorization context: subjects, tenants, action names, resource
+references, leases, mandates, budgets, input commitments, and replay records.
+Do not pass raw prompts, secrets, source code, or sensitive business payloads
+through commit-token APIs when a canonical hash or stable reference is enough.
+
+For production, configure replay-store retention, keep token TTLs short, redact
+raw IdP tokens from logs, and document any external policy engine that receives
+authorization context.
+
+Read [docs/PRIVACY.md](PRIVACY.md) before routing production IdP claims or
+business transactions through this layer.
+
+---
+
 ## Releases
 
 Tag **after** agentauth-core and agentauth-identity at the same semver line. Consumers install:
@@ -348,3 +373,4 @@ See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 - [Layer 1 DEV_GUIDE](https://github.com/pberlizov/clay-seal-identity/blob/main/docs/DEV_GUIDE.md)
 - [Layer 3 DEV_GUIDE](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - [cross_layer_integration.md](cross_layer_integration.md)
+- [Privacy and data handling](PRIVACY.md)

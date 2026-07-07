@@ -224,6 +224,22 @@ def verify_commit_token(
 
     # Single-use enforcement (replay defense). Reached only once the token is
     # otherwise valid, so a rejected token never consumes a token_id slot.
+    if used_token_store is None:
+        try:
+            from agentauth.capabilities.used_token_store import default_used_token_store
+
+            used_token_store = default_used_token_store()
+        except ImportError:
+            used_token_store = None
+    if used_token_store is None:
+        from agentauth.core.production import is_production
+
+        if is_production():
+            return (
+                False,
+                "commit token replay store required in production "
+                "(configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store)",
+            )
     if used_token_store is not None and not used_token_store.mark_used(
         signed.token.token_id, expires_at
     ):

@@ -13,7 +13,14 @@ LEASE_STRICT_ENV = "AGENTAUTH_LEASE_STRICT"
 
 
 def _strict_default() -> bool:
-    return os.getenv(LEASE_STRICT_ENV, "").strip().lower() in {"1", "true", "yes"}
+    explicit = os.getenv(LEASE_STRICT_ENV, "").strip().lower()
+    if explicit in {"1", "true", "yes", "on"}:
+        return True
+    if explicit in {"0", "false", "no", "off"}:
+        return False
+    from agentauth.core.production import is_production
+
+    return is_production()
 
 _WRITE_TOOL_MARKERS = (
     "write",

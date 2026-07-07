@@ -70,7 +70,7 @@ class EntraAgentIdProvider(VerifyingOidcProvider):
         self.require_agent = require_agent
 
     def to_binding(
-        self, raw: dict[str, Any] | str, *, evidence_verified: bool = True
+        self, raw: dict[str, Any] | str, *, evidence_verified: bool = False
     ) -> AuthorityBinding:
         if isinstance(raw, str):
             claims = self.verify(raw)

@@ -27,7 +27,7 @@ def claims_from_gcp(raw: dict[str, Any]) -> dict[str, Any]:
 class GcpIdentityProvider:
     name: str = "gcp_service_account"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_gcp(raw)
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -41,7 +41,7 @@ class GcpIdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),
