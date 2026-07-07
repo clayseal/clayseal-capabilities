@@ -15,8 +15,12 @@ class AgentAuthCapabilityLayer:
     def issue_commit_token(self, ctx: Any, *, key: Any, ttl_seconds: int) -> Any:
         return issue_commit_token(ctx, key=key, ttl_seconds=ttl_seconds)
 
-    def verify_commit_token(self, signed: Any, *, ctx: Any) -> tuple[bool, str | None]:
-        return verify_commit_token(signed, ctx=ctx)
+    def verify_commit_token(
+        self, signed: Any, *, ctx: Any, trusted_minting_keys: Any = None
+    ) -> tuple[bool, str | None]:
+        return verify_commit_token(
+            signed, ctx=ctx, trusted_minting_keys=trusted_minting_keys
+        )
 
     def compile_task_scope(self, mandate: dict[str, Any]) -> Any:
         return compile_task_scope(mandate)

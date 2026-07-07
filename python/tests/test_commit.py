@@ -88,3 +88,58 @@ def test_used_token_store_is_thread_safe_single_winner():
         t.join()
     # Exactly one caller may consume a single-use token, no matter the race.
     assert results.count(True) == 1
+
+
+def test_commit_token_rejects_untrusted_minting_key():
+    minting_key = generate_keypair()
+    attacker_key = generate_keypair()
+    ctx = _ctx()
+    forged = issue_commit_token(ctx, key=attacker_key, ttl_seconds=300)
+
+    ok, reason = verify_commit_token(
+        forged, ctx=ctx, trusted_minting_keys={minting_key.public_key_hex}
+    )
+    assert not ok and reason == "commit token signer is not a trusted minting key"
+
+
+def test_commit_token_accepts_pinned_minting_key_by_public_key_and_key_id():
+    key = generate_keypair()
+    ctx = _ctx()
+    signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
+
+    ok, reason = verify_commit_token(
+        signed, ctx=ctx, trusted_minting_keys={key.public_key_hex}
+    )
+    assert ok, reason
+    signed2 = issue_commit_token(ctx, key=key, ttl_seconds=300)
+    ok2, reason2 = verify_commit_token(
+        signed2, ctx=ctx, trusted_minting_keys={key.key_id}
+    )
+    assert ok2, reason2
+
+
+def test_commit_token_trusted_keys_from_env(monkeypatch):
+    key = generate_keypair()
+    ctx = _ctx()
+    signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
+    monkeypatch.setenv(
+        "AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS", f"ed25519:{key.public_key_hex}"
+    )
+    ok, reason = verify_commit_token(signed, ctx=ctx)
+    assert ok, reason
+
+    attacker = generate_keypair()
+    forged = issue_commit_token(ctx, key=attacker, ttl_seconds=300)
+    ok2, reason2 = verify_commit_token(forged, ctx=ctx)
+    assert not ok2 and reason2 == "commit token signer is not a trusted minting key"
+
+
+def test_commit_token_requires_minting_key_pin_in_production(monkeypatch):
+    monkeypatch.setenv("AGENTAUTH_ENV", "production")
+    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS", raising=False)
+    key = generate_keypair()
+    ctx = _ctx()
+    signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
+    ok, reason = verify_commit_token(signed, ctx=ctx)
+    assert not ok
+    assert reason and "trusted minting keys required in production" in reason

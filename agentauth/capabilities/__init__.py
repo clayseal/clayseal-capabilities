@@ -4,6 +4,7 @@ from agentauth.capabilities.commit import (
     SignedCommitToken,
     UsedTokenStore,
     issue_commit_token,
+    trusted_minting_keys_from_env,
     verify_commit_token,
 )
 from agentauth.capabilities.used_token_store import (
@@ -77,6 +78,7 @@ __all__ = [
     "external_authorizer",
     "get_capability_layer",
     "issue_commit_token",
+    "trusted_minting_keys_from_env",
     "issue_delegation",
     "issue_mandate",
     "list_capability_layers",

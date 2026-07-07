@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-core
+          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
           path: deps/agentauth-core
           ref: main
       # identity is an OPTIONAL extra ([biscuit-service]); checked out here so the
@@ -23,6 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-identity
+          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
           path: deps/agentauth-identity
           ref: main
       - uses: actions/setup-python@v5
