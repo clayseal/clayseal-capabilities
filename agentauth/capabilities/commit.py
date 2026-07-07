@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import threading
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol, runtime_checkable
@@ -11,6 +13,22 @@ from agentauth.core.hash_util import hash_canonical_json
 from agentauth.core.signing import SigningKey, signature_key_id_matches, verify
 
 COMMIT_TOKEN_SCHEMA = "agent-receipts.commit-token.v1"
+COMMIT_TOKEN_TRUSTED_KEYS_ENV = "AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS"
+
+
+def trusted_minting_keys_from_env() -> set[str]:
+    """Pinned commit-token minting keys from the environment.
+
+    Comma-separated entries; each is either a hex Ed25519 public key (an
+    optional ``ed25519:`` prefix is stripped) or a signature ``key_id``.
+    """
+    raw = os.environ.get(COMMIT_TOKEN_TRUSTED_KEYS_ENV, "")
+    keys: set[str] = set()
+    for item in raw.split(","):
+        normalized = item.strip().removeprefix("ed25519:")
+        if normalized:
+            keys.add(normalized)
+    return keys
 
 
 @runtime_checkable
@@ -182,8 +200,15 @@ def verify_commit_token(
     ctx: ExecutionContext,
     at: datetime | None = None,
     used_token_store: UsedTokenStore | None = None,
+    trusted_minting_keys: Iterable[str] | None = None,
 ) -> tuple[bool, str | None]:
     """Verify a signed commit token against ``ctx``.
+
+    The signature proves integrity, not authority: any keyholder can produce an
+    internally consistent token. ``trusted_minting_keys`` (or the
+    ``AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`` env var) pins which signer(s) —
+    hex public keys or key_ids — are the governor/committer allowed to mint.
+    In production a pin is REQUIRED; without one verification fails closed.
 
     Single-use enforcement is a swappable seam: pass ``used_token_store`` and a
     ``token_id`` that has already been consumed (before its expiry) is rejected
@@ -200,6 +225,29 @@ def verify_commit_token(
         return False, "commit token signature key_id does not match public_key"
     if not verify(token_dict, signed.signature):
         return False, "commit token signature invalid"
+
+    minting_keys = (
+        set(trusted_minting_keys)
+        if trusted_minting_keys is not None
+        else trusted_minting_keys_from_env()
+    )
+    if minting_keys:
+        signer_public_key = signed.signature.get("public_key", "")
+        signer_key_id = signed.signature.get("key_id", "")
+        if (
+            signer_public_key not in minting_keys
+            and signer_key_id not in minting_keys
+        ):
+            return False, "commit token signer is not a trusted minting key"
+    else:
+        from agentauth.core.production import is_production
+
+        if is_production():
+            return (
+                False,
+                "commit token trusted minting keys required in production "
+                f"(set {COMMIT_TOKEN_TRUSTED_KEYS_ENV} or pass trusted_minting_keys)",
+            )
     expires_at = _parse_dt(signed.token.expires_at)
     if expires_at is None:
         return False, "commit token expires_at invalid"
