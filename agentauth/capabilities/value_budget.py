@@ -144,6 +144,12 @@ class SessionValueBudget:
         if self.config.tightened:
             return False, "value_budget_disabled_tightened"
         budget_id, amount = parsed
+        # A negative tracked value must never book: a debit of -X would drop the running
+        # total and open headroom to later exceed the ceiling by X. (A supersession
+        # *reduction* is a negative NET of two positive amounts, handled below, not a
+        # negative raw amount.)
+        if amount < 0:
+            return False, "value_budget_negative_amount"
         ceiling = self.config.ceiling_for(budget_id)
         if ceiling is None:
             return True, "ok_no_ceiling"
@@ -171,6 +177,8 @@ class SessionValueBudget:
         if self.config.tightened:
             return ValueReservation(False, "value_budget_disabled_tightened")
         budget_id, amount = parsed
+        if amount < 0:  # negative debits open ceiling headroom — reject (see would_allow)
+            return ValueReservation(False, "value_budget_negative_amount")
         ceiling = self.config.ceiling_for(budget_id)
         raw_key = args.get("_idempotency_key")
         idem = raw_key.strip() if isinstance(raw_key, str) and raw_key.strip() else None
@@ -226,6 +234,8 @@ class SessionValueBudget:
         if parsed is None:
             return
         budget_id, amount = parsed
+        if amount < 0:  # never book a negative debit (would open ceiling headroom)
+            return
         with self._lock:
             prior = self._prior_effect(tool_name, budget_id, args)
             prior_amount = prior[1] if prior is not None else Decimal(0)
