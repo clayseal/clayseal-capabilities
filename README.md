@@ -10,7 +10,8 @@ pip install -e ".[dev]"
 python examples/03_commit_token.py
 ```
 
-Depends on [agentauth-identity](https://github.com/pberlizov/agentauth-identity) v0.4.0+.
+Depends on [agentauth-core](https://github.com/pberlizov/agentauth-core) v0.5.0+.
+The default Biscuit backend also uses [agentauth-identity](https://github.com/pberlizov/agentauth-identity) v0.5.0+.
 
 Import identity types with `from agentauth.identity import AgentAuth` when using this layer alone.
 

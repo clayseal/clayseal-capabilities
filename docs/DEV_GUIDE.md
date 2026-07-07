@@ -37,7 +37,7 @@ Without this layer, you either over-trust the agent’s static IAM role or under
 └─────────────────────────────────────────┘
 ```
 
-**Dependency rule:** this repo requires [agentauth-identity](https://github.com/pberlizov/agentauth-identity) installed at a **matching tag** (currently `v0.4.0`).
+**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/agentauth-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/agentauth-identity) at the same tag.
 
 **Import convention:**
 
@@ -56,17 +56,20 @@ There is no top-level `from agentauth import …` in this repo alone.
 ### Standard install (pinned)
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.4.0"
-pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.4.0"
+pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.5.0"
 ```
 
 ### Editable development
 
 ```bash
 git clone https://github.com/pberlizov/agentauth-identity.git ../agentauth-identity
+git clone https://github.com/pberlizov/agentauth-core.git ../agentauth-core
 git clone https://github.com/pberlizov/agentauth-capabilities.git
 cd agentauth-capabilities
 python -m venv .venv && source .venv/bin/activate
+pip install -e "../agentauth-core[dev]"
 pip install -e "../agentauth-identity[dev]"
 pip install -e ".[dev]"
 ```
@@ -329,10 +332,11 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 
 ## Releases
 
-Tag **after** agentauth-identity at the same semver line. Consumers install:
+Tag **after** agentauth-core and agentauth-identity at the same semver line. Consumers install:
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.4.0"
+pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.5.0"
 ```
 
 See [CHANGELOG.md](../CHANGELOG.md) for release notes.
