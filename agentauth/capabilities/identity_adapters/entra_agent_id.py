@@ -66,13 +66,31 @@ class EntraAgentIdProvider(VerifyingOidcProvider):
         # Entra issues RS256 only.
         kwargs.setdefault("allowed_algs", ("RS256",))
         kwargs.setdefault("name", "entra_agent_id")
-        super().__init__(discovery_url=discovery_url, audience=audience, **kwargs)
+        if discovery_url is None and "issuer" not in kwargs and "jwks" not in kwargs:
+            # Registry built-ins must be constructible without live tenant
+            # configuration so callers can map already-verified claim dicts.
+            # JWT-string verification still requires a configured provider.
+            self.name = kwargs["name"]
+            self.discovery_url = None
+            self.audience = audience
+            self.allowed_algs = tuple(kwargs["allowed_algs"])
+            self.jwks_ttl_seconds = int(kwargs.get("jwks_ttl_seconds", 300))
+            self._issuer = None
+            self._jwks = None
+            self._jwks_fetched_at = 0.0
+        else:
+            super().__init__(discovery_url=discovery_url, audience=audience, **kwargs)
         self.require_agent = require_agent
 
     def to_binding(
         self, raw: dict[str, Any] | str, *, evidence_verified: bool = False
     ) -> AuthorityBinding:
         if isinstance(raw, str):
+            if self.discovery_url is None and self._jwks is None:
+                raise ValueError(
+                    "EntraAgentIdProvider needs tenant/discovery_url or static "
+                    "issuer+jwks to verify JWT strings"
+                )
             claims = self.verify(raw)
             evidence_verified = True
         else:
@@ -101,3 +119,6 @@ class EntraAgentIdProvider(VerifyingOidcProvider):
         for facet in sorted(_facets(claims)):
             binding.selectors.append(f"entra:facet:{facet}")
         return binding
+
+
+provider = EntraAgentIdProvider()

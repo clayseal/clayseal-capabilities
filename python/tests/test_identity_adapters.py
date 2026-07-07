@@ -72,8 +72,25 @@ def test_five_identity_providers_registered():
         "aws_sts",
         "azure_ad",
         "gcp_service_account",
+        "entra_agent_id",
     ):
         assert expected in names
+
+
+def test_entra_agent_id_provider_maps_verified_agent_claims():
+    raw = {
+        "oid": "agent-object-id",
+        "tid": "tenant-123",
+        "iss": "https://login.microsoftonline.com/tenant-123/v2.0",
+        "xms_act_fct": "11",
+        "xms_par_app_azp": "blueprint-app-id",
+    }
+    provider = get_identity_provider("entra_agent_id")
+    binding = provider.to_binding(raw, evidence_verified=True)
+    assert binding.evidence_verified
+    assert binding.subject_id == "agent-object-id"
+    assert "entra:facet:11" in binding.selectors
+    assert "entra:blueprint:blueprint-app-id" in binding.selectors
 
 
 def test_each_provider_produces_verified_binding():
