@@ -16,11 +16,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pberlizov/agentauth-capabilities"
-Documentation = "https://github.com/pberlizov/agentauth-capabilities/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/agentauth-capabilities"
-Issues = "https://github.com/pberlizov/agentauth-capabilities/issues"
-Changelog = "https://github.com/pberlizov/agentauth-capabilities/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/pberlizov/clay-seal-capabilities"
+Documentation = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/pberlizov/clay-seal-capabilities"
+Issues = "https://github.com/pberlizov/clay-seal-capabilities/issues"
+Changelog = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 # The default Biscuit token backend wraps the identity layer's primitives;
