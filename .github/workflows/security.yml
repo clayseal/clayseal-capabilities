@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: pberlizov/agentauth-core
+          repository: pberlizov/clay-seal-core
           path: deps/agentauth-core
           ref: main
       - uses: actions/setup-python@v5

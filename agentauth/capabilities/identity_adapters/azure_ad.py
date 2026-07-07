@@ -28,7 +28,7 @@ def claims_from_azure(raw: dict[str, Any]) -> dict[str, Any]:
 class AzureAdIdentityProvider:
     name: str = "azure_ad"
 
-    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
         normalized = claims_from_azure(raw)
         return AuthorityBinding.from_verified_credential(
             normalized,
@@ -42,7 +42,7 @@ class AzureAdIdentityProvider:
         raw: dict[str, Any],
         *,
         capability_authorizer: CapabilityAuthorizer | None = None,
-        evidence_verified: bool = True,
+        evidence_verified: bool = False,
     ) -> IdentitySession:
         return IdentitySession(
             binding=self.to_binding(raw, evidence_verified=evidence_verified),

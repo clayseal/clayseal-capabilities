@@ -15,14 +15,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: pberlizov/agentauth-core
+          repository: pberlizov/clay-seal-core
           path: deps/agentauth-core
           ref: main
       # identity is an OPTIONAL extra ([biscuit-service]); checked out here so the
       # dev suite can exercise the default Biscuit backend.
       - uses: actions/checkout@v4
         with:
-          repository: pberlizov/agentauth-identity
+          repository: pberlizov/clay-seal-identity
           path: deps/agentauth-identity
           ref: main
       - uses: actions/setup-python@v5
@@ -32,7 +32,7 @@ jobs:
         run: |
           pip install "./deps/agentauth-core[dev]"
           pip install "./deps/agentauth-identity"
-          pip install -e . pytest ruff
+          pip install -e ".[oidc,a2a,redis]" pytest ruff
       - name: Layering contract (identity only via lazy/optional imports)
         run: |
           python -m agentauth.core.layering agentauth \
