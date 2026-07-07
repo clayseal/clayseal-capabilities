@@ -37,7 +37,7 @@ Without this layer, you either over-trust the agent’s static IAM role or under
 └─────────────────────────────────────────┘
 ```
 
-**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/agentauth-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/agentauth-identity) at the same tag.
+**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/clay-seal-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/clay-seal-identity) at the same tag.
 
 **Import convention:**
 
@@ -56,17 +56,17 @@ There is no top-level `from agentauth import …` in this repo alone.
 ### Standard install (pinned)
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-identity.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
 ```
 
 ### Editable development
 
 ```bash
-git clone https://github.com/pberlizov/agentauth-identity.git ../agentauth-identity
-git clone https://github.com/pberlizov/agentauth-core.git ../agentauth-core
-git clone https://github.com/pberlizov/agentauth-capabilities.git
+git clone https://github.com/pberlizov/clay-seal-identity.git ../agentauth-identity
+git clone https://github.com/pberlizov/clay-seal-core.git ../agentauth-core
+git clone https://github.com/pberlizov/clay-seal-capabilities.git
 cd agentauth-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e "../agentauth-core[dev]"
@@ -227,7 +227,7 @@ wrapper = wrap_with_identity_session(
 result = wrapper.run({"transaction_id": "t1"})
 ```
 
-Install [agentauth-receipts](https://github.com/pberlizov/agentauth-receipts) at the matching tag when running this code.
+Install [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts) at the matching tag when running this code.
 
 ---
 
@@ -335,8 +335,8 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 Tag **after** agentauth-core and agentauth-identity at the same semver line. Consumers install:
 
 ```bash
-pip install "git+https://github.com/pberlizov/agentauth-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/agentauth-capabilities.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
 ```
 
 See [CHANGELOG.md](../CHANGELOG.md) for release notes.
@@ -345,6 +345,6 @@ See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 
 ## Further reading
 
-- [Layer 1 DEV_GUIDE](https://github.com/pberlizov/agentauth-identity/blob/main/docs/DEV_GUIDE.md)
-- [Layer 3 DEV_GUIDE](https://github.com/pberlizov/agentauth-receipts/blob/main/docs/DEV_GUIDE.md)
+- [Layer 1 DEV_GUIDE](https://github.com/pberlizov/clay-seal-identity/blob/main/docs/DEV_GUIDE.md)
+- [Layer 3 DEV_GUIDE](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - [cross_layer_integration.md](cross_layer_integration.md)
