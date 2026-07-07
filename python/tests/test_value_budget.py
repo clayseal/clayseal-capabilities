@@ -161,3 +161,35 @@ def test_parallel_reserve_cannot_exceed_ceiling():
     for t in threads:
         t.join()
     assert results.count(True) == 10
+
+
+def test_negative_amount_cannot_open_ceiling_headroom():
+    """A negative debit must be rejected: otherwise booking -X drops the running total
+    and lets a later call exceed the ceiling by X (a ceiling bypass)."""
+    cfg = ValueBudgetConfig(
+        tracked=dict(_TRACKED), ceilings={"usd_payout": "1000"},
+        supersession_eligible=frozenset({"issue_payroll_bonus"}),
+    )
+    b = SessionValueBudget(config=cfg)
+    # negative is rejected at every gate
+    assert b.would_allow("issue_payroll_bonus", {"bonus_amount": -1_000_000})[0] is False
+    assert b.reserve("issue_payroll_bonus", {"bonus_amount": -1_000_000}).allowed is False
+    b.commit("issue_payroll_bonus", {"bonus_amount": -1_000_000})  # must not book
+    assert b.spent.get("usd_payout", Decimal(0)) == Decimal(0)
+    # ...so the ceiling still holds for a subsequent large payout
+    assert b.reserve("issue_payroll_bonus", {"bonus_amount": 5000}).allowed is False
+
+
+def test_supersession_reduction_still_allowed():
+    """A same-idempotency-key replace that lowers the amount (negative NET of two
+    positive amounts) must still be allowed — the guard is on the raw amount, not net."""
+    cfg = ValueBudgetConfig(
+        tracked=dict(_TRACKED), ceilings={"usd_payout": "1000"},
+        supersession_eligible=frozenset({"issue_payroll_bonus"}),
+    )
+    b = SessionValueBudget(config=cfg)
+    r = b.reserve("issue_payroll_bonus", {"bonus_amount": 800, "_idempotency_key": "k1"})
+    assert r.allowed
+    r.commit()
+    lowered = b.reserve("issue_payroll_bonus", {"bonus_amount": 300, "_idempotency_key": "k1"})
+    assert lowered.allowed is True
