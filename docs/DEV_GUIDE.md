@@ -42,7 +42,7 @@ Without this layer, you either over-trust the agent’s static IAM role or under
 └─────────────────────────────────────────┘
 ```
 
-**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/clay-seal-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/clay-seal-identity) at the same tag.
+**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/clay-seal-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/clayseal-identity) at the same tag.
 
 **Import convention:**
 
@@ -61,7 +61,7 @@ There is no top-level `from agentauth import …` in this repo alone.
 ### Standard install (pinned)
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-identity.git@v0.5.0"
+pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
 pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
 pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
 ```
@@ -69,13 +69,13 @@ pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
 ### Editable development
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-identity.git ../clay-seal-identity
+git clone https://github.com/pberlizov/clayseal-identity.git ../clayseal-identity
 git clone https://github.com/pberlizov/clay-seal-core.git ../clay-seal-core
 git clone https://github.com/pberlizov/clay-seal-capabilities.git
 cd clay-seal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e "../clay-seal-core[dev]"
-pip install -e "../clay-seal-identity[dev]"
+pip install -e "../clayseal-identity[dev]"
 pip install -e ".[dev]"
 ```
 
@@ -370,7 +370,7 @@ See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 
 ## Further reading
 
-- [Layer 1 DEV_GUIDE](https://github.com/pberlizov/clay-seal-identity/blob/main/docs/DEV_GUIDE.md)
+- [Layer 1 DEV_GUIDE](https://github.com/pberlizov/clayseal-identity/blob/main/docs/DEV_GUIDE.md)
 - [Layer 3 DEV_GUIDE](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
 - [cross_layer_integration.md](cross_layer_integration.md)
 - [Privacy and data handling](PRIVACY.md)

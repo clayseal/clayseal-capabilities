@@ -23,7 +23,7 @@ jobs:
       # dev suite can exercise the default Biscuit backend.
       - uses: actions/checkout@v4
         with:
-          repository: pberlizov/clay-seal-identity
+          repository: pberlizov/clayseal-identity
           token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
           path: deps/agentauth-identity
           ref: main
