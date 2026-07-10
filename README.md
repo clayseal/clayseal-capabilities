@@ -33,7 +33,7 @@ from your IdP, build an `IdentitySession`, and issue commit tokens from there.
 | Layer | Repository | Purpose |
 | --- | --- | --- |
 | Core | [clay-seal-core](https://github.com/pberlizov/clay-seal-core) | Shared contracts and crypto helpers |
-| L1 | [clay-seal-identity](https://github.com/pberlizov/clay-seal-identity) | Native Clay Seal credentials |
+| L1 | [clayseal-identity](https://github.com/pberlizov/clayseal-identity) | Native Clay Seal credentials |
 | L2 | this repo | Commit tokens, mandates, leases, budgets |
 | L3 | [clay-seal-receipts](https://github.com/pberlizov/clay-seal-receipts) | Verifiable receipts and audit |
 
@@ -43,12 +43,12 @@ Standalone editable development:
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-core.git ../clay-seal-core
-git clone https://github.com/pberlizov/clay-seal-identity.git ../clay-seal-identity
+git clone https://github.com/pberlizov/clayseal-identity.git ../clayseal-identity
 git clone https://github.com/pberlizov/clay-seal-capabilities.git
 cd clay-seal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e "../clay-seal-core[dev]"
-pip install -e "../clay-seal-identity[dev]"
+pip install -e "../clayseal-identity[dev]"
 pip install -e ".[dev]"
 pytest python/tests -q
 python examples/03_commit_token.py
