@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import threading
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
+from agentauth.capabilities.budget import BudgetType, CapabilityBudget
+from agentauth.capabilities.mandate import Mandate
 from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from agentauth.capabilities.value_budget import session_value_budget_from_mandate
 
 _TRACKED = {
     "issue_payroll_bonus": ("bonus_amount", "usd_payout"),
@@ -193,3 +197,94 @@ def test_supersession_reduction_still_allowed():
     r.commit()
     lowered = b.reserve("issue_payroll_bonus", {"bonus_amount": 300, "_idempotency_key": "k1"})
     assert lowered.allowed is True
+
+
+def test_mandate_budget_blocks_fragmented_payments():
+    """A signed mandate/IFS-style capability is not enough by itself: each $999
+    payment is individually below a $1000 grant, but the live L2 ledger must
+    reject the second effect because the session total would be $1998."""
+    now = datetime.now(timezone.utc)
+    mandate = Mandate(
+        grant_id="grant-payroll-001",
+        issuer="security-team",
+        issued_at=now,
+        expires_at=now + timedelta(minutes=15),
+        allowed_actions=["issue_payroll_bonus", "legacy_process_bonus_payment"],
+        budgets=[
+            CapabilityBudget(
+                budget_id="usd_payout",
+                budget_type=BudgetType.USD_LIMIT,
+                unit="USD",
+                limit=1000,
+                remaining=1000,
+                shared=True,
+            )
+        ],
+    )
+    b = session_value_budget_from_mandate(mandate, tracked=_TRACKED)
+
+    first = b.reserve("issue_payroll_bonus", {"bonus_amount": 999})
+    assert first.allowed
+    first.commit()
+
+    second = b.reserve("legacy_process_bonus_payment", {"amount": 999})
+    assert not second.allowed
+    assert second.reason == "value_budget_exceeded"
+    assert b.spent["usd_payout"] == Decimal("999.00")
+
+
+def test_mandate_budget_uses_remaining_when_lower_than_limit():
+    now = datetime.now(timezone.utc)
+    mandate = Mandate(
+        grant_id="grant-payroll-partial",
+        issuer="security-team",
+        issued_at=now,
+        expires_at=now + timedelta(minutes=15),
+        budgets=[
+            CapabilityBudget(
+                budget_id="usd_payout",
+                budget_type=BudgetType.USD_LIMIT,
+                unit="USD",
+                limit=1000,
+                remaining=500,
+            )
+        ],
+    )
+    b = session_value_budget_from_mandate(mandate, tracked=_TRACKED)
+
+    assert b.reserve("issue_payroll_bonus", {"bonus_amount": 500}).allowed
+    blocked = b.reserve("issue_payroll_bonus", {"bonus_amount": 501})
+    assert not blocked.allowed
+    assert blocked.reason == "value_budget_exceeded"
+
+
+def test_value_helper_ignores_non_usd_budgets():
+    """Regression: the value ledger is money-only. A TOOL_CALL_LIMIT grant must
+    NOT be coerced into a dollar ceiling here (the prior bug turned '3 calls'
+    into a phantom '$3.00' ceiling that nothing ever debited)."""
+    now = datetime.now(timezone.utc)
+    mandate = Mandate(
+        grant_id="g-mixed",
+        issuer="security-team",
+        issued_at=now,
+        expires_at=now + timedelta(minutes=15),
+        budgets=[
+            CapabilityBudget(
+                budget_id="usd_payout",
+                budget_type=BudgetType.USD_LIMIT,
+                unit="USD",
+                limit=1000,
+                remaining=1000,
+            ),
+            CapabilityBudget(
+                budget_id="calls",
+                budget_type=BudgetType.TOOL_CALL_LIMIT,
+                unit="calls",
+                limit=3,
+                remaining=3,
+            ),
+        ],
+    )
+    b = session_value_budget_from_mandate(mandate, tracked=_TRACKED)
+    assert b.config.ceilings == {"usd_payout": "1000.00"}  # only the USD budget
+    assert "calls" not in b.config.ceilings

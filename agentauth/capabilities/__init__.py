@@ -45,15 +45,31 @@ from agentauth.capabilities.scoping import (
     build_capability_lease,
     build_repo_chunk_index,
 )
+from agentauth.capabilities.call_budget import (
+    CallBudgetConfig,
+    CallReservation,
+    SessionCallBudget,
+    call_budget_config_from_mandate,
+    session_call_budget_from_mandate,
+)
+from agentauth.capabilities.mandate_budgets import (
+    MandateBudgets,
+    UnsupportedBudgetType,
+    session_budgets_from_mandate,
+)
 from agentauth.capabilities.task_scope import TaskScope, compile_task_scope
 from agentauth.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
     ValueReservation,
+    session_value_budget_from_mandate,
+    value_budget_config_from_mandate,
 )
 
 __all__ = [
     "AgentAuthCapabilityLayer",
+    "CallBudgetConfig",
+    "CallReservation",
     "CapabilityLease",
     "CommitToken",
     "DelegationToken",
@@ -61,14 +77,18 @@ __all__ = [
     "GoalSpec",
     "InMemoryUsedTokenStore",
     "Mandate",
+    "MandateBudgets",
     "RedisUsedTokenStore",
+    "SessionCallBudget",
     "SessionValueBudget",
     "SignedCommitToken",
     "TaskScope",
+    "UnsupportedBudgetType",
     "UsedTokenStore",
     "ValueBudgetConfig",
     "ValueReservation",
     "build_capability_lease",
+    "call_budget_config_from_mandate",
     "build_repo_chunk_index",
     "capability_allows",
     "cedar_authorizer",
@@ -88,8 +108,12 @@ __all__ = [
     "operation_for_action",
     "operation_for_mcp_tool",
     "register_capability_layer",
+    "session_budgets_from_mandate",
+    "session_call_budget_from_mandate",
     "set_default_used_token_store",
+    "session_value_budget_from_mandate",
     "sign_delegation",
+    "value_budget_config_from_mandate",
     "verify_commit_token",
     "verify_delegation_chain",
     "verify_mandate_signature",
