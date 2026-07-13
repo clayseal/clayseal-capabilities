@@ -33,9 +33,16 @@ check-then-commit path and for read-only monitoring passes.
 from __future__ import annotations
 
 import threading
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
+
+from agentauth.capabilities.budget import (
+    BudgetType,
+    budget_attr as _budget_attr,
+    select_budgets,
+)
 
 # Currency scale: money is accumulated and compared at cent precision.
 MONEY_QUANTUM = Decimal("0.01")
@@ -44,6 +51,61 @@ MONEY_QUANTUM = Decimal("0.01")
 def _money(value: Any) -> Decimal:
     """Coerce a scalar to a quantized :class:`Decimal` WITHOUT going via float."""
     return Decimal(str(value)).quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
+
+
+def value_budget_config_from_mandate(
+    mandate: Any,
+    *,
+    tracked: Mapping[str, tuple[str, str]],
+    supersession_eligible: frozenset[str] | set[str] | None = None,
+    tightened: bool = False,
+) -> ValueBudgetConfig:
+    """Build a live *value* (money) session ledger from a signed mandate.
+
+    Mandates/capability tokens are the cryptographic grant: they describe which
+    budget IDs and ceilings were delegated. They do not, by themselves, remember
+    prior tool calls. This helper turns the signed **USD** limits into the
+    stateful layer-2 ledger that catches fragmented-but-individually-valid
+    effects such as two $999 payments against one $1000 authorization.
+
+    Only ``BudgetType.USD_LIMIT`` budgets are consumed here — the value ledger
+    sums monetary quantities at cent precision, so it is the wrong home for a
+    call-count, token, compute, or byte grant. Those are dispatched to their own
+    enforcers by :func:`agentauth.capabilities.session_budgets_from_mandate`;
+    routing them through here (the prior behavior) silently reinterpreted, e.g.,
+    a "3 tool calls" grant as a "$3.00" ceiling that nothing ever debited.
+    """
+    budgets = _budget_attr(mandate, "budgets") or []
+    ceilings: dict[str, str] = {}
+    for budget in select_budgets(budgets, BudgetType.USD_LIMIT):
+        budget_id = str(_budget_attr(budget, "budget_id"))
+        limit = _money(_budget_attr(budget, "limit"))
+        remaining = _money(_budget_attr(budget, "remaining"))
+        ceilings[budget_id] = str(min(limit, remaining))
+    return ValueBudgetConfig(
+        tracked=dict(tracked),
+        ceilings=ceilings,
+        supersession_eligible=frozenset(supersession_eligible or frozenset()),
+        tightened=tightened,
+    )
+
+
+def session_value_budget_from_mandate(
+    mandate: Any,
+    *,
+    tracked: Mapping[str, tuple[str, str]],
+    supersession_eligible: frozenset[str] | set[str] | None = None,
+    tightened: bool = False,
+) -> SessionValueBudget:
+    """Create a fresh per-session cumulative budget from a mandate."""
+    return SessionValueBudget(
+        config=value_budget_config_from_mandate(
+            mandate,
+            tracked=tracked,
+            supersession_eligible=supersession_eligible,
+            tightened=tightened,
+        )
+    )
 
 
 @dataclass
