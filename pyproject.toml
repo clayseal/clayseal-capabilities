@@ -36,6 +36,17 @@ spiffe = ["spiffe>=0.3"]
 a2a = ["rfc8785>=0.1.4", "PyJWT>=2.8,<3.0"]
 redis = ["redis>=5.0"]
 dynamodb = ["boto3>=1.34"]
+# External agent-security corpora for the enforcement benchmark (benchmarks/).
+# agentdojo bundles its suite data; the loader tracks the 0.1.x suite/
+# ground-truth API (get_suites -> load_and_inject_default_environment ->
+# task.ground_truth). agentdojo supports Python 3.10-3.12, so run the benchmark
+# under a 3.12 interpreter. InjecAgent/ToolEmu are separate checkouts (see
+# benchmarks/README.md), not pip deps.
+benchmarks = ["agentdojo>=0.1.35,<0.2"]
+# Learned goal-conditioned trajectory scorer (agentauth.capabilities.monitor).
+# Optional: the n-gram scorer + conformal layer run with no extra deps; torch is
+# only needed to train/serve the transformer scorer (do it on a GPU VM).
+monitor = ["torch>=2.2"]
 dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc,a2a]"]
 
 # Ship ONLY the capabilities subpackage in the shared `agentauth` namespace.
