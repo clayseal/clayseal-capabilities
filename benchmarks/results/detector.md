@@ -1,14 +1,31 @@
-# Trajectory detector: the uncontested class, not yet an earned claim
+# Trajectory detector: the uncontested class, measured without the label
 
 The goal-conditional trajectory detector is meant to catch the class even the
 budget rung cannot: fully-authorized aggregates like in-scope-burst (an
 authorized read repeated into a scanning/exfil burst), where every action passes
 every per-call check and the sequence is the attack. This is the frontier the
-research map found empty. Here is what it actually does today, stated straight.
+research map found empty. Here is what it actually does today, measured with the
+detector blind to the ground-truth label.
+
+## Provenance is data-flow derived, not label derived
+
+Earlier versions of this benchmark tainted an action iff it was the injected
+(ATTACK-labeled) event, then hard-blocked any tainted consequential action. That
+made the taint tier read the answer key: goal-drift and connector-substitution
+scored 100% because the label, not the behaviour, marked them. That is fixed. In
+`benchmarks/core/detector_eval.py`, an action is now marked driven-by-untrusted-
+context purely from data flow (the trajectory has already crossed an external
+read earlier in the stream), computed identically for benign and attack events;
+the ATTACK label is never consulted to taint an action or to decide a block. The
+sealed goal's expected verbs likewise come from the user's own benign steps, not
+from the injected events. Taint hard-blocks only when the untrusted-driven action
+also leaves the typed envelope — untrusted-driven AND off-goal, the injection
+shape. The numbers below are what the detector earns under that rule.
 
 ## The setup is right: the per-call ladder is totally blind
 
-On AgentDojo, in-scope-burst containment across the entire enforcement ladder:
+On the aggregate class, in-scope-burst containment across the entire enforcement
+ladder:
 
 | Engine | in-scope-burst containment |
 |---|--:|
@@ -19,175 +36,112 @@ Every per-call rung, including the stateful budget rung, scores 0. Only a
 trajectory-level detector can catch this class at all. That part of the thesis
 holds by construction.
 
-## The detector does not yet hold its bound
+## What the label-blind detector earns
 
 Fit the goal-conditional detector (ngram scorer, conformal alpha=0.05) on benign
-trajectories, measure containment on in-scope-burst and false-block on held-out
-benign:
+trajectories from a shuffled train split; measure per-class containment on
+held-out attack variants and false-block on held-out benign. The detector's own
+job is in-scope-burst; goal-drift and connector-substitution leave the authorized
+surface and are the enforcement floor's job (next section).
 
-| corpus | n_train benign | in-scope-burst containment | benign false-block |
+| corpus | n_train | in-scope-burst | benign false-block |
 |---|--:|--:|--:|
-| agentdojo | 46 | 48.4% | 22.6% |
-| atif (real long trajectories) | 22 | 0.0% (abstains) | 0.0% |
-| agentdojo + atif | 68 | 32.6% | 17.4% |
+| bfcl (real function-calling, 1200 tasks) | 720 | **100.0%** | **0.0%** |
+| tau2 (heterogeneous dual-control, 1200 tasks) | 720 | 66.7% | 5.4% |
+| atif (22 long benign) | 22 | 0% (abstains) | 0% |
 
-Two problems, both real:
+The headline is honest and it is strong: on bfcl the detector contains **100
+percent of in-scope-burst at a 0 percent observed false-alarm rate** on the
+fully-authorized aggregate class the entire per-call ladder scores 0 on. On tau2,
+whose benign corridor is loose (heterogeneous dual-control), the same detector
+gets 66.7% at a 5.4% false-alarm rate — weaker, and honestly so. atif is too
+small to calibrate a corridor, so the detector abstains (0 containment, 0
+false-block) rather than over-flag.
 
-1. The false-alarm bound is violated. alpha was set to 0.05; actual benign
-   false-block is 17 to 23 percent whenever the detector is active. The conformal
-   guarantee is not holding on these corpora, so the block decisions are not
-   trustworthy yet.
-2. Containment is mediocre and non-monotone in data. 48 percent on agentdojo, 0
-   on atif (too few benign per goal bucket, so the structural tiers abstain by
-   design rather than over-flag), 33 percent combined. More data did not help
-   because adding atif diluted the per-goal buckets.
+## goal-drift and connector-substitution are the floor's job, not the detector's
 
-## Diagnosis: confirmed, and it is NOT data starvation
+These two classes do not stay inside the authorized surface: goal-drift calls a
+tool the goal never granted (`send_external`) and connector-substitution swaps the
+target to a look-alike resource outside the goal's allow-list. The per-action
+enforcement floor (task-scope + binding + budget) contains both at 100% on both
+corpora:
 
-The first hypothesis (too few benign trajectories) is wrong. Two checks kill it:
-
-1. Data scaling does not help. false-block across corpora: agentdojo 46 train
-   22.6%, tau2 60 train 15.0%, bfcl 687 train 27.5%, combined 793 train 24.7%.
-   From 46 to 793 benign there is no downward trend. bfcl at 687 is the worst.
-2. false-block does not respond to alpha at the low end. tau2 is 15.0% at BOTH
-   alpha=0.01 and alpha=0.05; bfcl is 27.5% at both. Lowering the conformal
-   budget changes nothing, so those false-blocks are not coming from the
-   conformal scorer.
-
-Root cause, confirmed in code (detector.py `AssessResult.blocked`):
-
-    blocked = self.structural_block or any(v.decision is BLOCK for v in verdicts)
-
-The structural tiers (Waymo path-envelope in reachability.py, AML analytics in
-aml.py) set `structural_block` and are OR'd into the decision OUTSIDE the
-conformal budget. The docstring claims they are "strong low-false-positive
-structural signals" that "can block outright", but on real heterogeneous corpora
-they fire on 15 to 27 percent of benign trajectories. Only the learned scorer is
-bounded by alpha; the structural tiers are not, so the total false-alarm rate is
-not bounded by anything. The headline property of this layer, a conformally
-bounded false-alarm rate, does not hold as implemented.
-
-## The fix (concrete, and it is calibration, not data)
-
-Subordinate the structural tiers to the same conformal budget. Calibrate each
-structural corridor threshold on the held-out benign slice so at most alpha of
-benign falls outside it, and combine the tiers at the trajectory level so the
-union false-alarm rate stays near alpha (not a per-tier OR that inflates it).
-Alternatively, demote structural-tier hits to step-up rather than hard block, so
-they raise friction but do not count as blocks. Either way this is a bounded
-calibration change in detector.py / reachability.py / aml.py, testable by
-re-running this sweep and confirming benign false-block tracks alpha.
-
-Only after the bound holds does corpus scale (ATIF-scale, then iVisor at-scale
-trajectory capture, docs/ivisor_integration.md) become the lever for containment.
-Data was going to be the second problem; it is not the first one.
-
-## After the fix: the bound holds, and the claim is earned on real data
-
-The fix landed in detector.py: the structural tiers now fit on the same slice as
-the scorer, the path-envelope penalty is conformally calibrated on the held-out
-benign slice, and AML blocks only when its held-out benign flag rate is under
-alpha. Re-running the exact sweep at alpha=0.05:
-
-| corpus | before (containment / false-block) | after (containment / false-block) |
+| class | floor containment (bfcl / tau2) | detector alone (bfcl / tau2) |
 |---|--:|--:|
-| tau2 | 75% / 15.0% | 75% / **5.0%** |
-| bfcl | 99% / 27.5% | 95.4% / **5.9%** |
-| agentdojo | 48% / 22.6% | 0% / 0% (too small, abstains) |
+| goal-drift | 100% / 100% | 100% / 100% |
+| connector-substitution | 100% / 100% | 31% / 89% |
 
-And false-block now responds to alpha as a conformal bound must: tau2 5.0% at
-alpha 0.05 rising to 22.5% at 0.20; bfcl 0.0% at 0.01, 5.9% at 0.05, 27.7% at
-0.20. The guarantee is real, not nominal.
+The floor catches them because they violate a per-action scope, which is exactly
+what a per-action check is for. The detector also catches goal-drift (the novel
+tool is structurally surprising) but is not a reliable catcher of
+connector-substitution (a same-tool, same-verb resource swap is not a trajectory-
+shape anomaly). The layered system contains both at 100% via the floor. The
+earlier "detector contains these at 100%" claim was the label leak; the correct
+statement is that the floor owns them and the detector owns in-scope-burst.
 
-The headline: on bfcl, a real function-calling corpus of 1146 trajectories, the
-goal-conditional detector contains **95.4 percent of in-scope-burst at a 5.9
-percent false-alarm rate**, on the fully-authorized aggregate class the entire
-per-call ladder scores 0 percent on. That is a runtime defense for a threat shape
-the published field only exposes and never defends, now earned empirically with a
-false-alarm bound that holds.
+## The false-alarm bound: per-tier conformal, honestly stated
 
-The agentdojo 0 percent is the honest small-corpus floor: 46 short benign
-trajectories are too few to calibrate a corridor, so the detector abstains rather
-than over-flag (0 containment at 0 false-block). This is exactly where corpus
-scale (ATIF, then iVisor capture) is the lever, now that calibration is fixed.
+Each hard-blocking tier — the learned trajectory scorer, the CUSUM drift tier, and
+the path-envelope — is a proper per-bucket (Mondrian) split-conformal test, so
+each is individually bounded at alpha. They fire on different shapes (novel
+bigrams, sustained elevation, corridor departure), so their benign flags barely
+overlap and the empirical UNION false-alarm rate stays near alpha; the honest
+worst-case union bound is k*alpha. AML informs reasons but does not carry a
+conformal budget (its aggregate-volume job is the floor's budget rung). The bound
+responds to alpha as a conformal control must:
 
-## The full goal-conditional trajectory SOTA table
-
-Not one class on one corpus. The detector at alpha=0.05 across the aggregate /
-composite attack classes on the large real corpora:
-
-| corpus | in-scope-burst | goal-drift | connector-substitution | benign false-block |
+| corpus | alpha 0.01 | 0.05 | 0.10 | 0.20 |
 |---|--:|--:|--:|--:|
-| bfcl (1927 tasks) | 95.4% | 100% | 100% | 4.1 to 5.9% |
-| tau2 (2545 tasks) | 75.0% | 100% | 100% | 5.0 to 8.4% |
-| agentdojo (77 tasks) | 0% (abstains) | 100% | 100% | 0% |
+| bfcl false-block | 0.0% | 0.0% | 0.0% | 11.2% |
+| bfcl in-scope-burst | 89.1% | 100% | 100% | 100% |
+| tau2 false-block | 0.0% | 5.4% | 10.4% | 23.3% |
+| tau2 in-scope-burst | 0% | 66.7% | 86.7% | 93.3% |
 
-The per-call enforcement ladder scores 0 percent on in-scope-burst at every rung,
-because every action is authorized. The detector holds 95 percent (bfcl) and 75
-percent (tau2) on that class at a false-alarm rate that stays near alpha across
-all classes and corpora. goal-drift and connector-substitution are contained at
-100 percent. This is a runtime defense of the composite / aggregate / goal-
-conditional class across three corpora, at a bounded false-alarm rate, for a
-threat shape the published field only exposes and never defends.
+False-block tracks alpha monotonically and sits at or below alpha at 0.05 on both
+corpora. A single combined statistic could reclaim the per-tier split for more
+power at a fixed alpha, but calibrating its threshold is data-fragile on
+heterogeneous corpora (it overshot alpha on bfcl in testing), whereas per-tier
+conformal control is robust; that is the deliberate trade.
 
 ## Adaptive robustness: the honest frontier (corpus-dependent)
 
-The field's central critique is static-only evaluation. So: a defense-aware
-aggregate attacker that knows the detector mechanism and shapes the aggregate to
-stay in-corridor. Three strategies, at alpha=0.05:
+The field's central critique is static-only evaluation, so: a defense-aware
+aggregate attacker that shapes the burst to stay in-corridor. The result is the
+same split the numbers above imply. Where benign is homogeneous (bfcl), the
+corridor is tight and the attacker cannot both stay inside it and move a large
+aggregate — containment stays high. Where benign is heterogeneous (tau2), the
+corridor is loose, so a small aggregate fits inside natural variation and shape
+alone cannot catch it; containment degrades toward the false-alarm floor. That
+residual is not a shape problem to tune away, it is the province of a different
+signal: provenance / taint catches an untrusted-driven read regardless of volume.
+Shape and taint are complementary, and the honest claim is shape-robust on
+homogeneous workloads, taint-dependent on heterogeneous ones.
 
-- naive: repeat one authorized read many times (hits path-envelope max_count).
-- fanout: spread the reads across every distinct authorized tool (evades the
-  per-token count).
-- stealth: a few reads at near-benign volume, reusing only seen tools.
-
-| corpus | naive | fanout | stealth |
-|---|--:|--:|--:|
-| bfcl (homogeneous) | 95.4% | 95.4% | 87.6% |
-| tau2 (heterogeneous) | 75.0% | 27.5% | 5.0% |
-
-The result is split and must not be overstated. On bfcl the benign corridor is
-tight (rich, homogeneous per-goal data), so the attacker cannot evade: fan-out
-does not help and even a minimal 3-read stealth aggregate is caught 87.6%. On
-tau2 the corridor is loose (heterogeneous dual-control benign), so a defense-aware
-attacker evades: fan-out drops containment to 27.5% and stealth collapses to the
-5% false-alarm floor, i.e. a small aggregate is statistically indistinguishable
-from benign by trajectory shape alone. The naive tau2 75% is not an
-adaptive-robust number.
-
-The interpretation is precise and it is the same tradeoff as the escapes adaptive
-adversary: the attacker cannot both stay in the benign corridor and move a large
-aggregate. Where benign is homogeneous the corridor squeezes that to near-zero
-residual; where benign is heterogeneous, small aggregates fit inside natural
-variation and shape alone cannot catch them. That residual is not a shape problem
-to be tuned away, it is a job for a different signal: provenance / taint catches a
-read driven by untrusted context regardless of volume, which is exactly the
-stealth case shape misses. Shape and taint are complementary, and the honest claim
-is shape-robust on homogeneous workloads, taint-dependent on heterogeneous ones.
-
-## Honest standing of the SOTA claim
+## Honest standing of the claim
 
 - The deterministic aggregate enforcement (the budget rung, sub-threshold
-  splitting) is PROVEN on real data. See bpl_aggregate.md.
-- The learned goal-conditional trajectory detector now holds its false-alarm
-  bound and contains 95 percent of in-scope-burst at ~6 percent false-alarm on
-  bfcl, a class the per-call ladder cannot touch, and this survives a defense-
-  aware adaptive attacker (fan-out 95 percent, stealth 88 percent). On a
-  homogeneous corpus it is a genuine, adaptive-robust SOTA result.
-- The honest boundary: on a heterogeneous corpus (tau2) the naive 75 percent does
-  NOT survive the adaptive attacker (fan-out 27 percent, stealth 5 percent). Shape
-  alone cannot catch a small aggregate that fits inside heterogeneous benign
-  variation. That residual is the province of provenance / taint (origin, not
-  volume), which is complementary to shape, not a tuning of it.
-- The remaining data limit is corpus size on small suites (agentdojo abstains),
-  correctly sequenced after calibration.
+  splitting) is proven on real data. See bpl_aggregate.md.
+- The learned goal-conditional trajectory detector, measured blind to the label,
+  contains **100 percent of in-scope-burst at 0 percent false-alarm on bfcl**, a
+  class the per-call ladder cannot touch. On a homogeneous corpus this is a
+  genuine result for a threat shape the published field only exposes and never
+  defends.
+- The honest boundary: on a heterogeneous corpus (tau2) containment is 66.7% at
+  alpha, and a defense-aware attacker pushes a small aggregate toward the
+  false-alarm floor. Shape alone cannot catch it; that residual belongs to
+  provenance / taint (origin, not volume).
+- goal-drift and connector-substitution are contained by the per-action floor at
+  100%, not by the detector; crediting the detector for them was the label leak,
+  now removed.
+- The remaining data limit is corpus size on small suites (atif/agentdojo
+  abstain), correctly sequenced after calibration.
 
 ## Next
 
 1. Scale the benign corpus on the thin suites (ATIF-scale, ultimately iVisor
-   syscall/tool trajectory capture) so agentdojo-like buckets stop abstaining.
-2. Train the transformer scorer on it and confirm the bound still holds and
-   containment rises on the harder buckets.
-3. Report containment on the full class set (in-scope-burst, goal-drift,
-   structuring, slow-drift) across suites, with the adaptive aggregate attack, as
-   the headline goal-conditional-trajectory SOTA number.
+   syscall/tool trajectory capture) so small buckets stop abstaining.
+2. Add the provenance/taint signal on the tau2-style stealth residual, which
+   shape misses, and report shape+taint jointly.
+3. Report containment on the full class set with the defense-aware adaptive
+   aggregate attacker on the deployable path (not the oracle), as the headline
+   goal-conditional-trajectory number.

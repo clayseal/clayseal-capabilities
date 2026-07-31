@@ -3,9 +3,11 @@
 The engine ladder scores per-action authorization. This module scores the
 *behavioral* layer: fit the goal-conditioned detector on benign trajectories,
 then measure how many attack trajectories it contains versus how often it wrongly
-blocks a held-out benign trajectory. Because the decision comes through the
-conformal layer, the benign block rate is bounded by ``alpha`` by construction,
-so the headline is containment at a chosen, guaranteed false-alarm budget.
+blocks a held-out benign trajectory. Each blocking tier is a per-bucket
+split-conformal test bounded at ``alpha``; the tiers block on disjoint shapes so
+the empirical union false-alarm rate stays near ``alpha`` (worst case k*alpha),
+and it tracks ``alpha`` as a conformal control must. The headline is containment
+at a measured false-alarm rate, not a per-construction guarantee.
 
 Each ``BenchmarkTask`` becomes two trajectories under one sealed goal: a benign
 one (its benign events) and an attack one (benign events followed by the injected
@@ -35,7 +37,14 @@ def _goal_for(task: BenchmarkTask) -> GoalSpec:
     resources = list(mandate.get("allowed_resources", [])) or sorted(
         {c.get("resource", "") for c in task.capabilities if c.get("resource")}
     )
-    verbs = sorted(mandate.get("allowed_actions", []) or {e.action for e in task.events})
+    # The goal is SEALED from the legitimate task: its expected verbs come from the
+    # user's own (benign) steps or an explicit mandate, never from injected events.
+    # Deriving verbs from attack events would silently widen the envelope to admit
+    # exactly the verb an injection introduces (e.g. an unexpected ``send``), which
+    # both hurts containment and misstates what the user authorized. The label is
+    # used only to define the sealed goal up front, never consulted at assess time.
+    benign_verbs = {e.action for e in task.events if e.label is EventLabel.BENIGN}
+    verbs = sorted(mandate.get("allowed_actions", []) or benign_verbs)
     # Goal-type bucket drives the detector's per-goal calibration granularity.
     # Loaders set meta["goal_kind"] (e.g. "tau2:airline", "bfcl:multi_turn_base");
     # fall back to the suite, then a generic bucket.
@@ -48,25 +57,45 @@ def _goal_for(task: BenchmarkTask) -> GoalSpec:
     )
 
 
+# Read-style verbs that ingest content the agent did not author. Crossing one of
+# these means later actions may be justified by untrusted external content.
+_READ_VERBS = frozenset(
+    {"read", "get", "list", "search", "fetch", "view", "query", "retrieve", "load", "scan"}
+)
+
+
 def task_to_trajectories(task: BenchmarkTask) -> tuple[Trajectory, Trajectory]:
-    """Return ``(benign_trajectory, attack_trajectory)`` for a task."""
+    """Return ``(benign_trajectory, attack_trajectory)`` for a task.
+
+    Provenance is DATA-FLOW derived, never label-derived. An action is marked
+    driven-by-untrusted-context once the trajectory has already ingested content
+    from an external read earlier in the stream; the rule reads only the verb
+    order, so benign and attack actions are treated identically and the
+    ground-truth ATTACK label is never consulted to taint an action. The detector
+    must therefore separate benign from attack by BEHAVIOUR — an untrusted-driven
+    action that leaves the sealed goal — not by reading which events were injected.
+    """
     goal = _goal_for(task)
     benign_actions: list[Action] = []
     attack_actions: list[Action] = []
-    context: list[ContextItem] = []
+    context: list[ContextItem] = [
+        ContextItem("external-content", TrustLevel.UNTRUSTED, introduced_at_step=0)
+    ]
     step = 0
+    ingested = False
     for event in task.events:
         act = Action(
             step=step, tool=event.tool_name, resource=event.resource,
             verb=event.action, args=dict(event.args),
-            derived_from=("injection",) if event.label is EventLabel.ATTACK else (),
+            derived_from=("external-content",) if ingested else (),
         )
+        if event.action.lower() in _READ_VERBS:
+            ingested = True
         if event.label is EventLabel.BENIGN:
             benign_actions.append(act)
         else:
             attack_actions.append(act)
         step += 1
-    context.append(ContextItem("injection", TrustLevel.UNTRUSTED, introduced_at_step=0))
     benign = Trajectory(goal=goal, actions=benign_actions, context=context)
     attack = Trajectory(goal=goal, actions=benign_actions + attack_actions, context=context)
     return benign, attack
