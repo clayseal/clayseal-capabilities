@@ -141,12 +141,18 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
                     suite, pipe, suite.user_tasks[uid], attack, None, True, injection_tasks=inj_ids)
                 util += list(u_res.values())
                 sec += list(s_res.values())
-        gated = f" | broker allow/block {harness.allows}/{harness.blocks}" if harness else ""
+        # Friction: STEP_UP decisions (graduated response — halts autonomously but
+        # is human-recoverable), reported as step-ups per user task so the metric
+        # triple is (security=ASR, utility, friction), not security alone.
+        step_ups = sum(1 for d in harness.decisions if d.get("outcome") == "STEP_UP") if harness else 0
+        n_tasks = max(1, len(user_ids))
+        gated = f" | allow/block {harness.allows}/{harness.blocks} step-ups {step_ups}" if harness else ""
         out[ab] = dict(clean_utility=statistics.fmean(clean), utility_under_attack=statistics.fmean(util),
-                       asr=statistics.fmean(sec), n=len(sec))
+                       asr=statistics.fmean(sec), n=len(sec),
+                       friction=step_ups / n_tasks, step_ups=step_ups)
         print(f"  {ab:9} clean-utility {out[ab]['clean_utility']*100:5.1f}%  "
               f"ASR {out[ab]['asr']*100:5.1f}%  utility-under-attack {out[ab]['utility_under_attack']*100:5.1f}%"
-              f"  (n={len(sec)}){gated}")
+              f"  friction {out[ab]['friction']:.2f}/task  (n={len(sec)}){gated}")
     return out
 
 
