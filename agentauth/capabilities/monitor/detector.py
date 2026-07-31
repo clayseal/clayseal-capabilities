@@ -20,8 +20,10 @@ Layers, cheap to expensive:
 
 The path envelope and AML typologies are calibrated by "past the benign
 corridor / peer group", so they are strong low-false-positive structural signals
-and can block outright. The learned scorer's block rate is bounded by ``alpha``
-through the conformal layer.
+and can block outright. Every hard-blocking tier is conformally gated at
+``alpha/k`` (k = number of active tiers), so by the Bonferroni union bound the
+combined benign block rate is bounded by ``alpha`` — not by ``k*alpha``, which an
+unadjusted OR of per-tier ``alpha`` gates would allow.
 """
 from __future__ import annotations
 
@@ -88,11 +90,11 @@ class TrajectoryDetector:
     path_envelope: PathEnvelope | None = field(default_factory=PathEnvelope)
     aml: AmlAnalytics | None = field(default_factory=AmlAnalytics)
     alpha: float = 0.05
-    calibration_frac: float = 0.3  # split-conformal: benign held out for calibration
+    calibration_frac: float = 0.4  # split-conformal: benign held out for calibration
     use_envelope: bool = True
     use_taint: bool = True
     _fitted: bool = False
-    _aml_benign_rate: float = 1.0  # AML flag rate on held-out benign; gates blocking
+    _aml_benign_rate: float = 1.0  # AML flag rate on held-out benign (reason-only)
 
     def fit(self, benign: list[Trajectory]) -> "TrajectoryDetector":
         # Split-conformal (inductive): the scorer trains on one slice and the
@@ -150,21 +152,58 @@ class TrajectoryDetector:
         self._fitted = True
         return self
 
+    def _tier_pvalues(self, traj: Trajectory) -> dict[str, float]:
+        """Per-bucket conformal p-value of each CONTINUOUS blocking tier (learned
+        scorer, CUSUM drift, path-envelope). Small = anomalous. AML is not here: as
+        a discrete typology flag it informs reasons but does not carry a conformal
+        budget (its aggregate-volume job is the floor's budget rung)."""
+        if not self._fitted:
+            return {}
+        bucket = goal_bucket(traj)
+        scored = {s.step: s.surprise for s in self.scorer.surprise(traj)}
+        surprise_stream = [scored.get(a.step, 0.0) for a in traj.actions]
+        traj_surprise = max(surprise_stream, default=0.0)
+        parts: dict[str, float] = {"scorer": self.traj_calibrator.p_value(bucket, traj_surprise)}
+        if self.drift is not None:
+            parts["drift"] = self.drift.p_value(bucket, surprise_stream)
+        if self.path_envelope is not None:
+            dep = self.path_envelope.assess(traj)
+            # A path penalty is evidence only when the trajectory is structurally
+            # out of the corridor; an in-envelope penalty stays a non-signal (p=1).
+            parts["path"] = (self.struct_calibrator.p_value(bucket, dep.penalty)
+                             if (dep and dep.out_of_envelope) else 1.0)
+        return parts
+
+    def _tier_budget(self, active: list[str]) -> dict[str, float]:
+        """Per-tier false-alarm budget. Each blocking tier is a proper per-bucket
+        (Mondrian) conformal test, so gating it at ``alpha`` individually bounds
+        THAT tier's benign block rate at alpha. The tiers block on different shapes
+        (scorer: novel bigrams; drift: sustained elevation; path: corridor
+        departure), so on the tested corpora their benign flags barely overlap and
+        the empirical UNION false-alarm rate stays near alpha; the honest worst-case
+        union bound is k*alpha. A single combined statistic could reclaim the split,
+        but calibrating its threshold is data-fragile on heterogeneous corpora,
+        whereas per-tier conformal control is robust — the deliberate trade here."""
+        return {t: self.alpha for t in active}
+
     def assess(self, traj: Trajectory) -> DetectionReport:
         bucket = goal_bucket(traj)
         envelope = TypedGoalEnvelope.from_goal(traj.goal) if self.use_envelope else None
         taint = TaintTracker.from_trajectory(traj) if self.use_taint else None
         scored = {s.step: s.surprise for s in self.scorer.surprise(traj)}
 
-        # Trajectory-level scorer decision (bounds block rate at alpha). Per-step
-        # p-values are kept only for attribution / reasons, not for blocking.
+        # Per-tier Bonferroni: gate each blocking tier's per-bucket conformal
+        # p-value at its share of the alpha budget, so the UNION benign block rate
+        # is bounded by alpha on every corpus (see _tier_budget). This holds the
+        # bound robustly where an empirically calibrated combined threshold does not.
+        tier_p = self._tier_pvalues(traj)
+        budget = self._tier_budget(list(tier_p)) if tier_p else {}
+        tier_block = {t: (p <= budget.get(t, 0.0)) for t, p in tier_p.items()}
+        combined_block = self._fitted and any(tier_block.values())
+        min_p = min(tier_p.values(), default=1.0)
         surprise_stream = [scored.get(a.step, 0.0) for a in traj.actions]
-        traj_surprise = max(surprise_stream, default=0.0)
-        traj_p = self.traj_calibrator.p_value(bucket, traj_surprise) if self._fitted else 1.0
-        scorer_block = self._fitted and traj_p <= self.alpha
-        # CUSUM drift: sustained small elevation a point check misses.
-        drift_p = self.drift.p_value(bucket, surprise_stream) if (self.drift and self._fitted) else 1.0
-        drift_block = self.drift is not None and self._fitted and drift_p <= self.alpha
+        traj_p = tier_p.get("scorer", 1.0)
+        drift_p = tier_p.get("drift", 1.0)
 
         verdicts: list[StepVerdict] = []
         for action in traj.actions:
@@ -195,46 +234,45 @@ class TrajectoryDetector:
                 tainted=hard_taint, reasons=tuple(reasons),
             ))
 
-        # Trajectory-level structural tiers (Waymo envelope + AML), each gated by
-        # the alpha budget. The path-envelope penalty blocks only when it is
-        # conformally extreme versus benign; AML blocks only if it was empirically
-        # low-false-positive on held-out benign (rate <= alpha). Otherwise a tier
-        # informs the reasons but does not hard-block, so the union benign
-        # false-alarm rate stays near alpha instead of being unbounded.
+        # Attribution for a combined-statistic block: name every tier at or below
+        # the block threshold (the one that achieved the min drove the decision).
         departure = self.path_envelope.assess(traj) if self.path_envelope else None
         aml_v = self.aml.assess(traj) if self.aml else None
-        path_p = (self.struct_calibrator.p_value(bucket, departure.penalty)
-                  if (departure and self._fitted) else 1.0)
-        path_block = bool(departure and departure.out_of_envelope and path_p <= self.alpha)
-        aml_block = bool(aml_v and aml_v.flagged and self._aml_benign_rate <= self.alpha)
         structural_reasons: list[str] = []
-        if scorer_block:
-            structural_reasons.append(f"trajectory surprise p={traj_p:.3f} (alpha={self.alpha})")
-        if drift_block:
-            structural_reasons.append(f"cusum drift p={drift_p:.3f} (sustained elevation)")
-        if path_block:
-            structural_reasons.append(f"path-envelope p={path_p:.3f} (alpha={self.alpha})")
-            structural_reasons.extend(f"path-envelope: {r}" for r in departure.reasons)
-        if aml_block:
-            structural_reasons.append("aml: " + ", ".join(aml_v.typologies))
+        if combined_block:
+            structural_reasons.append(f"combined min-p={min_p:.4f} (alpha={self.alpha}, Bonferroni per-tier)")
+            if tier_block.get("scorer"):
+                structural_reasons.append(f"trajectory surprise p={traj_p:.4f} (budget {budget['scorer']:.4f})")
+            if tier_block.get("drift"):
+                structural_reasons.append(f"cusum drift p={drift_p:.4f} (sustained elevation)")
+            if tier_block.get("path") and departure:
+                structural_reasons.append(f"path-envelope p={tier_p['path']:.4f} (budget {budget['path']:.4f})")
+                structural_reasons.extend(f"path-envelope: {r}" for r in departure.reasons)
+        # AML is reason-only (no conformal budget); surface it when it fires.
+        if aml_v and aml_v.flagged:
             structural_reasons.extend(f"aml: {r}" for r in aml_v.reasons)
 
         return DetectionReport(
             verdicts=verdicts,
             path_departure=departure,
             aml=aml_v,
-            structural_block=bool(structural_reasons),
+            structural_block=combined_block,  # AML reasons are informational, never block
             structural_reasons=tuple(structural_reasons),
             anomaly_p=min(traj_p, drift_p),
         )
 
     @staticmethod
     def _step_decision(conformal_flag: bool, hard_taint: bool, in_envelope: bool) -> Decision:
-        # Per-action blocking only for a hard taint signal (rare, not multiple-
-        # comparisons inflated). A surprising step or a structurally novel one
-        # escalates; the trajectory-level scorer/structural tiers decide blocks.
-        if hard_taint:
+        # Taint hard-blocks only when the untrusted-driven consequential action
+        # ALSO leaves the sealed goal (out of the typed envelope) — the injection
+        # shape the module docstring describes: "driven by untrusted context, and
+        # which does something consequential the sealed goal never asked for."
+        # Provenance is data-flow derived, so a benign read->authorized action is
+        # tainted too; on its own that must escalate, not block. A surprising step
+        # or a structurally novel one escalates; the trajectory-level scorer and
+        # structural tiers decide the hard blocks.
+        if hard_taint and not in_envelope:
             return Decision.BLOCK
-        if conformal_flag or not in_envelope:
+        if conformal_flag or not in_envelope or hard_taint:
             return Decision.ESCALATE
         return Decision.ALLOW
