@@ -32,7 +32,19 @@ def _maybe_use_azure() -> str | None:
     api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
 
     def _factory(*_a, **_k):
-        return AzureOpenAI(azure_endpoint=ep, api_key=key, api_version=api_version)
+        client = AzureOpenAI(azure_endpoint=ep, api_key=key, api_version=api_version)
+        # gpt-5 deployments only accept the default temperature; callers that pass
+        # temperature=0 (our planner, some builtins) 400 otherwise. Strip an
+        # explicit 0 at the boundary so every caller works unmodified.
+        _orig = client.chat.completions.create
+
+        def _create(*a, **k):
+            if k.get("temperature") == 0:
+                k.pop("temperature")
+            return _orig(*a, **k)
+
+        client.chat.completions.create = _create
+        return client
 
     openai.OpenAI = _factory  # agentdojo get_llm(): openai.OpenAI(); planner: OpenAI()
     return ep
