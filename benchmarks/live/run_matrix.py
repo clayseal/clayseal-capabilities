@@ -30,7 +30,7 @@ from pathlib import Path
 DEFAULT_ABLATIONS = [
     "none",
     "builtin:tool_filter",
-    "builtin:spotlighting",
+    "builtin:spotlighting_with_delimiting",
     "builtin:repeat_user_prompt",
     "envelope-taint",
     "envelope-taint-graduated",

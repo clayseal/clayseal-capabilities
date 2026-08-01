@@ -13,41 +13,56 @@ import statistics
 import sys
 
 
-def _maybe_use_azure() -> str | None:
-    """Route every OpenAI client (AgentDojo's agent LLM and our planner) to Azure
-    OpenAI when AZURE_OPENAI_ENDPOINT is set. AgentDojo builds its client with a
-    bare ``openai.OpenAI()`` and our planner with ``from openai import OpenAI``, so
-    patching the ``openai.OpenAI`` symbol to an AzureOpenAI factory covers both.
-    The AgentDojo model id doubles as the Azure DEPLOYMENT name (we name the
-    deployments after valid ModelsEnum ids), so no per-call routing change is
-    needed. AgentDojo already omits temperature (0.0 is falsy -> NOT_GIVEN) and
-    sends no max_tokens, so gpt-5 deployments accept the requests unmodified."""
-    ep = os.environ.get("AZURE_OPENAI_ENDPOINT")
-    if not ep:
-        return None
+_REAL_OPENAI = None  # captured before any patching, so the OpenAI backup is restorable
+
+
+def _configure_provider(model: str) -> str:
+    """Route every OpenAI client (AgentDojo's agent LLM and our planner) per model.
+    Default to Azure OpenAI for the models it serves (AZURE_OPENAI_DEPLOYMENTS, the
+    deployment names, which we set to valid AgentDojo ModelsEnum ids); fall back to
+    public OpenAI for any other model, or when Azure is not configured. Patching
+    the ``openai.OpenAI`` symbol covers both AgentDojo's ``openai.OpenAI()`` and our
+    planner's ``from openai import OpenAI``.
+
+    Azure gpt-5 deployments reject an explicit ``temperature=0`` (our planner sends
+    it) and want max_completion_tokens, but AgentDojo omits both by default, so
+    stripping a literal 0 at the boundary is all that is needed."""
+    global _REAL_OPENAI
     import openai
-    from openai import AzureOpenAI
 
-    key = os.environ.get("AZURE_OPENAI_KEY") or os.environ["AZURE_OPENAI_API_KEY"]
-    api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+    if _REAL_OPENAI is None:
+        _REAL_OPENAI = openai.OpenAI
 
-    def _factory(*_a, **_k):
-        client = AzureOpenAI(azure_endpoint=ep, api_key=key, api_version=api_version)
-        # gpt-5 deployments only accept the default temperature; callers that pass
-        # temperature=0 (our planner, some builtins) 400 otherwise. Strip an
-        # explicit 0 at the boundary so every caller works unmodified.
-        _orig = client.chat.completions.create
+    az_ep = os.environ.get("AZURE_OPENAI_ENDPOINT")
+    az_key = os.environ.get("AZURE_OPENAI_KEY") or os.environ.get("AZURE_OPENAI_API_KEY")
+    az_models = {m for m in os.environ.get("AZURE_OPENAI_DEPLOYMENTS",
+                                           "gpt-4o-mini-2024-07-18").split(",") if m}
+    has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+    use_azure = bool(az_ep and az_key) and (model in az_models or not has_openai)
 
-        def _create(*a, **k):
-            if k.get("temperature") == 0:
-                k.pop("temperature")
-            return _orig(*a, **k)
+    if use_azure:
+        from openai import AzureOpenAI
+        api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
 
-        client.chat.completions.create = _create
-        return client
+        def _factory(*_a, **_k):
+            client = AzureOpenAI(azure_endpoint=az_ep, api_key=az_key, api_version=api_version)
+            _orig = client.chat.completions.create
 
-    openai.OpenAI = _factory  # agentdojo get_llm(): openai.OpenAI(); planner: OpenAI()
-    return ep
+            def _create(*a, **k):
+                if k.get("temperature") == 0:  # gpt-5 only accepts the default
+                    k.pop("temperature")
+                return _orig(*a, **k)
+
+            client.chat.completions.create = _create
+            return client
+
+        openai.OpenAI = _factory
+        return f"azure:{az_ep} ({model})"
+
+    # Public OpenAI: the backup for models Azure does not serve, or when Azure is
+    # unset. Restore the real client (a prior run may have patched it to Azure).
+    openai.OpenAI = _REAL_OPENAI
+    return f"openai ({model})"
 
 from agentdojo.agent_pipeline import (
     AgentPipeline, PipelineConfig, ToolsExecutionLoop, ToolsExecutor)
@@ -145,9 +160,7 @@ def _recipient_map(suite, user_ids):
 
 
 def run(suite_name, model, n_user, n_inj, ablations, attack_name):
-    az = _maybe_use_azure()
-    if az:
-        print(f"[azure] routing OpenAI clients to {az}")
+    print(f"[provider] {_configure_provider(model)}")
     from openai import OpenAI
     client = OpenAI()
     llm_planner = LLMPlanner(client, model)
@@ -170,8 +183,15 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
     import tempfile
     logdir = tempfile.mkdtemp(prefix="adojo-")
     for ab in ablations:
-        pipe, harness = build_pipeline(model, ab, planners.get(ab), recipient_map)
-        attack = load_attack(attack_name, suite, pipe)
+        # One bad ablation (e.g. an unknown builtin defense name) must not lose the
+        # whole cell's other ablations; record its error and continue.
+        try:
+            pipe, harness = build_pipeline(model, ab, planners.get(ab), recipient_map)
+            attack = load_attack(attack_name, suite, pipe)
+        except Exception as exc:
+            print(f"  {ab:9} SKIPPED: {type(exc).__name__}: {exc}")
+            out[ab] = {"error": f"{type(exc).__name__}: {exc}"}
+            continue
         clean, util, sec = [], [], []
         with OutputLogger(logdir, live=None):
             for uid in user_ids:
