@@ -61,6 +61,33 @@ harness can ablate:
 Both need the py3.12 agentdojo env. This is the next discrete task after the
 built-in matrix confirms the harness end-to-end; it is scoped, not started.
 
+## Azure setup (the LLM runs on Azure, not public OpenAI)
+
+Provisioned in subscription 44c3f680 (`az` login):
+
+- Resource: `clayseal-aoai` (Cognitive Services, kind OpenAI, S0), RG
+  `clayseal-bench-rg`, region eastus. Endpoint
+  `https://clayseal-aoai.openai.azure.com/`.
+- Deployment `gpt-4o-mini-2024-07-18` -> underlying model **gpt-5-mini
+  2025-08-07**. The gpt-4o / gpt-4.1 lines are retired on Azure as of 03/2026, so
+  the deployment NAME (a valid AgentDojo ModelsEnum id, for harness routing) is
+  decoupled from the current model it serves. Report the true model (gpt-5-mini),
+  not the deployment alias.
+- Second model (gpt-5 / gpt-5-nano) is quota-gated at 0 TPM; a quota increase is
+  requested. Until it lands the matrix runs single-model on gpt-5-mini, still an
+  upgrade over the prior single gpt-4o-mini.
+
+Routing: `benchmarks/live/run_agentdojo.py:_maybe_use_azure()` repoints every
+`openai.OpenAI` client to `AzureOpenAI` when `AZURE_OPENAI_ENDPOINT` is set.
+AgentDojo already omits temperature (0.0 -> NOT_GIVEN) and sends no max_tokens, so
+gpt-5 deployments accept its requests unmodified. Validated end to end: banking,
+n=4, gpt-5-mini via Azure, clean-utility 25%, utility-under-attack 50%.
+
+    export AZURE_OPENAI_ENDPOINT=https://clayseal-aoai.openai.azure.com/
+    export AZURE_OPENAI_KEY=$(az cognitiveservices account keys list \
+        -n clayseal-aoai -g clayseal-bench-rg --query key1 -o tsv)
+    python -m benchmarks.live.run_matrix --out benchmarks/results/matrix
+
 ## Reporting
 
 `summary.md` / `summary.json` land in the `--out` dir. The headline table is the
