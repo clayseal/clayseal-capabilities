@@ -8,8 +8,34 @@ with the Clay Seal broker as an ablatable defense, and report attack-success rat
 from __future__ import annotations
 
 import argparse
+import os
 import statistics
 import sys
+
+
+def _maybe_use_azure() -> str | None:
+    """Route every OpenAI client (AgentDojo's agent LLM and our planner) to Azure
+    OpenAI when AZURE_OPENAI_ENDPOINT is set. AgentDojo builds its client with a
+    bare ``openai.OpenAI()`` and our planner with ``from openai import OpenAI``, so
+    patching the ``openai.OpenAI`` symbol to an AzureOpenAI factory covers both.
+    The AgentDojo model id doubles as the Azure DEPLOYMENT name (we name the
+    deployments after valid ModelsEnum ids), so no per-call routing change is
+    needed. AgentDojo already omits temperature (0.0 is falsy -> NOT_GIVEN) and
+    sends no max_tokens, so gpt-5 deployments accept the requests unmodified."""
+    ep = os.environ.get("AZURE_OPENAI_ENDPOINT")
+    if not ep:
+        return None
+    import openai
+    from openai import AzureOpenAI
+
+    key = os.environ.get("AZURE_OPENAI_KEY") or os.environ["AZURE_OPENAI_API_KEY"]
+    api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
+
+    def _factory(*_a, **_k):
+        return AzureOpenAI(azure_endpoint=ep, api_key=key, api_version=api_version)
+
+    openai.OpenAI = _factory  # agentdojo get_llm(): openai.OpenAI(); planner: OpenAI()
+    return ep
 
 from agentdojo.agent_pipeline import (
     AgentPipeline, PipelineConfig, ToolsExecutionLoop, ToolsExecutor)
@@ -107,6 +133,9 @@ def _recipient_map(suite, user_ids):
 
 
 def run(suite_name, model, n_user, n_inj, ablations, attack_name):
+    az = _maybe_use_azure()
+    if az:
+        print(f"[azure] routing OpenAI clients to {az}")
     from openai import OpenAI
     client = OpenAI()
     llm_planner = LLMPlanner(client, model)
