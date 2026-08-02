@@ -13,11 +13,14 @@ envelope-taint path.
 |---|--:|--:|--:|--:|--:|--:|
 | banking | 61.1% | 33.3% | 61.1% | 27.8% | 16.7% | **0.0%** |
 | slack | 83.3% | 16.7% | 55.6% | 38.9% | 11.1% | **0.0%** |
-| travel | (pending) | | | | 11.1% | (pending) |
+| travel | 27.8% | 5.6% | 27.8% | 5.6% | 11.1% | **0.0%** |
 | workspace | 88.9% | 5.6% | 77.8% | 72.2% | 16.7% | **0.0%** |
 
-On security we beat every AgentDojo built-in and Progent on every suite measured,
-holding ASR to zero where Progent leaves 11 to 17 percent.
+On security we hold ASR to zero on all four suites, beating every AgentDojo
+built-in and Progent everywhere. Progent leaves 11 to 17 percent across suites;
+note travel is only weakly injectable for this model (undefended 27.8%), and there
+the built-in tool_filter (5.6%) actually edges Progent (11.1%), while ours is still
+zero.
 
 ## Clean utility (higher is better) — the honest tradeoff
 
@@ -25,6 +28,7 @@ holding ASR to zero where Progent leaves 11 to 17 percent.
 |---|--:|--:|--:|
 | banking | 50.0% | 16.7% | 16.7% |
 | slack | 83.3% | 83.3% | 50.0% |
+| travel | 100.0% | 83.3% | 66.7% |
 | workspace | 100.0% | 100.0% | 83.3% |
 
 This is the real cost. We drive ASR to zero but sacrifice benign utility, most
