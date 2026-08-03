@@ -302,6 +302,62 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 
 ---
 
+## Running under iVisor (syscall-level enforcement)
+
+`agentauth.capabilities.sandbox` compiles an envelope's **egress and path scope**
+into iVisor sandbox policy, runs the work inside the guest, and returns iVisor's
+unforgeable verdict stream as attested evidence. Everything else — recipients,
+budgets, tool scope, argument binding — stays in the `SessionBroker`. The
+sandbox is a peer of the broker, invoked *after* it allows:
+
+```python
+from agentauth.capabilities.sandbox import (
+    SandboxRunSpec, run_sandboxed, attach_sandboxing)
+
+decision = broker.authorize(action)
+if decision.outcome is Outcome.ALLOW:
+    outcome = run_sandboxed(SandboxRunSpec(
+        elf=f"{rootfs}/usr/bin/python3", guest_args=("-u", "/work/task/run.py"),
+        rootfs=rootfs, egress=egress, lease=lease, repo_root=repo,
+        extra_files={"task/run.py": local_script}))
+    attach_sandboxing(ctx, outcome.sandboxing)   # rides into the commit token
+    assert not outcome.denied                    # verified verdicts only
+```
+
+Each run writes `<run_root>/<run_id>/` containing `ivisor.conf` (re-runnable by
+hand), the staged `workspace/`, `trace.jsonl` (verified verdicts), and
+`result.json`.
+
+**Only trace-fd lines are evidence.** Policy-shaped lines a guest prints to
+stdout/stderr land in `unverified_claims` and are never scored; if iVisor cannot
+use the trace fd, `trace_degraded` makes attestation fail closed
+(`evidence_ok: false`, outcome `indeterminate`).
+
+Real runs need Apple Silicon and a signed sentry — **sign a copy**, since
+signing a binary another process is executing can kill it:
+
+```bash
+cp <iVisor>/target/release/ivisor /tmp/ivisor-signed
+codesign --force --sign - --entitlements <iVisor>/entitlements.plist \
+    /tmp/ivisor-signed
+IVISOR_E2E=1 IVISOR_BIN=/tmp/ivisor-signed \
+IVISOR_ROOTFS=<iVisor>/guests/rootfs pytest python/tests/test_ivisor_e2e.py -q
+```
+
+Unit tests need none of that: `python/tests/fakes/fake_ivisor.py` honors the same
+CLI, config, and trace-fd contract, so the driver is fully covered anywhere. Off
+POSIX the driver raises `SandboxUnsupported`.
+
+Swap the substrate by registering under the `agentauth.sandbox_backends` entry
+point group (or `register_plugin("sandbox_backends", name, obj)`) and resolving
+with `default_sandbox_backend(name)`.
+
+See [ivisor_integration.md](ivisor_integration.md) for the lowering table and
+the honest limits (subdomain narrowing, unenforced ports, `allow_all` refusal,
+why `data_export_bytes` still fails closed).
+
+---
+
 ## Project layout
 
 | Path | Purpose |
@@ -310,6 +366,8 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 | `agentauth/capabilities/identity_adapters/` | Five IdP adapters + registry |
 | `agentauth/capabilities/integration.py` | Session → execution context |
 | `agentauth/capabilities/layer.py` | `AgentAuthCapabilityLayer` |
+| `agentauth/capabilities/sandbox/` | iVisor syscall-level enforcement + attestation |
+| `agentauth/capabilities/compute_budget.py` | Compute-seconds ledger (sandbox-metered) |
 | `agentauth/core/authority_binding.py` | Shared L1→L2/L3 contract |
 | `agentauth/core/identity_protocol.py` | Protocol types |
 | `examples/` | Runnable demos |

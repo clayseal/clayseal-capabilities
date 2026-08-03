@@ -1,8 +1,94 @@
-"""Execution-sandbox integration seams for Clay Seal.
+"""Execution-sandbox integration for Clay Seal.
 
-Currently a launch-time seam onto iVisor (a syscall-interposition sandbox).
-See ivisor.py for status and boundaries.
+Clay Seal decides whether an action is authorized; this package makes the
+decision govern what the code can actually do. An envelope's network egress and
+path scope are compiled into iVisor launch policy, the work runs inside the
+guest, and iVisor's verdict stream comes back as evidence the agent cannot
+forge.
+
+Typical use — the sandbox is a peer of the broker, invoked after it allows:
+
+    decision = broker.authorize(action)
+    if decision.outcome is Outcome.ALLOW:
+        outcome = run_sandboxed(SandboxRunSpec(
+            elf="/usr/bin/python3", guest_args=("/work/task/run.py",),
+            rootfs=rootfs, egress=egress, lease=lease, repo_root=repo))
+        attach_sandboxing(ctx, outcome.sandboxing)
+
+Module map: `lowering` (envelope -> policy), `staging` (path scope -> workspace),
+`config` (policy -> config file), `driver` (spawn + verdict stream), `verdicts`
+(ADR-0021 parser), `monitor_feed` (verdicts -> behavioral actions), `attest`
+(evidence -> attestation), `session` (composition), `backend` (plugin seam).
 """
+from agentauth.capabilities.sandbox.attest import (
+    attach_sandboxing,
+    ivisor_binary_identity,
+    log_sandbox_run,
+    sandboxing_context,
+)
+from agentauth.capabilities.sandbox.backend import (
+    IVisorBackend,
+    SandboxBackend,
+    default_sandbox_backend,
+)
+from agentauth.capabilities.sandbox.config import (
+    AllowEntryError,
+    IVisorConfig,
+    validate_allow_entry,
+)
+from agentauth.capabilities.sandbox.driver import (
+    ExitKind,
+    IVisorResult,
+    SandboxUnsupported,
+    run_ivisor,
+)
 from agentauth.capabilities.sandbox.ivisor import IVisorLaunch, launch_from_envelope
+from agentauth.capabilities.sandbox.lowering import (
+    LoweredPolicy,
+    LoweringError,
+    LoweringReport,
+    lower_to_ivisor,
+)
+from agentauth.capabilities.sandbox.monitor_feed import (
+    actions_from_events,
+    extend_trajectory,
+)
+from agentauth.capabilities.sandbox.session import (
+    SandboxOutcome,
+    SandboxRunSpec,
+    run_sandboxed,
+)
+from agentauth.capabilities.sandbox.staging import (
+    StagedWorkspace,
+    StagingError,
+    StagingPlan,
+    build_staging_plan,
+    collect_writeback,
+    stage_workspace,
+    workspace_delta,
+)
+from agentauth.capabilities.sandbox.verdicts import (
+    PolicyEvent,
+    Verdict,
+    parse_policy_line,
+)
 
-__all__ = ["IVisorLaunch", "launch_from_envelope"]
+__all__ = [
+    # composition
+    "SandboxRunSpec", "SandboxOutcome", "run_sandboxed",
+    "SandboxBackend", "IVisorBackend", "default_sandbox_backend",
+    # policy lowering
+    "lower_to_ivisor", "LoweredPolicy", "LoweringReport", "LoweringError",
+    "IVisorConfig", "validate_allow_entry", "AllowEntryError",
+    # workspace staging
+    "build_staging_plan", "stage_workspace", "workspace_delta",
+    "collect_writeback", "StagingPlan", "StagedWorkspace", "StagingError",
+    # execution and evidence
+    "run_ivisor", "IVisorResult", "ExitKind", "SandboxUnsupported",
+    "PolicyEvent", "Verdict", "parse_policy_line",
+    "actions_from_events", "extend_trajectory",
+    "sandboxing_context", "attach_sandboxing", "log_sandbox_run",
+    "ivisor_binary_identity",
+    # legacy launch-time seam
+    "IVisorLaunch", "launch_from_envelope",
+]
