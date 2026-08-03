@@ -94,6 +94,13 @@ _IBAN_RE = re.compile(r"\b[A-Z]{2}[0-9A-Z]{6,32}\b")
 _EMAIL_RE = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
 _URL_HOST_RE = re.compile(r"https?://([^/\s]+)", re.I)
 _DOMAIN_RE = re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b", re.I)
+# A file/resource explicitly named in the goal, e.g. 'bill-december-2023.txt'.
+_NAMED_FILE_RE = re.compile(r"[\w.\-/]+\.[A-Za-z]{2,5}\b")
+
+
+def _destinations_in(text: str) -> set[str]:
+    """Every egress destination (IBAN or email) appearing in a text blob."""
+    return set(_IBAN_RE.findall(text)) | set(_EMAIL_RE.findall(text))
 
 
 def goal_destinations(query: str) -> tuple[set[str], set[str]]:
@@ -145,6 +152,7 @@ class LiveBrokerHarness:
         self.phase = "clean"
         self.query = ""
         self.decisions: list[dict] = []
+        self._named: set[str] = set()  # files the user named in the goal
 
     def _plan(self, query: str, runtime):
         if query not in self._plans:
@@ -157,6 +165,9 @@ class LiveBrokerHarness:
 
     def start_run(self, query: str, runtime) -> None:
         self.query = query
+        # Resources the user explicitly named in the sealed goal. Only a unique
+        # destination read DIRECTLY from one of these is trusted (see observe_output).
+        self._named = set(_NAMED_FILE_RE.findall(query)) if self.taint else set()
         allowed, envelope = self._plan(query, runtime)
         goal = GoalSpec(query_id="live", summary=query,
                         allow_resources=[f"mcp:tool:{t}" for t in allowed])
@@ -200,6 +211,21 @@ class LiveBrokerHarness:
         for d in _iter_dicts(result):
             for r in extract_recipients(d):
                 self._egress.allowed_recipients.add(r)
+        # Trust the UNIQUE destination in a resource the user NAMED in the goal,
+        # and nothing else. Strictly scoped: only a read whose own arguments name a
+        # goal-named file qualifies (so anything that file merely links to, or any
+        # chained read of another file, never does), and only that read's own
+        # returned content is scanned. Exactly one destination means the user
+        # directed the agent to it; a second destination (an additive injection
+        # placed in the same file) makes it non-unique, so nothing is trusted and
+        # the effect steps up. This resolves the free-text limit above by refusing
+        # on ambiguity rather than trying to separate two tokens with one origin.
+        if self._named and source_args:
+            target = " ".join(str(v) for v in source_args.values())
+            if any(nm in target for nm in self._named):
+                dests = _destinations_in(str(result))
+                if len(dests) == 1:
+                    self._egress.allowed_recipients |= dests
 
     def gate(self, tool_name: str, args: dict) -> tuple[bool, str]:
         action = Action(step=len(self.broker._trajectory.actions), tool=tool_name,
