@@ -42,10 +42,22 @@ anything.
 
 This scenario (read customer records, send them to an external address) is where
 CaMeL's dataflow gate genuinely engages, so it is not a clean "both blind" case and
-is reported separately. Numbers pending a re-run after a fix to the Progent
-reproduction. Preliminary: undefended exfiltrates (100% violation); CaMeL's gate
-blocks the read-to-send flow but over-restricts and completes 0% of the legitimate
-work; our egress binding blocks only the external send at 100% legitimate progress.
+is reported separately. n=20:
+
+| condition | violation | legitimate progress |
+|---|--:|--:|
+| none | 100% | 100% |
+| Progent | 100% | 100% |
+| CaMeL | 0% | 0% |
+| ours | 0% | 100% |
+
+Progent is still blind: its per-call policy authorizes the external send, so the
+exfil happens on every run. CaMeL's dataflow gate does stop the exfil, but it
+over-restricts and completes none of the legitimate work (it blocks reading the
+records at all once an id flows from one tool to the next). Our egress binding
+blocks only the external send, so the reads complete and legitimate progress stays
+at 100%. So even on the class CaMeL is built for, we match its security at a
+fraction of its utility cost, and we beat Progent outright.
 
 ## What this establishes
 
