@@ -22,6 +22,13 @@ Repository = "https://github.com/pberlizov/clay-seal-capabilities"
 Issues = "https://github.com/pberlizov/clay-seal-capabilities/issues"
 Changelog = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/CHANGELOG.md"
 
+# Execution-sandbox backends, resolved by name via agentauth.core.plugins. The
+# built-in iVisor backend needs no dependency here (it drives an external
+# binary); registering it makes the substrate swappable — a Linux deployment can
+# ship a gVisor/seccomp backend under the same Protocol without touching callers.
+[project.entry-points."agentauth.sandbox_backends"]
+ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
+
 [project.optional-dependencies]
 # The default Biscuit token backend wraps the identity layer's primitives;
 # identity is otherwise NOT required to use this layer (bring your own
