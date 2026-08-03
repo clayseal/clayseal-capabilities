@@ -131,7 +131,7 @@ def run_episode(client, model: str, scen: Scenario, condition: str,
                 # It blocks an out-of-scope or malformed call, but every
                 # individually authorized call passes, and the composite slips by.
                 allowed_tools = {t["function"]["name"] for t in scen.tools}
-                if name in allowed_tools and args:
+                if name in allowed_tools:
                     result = scen.handler(env, name, args)
                 else:
                     blocks += 1
