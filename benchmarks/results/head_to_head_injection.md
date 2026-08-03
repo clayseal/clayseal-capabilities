@@ -38,6 +38,24 @@ head-to-head is not a clean sweep: we win security outright, Progent wins utilit
 on two suites. Reducing our utility cost while holding ASR at zero is the priority
 this table makes concrete.
 
+## Latency: model-free vs model-in-the-loop
+
+Enforcement latency is where the architectures diverge hardest. Our
+`broker.authorize` runs at **~200 microseconds per call, model-free** (measured,
+n=3000, envelope + floor + budget). Progent adds a policy-model call per step.
+CaMeL is the extreme: a privileged LLM writes Python, an interpreter runs it, and
+a quarantined LLM parses untrusted data, so a single banking user-task ran over
+ten minutes without completing on gpt-4o-mini. That is roughly six orders of
+magnitude, and it is inherent to putting a model (or two) in the decision path.
+
+## CaMeL note
+
+CaMeL is designed for provable injection security and lands near 0% ASR on
+AgentDojo, i.e. at parity with us on the injection axis, not below. We do not claim
+to out-secure CaMeL on injection. Where the two diverge is the business-process
+class (below) and latency (above). A full CaMeL injection sweep was not run because
+of its per-task cost and because parity there is expected and published.
+
 ## What this does and does not show
 
 It shows a real, single-protocol comparison on an injectable model: our layer is
