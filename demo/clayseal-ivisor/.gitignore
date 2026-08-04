@@ -1,0 +1,8 @@
+# Regenerable run artifacts, not checked in (report.html is self-contained and IS checked in).
+# results.json      — raw arena run output   (regenerate: `python arena.py run all`)
+# report_data.json  — build_report input     (regenerate: `python build_report.py`)
+results.json
+report_data.json
+__pycache__/
+*.pyc
+.venv/
