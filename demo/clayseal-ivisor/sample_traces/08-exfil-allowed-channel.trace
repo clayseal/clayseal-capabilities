@@ -1,0 +1,19 @@
+ivisor: policy fs.open verdict=allow root=workspace path=/work/notes.txt flags=0o2001101
+ivisor: policy dns.query verdict=allow name=pypi.org qtype=1 ips=151.101.128.223,151.101.0.223,151.101.64.223,151.101.192.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.128.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
+ivisor: policy dns.query verdict=allow name=files.pythonhosted.org qtype=1 ips=151.101.64.223,151.101.128.223,151.101.192.223,151.101.0.223 ttl=60
+ivisor: policy net.connect verdict=allow dst=151.101.64.223:443 reason=pinned status=ok
