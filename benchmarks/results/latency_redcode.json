@@ -1,0 +1,72 @@
+[
+  {
+    "engine": "allow-all",
+    "decisions": 10880,
+    "p50_us": 0.375,
+    "p95_us": 0.458,
+    "p99_us": 0.5,
+    "max_us": 2.834,
+    "mean_us": 0.399,
+    "cold_pass_ms": 0.202
+  },
+  {
+    "engine": "tool-allowlist",
+    "decisions": 10880,
+    "p50_us": 0.625,
+    "p95_us": 1.0,
+    "p99_us": 1.125,
+    "max_us": 26.459,
+    "mean_us": 0.757,
+    "cold_pass_ms": 0.271
+  },
+  {
+    "engine": "capability-token",
+    "decisions": 10880,
+    "p50_us": 5.042,
+    "p95_us": 5.75,
+    "p99_us": 6.875,
+    "max_us": 60.084,
+    "mean_us": 4.269,
+    "cold_pass_ms": 2.809
+  },
+  {
+    "engine": "task-scope",
+    "decisions": 10880,
+    "p50_us": 34.0,
+    "p95_us": 60.666,
+    "p99_us": 75.208,
+    "max_us": 279.959,
+    "mean_us": 38.486,
+    "cold_pass_ms": 23.004
+  },
+  {
+    "engine": "task-scope+binding",
+    "decisions": 10880,
+    "p50_us": 37.458,
+    "p95_us": 65.25,
+    "p99_us": 81.375,
+    "max_us": 230.5,
+    "mean_us": 40.973,
+    "cold_pass_ms": 22.401
+  },
+  {
+    "engine": "task-scope+binding+budget",
+    "decisions": 10880,
+    "p50_us": 39.875,
+    "p95_us": 69.958,
+    "p99_us": 93.125,
+    "max_us": 201.417,
+    "mean_us": 45.089,
+    "cold_pass_ms": 26.065
+  },
+  {
+    "engine": "deny-all",
+    "decisions": 10880,
+    "p50_us": 0.75,
+    "p95_us": 0.792,
+    "p99_us": 0.875,
+    "max_us": 26.875,
+    "mean_us": 0.688,
+    "cold_pass_ms": 0.377
+  }
+]

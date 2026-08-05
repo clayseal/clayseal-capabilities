@@ -5,9 +5,9 @@
 | allow-all | 0% | 0% | 0% | 0% | 0% | 0% | 0% | 0% | 0% | 0% |
 | tool-allowlist | 86% | 0% | 0% | 0% | 100% | 0% | 0% | 0% | 100% | 0% |
 | capability-token | 89% | 0% | 0% | 0% | 100% | 0% | 100% | 0% | 100% | 0% |
-| task-scope | 89% | 0% | 0% | 100% | 100% | 0% | 0% | 0% | 100% | 0% |
-| task-scope+binding | 95% | 0% | 100% | 100% | 100% | 100% | 0% | 0% | 100% | 0% |
-| task-scope+binding+budget | 95% | 0% | 100% | 100% | 100% | 100% | 0% | 0% | 100% | 0% |
+| task-scope | 92% | 0% | 0% | 100% | 100% | 0% | 100% | 0% | 100% | 0% |
+| task-scope+binding | 97% | 0% | 100% | 100% | 100% | 100% | 100% | 0% | 100% | 0% |
+| task-scope+binding+budget | 97% | 0% | 100% | 100% | 100% | 100% | 100% | 0% | 100% | 0% |
 | deny-all | 100% | 100% | 100% | 100% | 100% | 100% | 100% | 0% | 100% | 100% |
 
-Cells are containment per attack class (higher better); False-block is benign steps wrongly denied (lower better).
+Mean over 10 synthesis seeds (0..9); `±` is the standard deviation across seeds, omitted below 0.5 points. A cell with no `±` was identical on every seed, which is the signature of a structural result rather than a lucky draw.

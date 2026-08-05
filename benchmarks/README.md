@@ -35,12 +35,19 @@ session ledgers in event order, catching aggregate volume (many individually
 valid calls that together cross a requester-inherited ceiling) that every
 per-call rung below it structurally cannot see.
 
-> **Known monotonicity break.** Under a path-scoped
-> (`agentauth.human_authorization.v1`) mandate, `compile_task_scope` leaves
-> `allowed_resources` empty, so `task-scope` skips the resource check that
-> `capability-token` — a *lower* rung — enforces. Connector-substitution
-> attacks therefore pass a higher rung and fail a lower one. Surfaced by the
-> `redcode` suite; see [results/new_suites.md](results/new_suites.md).
+Monotonicity is enforced as a per-event test on every corpus
+([tests/test_ladder_invariants.py](tests/test_ladder_invariants.py)), not
+asserted in prose. It has to be per-event: two rungs can report the same
+containment percentage while disagreeing about which events they caught, and
+that disagreement is the defect class worth hunting. It found one on the first
+run, now fixed — under a path-scoped mandate `compile_task_scope` leaves
+`allowed_resources` empty, so `task-scope` was skipping the resource check that
+`capability-token`, a *lower* rung, enforces. `TaskScopeEngine` now composes the
+rung below instead of replacing it.
+
+Every rate carries a task-clustered bootstrap interval with `--ci`. Events
+inside a task share a template, so an event-level interval is roughly
+sqrt(events-per-task) too narrow; see [core/stats.py](core/stats.py).
 
 **Engine-integration family** — `opa`, `cedar`, `openfga` carry the *same*
 compiled policy across the pluggable `agentauth.capabilities.authorizers` seam.

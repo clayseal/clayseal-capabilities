@@ -8,8 +8,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 718,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0003,
-    "overhead_p95_ms": 0.0004
+    "overhead_p50_ms": 0.0004,
+    "overhead_p95_ms": 0.0005,
+    "overhead_p99_ms": 0.0005,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0042,
+      "n": 718,
+      "level": 0.95,
+      "method": "rule-of-three"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "tool-allowlist": {
     "engine": "tool-allowlist",
@@ -20,8 +37,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 718,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0005,
-    "overhead_p95_ms": 0.0005
+    "overhead_p50_ms": 0.0006,
+    "overhead_p95_ms": 0.0007,
+    "overhead_p99_ms": 0.0007,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0042,
+      "n": 718,
+      "level": 0.95,
+      "method": "rule-of-three"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "capability-token": {
     "engine": "capability-token",
@@ -32,8 +66,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 718,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0028,
-    "overhead_p95_ms": 0.0032
+    "overhead_p50_ms": 0.0029,
+    "overhead_p95_ms": 0.0032,
+    "overhead_p99_ms": 0.005,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0042,
+      "n": 718,
+      "level": 0.95,
+      "method": "rule-of-three"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "task-scope": {
     "engine": "task-scope",
@@ -44,8 +95,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 1,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.013,
-    "overhead_p95_ms": 0.0156
+    "overhead_p50_ms": 0.0376,
+    "overhead_p95_ms": 0.0593,
+    "overhead_p99_ms": 0.085,
+    "containment_ci": {
+      "point": 0.9986,
+      "ci_low": 0.9958,
+      "ci_high": 1.0,
+      "n": 718,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "task-scope+binding": {
     "engine": "task-scope+binding",
@@ -56,8 +124,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 1,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0142,
-    "overhead_p95_ms": 0.0203
+    "overhead_p50_ms": 0.0376,
+    "overhead_p95_ms": 0.0533,
+    "overhead_p99_ms": 0.0825,
+    "containment_ci": {
+      "point": 0.9986,
+      "ci_low": 0.9958,
+      "ci_high": 1.0,
+      "n": 718,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "task-scope+binding+budget": {
     "engine": "task-scope+binding+budget",
@@ -68,8 +153,25 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 1,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0148,
-    "overhead_p95_ms": 0.0223
+    "overhead_p50_ms": 0.0391,
+    "overhead_p95_ms": 0.0666,
+    "overhead_p99_ms": 0.1077,
+    "containment_ci": {
+      "point": 0.9986,
+      "ci_low": 0.9958,
+      "ci_high": 1.0,
+      "n": 718,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.06,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   },
   "deny-all": {
     "engine": "deny-all",
@@ -80,7 +182,24 @@
     "benign_utility_rate": 0.0,
     "attack_allowed": 0,
     "benign_blocked": 344,
-    "overhead_p50_ms": 0.0003,
-    "overhead_p95_ms": 0.0004
+    "overhead_p50_ms": 0.0004,
+    "overhead_p95_ms": 0.0004,
+    "overhead_p99_ms": 0.0005,
+    "containment_ci": {
+      "point": 1.0,
+      "ci_low": 0.9958,
+      "ci_high": 1.0,
+      "n": 718,
+      "level": 0.95,
+      "method": "rule-of-three"
+    },
+    "false_block_ci": {
+      "point": 1.0,
+      "ci_low": 0.94,
+      "ci_high": 1.0,
+      "n": 50,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
   }
 }

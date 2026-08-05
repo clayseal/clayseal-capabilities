@@ -30,6 +30,11 @@ class EngineResult:
     attack_blocked: int = 0  # prevented violations
     overhead_ms: list[float] = field(default_factory=list)
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
+    # Per-task (blocked, total) pairs, kept so rates can carry a cluster
+    # bootstrap interval. Events inside a task are correlated, so the task is
+    # the honest resampling unit; see benchmarks/core/stats.py.
+    attack_clusters: list[tuple[int, int]] = field(default_factory=list)
+    benign_clusters: list[tuple[int, int]] = field(default_factory=list)
 
     @property
     def attack_prevention_rate(self) -> float:
@@ -51,6 +56,20 @@ class EngineResult:
     def overhead_p95_ms(self) -> float:
         return _percentile(self.overhead_ms, 0.95)
 
+    @property
+    def overhead_p99_ms(self) -> float:
+        return _percentile(self.overhead_ms, 0.99)
+
+    def containment_ci(self, level: float = 0.95, seed: int = 0):
+        from benchmarks.core.stats import cluster_bootstrap_ci
+
+        return cluster_bootstrap_ci(self.attack_clusters, level=level, seed=seed)
+
+    def false_block_ci(self, level: float = 0.95, seed: int = 0):
+        from benchmarks.core.stats import cluster_bootstrap_ci
+
+        return cluster_bootstrap_ci(self.benign_clusters, level=level, seed=seed)
+
     def summary(self) -> dict:
         return {
             "engine": self.engine,
@@ -63,6 +82,9 @@ class EngineResult:
             "benign_blocked": self.benign_blocked,
             "overhead_p50_ms": round(self.overhead_p50_ms, 4),
             "overhead_p95_ms": round(self.overhead_p95_ms, 4),
+            "overhead_p99_ms": round(self.overhead_p99_ms, 4),
+            "containment_ci": self.containment_ci().summary(),
+            "false_block_ci": self.false_block_ci().summary(),
         }
 
 
@@ -84,12 +106,23 @@ def run_benchmark(
         result = results[engine.name]
         for task in tasks:
             result.metrics.goal_id = task.task_id
+            a_blocked = a_total = b_blocked = b_total = 0
             for event in task.events:
                 start = time.perf_counter()
                 decision = engine.decide(task, event)
                 overhead_ms = (time.perf_counter() - start) * 1000.0
                 result.overhead_ms.append(overhead_ms)
                 _record(result, task, event, decision, overhead_ms)
+                if event.label is EventLabel.ATTACK:
+                    a_total += 1
+                    a_blocked += not decision.allowed
+                else:
+                    b_total += 1
+                    b_blocked += not decision.allowed
+            if a_total:
+                result.attack_clusters.append((a_blocked, a_total))
+            if b_total:
+                result.benign_clusters.append((b_blocked, b_total))
     return results
 
 

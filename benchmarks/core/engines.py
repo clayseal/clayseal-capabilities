@@ -96,7 +96,16 @@ class CapabilityTokenEngine:
 
 
 class TaskScopeEngine:
-    """Path- and resource-scoped mandate enforcement (``core.task_scope``)."""
+    """Path- and resource-scoped mandate enforcement (``core.task_scope``).
+
+    Composes the rung below rather than replacing it. A path-scoped
+    (``agentauth.human_authorization.v1``) mandate compiles to an *empty*
+    ``allowed_resources``, so scope alone would silently drop the
+    ``resource:action`` check that ``capability-token`` enforces, and a
+    connector-substitution attack would pass a higher rung while failing a
+    lower one. Carrying the capability check forward makes the ladder monotone
+    by construction instead of by coincidence of corpus.
+    """
 
     name = "task-scope"
 
@@ -117,6 +126,13 @@ class TaskScopeEngine:
 
     def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
         scope = self._scope(task)
+        # Inherited from the rung below. Only when the task actually carries
+        # capabilities: a corpus with no capability grant would otherwise be
+        # denied wholesale rather than judged on scope.
+        if task.capabilities and not capability_allows(
+            normalize_capabilities(task.capabilities), event.resource, event.action
+        ):
+            return Decision(False, f"no capability for {event.resource}:{event.action}", self.name)
         # Global protected zones win over the goal's own path scope: no task
         # reads/writes credential stores, keys, or env files without an explicit
         # allow-listed exception (goal's allowed_paths).
