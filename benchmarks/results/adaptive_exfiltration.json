@@ -3,14 +3,14 @@
     "engine": "allow-all",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -469,14 +469,14 @@
     "engine": "allow-all",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -935,14 +935,14 @@
     "engine": "allow-all",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -1401,14 +1401,14 @@
     "engine": "tool-allowlist",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -1867,14 +1867,14 @@
     "engine": "tool-allowlist",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -2333,14 +2333,14 @@
     "engine": "tool-allowlist",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -2799,14 +2799,14 @@
     "engine": "capability-token",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -3265,14 +3265,14 @@
     "engine": "capability-token",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -3731,14 +3731,14 @@
     "engine": "capability-token",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -4197,11 +4197,11 @@
     "engine": "task-scope",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27000,
+    "candidates_tried": 2400,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4210,11 +4210,11 @@
     "engine": "task-scope",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4223,11 +4223,11 @@
     "engine": "task-scope",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4236,11 +4236,11 @@
     "engine": "task-scope+binding",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27000,
+    "candidates_tried": 2400,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4249,11 +4249,11 @@
     "engine": "task-scope+binding",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4262,11 +4262,11 @@
     "engine": "task-scope+binding",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4275,11 +4275,11 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "blind",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27000,
+    "candidates_tried": 2400,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4288,11 +4288,11 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "feedback",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []
@@ -4301,11 +4301,11 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "oracle",
     "objective": "exfiltration",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
+    "candidates_tried": 2500,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {},
     "escapes": []

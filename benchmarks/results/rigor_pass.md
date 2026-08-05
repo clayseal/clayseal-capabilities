@@ -141,6 +141,45 @@ The path-normalization fix cost real time: `task-scope` went from about 19 us to
 48 us, brought back to 32 us by caching the resolver. It is still the most
 expensive rung by a wide margin, and it is the one that does the work.
 
+## Why the 100% / 0% pair is not believable, and what replaces it
+
+A table reading 100% containment at 0% false-block should be discounted on
+sight, and a CISO will. The numbers are not wrong. They are **unweighted**.
+
+`benchmarks/coverage.py` partitions attack events without consulting any engine.
+An attack is `surface-leaving` if any field (tool, resource, action, target)
+falls outside what the task's own mandate and benign trajectory establish, and
+`in-surface` if every field is one the task legitimately uses.
+
+| Corpus | attack events | surface-leaving | in-surface | full stack, surface-leaving | full stack, in-surface |
+| --- | --: | --: | --: | --: | --: |
+| redcode | 718 | 717 (100%) | 1 | 100.0% [99.2, 100.0] | 0% |
+| agentharm | 652 | 41 (6%) | 611 (94%) | 100.0% [90.9, 100.0] | 0.0% [0.0, 1.7] |
+| asb | 2040 | 2040 (100%) | 0 | 100.0% [94.1, 100.0] | n/a |
+
+**Pooled over all 3,410 attack events, full-stack containment is 82.1%, not
+100%.** The 100% figure is what you get by quoting the surface-leaving column
+and letting the corpus mix pick the weights for you.
+
+The partition also grades the corpora, which is more useful than another score:
+
+- **ASB's 100% is trivial.** All 2,040 attacks leave the surface via an
+  ungranted *tool name*, so `tool-allowlist`, the weakest rung, already contains
+  every one. ASB measures whether you check tool names. It adds breadth and a
+  false-block check and nothing else, exactly as Yuvvan's write-up said.
+- **RedCode's 100% is the real result.** All 717 leave the surface via the
+  **target alone** and nothing else, so every rung below `task-scope` scores 0%
+  and `task-scope` scores 100%. That is a clean, single-variable demonstration
+  that authority must bind to the target rather than the tool.
+- **AgentHarm is 94% in-surface and the ladder contains 0% of it.** No per-call
+  authorization layer can decide that class, because every field is legitimate.
+
+So the honest headline is two numbers with a mix, not one number: **authorization
+contains what leaves the granted surface and does not decide what stays inside
+it.** The in-surface 18% is where aggregate limits and the behavioral layer have
+to work, and adding more surface-leaving corpora would inflate the headline
+while measuring nothing new.
+
 ## Still open
 
 - **Live false-block.** The three methodology defects in

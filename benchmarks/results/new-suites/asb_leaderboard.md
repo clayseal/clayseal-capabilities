@@ -10,4 +10,4 @@
 | task-scope+binding+budget | 97% | 0% | 0% | 100% | 100% | 100% | 100% | 0% | 100% | 0% |
 | deny-all | 100% | 100% | 0% | 100% | 100% | 100% | 100% | 0% | 100% | 100% |
 
-Mean over 10 synthesis seeds (0..9); `±` is the standard deviation across seeds, omitted below 0.5 points. A cell with no `±` was identical on every seed, which is the signature of a structural result rather than a lucky draw.
+Mean over 3 synthesis seeds (0..2); `±` is the standard deviation across seeds, omitted below 0.5 points. A cell with no `±` was identical on every seed, which is the signature of a structural result rather than a lucky draw.

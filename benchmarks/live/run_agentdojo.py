@@ -33,6 +33,42 @@ def _configure_provider(model: str) -> str:
     if _REAL_OPENAI is None:
         _REAL_OPENAI = openai.OpenAI
 
+    # Generic OpenAI-compatible endpoint: xAI (Grok), Together, Groq, Fireworks,
+    # a local vLLM, anything that speaks /v1/chat/completions. Checked first so
+    # it can override the OpenAI default without unsetting credentials.
+    #
+    # AgentDojo validates the model id against its own ModelsEnum, so a run
+    # against a non-OpenAI model keeps a recognized id on the AgentDojo side
+    # while the client underneath talks to the compatible endpoint. The id is
+    # therefore NOT the model that answered, which is why COMPAT_LABEL is
+    # required: a result file that names the wrong model is worse than no
+    # result. The label is what gets recorded and published.
+    compat_url = os.environ.get("OPENAI_COMPAT_BASE_URL")
+    compat_key = os.environ.get("OPENAI_COMPAT_KEY")
+    compat_model = os.environ.get("OPENAI_COMPAT_MODEL")
+    compat_label = os.environ.get("OPENAI_COMPAT_LABEL") or compat_model
+    if compat_url and compat_key and compat_model:
+        from openai import OpenAI as _OpenAI
+
+        def _compat_factory(*_a, **_k):
+            client = _OpenAI(base_url=compat_url, api_key=compat_key)
+            _orig = client.chat.completions.create
+
+            def _create(*a, **k):
+                # Rewrite the AgentDojo-facing id to the model actually served.
+                k["model"] = compat_model
+                # Endpoints vary on which sampling params they accept; a
+                # literal temperature=0 is the common rejection.
+                if k.get("temperature") == 0:
+                    k.pop("temperature", None)
+                return _orig(*a, **k)
+
+            client.chat.completions.create = _create
+            return client
+
+        openai.OpenAI = _compat_factory
+        return f"openai-compat:{compat_url} ({compat_label})"
+
     az_ep = os.environ.get("AZURE_OPENAI_ENDPOINT")
     az_key = os.environ.get("AZURE_OPENAI_KEY") or os.environ.get("AZURE_OPENAI_API_KEY")
     az_models = {m for m in os.environ.get("AZURE_OPENAI_DEPLOYMENTS",

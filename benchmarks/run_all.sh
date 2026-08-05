@@ -40,6 +40,10 @@ for dataset in redcode agentharm asb; do
     | tee "${RESULTS}/new-suites/${dataset}_leaderboard.md"
 done
 
+echo "==> attack-class coverage (what the layer can and cannot decide)"
+"${PY}" -m benchmarks.coverage --datasets redcode,agentharm,asb \
+  --json "${RESULTS}/coverage.json" | tee "${RESULTS}/coverage.md"
+
 echo "==> adaptive red-team (all three knowledge levels)"
 for objective in exfiltration persistence destruction; do
   "${PY}" -m benchmarks.adaptive --dataset redcode --limit "${LIMIT}" \
