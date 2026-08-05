@@ -31,6 +31,19 @@ trusted if it is reachable from the sealed goal through a chain of calls whose
 own inputs were trusted, and untrusted the moment any link's input came from
 free-text content that entered after the seal.
 
+**Three-suite evidence on the existing `taint` mechanism**, which is where this
+item now starts:
+
+| Suite | `envelope` hard denies | `envelope-taint` hard denies |
+| --- | --: | --: |
+| banking | 2 | **1** |
+| travel | 3 | **1** |
+| slack | 0 | **10** |
+
+Net positive on two suites (travel gains 25 points of autonomous utility) and
+catastrophic on one. The mechanism is sound and has a single diagnosable failure
+mode, so the work is to fix that mode rather than to replace the approach.
+
 The distinction `taint` currently relies on is that injections live in free text
 and legitimate values live in structured fields. **The slack run shows that
 distinction is suite-specific and breaks.** See
