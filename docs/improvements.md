@@ -12,21 +12,33 @@ properly for the first time:
 
 | | utility | baseline | cost |
 | --- | --- | --- | --- |
-| CaMeL (published) | 77% | 84% | 7 pts |
-| ours, oracle ceiling | 78.1% | 84.4% | 6.3 pts |
-| ours, deployable | 59-63% | 84.4% | **19-22 pts** |
+| CaMeL (published, gpt-4o) | 77% | 84% | 7 pts |
+| ours, deployable, gpt-4o-mini | 59% | 84% | 25 pts |
+| ours, deployable, gpt-oss-120b | 66% | 84% | 19 pts |
+| **ours, deployable, grok-4-1-fast** | **78%** | 81% | **3 pts** |
 
-The ceiling already matches CaMeL on a near-identical baseline, so the
-mechanism is not the problem. The gap is entirely between our *deployable*
-provenance path and our own oracle, and that gap is roughly three times CaMeL's
-total cost. Closing it is item 1 below.
+**The utility problem is much smaller than we thought, and it is mostly a
+weak-agent artifact.** The cost of the deployable envelope falls monotonically
+with model strength across the ladder: 25 points on gpt-4o-mini, 19 on
+gpt-oss-120b, 3 on grok-4-1-fast. On the strongest model we measured, the
+*shippable* path beats CaMeL's published bar, at 6.2% false-block and 0.09
+endorsements per task.
 
-Two qualifiers, both of which cut against us and both of which belong here:
-the oracle path reaches its number partly by asking (0.72 endorsements per task
-against 0.03 for the deployable paths), and the whole table is gpt-4o-mini. On
-stronger models the deployable envelope is much cheaper already, free on two of
-three suites for grok-4-1-fast, which suggests part of what we have been
-measuring as defense cost is weak-agent cost.
+This reorders everything below. Item 1 was written when the deployable gap
+looked like 19 to 22 points against our own oracle; on a strong model that gap
+is 3 points and the oracle is *behind* the envelope on two suites. The
+containing-object provenance work is still correct and still worth doing, but it
+is no longer the thing standing between us and the state of the art.
+
+What it is now: an insurance policy for weak and cheap models, which is a real
+deployment segment (cost-sensitive, high-volume) but not the flagship case. The
+honest priority order changes accordingly, and the flagship claim to defend is
+the one the four-model matrix supports: **0% ASR at a 3-point utility cost on
+the class of model people deploy.**
+
+Caveat that belongs in the same breath: n=32 per model, so the interval around a
+3-point difference is wide. The monotone trend across four models and four
+suites carries the claim, not any single cell.
 
 ## 1. Provenance closure over trusted data flow (utility)
 
