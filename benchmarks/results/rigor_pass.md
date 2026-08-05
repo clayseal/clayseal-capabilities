@@ -180,6 +180,33 @@ it.** The in-surface 18% is where aggregate limits and the behavioral layer have
 to work, and adding more surface-leaving corpora would inflate the headline
 while measuring nothing new.
 
+## Long trajectory: the deployability number
+
+200 sessions of 500 benign actions, one attack buried in each. Haystack from
+BFCL, needle from RedCode wearing the session's own tool and resource so it is
+not detectable by name.
+
+| Engine | Needle detected | False alarms / 1k actions | Alarms per session |
+| --- | --- | --: | --: |
+| tool-allowlist | 0.0% [0.0, 1.9] | 0.00 | 0.00 |
+| capability-token | 82.0% [76.1, 86.7] | 0.00 | 0.00 |
+| task-scope | 83.0% [77.2, 87.6] | 0.00 | 0.00 |
+| task-scope+binding | **100.0%** [98.1, 100.0] | 0.00 | 0.00 |
+
+**100% needle detection at zero false alarms over 100,000 benign actions**, and
+it holds at 2,000-action sessions. This is the only tier where argument binding
+separates from path scoping: it closes the final 17 points. A benchmark with a
+mean trajectory of three calls cannot show that difference exists.
+
+Two silent fixture bugs were caught first, both of which print a confident table
+rather than an error:
+
+- the haystack sampled actions across *different* tasks while the session
+  carried one task's mandate, so most benign actions were out of scope by
+  construction and the tier reported 971 false alarms per 1,000 actions;
+- the needle kept the attack corpus's own tool name, so every rung including
+  `tool-allowlist` "detected" it and scored 100%.
+
 ## Still open
 
 - **Live false-block.** The three methodology defects in

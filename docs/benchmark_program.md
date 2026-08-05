@@ -29,12 +29,14 @@ places and closed in the same way.
 
 ## The four tiers
 
-| Tier | Question | Cost | In `run_all.sh` |
-| --- | --- | --- | --- |
-| Replay ladder | Does authority bind to the target? | seconds, CPU | yes |
-| Adaptive red-team | Does it hold when the adversary adapts? | seconds, CPU | yes |
-| Live agent | What does it cost real work? | dollars, API, noisy | no |
-| Syscall boundary | Does it hold when the agent tries to escape? | minutes, VM | no |
+| Tier | Question | Cost | In `run_all.sh` | Built |
+| --- | --- | --- | --- | --- |
+| Replay ladder | Does authority bind to the target? | seconds, CPU | yes | yes |
+| Attack-class coverage | What can this layer even decide? | seconds, CPU | yes | yes |
+| Adaptive red-team | Does it hold when the adversary adapts? | seconds, CPU | yes | yes |
+| Long trajectory | What does it cost per *session*? | seconds, CPU | yes | yes |
+| Live agent | What does it cost real work? | dollars, API, noisy | no | yes |
+| Syscall boundary | Does it hold when the agent tries to escape? | minutes, VM | no | not yet |
 
 The live tier is deliberately excluded from the one-command run. It costs money,
 needs credentials, and carries sampling noise, so mixing it into a "run
@@ -94,7 +96,28 @@ obfuscation that worked, so persistence reported 46% containment against an
 oracle attacker and 0% against a blind one. Published unchanged, that table
 would have claimed disclosing the policy helps the defender.
 
-## Tier 3: live agent (not yet rebuilt)
+## Tier: attack-class coverage
+
+Partitions attack events into `surface-leaving` and `in-surface` without
+consulting any engine, so a containment headline can be read against the mix
+that produced it. Pooled over 3,410 events the full stack contains 82.1%, not
+the 100% the surface-leaving column alone suggests. See
+[results/rigor_pass.md](../benchmarks/results/rigor_pass.md).
+
+## Tier: long trajectory
+
+Sessions of 500 to 2,000 benign actions with one attack buried in each,
+reporting detection per session and **false alarms per 1,000 benign actions**.
+The second number is the deployability one. A 0.5% per-action false-block rate
+reads as excellent and produces five alerts per thousand actions, which at agent
+speeds is a page every few minutes for as long as the agent is running.
+Per-action rates hide that arithmetic; this tier does it out loud.
+
+It is also the only tier where argument binding separates from path scoping,
+closing the final 17 points that `capability-token` and `task-scope` leave open.
+A three-call benchmark cannot show that.
+
+## Tier 3: live agent (built)
 
 The false-block rate on the replay tier is 0% and will stay 0%, because replay
 feeds back ground-truth calls that pass by construction. That number must never
@@ -103,15 +126,27 @@ be quoted as an operational false-positive rate. See
 problem, plus two others still open: STEP_UP outcomes counted as failures, and
 clean-task failures attributed to the defense without a paired control.
 
-What this tier needs, and does not yet have:
+Built as `benchmarks/live/run_model_ladder.sh` plus `summarize_ladder`, across a
+ladder of models rather than one. Results in
+[results/live_ladder.md](../benchmarks/results/live_ladder.md).
 
-- utility measured against real agent trajectories with natural variation;
-- DENY and STEP_UP reported separately, since only a hard DENY of benign work is
-  unrecoverable;
-- paired attribution, where only a task that succeeded undefended and failed
-  defended counts as a defense-caused loss;
-- enough seeds to report an interval, given the audit records the same
-  configuration producing 55.6%, then 11.1%, then 12.5%.
+What it now does, and what each fixed:
+
+- **paired attribution** — only a task that succeeded undefended and failed
+  defended counts against the defense. On banking, 3 of 8 clean tasks fail with
+  no defense present, so the true false-block is 12.5% rather than the ~33-point
+  loss we were publishing;
+- **DENY separated from STEP_UP**, since only a hard DENY is unrecoverable;
+- **endorsement rate**, reported beside supervised utility and never without it.
+  `oracle-envelope-egress` reaches baseline utility at 0% false-block by asking
+  0.88 confirmations per task, and the supervised number alone hides that;
+- **action-level counts**, because task-binary at n=8 makes one task worth 12.5
+  points. It immediately showed `envelope-taint` halving hard denies on banking
+  where the task-level number said it did nothing;
+- **upstream transients counted and printed**, so a result always says how hard
+  the run had to fight the backend to exist.
+
+Still missing: more seeds, and all four suites on all three models.
 
 ## Tier 4: syscall boundary (not yet built)
 
