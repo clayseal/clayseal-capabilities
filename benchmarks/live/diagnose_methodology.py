@@ -142,6 +142,13 @@ def _report(ablations, per_task, out_path):
                        for ab in per_task[q]}
                    for q in queries}, f, indent=1)
     print(f"raw per-task trace dumped to {out_path}")
+    # Always state how much the backend had to be retried to produce this
+    # result. A number obtained through heavy retrying is still a number, but
+    # the reader is entitled to know the run was fighting the infrastructure.
+    from benchmarks.live.run_agentdojo import _TRANSIENT
+
+    if _TRANSIENT:
+        print(f"upstream transients during this run: {dict(_TRANSIENT)}")
 
 
 def main(argv=None):
