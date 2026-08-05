@@ -83,10 +83,15 @@ unset AZURE_OPENAI_ENDPOINT AZURE_OPENAI_KEY AZURE_OPENAI_API_KEY || true
 
 run_one "gpt-4o-mini"      ""                ""               ""                 0 || true
 run_one "llama-4-maverick" "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "llama-4-maverick" 0 || true
-# grok-4 is a reasoning model: it spends the completion budget thinking before
-# it emits anything, so it needs a much higher token floor or every turn comes
-# back empty and reads as task failure.
-run_one "grok-4"           "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "grok-4"           0 16000 || true
+# gpt-oss-120b rejects a history containing a multi-call assistant turn, so it
+# runs with the sequential-tool shim.
+run_one "gpt-oss-120b"     "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "gpt-oss-120b"     1 || true
+# grok-4-1-fast replaces plain grok-4 as the strong rung. grok-4 is a heavy
+# reasoning model and, on top of Foundry returning 424/503 for roughly one
+# request in three, a single suite ran five hours without completing. That is
+# not a usable measurement loop. The fast variant passes the same tool-use
+# probe and is not deprecated (grok-4-fast-reasoning is, as of 2026-05-01).
+run_one "grok-4-1-fast"    "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "grok-4-1-fast"    0 || true
 
 echo
 echo "Traces in ${OUT}/. Summarize with:"
