@@ -76,6 +76,18 @@ def _loader_with_data_root(dataset: str, data_root: str | None):
         from benchmarks.datasets.toolemu import ToolEmuLoader
 
         return ToolEmuLoader(data_root=data_root)
+    if data_root and dataset == "redcode":
+        from benchmarks.datasets.redcode import RedCodeLoader
+
+        return RedCodeLoader(data_root=data_root)
+    if data_root and dataset == "agentharm":
+        from benchmarks.datasets.agentharm import AgentHarmLoader
+
+        return AgentHarmLoader(data_root=data_root)
+    if data_root and dataset == "asb":
+        from benchmarks.datasets.asb import AsbLoader
+
+        return AsbLoader(data_root=data_root)
     return get_loader(dataset)
 
 

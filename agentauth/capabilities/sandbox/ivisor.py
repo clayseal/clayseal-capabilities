@@ -1,34 +1,27 @@
-"""Launch-time integration seam: run an agent's code inside iVisor with the
-goal-derived envelope lowered to syscall-level egress and path policy.
+"""Minimal flag-mapping seam: build an `ivisor run` command line from an envelope.
 
-STATUS (read this before trusting it):
-- Launch-time only, and NOT end-to-end tested, because that needs iVisor built.
-  iVisor is a Rust user-space kernel for Apple Silicon; running it requires
-  `cargo build -p ivisor` and the com.apple.security.hypervisor entitlement.
-  This module only formats iVisor's CLI and shells out. It does not build,
-  bundle, or verify iVisor. The unit test exercises the flag mapping only.
+PREFER `agentauth.capabilities.sandbox.session.run_sandboxed`. This module is
+the original launch-time sketch and is kept for callers that only want the argv.
+It formats flags and shells out — nothing more. In particular it does NOT:
 
-WHAT THIS DOES:
-- Maps the goal envelope's NETWORK egress (hosts/domains) and filesystem scope
-  onto iVisor's `--allow`, `--workspace`, and `--rootfs` flags, then launches
-  `ivisor run <elf>`. From launch, iVisor enforces those at the syscall level
-  (default-deny egress via smoltcp, path containment via the Gofer), which the
-  agent cannot bypass because it cannot make a syscall iVisor does not service.
+- generate a config file (the supported way to pass policy, and a re-runnable
+  artifact),
+- collect iVisor's verdict stream, so a run through here produces no evidence
+  and cannot tell a denial from a clean run,
+- stage a workspace, so `scope.allowed_paths[0]` is mounted whole and the rest
+  of the scope — along with `denied_paths` and protected zones — is silently
+  dropped,
+- validate allow entries, so a malformed domain is silently skipped by iVisor
+  and egress ends up narrower than the policy claims.
 
-WHAT THIS DOES NOT DO (the runtime seam, needs iVisor changes + coordination):
-- Push a policy update mid-run. iVisor's policy is compiled at launch and is
-  immutable after, so a recipient discovered from a trusted read cannot be added
-  to the live allowlist yet. This is the "runtime-mutable seam" first step.
-- Stream the syscall trace back into the behavioral monitor or the detector
-  corpus. iVisor's newer daemon (`ivisor-hostd`) and framed protocol
-  (`ivisor-compute-proto`) are for GPU compute offload, not policy control, but
-  they are the pattern to model a control/event channel on.
+`session.run_sandboxed` does all of the above. Use this only for inspecting the
+command line.
 
-LAYER BOUNDARY: only the network-egress and path constraints lower to iVisor,
-because those are what a syscall boundary can express. The semantic bindings
-(recipients, tools, spend budget) and the aggregate/behavioral checks stay in the
-SessionBroker at the tool-call level. One goal-derived policy, two enforcement
-points; this file is the lower one.
+LAYER BOUNDARY (unchanged, and enforced by the tests): only network-egress and
+path constraints lower to iVisor, because those are what a syscall boundary can
+express. The semantic bindings (recipients, tools, spend budget) and the
+aggregate/behavioral checks stay in the SessionBroker at the tool-call level.
+One goal-derived policy, two enforcement points; this file is the lower one.
 """
 from __future__ import annotations
 

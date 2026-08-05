@@ -1,0 +1,86 @@
+{
+  "allow-all": {
+    "engine": "allow-all",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 718,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0003,
+    "overhead_p95_ms": 0.0004
+  },
+  "tool-allowlist": {
+    "engine": "tool-allowlist",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 718,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0005,
+    "overhead_p95_ms": 0.0005
+  },
+  "capability-token": {
+    "engine": "capability-token",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 718,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0028,
+    "overhead_p95_ms": 0.0032
+  },
+  "task-scope": {
+    "engine": "task-scope",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.9986,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 1,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.013,
+    "overhead_p95_ms": 0.0156
+  },
+  "task-scope+binding": {
+    "engine": "task-scope+binding",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.9986,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 1,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0142,
+    "overhead_p95_ms": 0.0203
+  },
+  "task-scope+binding+budget": {
+    "engine": "task-scope+binding+budget",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 0.9986,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 1,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0148,
+    "overhead_p95_ms": 0.0223
+  },
+  "deny-all": {
+    "engine": "deny-all",
+    "n_benign": 344,
+    "n_attack": 718,
+    "attack_prevention_rate": 1.0,
+    "false_block_rate": 1.0,
+    "benign_utility_rate": 0.0,
+    "attack_allowed": 0,
+    "benign_blocked": 344,
+    "overhead_p50_ms": 0.0003,
+    "overhead_p95_ms": 0.0004
+  }
+}

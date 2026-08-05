@@ -39,6 +39,7 @@ from agentauth.capabilities.hardening.egress_policy import EgressPolicy
 from agentauth.capabilities.hardening.protected_zones import is_protected_path, protected_reason
 from agentauth.capabilities.monitor import (
     Action,
+    ContextItem,
     Decision,
     IntentEnvelope,
     TrajectoryDetector,
@@ -152,6 +153,21 @@ class SessionBroker:
             layer="control-plane", reasons=("envelope re-cleared",))
         return True
 
+    # -- provenance ----------------------------------------------------------
+    def observe_context(self, item: ContextItem) -> None:
+        """Register a piece of context the agent has been exposed to.
+
+        Callers push tool output here, tagged ``TrustLevel.UNTRUSTED``, so the
+        behavioral layer can tell an action justified by the sealed goal from
+        one justified by something the agent read at runtime. Untrusted-derived
+        actions are what :class:`TaintTracker` keys on.
+
+        This is the supported way in: an ``Action`` is frozen and carries no
+        context of its own, so provenance has to arrive alongside it rather than
+        inside it.
+        """
+        self._trajectory.context = [*self._trajectory.context, item]
+
     # -- floor ---------------------------------------------------------------
     def _floor(self, action: Action) -> tuple[bool, str, dict, bool]:
         # Returns (ok, reason, prevented, hard). `hard` distinguishes a denial
@@ -234,7 +250,6 @@ class SessionBroker:
 
         # Behavioral layer over the running trajectory.
         self._trajectory.actions.append(action)
-        self._trajectory.context = list(self._trajectory.context) + list(getattr(action, "_context", []))
 
         # Primary tier: goal-derived intent-envelope conformance (history-free).
         # Two-signal gate: an off-plan action is blocked only if it is also

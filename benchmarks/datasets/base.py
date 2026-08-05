@@ -81,6 +81,24 @@ def _bfcl_factory() -> DatasetLoader:
     return BfclLoader()
 
 
+def _redcode_factory() -> DatasetLoader:
+    from benchmarks.datasets.redcode import RedCodeLoader
+
+    return RedCodeLoader()
+
+
+def _agentharm_factory() -> DatasetLoader:
+    from benchmarks.datasets.agentharm import AgentHarmLoader
+
+    return AgentHarmLoader()
+
+
+def _asb_factory() -> DatasetLoader:
+    from benchmarks.datasets.asb import AsbLoader
+
+    return AsbLoader()
+
+
 register_loader("fixture", _fixture_factory)
 register_loader("agentdojo", _agentdojo_factory)
 register_loader("injecagent", _injecagent_factory)
@@ -88,3 +106,6 @@ register_loader("toolemu", _toolemu_factory)
 register_loader("atif", _atif_factory)
 register_loader("tau2", _tau2_factory)
 register_loader("bfcl", _bfcl_factory)
+register_loader("redcode", _redcode_factory)
+register_loader("agentharm", _agentharm_factory)
+register_loader("asb", _asb_factory)
