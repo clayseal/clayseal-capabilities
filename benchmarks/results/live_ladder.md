@@ -86,9 +86,54 @@ This is the case that justifies pairing. Naive methodology would compare 25%
 here against 50% on gpt-4o-mini and conclude the defense costs more on open
 weights. It costs nothing; the model is weaker at banking.
 
+## slack, gpt-4o-mini: taint reverses sign
+
+Baseline utility 7/8 (88%).
+
+| Ablation | Autonomous | False-block | Endorsements/task | hard DENYs |
+| --- | --- | --- | --- | --: |
+| envelope | 87.5% [52.9, 97.8] | **0.0%** | 0.00 | 0 |
+| envelope-taint | 50.0% [21.5, 78.5] | **37.5%** [13.7, 69.4] | 0.00 | 10 |
+| oracle-envelope-egress | 87.5% [52.9, 97.8] | 0.0% | 0.50 | 3 |
+
+On banking, taint halved hard denies. On slack it causes them: 10 denies and a
+37.5% false-block rate where the plain envelope has zero. **Taint is net
+negative here, and it should not ship on the strength of the banking number
+alone.**
+
+The denial reasons say why, and the reason matters more than the number:
+
+```
+send_direct_message  recipient 'Alice' not on allow-list
+get_webpage          egress to 'www.restaurant-zurich.com' not on allow-list
+post_webpage         egress to 'www.our-company.com' not on allow-list
+```
+
+These are all legitimate. In slack, the destinations a benign task needs are
+*discovered from message content* — the user asks the agent to message whoever
+posted in a channel, or to read the restaurant page someone linked. They never
+appear as literals in the sealed goal, so the goal-seeded trusted set does not
+contain them, and taint's widening rule deliberately refuses to look at free
+text because that is where injections live.
+
+**That is the tension in one sentence: on this suite, legitimate destinations
+arrive through the same channel as the attack.** Banking hides it because IBANs
+arrive in structured fields. Slack does not, and no rule that discriminates by
+*field type* can work here.
+
+The fix direction follows from the diagnosis and is item 1 in
+[docs/improvements.md](../../docs/improvements.md): discriminate by the
+provenance of the *containing object*, not the field it sat in. A name in a
+message from a channel the user's own goal named is task-derived; a name in a
+webpage fetched from an unrelated domain is not. That is a transitive trust
+judgement over the data-flow graph, which is what PAuth's operand binding does
+and what our current one-hop widening cannot express.
+
 ## grok-4
 
-Run in progress at the time of writing. Table to follow.
+Blocked on upstream availability. The first attempt failed with a Foundry
+`424 / 503 The model is temporarily unavailable`, which is a capacity condition
+on their side rather than a harness problem. Retry in progress.
 
 ## What this does not establish
 

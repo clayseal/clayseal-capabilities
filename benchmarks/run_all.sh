@@ -52,6 +52,10 @@ for objective in exfiltration persistence destruction; do
     | tee "${RESULTS}/adaptive_${objective}.md"
 done
 
+echo "==> long-trajectory needle (deployability: alarms per session)"
+"${PY}" -m benchmarks.trajectory --length 500 --trajectories "$([ -n "${QUICK}" ] && echo 40 || echo 200)" \
+  --json "${RESULTS}/trajectory.json" | tee "${RESULTS}/trajectory.md"
+
 echo "==> enforcement latency"
 "${PY}" -m benchmarks.latency --dataset redcode --limit 200 --repeats 20 \
   --json "${RESULTS}/latency_redcode.json" \

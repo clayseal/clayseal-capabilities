@@ -2,14 +2,14 @@
 
 | Engine | p50 (us) | p95 (us) | p99 (us) | max (us) | added over previous |
 | --- | --- | --- | --- | --- | --- |
-| allow-all | 0.375 | 0.417 | 0.458 | 0.792 | - |
-| tool-allowlist | 0.500 | 0.583 | 0.625 | 9.459 | +0.125 us |
-| capability-token | 2.750 | 3.125 | 3.208 | 90.583 | +2.250 us |
-| task-scope | 31.792 | 36.958 | 56.125 | 325.792 | +29.042 us |
-| task-scope+binding | 33.792 | 38.916 | 53.500 | 234.834 | +2.000 us |
-| task-scope+binding+budget | 34.875 | 41.500 | 69.333 | 288.125 | +1.083 us |
-| deny-all | 0.416 | 0.666 | 0.792 | 45.042 | -34.459 us |
+| allow-all | 0.458 | 0.541 | 0.542 | 11.459 | - |
+| tool-allowlist | 0.584 | 0.667 | 0.708 | 6.750 | +0.126 us |
+| capability-token | 3.708 | 4.208 | 4.292 | 17.125 | +3.124 us |
+| task-scope | 7.917 | 50.000 | 84.417 | 1206.167 | +4.209 us |
+| task-scope+binding | 12.958 | 50.584 | 78.958 | 383.042 | +5.041 us |
+| task-scope+binding+budget | 15.250 | 50.625 | 56.375 | 186.291 | +2.292 us |
+| deny-all | 0.542 | 0.791 | 0.833 | 106.625 | -14.708 us |
 
-The full stack decides in 34.9 us at p50 and 69.3 us at p99. For scale, a single LLM tool-call round trip is on the order of hundreds of milliseconds, so enforcement is roughly four orders of magnitude below the thing it gates and is not a throughput consideration for an agent. It would be one for an inline syscall filter, which is why the syscall-boundary layer is measured separately rather than extrapolated from these numbers.
+The full stack decides in 15.2 us at p50 and 56.4 us at p99. For scale, a single LLM tool-call round trip is on the order of hundreds of milliseconds, so enforcement is roughly four orders of magnitude below the thing it gates and is not a throughput consideration for an agent. It would be one for an inline syscall filter, which is why the syscall-boundary layer is measured separately rather than extrapolated from these numbers.
 
-Cold pass (scope compilation, cache population) over all 250 tasks: 21.4 ms, amortized once per task and excluded from the distribution above.
+Cold pass (scope compilation, cache population) over all 250 tasks: 17.7 ms, amortized once per task and excluded from the distribution above.
