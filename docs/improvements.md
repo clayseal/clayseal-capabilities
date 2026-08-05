@@ -40,9 +40,18 @@ item now starts:
 | travel | 3 | **1** |
 | slack | 0 | **10** |
 
-Net positive on two suites (travel gains 25 points of autonomous utility) and
-catastrophic on one. The mechanism is sound and has a single diagnosable failure
-mode, so the work is to fix that mode rather than to replace the approach.
+Net positive on two suites and catastrophic on one *for gpt-4o-mini*. Across
+four models the picture is weaker and the weaker reading is the correct one: on
+travel, taint takes gpt-4o-mini from 50% to 75% while taking gpt-oss-120b from
+50% to 25% and grok-4-1-fast from 75% to 62%. **The mechanism that recovers
+utility for a weak agent costs a strong one**, which fits the slack diagnosis:
+widening from structured fields helps an agent that would otherwise be blocked
+early, and an agent that navigates more of the task on its own reaches more
+destinations the widening never covers.
+
+The mechanism is still sound and still has one diagnosable failure mode, so the
+work is to fix that mode rather than replace the approach. But it should not
+ship on any single model's numbers.
 
 The distinction `taint` currently relies on is that injections live in free text
 and legitimate values live in structured fields. **The slack run shows that

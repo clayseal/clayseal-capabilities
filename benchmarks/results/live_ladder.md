@@ -139,6 +139,29 @@ manufactures ten denies where the plain envelope has none.
 So taint is not broken, and it is not ready. It has **one diagnosable failure
 mode**, and the fix is aimed at that rather than at the mechanism.
 
+### Correction: the benefit is model-dependent too
+
+The table above is gpt-4o-mini. Running the same ablation across four models
+weakens the claim, and the weaker claim is the correct one. Autonomous utility
+under `envelope-taint` over the undefended baseline:
+
+| Model | banking | slack | travel | workspace |
+| --- | --- | --- | --- | --- |
+| gpt-4o-mini | 38% / 62% | 50% / 88% | **75% / 100%** | 88% / 88% |
+| gpt-oss-120b | 75% / 75% | 50% / 100% | **25% / 62%** | 100% / 88% |
+| grok-4-1-fast | - | 50% / 100% | **62% / 75%** | 88% / 88% |
+| llama-4-maverick | 25% / 25% | 12% / 12% | - | 12% / 0% |
+
+Travel is the case to look at. Taint takes gpt-4o-mini from 50% to 75%, and on
+the same suite it takes gpt-oss-120b from 50% to 25% and grok-4-1-fast from 75%
+to 62%. **The mechanism that recovers utility for a weak agent costs it for a
+strong one**, which is consistent with the slack diagnosis: taint widens the
+trusted set from structured fields, and an agent that navigates more of the task
+on its own reaches more destinations that widening never covers.
+
+One model is not enough to characterise a defense layer, and neither is one
+suite. Taint needs the containing-object fix before it ships anywhere.
+
 ## slack, gpt-4o-mini: the failure mode
 
 Baseline utility 7/8 (88%).
@@ -233,6 +256,46 @@ on their side rather than a harness problem. Retry in progress.
 - **Utility is task-binary.** A task completing 9 of 10 steps scores the same as
   one doing nothing, which is most of why the numbers move so much between runs.
   Action-level scoring is item 6 in [docs/improvements.md](../../docs/improvements.md).
+
+## The defense gets cheaper as the agent gets better
+
+`envelope`, autonomous utility over undefended baseline:
+
+| Model | banking | slack | travel | workspace |
+| --- | --- | --- | --- | --- |
+| gpt-4o-mini | 38% / 62% | 88% / 88% | **50% / 100%** | 62% / 88% |
+| gpt-oss-120b | 75% / 75% | 62% / 100% | 50% / 62% | **100% / 88%** |
+| grok-4-1-fast | - | 88% / 100% | **75% / 75%** | **88% / 88%** |
+| llama-4-maverick | 25% / 25% | 12% / 12% | - | 0% / 0% |
+
+On grok-4-1-fast the envelope is free on two suites and costs 12 points on the
+third. On gpt-4o-mini it costs 50 points on travel. **The expensive numbers we
+have been publishing are substantially a property of a weak agent rather than of
+the defense**, and no buyer is deploying gpt-4o-mini.
+
+The pairing is deliberate. Baselines span 0% to 100% across these models, so a
+bare utility figure makes a weak agent indistinguishable from an expensive
+defense. `llama-4-maverick` is the extreme: it scores 0% under the defense on
+workspace, and 0% without one.
+
+## A platform content filter was competing with us
+
+Azure's default RAI policy blocks responses labelled `Jailbreak`. On an injection
+benchmark that is an **uncontrolled second defense in front of ours**: it
+suppresses attacks we are trying to attribute to our own layer, and it fired
+during *clean* task runs, which corrupts the utility number as well.
+
+Any attack-success rate measured through a default Foundry deployment is partly
+Microsoft's filter and partly ours, and the two cannot be separated after the
+fact. The benchmark deployments now carry a custom policy (`benchmark-annotate`)
+that disables jailbreak and indirect-attack detection while leaving every harm
+category blocking, so the platform still refuses genuinely harmful content
+without competing with the thing under test.
+
+Runs predating that change are re-run rather than reinterpreted. This is worth
+stating in any published result: a defense benchmarked on a hosted endpoint
+inherits that endpoint's guardrails, and most published agent-security numbers
+do not say which platform filters were active.
 
 ## Model-compatibility findings
 
