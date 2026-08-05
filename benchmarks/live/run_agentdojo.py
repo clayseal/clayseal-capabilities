@@ -11,9 +11,14 @@ import argparse
 import os
 import statistics
 import sys
+import time
+from collections import Counter
 
 
 _REAL_OPENAI = None  # captured before any patching, so the OpenAI backup is restorable
+# Upstream flakiness counters, reported at the end of a run so a result always
+# says how much the backend had to be retried to produce it.
+_TRANSIENT: Counter = Counter()
 
 
 def _configure_provider(model: str) -> str:
@@ -71,11 +76,6 @@ def _configure_provider(model: str) -> str:
                     if isinstance(msg, dict) and msg.get("role") == "developer":
                         msg["role"] = "system"
 
-                # Some served models accept only one tool call per turn.
-                # AgentDojo emits parallel calls by default. This is a serving
-                # constraint, not a modelling choice, and it does change agent
-                # behaviour (sequential rather than batched tool use), so any
-                # rung that needs it must say so in its published result.
                 # Reasoning models spend the completion budget on reasoning
                 # tokens before emitting anything. grok-4 with AgentDojo's
                 # default max_tokens returns finish_reason=length,
@@ -87,6 +87,11 @@ def _configure_provider(model: str) -> str:
                 if floor and (k.get("max_tokens") or 0) < floor:
                     k["max_tokens"] = floor
 
+                # Some served models accept only one tool call per turn, while
+                # AgentDojo emits parallel calls by default. A serving
+                # constraint rather than a modelling choice, and it does change
+                # agent behaviour (sequential rather than batched tool use), so
+                # any rung needing it must say so in its published result.
                 no_parallel = os.environ.get("OPENAI_COMPAT_NO_PARALLEL_TOOLS") == "1"
                 if no_parallel and k.get("tools"):
                     k["parallel_tool_calls"] = False
@@ -110,7 +115,37 @@ def _configure_provider(model: str) -> str:
                         ]
                         msg["content"] = kept or (None if msg.get("tool_calls") else "")
 
-                resp = _orig(*a, **k)
+                # Foundry's grok-4 GlobalStandard capacity is intermittently
+                # unavailable: measured at roughly one request in three
+                # returning 424/503, plus occasional 200s carrying zero
+                # choices (which AgentDojo hits as an IndexError and scores as
+                # a failed turn). That is backend flakiness, not agent
+                # behaviour, so retrying is legitimate — but silently retrying
+                # would hide a condition that could bias results if failures
+                # correlate with particular prompts. Every retry is counted and
+                # the total is printed at the end of the run.
+                attempts = int(os.environ.get("OPENAI_COMPAT_RETRIES", "0") or 0)
+                resp = None
+                for attempt in range(attempts + 1):
+                    try:
+                        resp = _orig(*a, **k)
+                        if getattr(resp, "choices", None):
+                            break
+                        _TRANSIENT["empty_choices"] += 1
+                    except Exception as exc:  # noqa: BLE001 - re-raised below
+                        status = getattr(exc, "status_code", None)
+                        if status not in (424, 429, 500, 502, 503) or attempt >= attempts:
+                            raise
+                        _TRANSIENT["http_error"] += 1
+                    if attempt < attempts:
+                        _TRANSIENT["retries"] += 1
+                        time.sleep(min(2 ** attempt, 8))
+                if resp is None or not getattr(resp, "choices", None):
+                    raise RuntimeError(
+                        f"{compat_label}: backend returned no usable completion after "
+                        f"{attempts + 1} attempts ({dict(_TRANSIENT)}). This is an upstream "
+                        "availability problem, not a result."
+                    )
 
                 # Llama's Foundry serving ignores parallel_tool_calls=False and
                 # still returns several calls, then rejects the next request

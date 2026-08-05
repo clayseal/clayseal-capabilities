@@ -61,11 +61,12 @@ run_one() {
     export OPENAI_COMPAT_BASE_URL="${base}" OPENAI_COMPAT_KEY="${key}" \
            OPENAI_COMPAT_MODEL="${model}" OPENAI_COMPAT_LABEL="${label}" \
            OPENAI_COMPAT_NO_PARALLEL_TOOLS="${no_parallel}" \
-           OPENAI_COMPAT_MIN_MAX_TOKENS="${min_tokens}"
+           OPENAI_COMPAT_MIN_MAX_TOKENS OPENAI_COMPAT_RETRIES="${min_tokens}" \
+           OPENAI_COMPAT_RETRIES="${OPENAI_COMPAT_RETRIES:-4}"
   else
     unset OPENAI_COMPAT_BASE_URL OPENAI_COMPAT_KEY OPENAI_COMPAT_MODEL \
           OPENAI_COMPAT_LABEL OPENAI_COMPAT_NO_PARALLEL_TOOLS \
-          OPENAI_COMPAT_MIN_MAX_TOKENS
+          OPENAI_COMPAT_MIN_MAX_TOKENS OPENAI_COMPAT_RETRIES
   fi
   "${PY}" -m benchmarks.live.diagnose_methodology \
     --suite "${SUITE}" --model "${AGENTDOJO_ID}" --n-user "${N_USER}" \
