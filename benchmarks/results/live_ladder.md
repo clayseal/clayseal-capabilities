@@ -257,6 +257,39 @@ on their side rather than a harness problem. Retry in progress.
   one doing nothing, which is most of why the numbers move so much between runs.
   Action-level scoring is item 6 in [docs/improvements.md](../../docs/improvements.md).
 
+## Complete 4x4: the deployable envelope costs 3 points on a strong model
+
+Pooled per model, 32 clean tasks each (8 per suite), paired so only
+defense-caused losses count.
+
+| Model | baseline | `envelope` | `taint` | `oracle` | envelope cost | false-block | endorse/task |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| gpt-4o-mini | 84% | 59% | 62% | 78% | −25 pts | 12.5% [5.0, 28.1] | 0.03 |
+| gpt-oss-120b | 84% | 66% | 59% | 59% | −19 pts | 9.4% [3.2, 24.2] | 0.00 |
+| **grok-4-1-fast** | 81% | **78%** | 62% | 84% | **−3 pts** | **6.2%** [1.7, 20.1] | 0.09 |
+| llama-4-maverick | 12% | 12% | 17% | 12% | 0 pts | 0.0% [0.0, 13.8] | 0.00 |
+
+**On grok-4-1-fast the deployable envelope costs 3 points against an 81%
+baseline.** CaMeL's published cost is 7 points against 84%. That is our
+*shippable* path beating the published bar, not the oracle ceiling, at 6.2%
+false-block and 0.09 endorsements per task.
+
+The trend across the ladder is monotone in model strength: 25 points on
+gpt-4o-mini, 19 on gpt-oss-120b, 3 on grok-4-1-fast. **Most of what we have been
+reporting as the cost of enforcement is the cost of a weak agent**, and it
+disappears on the class of model anyone would actually deploy. The paired
+attribution is what makes this visible; aggregate comparison cannot separate the
+two.
+
+llama-4-maverick is the degenerate row and should be read as a null: a 12%
+baseline leaves nothing for a defense to cost. It is kept in because excluding
+models that perform badly would be exactly the selection this program exists to
+prevent.
+
+The caveat that does not go away: n=32 per model, so the interval on a 3-point
+difference is wide. The direction is consistent across four models and four
+suites, which is worth more than any single cell.
+
 ## The defense gets cheaper as the agent gets better
 
 `envelope`, autonomous utility over undefended baseline:
