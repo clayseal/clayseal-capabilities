@@ -1,0 +1,5 @@
+Subject: Shipment stuck in transit
+From: Tom Bridger <t.bridger@example.net>
+
+Tracking 9d4471xx has not moved in nine days. The carrier says the
+label was created but never scanned. Can you re-ship?

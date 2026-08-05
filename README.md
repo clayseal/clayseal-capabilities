@@ -22,7 +22,16 @@ Implemented today:
 - Input binding so mutated tool arguments invalidate authorization.
 - Mandates, leases, delegation, and session value budgets.
 - Goal-bound path scoping for coding-agent sandboxes.
-- A pluggable capability backend seam with a Biscuit default.
+- Syscall-level enforcement: an envelope's egress and path scope compile into
+  [iVisor](https://github.com/yuvvantalreja/iVisor) sandbox policy, and its
+  unforgeable verdict stream returns as attested evidence
+  ([docs/ivisor_integration.md](docs/ivisor_integration.md)).
+- Compute-seconds budgets, enforced by the sandbox timeout.
+- A runnable demo of the sandbox policy being **recompiled every step** from the
+  agent's trajectory ([demo/README.md](demo/README.md)):
+  `python -m demo run ticket-triage --provider mock --plain --fake-guest`
+- A pluggable capability backend seam with a Biscuit default, and a matching
+  `sandbox_backends` seam for execution substrates.
 - Cross-provider identity adapters for native Clay Seal, SPIFFE JWT-SVID, OIDC,
   Auth0, AWS STS, Entra Agent ID, Azure AD, and GCP.
 - Optional Redis/DynamoDB replay-defense stores for multi-instance gateways.

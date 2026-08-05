@@ -29,6 +29,10 @@ from agentauth.capabilities.call_budget import (
     SessionCallBudget,
     session_call_budget_from_mandate,
 )
+from agentauth.capabilities.compute_budget import (
+    SessionComputeBudget,
+    session_compute_budget_from_mandate,
+)
 from agentauth.capabilities.value_budget import (
     SessionValueBudget,
     session_value_budget_from_mandate,
@@ -36,7 +40,18 @@ from agentauth.capabilities.value_budget import (
 
 # Budget kinds that currently have a stateful session enforcer. Kinds outside
 # this set are refused rather than approximated — see the module docstring.
-SUPPORTED_BUDGET_TYPES = frozenset({BudgetType.USD_LIMIT, BudgetType.TOOL_CALL_LIMIT})
+#
+# COMPUTE_SECONDS joined this set only once a sandboxed run could enforce it:
+# the reservation is the timeout that kills the guest, so the ceiling is real
+# rather than merely recorded. DATA_EXPORT_BYTES is deliberately still absent —
+# iVisor's verdict stream reports which destinations were reached, not how many
+# bytes crossed, and charging a byte budget from anything else would be a
+# fabricated measurement. It stays refused until something can honestly meter it.
+SUPPORTED_BUDGET_TYPES = frozenset({
+    BudgetType.USD_LIMIT,
+    BudgetType.TOOL_CALL_LIMIT,
+    BudgetType.COMPUTE_SECONDS,
+})
 
 
 class UnsupportedBudgetType(ValueError):
@@ -54,6 +69,7 @@ class MandateBudgets:
 
     value: SessionValueBudget | None = None
     calls: SessionCallBudget | None = None
+    compute: SessionComputeBudget | None = None
 
 
 def session_budgets_from_mandate(
@@ -61,6 +77,7 @@ def session_budgets_from_mandate(
     *,
     value_tracked: Mapping[str, tuple[str, str]] | None = None,
     call_tracked: Mapping[str, str] | None = None,
+    compute_tracked: Mapping[str, str] | None = None,
     value_supersession_eligible: frozenset[str] | set[str] | None = None,
     call_supersession_eligible: frozenset[str] | set[str] | None = None,
     tightened: bool = False,
@@ -69,8 +86,9 @@ def session_budgets_from_mandate(
     """Build every stateful session budget a mandate authorizes.
 
     ``value_tracked`` maps a tool to ``(arg_name, budget_id)`` for money budgets;
-    ``call_tracked`` maps a tool to ``budget_id`` for call-count budgets. Each is
-    only required if the mandate actually carries that kind of budget.
+    ``call_tracked`` maps a tool to ``budget_id`` for call-count budgets;
+    ``compute_tracked`` maps a tool to ``budget_id`` for compute-seconds budgets.
+    Each is only required if the mandate actually carries that kind of budget.
 
     Raises :class:`UnsupportedBudgetType` if the mandate carries a budget kind
     with no enforcer, unless ``allow_unsupported`` is set (in which case such
@@ -112,4 +130,16 @@ def session_budgets_from_mandate(
             tightened=tightened,
         )
 
-    return MandateBudgets(value=value, calls=calls)
+    compute = None
+    if BudgetType.COMPUTE_SECONDS in present:
+        if compute_tracked is None:
+            raise ValueError(
+                "mandate has a COMPUTE_SECONDS budget but compute_tracked is None"
+            )
+        compute = session_compute_budget_from_mandate(
+            mandate,
+            tracked=compute_tracked,
+            tightened=tightened,
+        )
+
+    return MandateBudgets(value=value, calls=calls, compute=compute)

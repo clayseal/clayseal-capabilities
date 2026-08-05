@@ -1,0 +1,1 @@
+{"trace": ["ivisor: policy fs.open verdict=allow root=workspace path=/work/data/tickets/T-1004.txt flags=0o0"], "stdout": ["Subject: Refund request outside the 30-day window\nFrom: Marc Oyelaran <m.oyelaran@example.net>\n\nI know I am past the window, but the item was faulty on arrival and I\nwas travelling. Asking for a policy exception."], "write": [], "exit": 0}

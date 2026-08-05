@@ -108,3 +108,44 @@ def test_soft_escalation_raises_step_up():
     assert d.step_up is not None
     assert d.step_up.to_dict()["schema"].startswith("agent-receipts")
     assert broker.metrics.summary()["step_up_prompts"] == 1
+
+
+# --------------------------------------------------------------------------- #
+# Provenance: observe_context
+# --------------------------------------------------------------------------- #
+
+def test_observe_context_records_untrusted_provenance():
+    """Tool output enters the trajectory as untrusted context.
+
+    Replaces a dead hook: `authorize` used to read `Action._context`, which a
+    frozen Action never has, so provenance could not reach the broker at all.
+    """
+    from agentauth.capabilities.monitor.action import ContextItem, TrustLevel
+
+    broker = SessionBroker(goal=GoalSpec(query_id="q", summary="triage"))
+    assert broker._trajectory.context == []
+
+    item = ContextItem(item_id="ret:0", trust=TrustLevel.UNTRUSTED,
+                       introduced_at_step=0, summary="read_ticket return")
+    broker.observe_context(item)
+    assert broker._trajectory.context == [item]
+
+    broker.observe_context(ContextItem(item_id="ret:1",
+                                       trust=TrustLevel.UNTRUSTED,
+                                       introduced_at_step=1))
+    assert [c.item_id for c in broker._trajectory.context] == ["ret:0", "ret:1"]
+
+
+def test_observed_context_is_visible_to_the_taint_tracker():
+    from agentauth.capabilities.monitor.action import ContextItem, TrustLevel
+    from agentauth.capabilities.monitor.provenance import TaintTracker
+
+    broker = SessionBroker(goal=GoalSpec(query_id="q", summary="triage"))
+    broker.observe_context(ContextItem(item_id="ret:0",
+                                       trust=TrustLevel.UNTRUSTED,
+                                       introduced_at_step=0))
+    action = Action(step=1, tool="send_email", resource="mcp:tool:send_email",
+                    verb="send", args={"to": "x@evil.example"},
+                    derived_from=("ret:0",))
+    verdict = TaintTracker(broker._trajectory.context).assess(action)
+    assert verdict.escalate is True
