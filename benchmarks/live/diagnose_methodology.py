@@ -40,6 +40,15 @@ from benchmarks.live.diagnose import _gt_map, _label
 
 
 def run(suite_name, model, n_user, ablations, out_path):
+    # Route the planner's client through the same provider selection the agent
+    # uses. Without this the planner silently talks to public OpenAI while the
+    # agent under test talks to Foundry, so a "Llama" run would be half GPT and
+    # the result would be attributed to the wrong model.
+    from benchmarks.live.run_agentdojo import _configure_provider
+
+    provider = _configure_provider(model)
+    print(f"provider: {provider}")
+
     from openai import OpenAI
     client = OpenAI()
     llm_planner = LLMPlanner(client, model)
