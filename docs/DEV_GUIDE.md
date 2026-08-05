@@ -368,6 +368,7 @@ why `data_export_bytes` still fails closed).
 | `agentauth/capabilities/layer.py` | `AgentAuthCapabilityLayer` |
 | `agentauth/capabilities/sandbox/` | iVisor syscall-level enforcement + attestation |
 | `agentauth/capabilities/compute_budget.py` | Compute-seconds ledger (sandbox-metered) |
+| `demo/` | Runnable demo: sandbox policy recompiled every step from the trajectory |
 | `agentauth/core/authority_binding.py` | Shared L1→L2/L3 contract |
 | `agentauth/core/identity_protocol.py` | Protocol types |
 | `examples/` | Runnable demos |

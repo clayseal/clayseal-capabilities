@@ -30,6 +30,12 @@ Changelog = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/CHANG
 ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
 
 [project.optional-dependencies]
+# The live TUI in demo/. Deliberately NOT folded into [dev]: the demo's pure
+# modules (reducer, escalation ladder, scenario) must import and test with rich
+# absent, and CI installing [dev] only is what enforces that.
+# openai is only needed by --provider openai/live; the mock provider
+# needs neither a key nor a model.
+demo = ["rich>=13.7", "openai>=1.40"]
 # The default Biscuit token backend wraps the identity layer's primitives;
 # identity is otherwise NOT required to use this layer (bring your own
 # CapabilityTokenBackend via the agentauth.capability_backends entry point).

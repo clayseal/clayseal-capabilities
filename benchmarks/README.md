@@ -35,6 +35,13 @@ session ledgers in event order, catching aggregate volume (many individually
 valid calls that together cross a requester-inherited ceiling) that every
 per-call rung below it structurally cannot see.
 
+> **Known monotonicity break.** Under a path-scoped
+> (`agentauth.human_authorization.v1`) mandate, `compile_task_scope` leaves
+> `allowed_resources` empty, so `task-scope` skips the resource check that
+> `capability-token` — a *lower* rung — enforces. Connector-substitution
+> attacks therefore pass a higher rung and fail a lower one. Surfaced by the
+> `redcode` suite; see [results/new_suites.md](results/new_suites.md).
+
 **Engine-integration family** — `opa`, `cedar`, `openfga` carry the *same*
 compiled policy across the pluggable `agentauth.capabilities.authorizers` seam.
 Holding policy fixed isolates the engine integration (decision parity + overhead)
@@ -63,6 +70,14 @@ Fixture result (offline, `python -m benchmarks.cli --dataset fixture`):
 | `injecagent` | [InjecAgent](https://github.com/uiuc-kang-lab/InjecAgent) JSON corpus | reads `test_cases_*.json`; point `data_root` at a checkout |
 | `toolemu` | [ToolEmu](https://github.com/ryoungj/ToolEmu) curated cases | preferred: a normalized `clayseal_traces.jsonl`; best-effort raw-case parsing otherwise |
 | `atif` | ATIF-v1.2 MCP agent trajectories (in `agentauth-receipts/benchmarks/corpus`) | **real long benign trajectories** (38 sessions, up to 32 tool-calls); ideal for the detector and adversarial synthesis |
+| `redcode` | [RedCode-Exec](https://github.com/AI-secure/RedCode) + BFCL benign | ready — 718 risky ops on *granted* tools vs out-of-scope targets; the suite's sharpest ladder separator |
+| `agentharm` | [AgentHarm](https://huggingface.co/datasets/ai-safety-institute/AgentHarm) (UK AISI) | ready — 176 harmful/benign twins; 81% share an identical tool set, so it maps the authorization *ceiling* |
+| `asb` | [Agent Security Bench](https://github.com/agiresearch/ASB) | ready — 400 attacker tools x 10 domains; saturated at the allowlist rung (breadth, not discrimination) |
+
+Fetch the last three (and the BFCL benign trajectories RedCode scores against)
+with `benchmarks/fetch_corpora.sh` — ~4 MB total, static JSON, no LLM or
+container needed. See [results/new_suites.md](results/new_suites.md) for what
+each one does and does not prove.
 
 More corpora already in `agentauth-receipts/benchmarks/corpus` (surveyed, not yet
 wired): Gorilla BFCL function-call tasks, τ²-bench, MCP-Bench, and the fraud

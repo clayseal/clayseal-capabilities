@@ -1,0 +1,46 @@
+{
+  "binary": {
+    "path": "/tmp/ivisor-signed",
+    "sha256": "b65da77a99b8257c2529dabb5a9f374b58c52c682da70a98ee2652e23b2bacad",
+    "size": 1517168
+  },
+  "config_path": ".demo-runs/epoch-2/ivisor.conf",
+  "cpu_seconds": 0.083185,
+  "denied": [
+    "dns.query deny acme-internal.com (not-allowlisted)"
+  ],
+  "evidence_ok": true,
+  "exit": {
+    "code": 0,
+    "kind": "exited",
+    "signal": null
+  },
+  "lowering": {
+    "caveats": [],
+    "lowered_domains": [],
+    "refused": [],
+    "retained_above": [
+      "value/call budgets",
+      "tool scope",
+      "argument binding"
+    ]
+  },
+  "policy_digest": "8f9525bb7389855abea6296e83db350f270b49892d80766691dc81a9c2ae0c17",
+  "run_id": "epoch-2",
+  "sandbox": "ivisor",
+  "schema": "agentauth.capabilities.sandbox.attestation.v1",
+  "trace_degraded": false,
+  "verdicts": {
+    "allow": 146,
+    "deny": 1,
+    "miss": 65,
+    "unverified_claims": 0
+  },
+  "wall_seconds": 0.131206,
+  "workspace_delta": {
+    "created": [],
+    "deleted": [],
+    "modified": []
+  },
+  "workspace_manifest_digest": "92f40d14f2987c328d3041a04d89499fc1827908f449151140c3301de9786497"
+}

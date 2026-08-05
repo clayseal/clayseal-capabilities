@@ -27,6 +27,9 @@ Implemented today:
   unforgeable verdict stream returns as attested evidence
   ([docs/ivisor_integration.md](docs/ivisor_integration.md)).
 - Compute-seconds budgets, enforced by the sandbox timeout.
+- A runnable demo of the sandbox policy being **recompiled every step** from the
+  agent's trajectory ([demo/README.md](demo/README.md)):
+  `python -m demo run ticket-triage --provider mock --plain --fake-guest`
 - A pluggable capability backend seam with a Biscuit default, and a matching
   `sandbox_backends` seam for execution substrates.
 - Cross-provider identity adapters for native Clay Seal, SPIFFE JWT-SVID, OIDC,

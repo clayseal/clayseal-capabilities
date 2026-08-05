@@ -54,9 +54,15 @@ def default_sandbox_backend(name: str = "ivisor") -> SandboxBackend:
     """Resolve a sandbox backend by name, preferring a registered plugin."""
     from agentauth.core.plugins import get_plugin
     try:
-        return get_plugin(PLUGIN_GROUP, name)
+        resolved = get_plugin(PLUGIN_GROUP, name)
     except KeyError:
         pass
+    else:
+        # An entry point conventionally names a class, and that is what the
+        # loader hands back; an in-process `register_plugin` more often supplies
+        # a ready instance. Accept both rather than making the two registration
+        # routes behave differently.
+        return resolved() if isinstance(resolved, type) else resolved
     if name == "ivisor":
         return IVisorBackend()
     raise LookupError(
