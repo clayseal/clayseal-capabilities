@@ -73,6 +73,30 @@ def summarize(trace: dict) -> dict:
     return rows
 
 
+def action_level(trace: dict) -> dict:
+    """Per-action friction, which is far less noisy than task-binary utility.
+
+    Task-binary scoring makes one task worth 12.5 points at n=8, and that
+    granularity is most of why our live numbers swing between runs: a task
+    completing nine of ten steps scores identically to one that does nothing.
+    Counting decisions instead gives a denominator in the hundreds on the same
+    data, so a difference of a few points becomes readable without buying more
+    inference. It answers a slightly different question — "what fraction of the
+    agent's attempted actions did we block" rather than "what fraction of jobs
+    finished" — and both belong in the table.
+    """
+    out = {}
+    ablations = [a for a in next(iter(trace.values())) if a != "none"]
+    for ablation in ablations:
+        denies = stepups = 0
+        for task in trace.values():
+            here = task.get(ablation) or {}
+            denies += here.get("n_deny", 0)
+            stepups += here.get("n_stepup", 0)
+        out[ablation] = {"denies": denies, "stepups": stepups}
+    return out
+
+
 def render(model: str, rows: dict) -> str:
     lines = [f"### {model}", ""]
     header = ["Ablation", "Baseline", "Autonomous", "Supervised",
@@ -127,6 +151,14 @@ def main(argv: list[str] | None = None) -> int:
             continue
         print(render(model, summarize(trace)))
         print()
+        actions = action_level(trace)
+        if any(v["denies"] or v["stepups"] for v in actions.values()):
+            print("Action-level counts (same runs, less noisy denominator):\n")
+            print("| Ablation | hard DENYs | step-ups |")
+            print("| --- | --: | --: |")
+            for ablation, v in actions.items():
+                print(f"| {ablation} | {v['denies']} | {v['stepups']} |")
+            print()
     return 0
 
 
