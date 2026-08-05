@@ -55,6 +55,31 @@ def _normalize(path: str) -> str:
     return resolved.lstrip("/").lower()
 
 
+def _exception_covers(path: str, norm: str, allow_exceptions: set[str]) -> bool:
+    """Whether an operator-granted exception authorizes this path.
+
+    Exceptions are matched as **globs**, not just as exact strings. Callers pass
+    the compiled task scope's ``allowed_paths``, which are patterns like
+    ``/records/**``, and an exact-membership test can never match one of those.
+    The effect was a silent, unfixable false block: a support agent whose
+    mandate explicitly granted ``/records/**`` was still hard-denied every file
+    under it whose name contained "credential", with no way for the operator to
+    authorize it, because the documented escape hatch did not accept the shape
+    the caller actually supplies. That is friction with no security benefit,
+    since the operator had already granted the path.
+
+    Exact strings still work, so a narrow single-file exception behaves exactly
+    as before.
+    """
+    if path in allow_exceptions or norm in {_normalize(a) for a in allow_exceptions}:
+        return True
+    return any(
+        fnmatch.fnmatchcase(norm, _normalize(pattern))
+        for pattern in allow_exceptions
+        if "*" in pattern or "?" in pattern
+    )
+
+
 def is_protected_path(
     path: str,
     *,
@@ -65,7 +90,7 @@ def is_protected_path(
     if not path:
         return False
     norm = _normalize(path)
-    if allow_exceptions and (path in allow_exceptions or norm in {_normalize(a) for a in allow_exceptions}):
+    if allow_exceptions and _exception_covers(path, norm, allow_exceptions):
         return False
 
     # Match the resolved form AND the literal form. Lexical resolution is
