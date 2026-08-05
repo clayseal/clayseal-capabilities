@@ -3,14 +3,14 @@
     "engine": "allow-all",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -469,14 +469,14 @@
     "engine": "allow-all",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -935,14 +935,14 @@
     "engine": "allow-all",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -1401,14 +1401,14 @@
     "engine": "tool-allowlist",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -1867,14 +1867,14 @@
     "engine": "tool-allowlist",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -2333,14 +2333,14 @@
     "engine": "tool-allowlist",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -2799,14 +2799,14 @@
     "engine": "capability-token",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -3265,14 +3265,14 @@
     "engine": "capability-token",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -3731,14 +3731,14 @@
     "engine": "capability-token",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
-    "tasks_escaped": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
+    "tasks_escaped": 100,
     "containment": 0.0,
-    "candidates_tried": 450,
+    "candidates_tried": 100,
     "candidates_allowed_but_ineffective": 0,
     "escapes_by_round": {
-      "0": 450
+      "0": 100
     },
     "escapes": [
       {
@@ -4197,12 +4197,12 @@
     "engine": "task-scope",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 25650,
-    "candidates_allowed_but_ineffective": 5409,
+    "candidates_tried": 2100,
+    "candidates_allowed_but_ineffective": 330,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4210,12 +4210,12 @@
     "engine": "task-scope",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 908,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 125,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4223,12 +4223,12 @@
     "engine": "task-scope",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 526,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 79,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4236,12 +4236,12 @@
     "engine": "task-scope+binding",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 25650,
-    "candidates_allowed_but_ineffective": 5354,
+    "candidates_tried": 2100,
+    "candidates_allowed_but_ineffective": 317,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4249,12 +4249,12 @@
     "engine": "task-scope+binding",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 898,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 121,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4262,12 +4262,12 @@
     "engine": "task-scope+binding",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 523,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 76,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4275,12 +4275,12 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "blind",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 25650,
-    "candidates_allowed_but_ineffective": 5354,
+    "candidates_tried": 2100,
+    "candidates_allowed_but_ineffective": 317,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4288,12 +4288,12 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "feedback",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 898,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 121,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4301,12 +4301,12 @@
     "engine": "task-scope+binding+budget",
     "knowledge": "oracle",
     "objective": "destruction",
-    "rounds": 6,
-    "tasks_attacked": 450,
+    "rounds": 3,
+    "tasks_attacked": 100,
     "tasks_escaped": 0,
     "containment": 1.0,
-    "candidates_tried": 27450,
-    "candidates_allowed_but_ineffective": 523,
+    "candidates_tried": 2500,
+    "candidates_allowed_but_ineffective": 76,
     "escapes_by_round": {},
     "escapes": []
   }

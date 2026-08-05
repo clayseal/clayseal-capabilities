@@ -3,70 +3,70 @@
     "engine": "allow-all",
     "decisions": 10880,
     "p50_us": 0.375,
-    "p95_us": 0.458,
-    "p99_us": 0.5,
-    "max_us": 2.834,
-    "mean_us": 0.399,
-    "cold_pass_ms": 0.202
+    "p95_us": 0.417,
+    "p99_us": 0.458,
+    "max_us": 0.792,
+    "mean_us": 0.367,
+    "cold_pass_ms": 0.183
   },
   {
     "engine": "tool-allowlist",
     "decisions": 10880,
-    "p50_us": 0.625,
-    "p95_us": 1.0,
-    "p99_us": 1.125,
-    "max_us": 26.459,
-    "mean_us": 0.757,
-    "cold_pass_ms": 0.271
+    "p50_us": 0.5,
+    "p95_us": 0.583,
+    "p99_us": 0.625,
+    "max_us": 9.459,
+    "mean_us": 0.505,
+    "cold_pass_ms": 0.27
   },
   {
     "engine": "capability-token",
     "decisions": 10880,
-    "p50_us": 5.042,
-    "p95_us": 5.75,
-    "p99_us": 6.875,
-    "max_us": 60.084,
-    "mean_us": 4.269,
-    "cold_pass_ms": 2.809
+    "p50_us": 2.75,
+    "p95_us": 3.125,
+    "p99_us": 3.208,
+    "max_us": 90.583,
+    "mean_us": 2.793,
+    "cold_pass_ms": 1.361
   },
   {
     "engine": "task-scope",
     "decisions": 10880,
-    "p50_us": 34.0,
-    "p95_us": 60.666,
-    "p99_us": 75.208,
-    "max_us": 279.959,
-    "mean_us": 38.486,
-    "cold_pass_ms": 23.004
+    "p50_us": 31.792,
+    "p95_us": 36.958,
+    "p99_us": 56.125,
+    "max_us": 325.792,
+    "mean_us": 30.744,
+    "cold_pass_ms": 18.4
   },
   {
     "engine": "task-scope+binding",
     "decisions": 10880,
-    "p50_us": 37.458,
-    "p95_us": 65.25,
-    "p99_us": 81.375,
-    "max_us": 230.5,
-    "mean_us": 40.973,
-    "cold_pass_ms": 22.401
+    "p50_us": 33.792,
+    "p95_us": 38.916,
+    "p99_us": 53.5,
+    "max_us": 234.834,
+    "mean_us": 33.295,
+    "cold_pass_ms": 18.759
   },
   {
     "engine": "task-scope+binding+budget",
     "decisions": 10880,
-    "p50_us": 39.875,
-    "p95_us": 69.958,
-    "p99_us": 93.125,
-    "max_us": 201.417,
-    "mean_us": 45.089,
-    "cold_pass_ms": 26.065
+    "p50_us": 34.875,
+    "p95_us": 41.5,
+    "p99_us": 69.333,
+    "max_us": 288.125,
+    "mean_us": 35.146,
+    "cold_pass_ms": 21.379
   },
   {
     "engine": "deny-all",
     "decisions": 10880,
-    "p50_us": 0.75,
-    "p95_us": 0.792,
-    "p99_us": 0.875,
-    "max_us": 26.875,
-    "mean_us": 0.688,
-    "cold_pass_ms": 0.377
+    "p50_us": 0.416,
+    "p95_us": 0.666,
+    "p99_us": 0.792,
+    "max_us": 45.042,
+    "mean_us": 0.44,
+    "cold_pass_ms": 0.207
   }
 ]
