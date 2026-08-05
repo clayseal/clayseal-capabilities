@@ -120,11 +120,66 @@ def render(model: str, rows: dict) -> str:
     return "\n".join(lines)
 
 
+def matrix(directory: Path, suites: list[str], ablation: str) -> str:
+    """One ablation across every model and suite.
+
+    The per-suite tables answer "what does this cost here"; this answers
+    "does the result survive changing the model", which is the question a
+    single-model number cannot address. Cells are autonomous utility over the
+    undefended baseline for that model and suite, because a bare utility figure
+    is unreadable when baselines differ by 60 points across models.
+    """
+    data: dict[str, dict[str, str]] = {}
+    for path in sorted(directory.glob("*-trace.json")):
+        stem = path.stem.removesuffix("-trace")
+        suite = next((s for s in suites if stem.startswith(f"{s}-")), None)
+        if suite is None:
+            continue
+        model = stem[len(suite) + 1:]
+        try:
+            rows = summarize(json.loads(path.read_text()))
+        except (json.JSONDecodeError, StopIteration):
+            continue
+        row = rows.get(ablation)
+        if not row or not row["n"]:
+            continue
+        data.setdefault(model, {})[suite] = (
+            f"{row['autonomous'] / row['n']:.0%} / {row['baseline'] / row['n']:.0%}"
+        )
+
+    lines = [f"### `{ablation}` — autonomous utility / undefended baseline", ""]
+    header = ["Model", *suites]
+    lines.append("| " + " | ".join(header) + " |")
+    lines.append("| " + " | ".join("---" for _ in header) + " |")
+    for model in sorted(data):
+        lines.append("| " + " | ".join([model, *(data[model].get(s, "-") for s in suites)]) + " |")
+    lines += [
+        "",
+        "Each cell is utility under the defense over utility with no defense at all, on the "
+        "same tasks. Reading the left number alone compares models, not defenses: these "
+        "baselines span a wide range, so a low cell can mean a weak agent rather than an "
+        "expensive defense.",
+    ]
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Summarize model-ladder traces")
     p.add_argument("--suite", default="banking")
     p.add_argument("--dir", type=Path, default=RESULTS)
+    p.add_argument("--matrix", action="store_true",
+                   help="cross-model view: one ablation across every model and suite")
+    p.add_argument("--suites", default="banking,slack,travel,workspace")
+    p.add_argument("--ablation", default="envelope")
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
+
+    if args.matrix:
+        suites = [s.strip() for s in args.suites.split(",") if s.strip()]
+        print("# Live tier — cross-model matrix\n")
+        for ablation in ("envelope", "envelope-taint", "oracle-envelope-egress"):
+            print(matrix(args.dir, suites, ablation))
+            print()
+        return 0
 
     traces = sorted(args.dir.glob(f"{args.suite}-*-trace.json"))
     if not traces:
