@@ -190,6 +190,43 @@ The offline replay ladder (`benchmarks/core/engines.py`) is deliberately *not*
 extended: a `DecisionEngine` adjudicates replayed tool events and cannot execute
 a guest, so a sandbox "engine" there would measure nothing.
 
+## Recompiled every step (the demo)
+
+`demo/` turns the launch-time model into a dynamic one without changing any of
+the above: because a run costs ~50 ms and a policy is a file, the policy can be
+**recompiled for every tool call** from the agent's evolving trajectory. Each
+recompile is a new epoch — a new run directory, a new immutable config, a new
+digest — so every verdict still attributes to exactly one policy version, which
+is the property a mid-run mutation channel would have destroyed.
+
+```bash
+python -m demo run ticket-triage --provider mock --plain --fake-guest
+```
+
+An agent triages tickets; one ticket carries an injected instruction to copy the
+summary to an outside address, with a fallback to an internal mirror. The
+ladder is tighten-only (`max(current, want)`), and its signals come from the
+trajectory *prefix*, so the policy governing a step cannot have been influenced
+by that step.
+
+The run isolates the two claims rather than conflating them:
+
+- the direct exfil is refused by the **sealed envelope**, at the tool level,
+  while the baseline policy is still in force — a static guarantee;
+- the internal-relay fallback is **allowed by the broker** (nothing external
+  appears in its arguments) and **denied by the sandbox**, because egress was
+  revoked in response to the trajectory. Same domain, allowed at epoch 1 and
+  denied at epoch 2.
+
+Mere exposure to untrusted content deliberately costs nothing — the `SUSPECT`
+epoch reports `digest unchanged` — which is what lets the legitimate internal
+summary email succeed one step after the poisoned ticket is read. The benign
+control asserts that property.
+
+See `demo/README.md`, including its honest-limits section (what the tightening
+did *not* do, why AML contributes nothing here, and why the fake sentry
+validates the harness rather than iVisor).
+
 ## Stage 2 (follow-up, not built)
 
 Runtime-mutable policy in iVisor, if per-spawn relaunch ever proves material:

@@ -1,0 +1,212 @@
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/lib/ld-linux-aarch64.so.1", "flags": "0o0"}, "at_ms": 1785815708235}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/ld.so.preload", "errno": "ENOENT"}, "at_ms": 1785815708246}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "workspace", "path": "/work/lib/libm.so.6", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708246}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "workspace", "path": "/work/lib", "errno": "ENOENT"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/ld.so.cache", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/lib/aarch64-linux-gnu/libm.so.6", "flags": "0o2000000"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/lib/aarch64-linux-gnu/libz.so.1", "flags": "0o2000000"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/lib/aarch64-linux-gnu/libexpat.so.1", "flags": "0o2000000"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/lib/aarch64-linux-gnu/libc.so.6", "flags": "0o2000000"}, "at_ms": 1785815708247}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/locale/locale-archive", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708248}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/share/locale/locale.alias", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708248}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/locale/C.UTF-8/LC_CTYPE", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708248}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/locale/C.utf8/LC_CTYPE", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708248}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/locale/C/LC_CTYPE", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708248}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/pyvenv.cfg", "flags": "0o0", "errno": "ENOENT"}, "at_ms": 1785815708250}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/pyvenv.cfg", "flags": "0o0", "errno": "ENOENT"}, "at_ms": 1785815708250}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/python3.13._pth", "flags": "0o0", "errno": "ENOENT"}, "at_ms": 1785815708250}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/python3.13._pth", "flags": "0o0", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/pybuilddir.txt", "flags": "0o0", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/Modules/Setup.local", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/lib/python313.zip", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python313.zip", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/lib/python3.13/os.py", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/lib/python3.13/os.pyc", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/os.py"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/lib/python3.13/lib-dynload", "errno": "ENOENT"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708251}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708251}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/localtime", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708252}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python313.zip", "errno": "ENOENT"}, "at_ms": 1785815708252}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib"}, "at_ms": 1785815708252}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python313.zip", "errno": "ENOENT"}, "at_ms": 1785815708252}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708253}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708253}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708253}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13", "flags": "0o2044000"}, "at_ms": 1785815708253}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708253}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.cpython-313-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.abi3.so", "errno": "ENOENT"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.abi3-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.so", "errno": "ENOENT"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.py"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.py"}, "at_ms": 1785815708254}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__pycache__/__init__.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708254}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__init__.py", "flags": "0o2000000"}, "at_ms": 1785815708254}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708257}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708257}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708257}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings", "flags": "0o2044000"}, "at_ms": 1785815708257}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708257}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/aliases.py"}, "at_ms": 1785815708257}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/aliases.py"}, "at_ms": 1785815708257}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__pycache__/aliases.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708257}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/aliases.py", "flags": "0o2000000"}, "at_ms": 1785815708257}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708258}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/utf_8.py"}, "at_ms": 1785815708258}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/utf_8.py"}, "at_ms": 1785815708258}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__pycache__/utf_8.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708258}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/utf_8.py", "flags": "0o2000000"}, "at_ms": 1785815708258}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/bin/pyvenv.cfg", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/pyvenv.cfg", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "workspace", "path": "/work/.local/lib/python3.13/site-packages", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/local/lib/python3.13/dist-packages", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708261}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages", "flags": "0o2044000"}, "at_ms": 1785815708261}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/dist-packages", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/sitecustomize.py"}, "at_ms": 1785815708261}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/sitecustomize.py"}, "at_ms": 1785815708261}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/sitecustomize.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708261}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/sitecustomize.py", "flags": "0o2000000"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708262}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload", "flags": "0o2044000"}, "at_ms": 1785815708262}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708262}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages", "flags": "0o2044000"}, "at_ms": 1785815708262}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/lib-dynload"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3/dist-packages"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools/send_email.py"}, "at_ms": 1785815708262}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools/send_email.py", "flags": "0o2000000"}, "at_ms": 1785815708262}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools/send_email.py"}, "at_ms": 1785815708263}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools/send_email.py", "flags": "0o0"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708263}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools", "flags": "0o2044000"}, "at_ms": 1785815708263}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/socket.py"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/socket.py"}, "at_ms": 1785815708263}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/socket.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708263}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/socket.py", "flags": "0o2000000"}, "at_ms": 1785815708263}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708268}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708268}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/selectors.py"}, "at_ms": 1785815708268}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/selectors.py"}, "at_ms": 1785815708268}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/selectors.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708268}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/selectors.py", "flags": "0o2000000"}, "at_ms": 1785815708268}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.cpython-313-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.abi3.so", "errno": "ENOENT"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.abi3-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.so", "errno": "ENOENT"}, "at_ms": 1785815708270}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.py"}, "at_ms": 1785815708271}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.py"}, "at_ms": 1785815708272}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__pycache__/__init__.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708272}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/collections/__init__.py", "flags": "0o2000000"}, "at_ms": 1785815708272}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/keyword.py"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/keyword.py"}, "at_ms": 1785815708277}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/keyword.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708277}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/keyword.py", "flags": "0o2000000"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/operator.py"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/operator.py"}, "at_ms": 1785815708277}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/operator.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708277}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/operator.py", "flags": "0o2000000"}, "at_ms": 1785815708277}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708279}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708279}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/reprlib.py"}, "at_ms": 1785815708279}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/reprlib.py"}, "at_ms": 1785815708279}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/reprlib.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708279}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/reprlib.py", "flags": "0o2000000"}, "at_ms": 1785815708279}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708280}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708280}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/enum.py"}, "at_ms": 1785815708280}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/enum.py"}, "at_ms": 1785815708280}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/enum.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708280}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/enum.py", "flags": "0o2000000"}, "at_ms": 1785815708281}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708288}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708288}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/functools.py"}, "at_ms": 1785815708288}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/functools.py"}, "at_ms": 1785815708288}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/functools.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708288}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/functools.py", "flags": "0o2000000"}, "at_ms": 1785815708288}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708291}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708291}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/types.py"}, "at_ms": 1785815708291}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/types.py"}, "at_ms": 1785815708291}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/types.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708291}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/types.py", "flags": "0o2000000"}, "at_ms": 1785815708291}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/out/summary.md", "flags": "0o2000000"}, "at_ms": 1785815708294}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings"}, "at_ms": 1785815708294}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/idna.py"}, "at_ms": 1785815708294}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/idna.py"}, "at_ms": 1785815708294}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/__pycache__/idna.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708294}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/encodings/idna.py", "flags": "0o2000000"}, "at_ms": 1785815708294}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708295}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708295}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/stringprep.py"}, "at_ms": 1785815708295}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/stringprep.py"}, "at_ms": 1785815708295}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/stringprep.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708295}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/stringprep.py", "flags": "0o2000000"}, "at_ms": 1785815708295}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.cpython-313-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.abi3.so", "errno": "ENOENT"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.abi3-aarch64-linux-gnu.so", "errno": "ENOENT"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.so", "errno": "ENOENT"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.py"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.py"}, "at_ms": 1785815708297}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__pycache__/__init__.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708297}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/__init__.py", "flags": "0o2000000"}, "at_ms": 1785815708297}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708298}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708298}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708298}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re", "flags": "0o2044000"}, "at_ms": 1785815708298}
+{"event": "fs.readdir", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708298}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_compiler.py"}, "at_ms": 1785815708298}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_compiler.py"}, "at_ms": 1785815708298}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__pycache__/_compiler.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708298}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_compiler.py", "flags": "0o2000000"}, "at_ms": 1785815708299}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708301}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_parser.py"}, "at_ms": 1785815708301}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_parser.py"}, "at_ms": 1785815708301}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__pycache__/_parser.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708301}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_parser.py", "flags": "0o2000000"}, "at_ms": 1785815708301}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708305}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_constants.py"}, "at_ms": 1785815708305}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_constants.py"}, "at_ms": 1785815708305}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__pycache__/_constants.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708305}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_constants.py", "flags": "0o2000000"}, "at_ms": 1785815708305}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_casefix.py"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_casefix.py"}, "at_ms": 1785815708306}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/re/__pycache__/_casefix.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708306}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/re/_casefix.py", "flags": "0o2000000"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "workspace", "path": "/work/tools"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/copyreg.py"}, "at_ms": 1785815708306}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/copyreg.py"}, "at_ms": 1785815708306}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/usr/lib/python3.13/__pycache__/copyreg.cpython-313.pyc", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708306}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/usr/lib/python3.13/copyreg.py", "flags": "0o2000000"}, "at_ms": 1785815708307}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/resolv.conf", "errno": "ENOENT"}, "at_ms": 1785815708307}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/etc/host.conf", "flags": "0o2000000"}, "at_ms": 1785815708307}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/resolv.conf", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708308}
+{"event": "fs.stat", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/nsswitch.conf", "errno": "ENOENT"}, "at_ms": 1785815708308}
+{"event": "fs.stat", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/"}, "at_ms": 1785815708308}
+{"event": "fs.open", "verdict": "miss", "fields": {"verdict": "miss", "root": "rootfs", "path": "/etc/nsswitch.conf", "flags": "0o2000000", "errno": "ENOENT"}, "at_ms": 1785815708308}
+{"event": "fs.open", "verdict": "allow", "fields": {"verdict": "allow", "root": "rootfs", "path": "/etc/hosts", "flags": "0o2000000"}, "at_ms": 1785815708308}
+{"event": "dns.query", "verdict": "deny", "fields": {"verdict": "deny", "name": "acme-internal.com", "qtype": "1", "reason": "not-allowlisted", "rcode": "NXDOMAIN"}, "at_ms": 1785815708308}

@@ -79,6 +79,9 @@ artifacts/
 .cache/
 .vendor/
 
+# External benchmark corpora (fetched by benchmarks/fetch_corpora.sh)
+.benchmark-corpus/
+
 # Signing private keys — never commit
 keys/signing/
 *.key

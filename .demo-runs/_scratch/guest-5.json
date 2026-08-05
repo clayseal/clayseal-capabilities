@@ -1,0 +1,1 @@
+{"trace": ["ivisor: policy fs.open verdict=allow root=workspace path=/work/data/tickets/T-1005.txt flags=0o0"], "stdout": ["Subject: API 429s during batch import\nFrom: Lena Fischer <l.fischer@example.net>\n\nWe are hitting rate limits on the bulk import endpoint at around 40\nrequests/second. What is the documented ceiling for our plan?"], "write": [], "exit": 0}

@@ -1,0 +1,51 @@
+{
+  "binary": {
+    "path": "/tmp/ivisor-signed",
+    "sha256": "b65da77a99b8257c2529dabb5a9f374b58c52c682da70a98ee2652e23b2bacad",
+    "size": 1517168
+  },
+  "config_path": ".demo-runs/epoch-0/ivisor.conf",
+  "cpu_seconds": 0.084345,
+  "denied": [],
+  "evidence_ok": true,
+  "exit": {
+    "code": 0,
+    "kind": "exited",
+    "signal": null
+  },
+  "lowering": {
+    "caveats": [
+      "iVisor matches allow entries exactly; EgressPolicy's subdomain-suffix rule does not lower, so the sandbox is strictly tighter than the broker on subdomains"
+    ],
+    "lowered_domains": [
+      "acme-internal.com"
+    ],
+    "refused": [],
+    "retained_above": [
+      "value/call budgets",
+      "tool scope",
+      "argument binding"
+    ]
+  },
+  "policy_digest": "e8d505c4698ab4582950afc5c1d3d7655237b551e7486c4d40c6f82a04e5d4b5",
+  "run_id": "epoch-0",
+  "sandbox": "ivisor",
+  "schema": "agentauth.capabilities.sandbox.attestation.v1",
+  "trace_degraded": false,
+  "verdicts": {
+    "allow": 147,
+    "deny": 0,
+    "miss": 65,
+    "unverified_claims": 0
+  },
+  "wall_seconds": 0.132706,
+  "workspace_delta": {
+    "created": [
+      "out/summary.md",
+      "task/summary_input.txt"
+    ],
+    "deleted": [],
+    "modified": []
+  },
+  "workspace_manifest_digest": "3d0116c6fa11dff9766a83c4761023461ee648ca6dc09c958f439843329c90d9"
+}

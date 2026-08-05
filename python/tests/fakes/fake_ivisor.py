@@ -112,6 +112,19 @@ def main(argv: list[str]) -> int:
     trace_on = "policy" in os.environ.get("IVISOR_TRACE", "")
     sink = _open_trace_sink()
 
+    # A guest that writes into its workspace. The real sentry's guest does this
+    # through the gofer; here the workspace is just a host directory, so the
+    # fake writes it directly. Optional and additive — callers that omit it see
+    # the previous behaviour exactly.
+    for entry in script.get("write", []):
+        try:
+            target = entry["path"]
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, "w") as fh:
+                fh.write(entry.get("text", ""))
+        except OSError:
+            pass
+
     for line in script.get("stdout", []):
         sys.stdout.write(line + "\n")
     sys.stdout.flush()

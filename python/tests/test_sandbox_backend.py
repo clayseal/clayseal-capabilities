@@ -59,3 +59,20 @@ def test_alternative_substrate_can_register_under_its_own_name(clean_registry):
 def test_unknown_backend_raises_with_registration_guidance():
     with pytest.raises(LookupError, match="register_plugin"):
         default_sandbox_backend("does-not-exist")
+
+
+def test_a_plugin_registered_as_a_class_is_instantiated(clean_registry):
+    # Entry points conventionally name a class, and importlib hands back the
+    # class itself. Both registration routes must yield a usable backend.
+    from agentauth.core.plugins import register_plugin
+
+    class ClassBackend:
+        name = "gvisor"
+
+        def run(self, spec, **sinks):
+            return "ran"
+
+    register_plugin(PLUGIN_GROUP, "gvisor", ClassBackend)   # the class, not ()
+    backend = default_sandbox_backend("gvisor")
+    assert isinstance(backend, ClassBackend)
+    assert backend.run(None) == "ran"
