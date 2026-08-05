@@ -61,7 +61,69 @@ def _configure_provider(model: str) -> str:
                 # literal temperature=0 is the common rejection.
                 if k.get("temperature") == 0:
                     k.pop("temperature", None)
-                return _orig(*a, **k)
+
+                # `developer` is OpenAI's newer name for the system role.
+                # Foundry's schema validator only knows the original four and
+                # rejects the request outright (422), so translate rather than
+                # drop: losing the system prompt would silently change the
+                # agent's instructions and invalidate the comparison.
+                for msg in k.get("messages") or []:
+                    if isinstance(msg, dict) and msg.get("role") == "developer":
+                        msg["role"] = "system"
+
+                # Some served models accept only one tool call per turn.
+                # AgentDojo emits parallel calls by default. This is a serving
+                # constraint, not a modelling choice, and it does change agent
+                # behaviour (sequential rather than batched tool use), so any
+                # rung that needs it must say so in its published result.
+                # Reasoning models spend the completion budget on reasoning
+                # tokens before emitting anything. grok-4 with AgentDojo's
+                # default max_tokens returns finish_reason=length,
+                # completion_tokens=0, and an empty message — which AgentDojo
+                # surfaces as a failed turn. Left alone that reads as the model
+                # being bad at the task, and would be published as such. Raise
+                # the floor so the visible answer has room after the thinking.
+                floor = int(os.environ.get("OPENAI_COMPAT_MIN_MAX_TOKENS", "0") or 0)
+                if floor and (k.get("max_tokens") or 0) < floor:
+                    k["max_tokens"] = floor
+
+                no_parallel = os.environ.get("OPENAI_COMPAT_NO_PARALLEL_TOOLS") == "1"
+                if no_parallel and k.get("tools"):
+                    k["parallel_tool_calls"] = False
+
+                # Empty text parts. When the model answers with tool calls and
+                # no prose, AgentDojo serializes content as
+                # [{"type": "text", "text": ""}]. Foundry's validator rejects an
+                # empty text part outright (422). Drop the empty parts, and
+                # collapse a list that becomes empty to None, which is what an
+                # assistant message carrying only tool calls should look like.
+                for msg in k.get("messages") or []:
+                    if not isinstance(msg, dict):
+                        continue
+                    content = msg.get("content")
+                    if isinstance(content, list):
+                        kept = [
+                            part for part in content
+                            if not (isinstance(part, dict)
+                                    and part.get("type") == "text"
+                                    and not (part.get("text") or "").strip())
+                        ]
+                        msg["content"] = kept or (None if msg.get("tool_calls") else "")
+
+                resp = _orig(*a, **k)
+
+                # Llama's Foundry serving ignores parallel_tool_calls=False and
+                # still returns several calls, then rejects the next request
+                # because the history now contains a multi-call assistant turn.
+                # Truncating the response keeps the history valid and turns
+                # batched tool use into sequential tool use: the dropped calls
+                # are not lost, the model reissues them on the following turn.
+                if no_parallel:
+                    for choice in getattr(resp, "choices", []) or []:
+                        calls = getattr(choice.message, "tool_calls", None)
+                        if calls and len(calls) > 1:
+                            choice.message.tool_calls = calls[:1]
+                return resp
 
             client.chat.completions.create = _create
             return client

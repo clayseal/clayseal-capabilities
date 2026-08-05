@@ -15,9 +15,15 @@
 #                 Kept precisely BECAUSE it is easy to inject: a defense that
 #                 only works on a model that already resists injection has
 #                 proven nothing.
-#   llama-3.3-70b open weights, Azure AI Foundry. The representative case —
+#   llama-4-maverick  open weights, Azure AI Foundry. The representative case,
 #                 what a company actually self-hosts.
 #   grok-4        Azure AI Foundry. The strong-model end of the ladder.
+#
+# Llama-3.3-70B was the first choice and is NOT usable here: Foundry's serving
+# of it rejects any request defining more than one tool (verified directly, not
+# inferred from a failure), and AgentDojo's banking suite defines eight. That is
+# a serving limitation rather than a model one, and no client-side shim can work
+# around it. Llama-4-Maverick passes the same probe cleanly.
 #
 # Costs real money and takes real time. Every run writes its provider line and
 # model label into the output so a result can never be attributed to the wrong
@@ -42,13 +48,17 @@ FOUNDRY_KEY="$(az cognitiveservices account keys list -n clayseal-foundry \
 AGENTDOJO_ID="gpt-4o-mini-2024-07-18"
 
 run_one() {
-  local label="$1" base="$2" key="$3" model="$4"
+  local label="$1" base="$2" key="$3" model="$4" no_parallel="${5:-0}" min_tokens="${6:-0}"
   echo "############ ${label} — ${SUITE}, n_user=${N_USER}"
   if [ -n "${base}" ]; then
     export OPENAI_COMPAT_BASE_URL="${base}" OPENAI_COMPAT_KEY="${key}" \
-           OPENAI_COMPAT_MODEL="${model}" OPENAI_COMPAT_LABEL="${label}"
+           OPENAI_COMPAT_MODEL="${model}" OPENAI_COMPAT_LABEL="${label}" \
+           OPENAI_COMPAT_NO_PARALLEL_TOOLS="${no_parallel}" \
+           OPENAI_COMPAT_MIN_MAX_TOKENS="${min_tokens}"
   else
-    unset OPENAI_COMPAT_BASE_URL OPENAI_COMPAT_KEY OPENAI_COMPAT_MODEL OPENAI_COMPAT_LABEL
+    unset OPENAI_COMPAT_BASE_URL OPENAI_COMPAT_KEY OPENAI_COMPAT_MODEL \
+          OPENAI_COMPAT_LABEL OPENAI_COMPAT_NO_PARALLEL_TOOLS \
+          OPENAI_COMPAT_MIN_MAX_TOKENS
   fi
   "${PY}" -m benchmarks.live.diagnose_methodology \
     --suite "${SUITE}" --model "${AGENTDOJO_ID}" --n-user "${N_USER}" \
@@ -63,9 +73,12 @@ export OPENAI_API_KEY="${OPENAI_API_KEY:-$(cat ~/.openai_api_key)}"
 # silently make the "gpt-4o-mini" rung a gpt-5-mini run.
 unset AZURE_OPENAI_ENDPOINT AZURE_OPENAI_KEY AZURE_OPENAI_API_KEY || true
 
-run_one "gpt-4o-mini"   ""               ""                "" || true
-run_one "llama-3.3-70b" "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "llama-3.3-70b" || true
-run_one "grok-4"        "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "grok-4" || true
+run_one "gpt-4o-mini"      ""                ""               ""                 0 || true
+run_one "llama-4-maverick" "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "llama-4-maverick" 0 || true
+# grok-4 is a reasoning model: it spends the completion budget thinking before
+# it emits anything, so it needs a much higher token floor or every turn comes
+# back empty and reads as task failure.
+run_one "grok-4"           "${FOUNDRY_BASE}" "${FOUNDRY_KEY}" "grok-4"           0 16000 || true
 
 echo
 echo "Traces in ${OUT}/. Summarize with:"
