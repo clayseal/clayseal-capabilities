@@ -5,9 +5,41 @@ what it costs a real agent doing real work. It is the tier
 [docs/methodology_audit.md](../../docs/methodology_audit.md) has been asking for
 since it was written, and running it changed the headline.
 
-Suite: AgentDojo banking, 8 clean user tasks, paired per task under `none` and
-under each ablation. Reproduce with `benchmarks/live/run_model_ladder.sh banking 8`
-then `python -m benchmarks.live.summarize_ladder --suite banking`.
+All four AgentDojo suites, 8 clean user tasks each, paired per task under `none`
+and under each ablation. Reproduce with
+`benchmarks/live/run_model_ladder.sh <suite> 8` then
+`python -m benchmarks.live.summarize_ladder --suite <suite>`.
+
+## Pooled across all four suites, gpt-4o-mini (n=32 clean tasks)
+
+Baseline with no defense: **84.4%** (27/32) [68.2, 93.1].
+
+| Ablation | Autonomous | Supervised | False-block | Endorsements/task | Utility cost |
+| --- | --- | --- | --- | --- | --- |
+| envelope | 59.4% [42.3, 74.5] | 62.5% [45.3, 77.1] | 12.5% [5.0, 28.1] | 0.03 | −21.9 pts |
+| envelope-taint | 62.5% [45.3, 77.1] | 65.6% [48.3, 79.6] | 18.8% [8.9, 35.3] | 0.03 | −18.8 pts |
+| oracle-envelope-egress | 78.1% [61.2, 89.0] | **84.4%** [68.2, 93.1] | 3.1% [0.6, 15.7] | **0.72** | **0.0 pts** |
+
+**This is directly comparable to CaMeL, and the coincidence of baselines makes it
+unusually clean.** CaMeL reports 77% task completion against an 84% undefended
+baseline. Our undefended baseline here is 84.4% and our oracle path completes
+78.1% autonomously. Same baseline, same utility, to within a point on both axes,
+while [head_to_head_injection.md](head_to_head_injection.md) holds ASR at 0%
+where Progent leaves 11 to 17%.
+
+Two things stop that being the headline, and both belong in the same breath:
+
+1. **The oracle path is a ceiling, not a product.** It seeds the trusted
+   destination set from ground truth. The deployable paths cost 18.8 to 21.9
+   points, which is roughly three times CaMeL's 7-point cost. Closing that gap
+   is item 1 of [docs/improvements.md](../../docs/improvements.md), and it is now
+   quantified against a comparable baseline rather than asserted.
+2. **The oracle reaches parity by asking.** 0.72 endorsements per task, against
+   0.03 for the deployable paths, a factor of twenty-four. Supervised utility of
+   84.4% means "as good as no defense, if a human answers roughly one prompt per
+   task". That is a real deployment posture and a defensible one, but it is not
+   the same product as an autonomous agent, and quoting the 84.4% without the
+   0.72 would be misleading.
 
 ## The correction
 
@@ -86,21 +118,23 @@ This is the case that justifies pairing. Naive methodology would compare 25%
 here against 50% on gpt-4o-mini and conclude the defense costs more on open
 weights. It costs nothing; the model is weaker at banking.
 
-## Taint across three suites: net positive, with one specific failure mode
+## Taint across four suites: net positive, with one specific failure mode
 
 The single most useful thing this tier produced. `envelope-taint` was built to
 recover the utility that goal-text-only provenance costs, and one suite cannot
 tell you whether it works.
 
-| Suite | Baseline | `envelope` denies | `envelope-taint` denies | Verdict |
-| --- | --: | --: | --: | --- |
-| banking | 5/8 | 2 | **1** | helps |
-| travel | 8/8 | 3 | **1** | helps, +25 pts utility |
-| slack | 7/8 | 0 | **10** | breaks |
+| Suite | Baseline | `envelope` denies | `envelope-taint` denies | Autonomous utility | Verdict |
+| --- | --: | --: | --: | --- | --- |
+| banking | 5/8 | 2 | **1** | 37.5% -> 37.5% | helps |
+| travel | 8/8 | 3 | **1** | 50.0% -> **75.0%** | helps |
+| workspace | 7/8 | 1 | 1 | 62.5% -> **87.5%** | helps |
+| slack | 7/8 | 0 | **10** | 87.5% -> **50.0%** | breaks |
 
-On travel it is the clearest win in the whole tier: autonomous utility 50% to
-75%, false-block 25% to 12.5%, hard denies 3 to 1. On banking it halves denies.
-On slack it manufactures ten denies where the plain envelope has none.
+Positive on three suites of four. On travel and workspace it adds 25 points of
+autonomous utility, and on workspace it reaches the undefended baseline exactly
+with zero agent-caused losses left. On banking it halves denies. On slack it
+manufactures ten denies where the plain envelope has none.
 
 So taint is not broken, and it is not ready. It has **one diagnosable failure
 mode**, and the fix is aimed at that rather than at the mechanism.
@@ -161,6 +195,25 @@ posts the best utility in the tier and asks for 1.25 human confirmations per
 task to get there. Ten step-ups across eight tasks is not a free defense, it is
 a defense with a person inside it.
 
+## workspace, gpt-4o-mini
+
+Baseline utility 7/8 (88%).
+
+| Ablation | Autonomous | Supervised | False-block | Endorsements/task | hard DENYs |
+| --- | --- | --- | --- | --- | --: |
+| envelope | 62.5% [30.6, 86.3] | 62.5% | 12.5% [2.2, 47.1] | 0.00 | 1 |
+| envelope-taint | **87.5%** [52.9, 97.8] | 87.5% | 12.5% [2.2, 47.1] | 0.00 | 1 |
+| oracle-envelope-egress | 87.5% [52.9, 97.8] | **100.0%** [67.6, 100.0] | **0.0%** | 0.25 | 0 |
+
+Taint reaches the undefended baseline here with zero remaining agent-caused
+losses, on the same denial count as the plain envelope: the one deny it still
+issues no longer lands on a task that would otherwise have succeeded.
+
+The oracle row posts 100% supervised utility, above the 88% baseline, which is
+not a paradox: a step-up that a human approves lets a task through that the
+undefended agent botched on its own. It is also the clearest case for reading
+that column with the endorsement rate attached.
+
 ## grok-4
 
 Blocked on upstream availability. The first attempt failed with a Foundry
@@ -172,7 +225,8 @@ on their side rather than a harness problem. Retry in progress.
 - **n=8.** Every interval spans 30 to 50 points. `envelope` at 37.5% and
   `oracle` at 50% overlap heavily and are not distinguished by this run. Nothing
   here resolves a difference smaller than about 25 points.
-- **One suite.** Banking only. The other three AgentDojo suites are unrun.
+- **One model for the four-suite result.** All four suites are gpt-4o-mini.
+  llama-4-maverick has banking only, grok-4 none.
 - **Clean tasks only.** This measures the cost of the defense, not its
   containment. ASR is measured separately in
   [head_to_head_injection.md](head_to_head_injection.md).
