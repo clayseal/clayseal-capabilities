@@ -4215,7 +4215,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 125,
+    "candidates_allowed_but_ineffective": 200,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4228,7 +4228,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 79,
+    "candidates_allowed_but_ineffective": 126,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4254,7 +4254,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 121,
+    "candidates_allowed_but_ineffective": 192,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4267,7 +4267,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 76,
+    "candidates_allowed_but_ineffective": 120,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4293,7 +4293,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 121,
+    "candidates_allowed_but_ineffective": 192,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4306,7 +4306,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 76,
+    "candidates_allowed_but_ineffective": 120,
     "escapes_by_round": {},
     "escapes": []
   }

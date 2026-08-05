@@ -35,6 +35,9 @@ cd "${ROOT}"
 PY="${ROOT}/.venv-h2h/bin/python"   # AgentDojo needs py3.12
 SUITE="${1:-banking}"
 N_USER="${2:-8}"
+# Optional comma-separated filter, so a single rung can be retried after an
+# upstream failure without paying for the whole ladder again.
+ONLY="${3:-}"
 OUT="benchmarks/results/model-ladder"
 mkdir -p "${OUT}"
 
@@ -49,6 +52,10 @@ AGENTDOJO_ID="gpt-4o-mini-2024-07-18"
 
 run_one() {
   local label="$1" base="$2" key="$3" model="$4" no_parallel="${5:-0}" min_tokens="${6:-0}"
+  if [ -n "${ONLY}" ] && [[ ",${ONLY}," != *",${label},"* ]]; then
+    echo "---- skipping ${label} (filtered)"
+    return 0
+  fi
   echo "############ ${label} — ${SUITE}, n_user=${N_USER}"
   if [ -n "${base}" ]; then
     export OPENAI_COMPAT_BASE_URL="${base}" OPENAI_COMPAT_KEY="${key}" \

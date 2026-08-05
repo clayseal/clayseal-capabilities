@@ -1,0 +1,56 @@
+[
+  {
+    "engine": "allow-all",
+    "trajectories": 40,
+    "detected": 0,
+    "detection_rate": 0.0,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  },
+  {
+    "engine": "tool-allowlist",
+    "trajectories": 40,
+    "detected": 0,
+    "detection_rate": 0.0,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  },
+  {
+    "engine": "capability-token",
+    "trajectories": 40,
+    "detected": 29,
+    "detection_rate": 0.725,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  },
+  {
+    "engine": "task-scope",
+    "trajectories": 40,
+    "detected": 30,
+    "detection_rate": 0.75,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  },
+  {
+    "engine": "task-scope+binding",
+    "trajectories": 40,
+    "detected": 40,
+    "detection_rate": 1.0,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  },
+  {
+    "engine": "task-scope+binding+budget",
+    "trajectories": 40,
+    "detected": 40,
+    "detection_rate": 1.0,
+    "benign_actions": 20000,
+    "false_alarms": 0,
+    "false_alarms_per_1k_actions": 0.0
+  }
+]

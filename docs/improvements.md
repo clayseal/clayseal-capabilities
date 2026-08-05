@@ -31,9 +31,28 @@ trusted if it is reachable from the sealed goal through a chain of calls whose
 own inputs were trusted, and untrusted the moment any link's input came from
 free-text content that entered after the seal.
 
-The distinction that makes it safe is the one `taint` already relies on:
-injections live in free text, legitimate values live in structured fields. The
-upgrade is to propagate that judgement across multiple hops instead of one.
+The distinction `taint` currently relies on is that injections live in free text
+and legitimate values live in structured fields. **The slack run shows that
+distinction is suite-specific and breaks.** See
+[results/live_ladder.md](../benchmarks/results/live_ladder.md): on slack, taint
+produces 10 hard denies and a 37.5% false-block rate where the plain envelope
+produces zero, because the destinations a benign task needs are discovered from
+message content. The user asks the agent to reply to whoever posted, or to open
+a page someone linked. Those never appear as literals in the sealed goal, and
+the widening rule refuses to read free text because that is where injections
+live.
+
+On this suite legitimate destinations and attacks arrive through the *same
+channel*, so no rule discriminating by field type can separate them. Banking
+hides this because IBANs come in structured fields, which is why the banking
+number alone would have shipped a regression.
+
+The upgrade is therefore not "propagate the same rule across more hops". It is
+to change the discriminator: judge the provenance of the **containing object**
+rather than the field. A name in a message from a channel the user's goal named
+is task-derived; the same name in a webpage fetched from an unrelated domain is
+not. That is a transitive trust judgement over the data-flow graph, which is
+what PAuth's operand binding expresses and what our one-hop widening cannot.
 
 **Measurement.** Clean utility at fixed 0% ASR, paired against `none` so only
 defense-caused losses count, on the model ladder. Target: within 10 points of
