@@ -86,7 +86,26 @@ This is the case that justifies pairing. Naive methodology would compare 25%
 here against 50% on gpt-4o-mini and conclude the defense costs more on open
 weights. It costs nothing; the model is weaker at banking.
 
-## slack, gpt-4o-mini: taint reverses sign
+## Taint across three suites: net positive, with one specific failure mode
+
+The single most useful thing this tier produced. `envelope-taint` was built to
+recover the utility that goal-text-only provenance costs, and one suite cannot
+tell you whether it works.
+
+| Suite | Baseline | `envelope` denies | `envelope-taint` denies | Verdict |
+| --- | --: | --: | --: | --- |
+| banking | 5/8 | 2 | **1** | helps |
+| travel | 8/8 | 3 | **1** | helps, +25 pts utility |
+| slack | 7/8 | 0 | **10** | breaks |
+
+On travel it is the clearest win in the whole tier: autonomous utility 50% to
+75%, false-block 25% to 12.5%, hard denies 3 to 1. On banking it halves denies.
+On slack it manufactures ten denies where the plain envelope has none.
+
+So taint is not broken, and it is not ready. It has **one diagnosable failure
+mode**, and the fix is aimed at that rather than at the mechanism.
+
+## slack, gpt-4o-mini: the failure mode
 
 Baseline utility 7/8 (88%).
 
@@ -96,10 +115,7 @@ Baseline utility 7/8 (88%).
 | envelope-taint | 50.0% [21.5, 78.5] | **37.5%** [13.7, 69.4] | 0.00 | 10 |
 | oracle-envelope-egress | 87.5% [52.9, 97.8] | 0.0% | 0.50 | 3 |
 
-On banking, taint halved hard denies. On slack it causes them: 10 denies and a
-37.5% false-block rate where the plain envelope has zero. **Taint is net
-negative here, and it should not ship on the strength of the banking number
-alone.**
+10 denies and a 37.5% false-block rate where the plain envelope has zero.
 
 The denial reasons say why, and the reason matters more than the number:
 
@@ -128,6 +144,22 @@ message from a channel the user's own goal named is task-derived; a name in a
 webpage fetched from an unrelated domain is not. That is a transitive trust
 judgement over the data-flow graph, which is what PAuth's operand binding does
 and what our current one-hop widening cannot express.
+
+## travel, gpt-4o-mini
+
+Baseline utility 8/8 (100%), the only suite where the agent is fully competent,
+which makes it the cleanest read on defense cost.
+
+| Ablation | Autonomous | False-block | Endorsements/task | hard DENYs |
+| --- | --- | --- | --- | --: |
+| envelope | 50.0% [21.5, 78.5] | 25.0% [7.1, 59.1] | 0.00 | 3 |
+| envelope-taint | 75.0% [40.9, 92.9] | 12.5% [2.2, 47.1] | 0.00 | 1 |
+| oracle-envelope-egress | 87.5% [52.9, 97.8] | 12.5% [2.2, 47.1] | **1.25** | 1 |
+
+The oracle row is the endorsement metric earning its place a second time: it
+posts the best utility in the tier and asks for 1.25 human confirmations per
+task to get there. Ten step-ups across eight tasks is not a free defense, it is
+a defense with a person inside it.
 
 ## grok-4
 
