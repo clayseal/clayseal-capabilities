@@ -83,6 +83,75 @@ def run_leaderboard(
     return boards
 
 
+def run_leaderboard_multiseed(
+    benign_tasks: list[BenchmarkTask],
+    *,
+    engines: list[DecisionEngine] | None = None,
+    classes: list[str] | None = None,
+    seeds: list[int],
+) -> dict[str, dict[str, "SeedSpread"]]:
+    """The leaderboard over several synthesis seeds.
+
+    The attack variants are drawn from a seeded RNG, so a one-seed table is a
+    single draw from the attack distribution reported as if it were the
+    distribution. Where an engine's containment is a structural property the
+    spread will be zero and the table says so; where it is luck of the draw,
+    the spread is the honest headline.
+    """
+    from benchmarks.core.stats import SeedSpread
+
+    per_seed: list[dict[str, EngineBoard]] = [
+        run_leaderboard(benign_tasks, engines=engines, classes=classes, seed=s) for s in seeds
+    ]
+    selected = classes or list(ATTACK_CLASSES)
+    out: dict[str, dict[str, SeedSpread]] = {}
+    for engine_name in per_seed[0]:
+        metrics = {
+            "overall": SeedSpread(tuple(b[engine_name].overall_containment for b in per_seed), "overall"),
+            "false-block": SeedSpread(tuple(b[engine_name].false_block_rate for b in per_seed), "false-block"),
+        }
+        for cls in selected:
+            metrics[cls] = SeedSpread(
+                tuple(b[engine_name].per_class[cls].rate for b in per_seed), cls
+            )
+        out[engine_name] = metrics
+    return out
+
+
+def render_multiseed_markdown(
+    spreads: dict[str, dict[str, "SeedSpread"]],
+    classes: list[str],
+    seeds: list[int],
+) -> str:
+    """Mean across seeds, with the spread attached wherever it is non-zero.
+
+    A cell reading plain `100%` is stable across every seed. A cell reading
+    `62% ±9` moved, and no single-seed comparison inside that band should be
+    read as a result.
+    """
+    header = ["Engine", "Overall", "False-block"] + [c.replace("-", "‑") for c in classes]
+    lines = ["| " + " | ".join(header) + " |",
+             "| " + " | ".join("---" for _ in header) + " |"]
+
+    def cell(spread) -> str:
+        if spread.stdev < 0.005:
+            return f"{spread.mean:.0%}"
+        return f"{spread.mean:.0%} ±{spread.stdev:.0%}"
+
+    for engine_name, metrics in spreads.items():
+        row = [engine_name, cell(metrics["overall"]), cell(metrics["false-block"])]
+        row += [cell(metrics[c]) for c in classes]
+        lines.append("| " + " | ".join(row) + " |")
+    lines += [
+        "",
+        f"Mean over {len(seeds)} synthesis seeds ({min(seeds)}..{max(seeds)}); `±` is the "
+        "standard deviation across seeds, omitted below 0.5 points. A cell with no `±` was "
+        "identical on every seed, which is the signature of a structural result rather than "
+        "a lucky draw.",
+    ]
+    return "\n".join(lines)
+
+
 def render_markdown(boards: dict[str, EngineBoard], classes: list[str]) -> str:
     header = ["Engine", "Overall", "False-block"] + [c.replace("-", "‑") for c in classes]
     lines = ["| " + " | ".join(header) + " |",

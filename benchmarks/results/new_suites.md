@@ -139,11 +139,16 @@ and denied by `capability-token`.
 This contradicts the invariant in `benchmarks/README.md` ("on a sound system
 containment is monotone up the ladder"). It was not visible before because the
 fixture is the only other path-scoped corpus and it contains no
-connector-substitution case. It is **not fixed here** — the fix belongs in
-`core/task_scope.py` or the engine, and would move numbers across the whole
-repo. Recommended: have the human-authorization schema carry an optional
-resource list, or make `TaskScopeEngine` compose the capability check rather
-than replace it.
+connector-substitution case.
+
+**Fixed** (see [rigor_pass.md](rigor_pass.md)) by the second option:
+`TaskScopeEngine` now composes the capability check rather than replacing it.
+`connector-substitution` goes 0% to 100% at that rung with false-block
+unchanged at 0%, and overall containment moves 89% to 92% and 95% to 97%. The
+leaderboard tables above predate the fix; regenerate with
+`benchmarks/run_all.sh`. Monotonicity is now a per-event test over every corpus
+rather than a claim in a README, and the same pass found two exploitable path
+bypasses that no static corpus here had surfaced.
 
 ## Reproduce
 

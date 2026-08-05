@@ -35,6 +35,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
                         help="detector mode: sequence scorer")
     parser.add_argument("--model-dir", type=Path, default=None,
                         help="detector mode: trained transformer checkpoint dir")
+    parser.add_argument("--ci", action="store_true",
+                        help="report task-clustered bootstrap confidence intervals on every rate")
+    parser.add_argument("--level", type=float, default=0.95,
+                        help="confidence level for --ci")
     parser.add_argument("--alpha", type=float, default=0.05,
                         help="detector mode: conformal false-alarm budget")
     return parser.parse_args(argv)
@@ -112,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     n_benign = sum(t.counts()[0] for t in tasks)
     n_attack = sum(t.counts()[1] for t in tasks)
     title = f"{args.title} — {args.dataset} ({len(tasks)} tasks, {n_benign} benign / {n_attack} attack events)"
-    print(render_markdown(results, title=title))
+    print(render_markdown(results, title=title, ci=args.ci, level=args.level))
 
     if args.json:
         args.json.write_text(render_json(results))

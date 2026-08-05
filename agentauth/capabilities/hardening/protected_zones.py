@@ -26,11 +26,33 @@ DEFAULT_PROTECTED_PATTERNS: tuple[str, ...] = (
     ".git/*", "**/.git/**",
     "etc/shadow", "etc/passwd", "**/.netrc", "**/.npmrc", "**/.pypirc",
     "**/*token*", "**/*secret*", "**/*password*", "**/*api_key*",
+    # Procfs re-entry. `/proc/self/root` is the process's own root directory, so
+    # any path under it addresses the whole filesystem again with a prefix no
+    # deny-list entry above would recognize. `/proc/<pid>/environ` and `mem`
+    # hand over another process's environment and memory directly. Found by the
+    # adaptive red-team harness, which reached /etc/passwd through
+    # /proc/self/root/etc/passwd while every pattern above matched nothing.
+    "proc/*/root/**", "proc/self/root/**",
+    "proc/*/environ", "proc/self/environ",
+    "proc/*/mem", "proc/self/mem",
+    "proc/*/cmdline", "proc/self/cmdline",
 )
 
 
 def _normalize(path: str) -> str:
-    return path.strip().lstrip("./").lstrip("/").lower()
+    """Canonicalize before matching.
+
+    Resolving ``..`` first is not optional: a deny-list that matches raw strings
+    is bypassed by ``/app/../etc/passwd``, which no pattern above matches and
+    which opens ``/etc/passwd``. This module's whole purpose is to be the check
+    that cannot be widened by anything the agent influences, and an unresolved
+    path is exactly such a widening. Same fix, and same reasoning, as
+    ``agentauth.core.task_scope.normalize_scope_path``.
+    """
+    from agentauth.core.task_scope import normalize_scope_path
+
+    resolved = normalize_scope_path(path.strip())
+    return resolved.lstrip("/").lower()
 
 
 def is_protected_path(
@@ -45,7 +67,26 @@ def is_protected_path(
     norm = _normalize(path)
     if allow_exceptions and (path in allow_exceptions or norm in {_normalize(a) for a in allow_exceptions}):
         return False
-    return any(fnmatch.fnmatchcase(norm, _normalize(pat)) for pat in patterns)
+
+    # Match the resolved form AND the literal form. Lexical resolution is
+    # unsound wherever a component is a symlink: `/proc/self/root` links to
+    # `/`, so `/proc/self/root/app/../../etc/passwd` resolves lexically to
+    # `/proc/self/etc/passwd` (which matches nothing) while the kernel opens
+    # `/etc/passwd`. Popping a symlinked component is simply the wrong
+    # operation, and no string function can know which components are links.
+    #
+    # For a deny-list, testing both forms is always safe: it can only deny
+    # more, never less, and a false deny here costs one explicit exception
+    # while a false allow costs the credential store. The allow-side check in
+    # core.task_scope cannot use this trick, which is why symlink containment
+    # ultimately belongs at the syscall boundary where paths are resolved for
+    # real.
+    literal = path.strip().lstrip("/").lower()
+    return any(
+        fnmatch.fnmatchcase(candidate, _normalize(pat))
+        for pat in patterns
+        for candidate in ({norm, literal})
+    )
 
 
 def protected_reason(path: str, **kwargs) -> str | None:

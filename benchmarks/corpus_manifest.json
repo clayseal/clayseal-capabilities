@@ -1,0 +1,18 @@
+{
+  "ASB": {
+    "sha256": "7328f14b8f719e05aff3528173c78f063229d8fca816309fdb1f67607a3d2b54",
+    "files": 3
+  },
+  "AgentHarm": {
+    "sha256": "1cfccf80cb84bd263c1eb3b8f386cf7c88eec8d1ed4937d16daee40adef4ed58",
+    "files": 4
+  },
+  "RedCode": {
+    "sha256": "45bf67a42c19a7ac37ef1c990e0f3d626ef33ea7381230feaee90fc3ce2d4427",
+    "files": 211
+  },
+  "bfcl": {
+    "sha256": "809d557dd2c96ea4d395d94f5b4eb80d3bc6e97145908549adaae04da9c60bb0",
+    "files": 5
+  }
+}
