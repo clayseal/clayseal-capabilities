@@ -5,12 +5,28 @@ value, not by ease. Each item states the evidence, the mechanism, and the
 measurement that would prove it worked.
 
 The headline: **our security is done and our utility is not.** Across every live
-result we hold ASR at 0%, matching or beating every published defense. We pay
-for it with a utility cost far above the state of the art. CaMeL reports 77% task
-completion against an 84% undefended baseline, a 7-point cost. Our deployable
-provenance path reports 16.7% against a 50% baseline on banking, a 33-point cost
-on a much lower base. That gap is the product problem, and it is where the
-remaining work should go.
+result we hold ASR at 0%, matching or beating every published defense. The
+utility cost is where the work remains, and the paired four-suite run
+([results/live_ladder.md](../benchmarks/results/live_ladder.md)) sizes it
+properly for the first time:
+
+| | utility | baseline | cost |
+| --- | --- | --- | --- |
+| CaMeL (published) | 77% | 84% | 7 pts |
+| ours, oracle ceiling | 78.1% | 84.4% | 6.3 pts |
+| ours, deployable | 59-63% | 84.4% | **19-22 pts** |
+
+The ceiling already matches CaMeL on a near-identical baseline, so the
+mechanism is not the problem. The gap is entirely between our *deployable*
+provenance path and our own oracle, and that gap is roughly three times CaMeL's
+total cost. Closing it is item 1 below.
+
+Two qualifiers, both of which cut against us and both of which belong here:
+the oracle path reaches its number partly by asking (0.72 endorsements per task
+against 0.03 for the deployable paths), and the whole table is gpt-4o-mini. On
+stronger models the deployable envelope is much cheaper already, free on two of
+three suites for grok-4-1-fast, which suggests part of what we have been
+measuring as defense cost is weak-agent cost.
 
 ## 1. Provenance closure over trusted data flow (utility)
 
