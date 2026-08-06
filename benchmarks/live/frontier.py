@@ -60,6 +60,33 @@ _LINE = re.compile(
 )
 
 
+def pool(runs: list[list[dict]]) -> list[dict]:
+    """Average repeated sweeps per configuration and record the spread.
+
+    A frontier drawn from one sweep is a frontier drawn from one draw. At
+    n=18 per cell, identical configurations have produced utility figures 25
+    points apart, which is wider than most of the gaps the chart is used to
+    judge. Repeating the whole sweep and pooling is the only thing that makes a
+    dominance call trustworthy, because dominance is a comparison of small
+    differences by construction.
+    """
+    by_config: dict[str, list[dict]] = {}
+    for run in runs:
+        for pt in run:
+            by_config.setdefault(pt["config"], []).append(pt)
+
+    pooled = []
+    for config, pts in by_config.items():
+        n = len(pts)
+        entry = {"config": config, "repeats": n}
+        for key in ("asr", "clean_utility", "utility_under_attack", "friction"):
+            values = [p[key] for p in pts]
+            entry[key] = sum(values) / n
+            entry[f"{key}_spread"] = (max(values) - min(values)) if n > 1 else 0.0
+        pooled.append(entry)
+    return pooled
+
+
 def run_sweep(suite: str, model: str, n_user: int, n_inj: int,
               configs: list[str], attack: str) -> list[dict]:
     import os
@@ -167,6 +194,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--n-inj", type=int, default=3)
     p.add_argument("--attack", default="important_instructions")
     p.add_argument("--configs", default=",".join(DEFAULT_CONFIGS))
+    p.add_argument("--repeats", type=int, default=1,
+                   help="repeat the whole sweep and pool; dominance calls compare "
+                        "small differences, so one draw is rarely enough")
     p.add_argument("--json", type=Path, default=None)
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
 
@@ -174,10 +204,17 @@ def main(argv: list[str] | None = None) -> int:
     print(f"# Safety/usefulness frontier — {args.suite}, {args.model}, "
           f"{args.n_user}x{args.n_inj} runs per config\n", flush=True)
 
-    points = run_sweep(args.suite, args.model, args.n_user, args.n_inj, configs, args.attack)
-    if not points:
+    runs = []
+    for i in range(args.repeats):
+        run = run_sweep(args.suite, args.model, args.n_user, args.n_inj, configs, args.attack)
+        if run:
+            runs.append(run)
+        if args.repeats > 1:
+            print(f"  sweep {i + 1}/{args.repeats} done", file=sys.stderr)
+    if not runs:
         print("no points collected", file=sys.stderr)
         return 2
+    points = pool(runs) if args.repeats > 1 else runs[0]
     points = mark_dominated(points)
 
     print("| Configuration | ASR | clean utility | utility under attack | friction/task | |")
@@ -185,10 +222,20 @@ def main(argv: list[str] | None = None) -> int:
     for pt in points:
         flag = "dominated" if pt["dominated_by"] else "**frontier**"
         note = f" (by {pt['dominated_by']})" if pt["dominated_by"] else ""
+        spread = ""
+        if pt.get("repeats", 1) > 1:
+            spread = (f" ±{pt['asr_spread']:.0%}/±{pt['clean_utility_spread']:.0%}")
         print(f"| {pt['config']} | {pt['asr']:.1%} | {pt['clean_utility']:.1%} | "
-              f"{pt['utility_under_attack']:.1%} | {pt['friction']:.2f} | {flag}{note} |")
+              f"{pt['utility_under_attack']:.1%} | {pt['friction']:.2f} | {flag}{note}{spread} |")
 
     print("\n```\n" + plot(points) + "\n```\n")
+
+    if points and points[0].get("repeats", 1) > 1:
+        worst = max(p["clean_utility_spread"] for p in points)
+        print(f"\nPooled over {points[0]['repeats']} sweeps. Widest run-to-run utility "
+              f"spread: **{worst:.0%}**. A dominance call resting on a difference "
+              "narrower than that is not supported by this data, however the table "
+              "orders itself.\n")
 
     frontier = [pt for pt in points if not pt["dominated_by"]]
     print(f"{len(frontier)} of {len(points)} configurations are on the frontier. "
