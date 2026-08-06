@@ -136,6 +136,11 @@ class SessionBroker:
     # floor was not already catching, which is a claim to verify by measurement
     # rather than assert — see benchmarks/results/deferred_envelope.md.
     defer_to_binding: bool = False
+    # The stronger form: for an action whose destination the floor positively
+    # validated, allow rather than step up. Separate flag because it is a real
+    # relaxation and has to earn its place against a measured ASR, not against
+    # the argument that it ought to be safe.
+    defer_allows_bound: bool = False
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
     receipt_sink: Callable[[dict[str, Any]], None] | None = None
@@ -308,6 +313,25 @@ class SessionBroker:
                     # halts, so an attacker gains nothing, and the benign case
                     # becomes recoverable instead of a hard loss.
                     if self.defer_to_binding and self._destination_bound:
+                        # Two tiers, because the evidence comes in two strengths.
+                        #
+                        # If the floor positively VALIDATED a destination on this
+                        # action, the strongest thing an attacker needs (an
+                        # address of their own) has already been denied to them,
+                        # and a plan miss is then almost certainly the planner
+                        # failing to enumerate a legitimate step. Allow it.
+                        #
+                        # If the action carried no destination at all, the floor
+                        # had no opinion on it. That is not evidence of anything,
+                        # so it steps up rather than passing: still no hard loss,
+                        # still no silent execution of something unvouched-for.
+                        if (self.defer_allows_bound
+                                and self.egress is not None
+                                and self.egress.binds(action.resource, action.args)):
+                            return self._finalize(
+                                action, Outcome.ALLOW, "intent-envelope",
+                                (reason, "off-plan; destination validated by binding floor"),
+                                None, is_write, start)
                         request = build_step_up_request(
                             request_id=str(uuid4()), query_id=self.goal.query_id,
                             resource_ref=action.resource, operation=action.verb,
