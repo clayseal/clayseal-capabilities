@@ -92,6 +92,41 @@ Caveats, all of which matter: n=18, one suite, one attack, one model.
 Validation runs on travel, workspace, and slack are in flight, and the result
 should not be quoted until they agree.
 
+### The gain is scoped to destination-carrying tools
+
+Travel, three repeats, n=8 each:
+
+| Ablation | pooled autonomous | per-run | hard DENYs | step-ups |
+| --- | --- | --- | --: | --: |
+| `envelope-taint` | 75.0% [55.1, 88.0] | 75%, 75%, 75% | 4 | 0 |
+| `envelope-taint-deferallow` | 66.7% [46.7, 82.0] | 75%, 62%, 62% | **1** | 10 |
+
+**No autonomous gain on travel**, and the reason is the two-tier rule working as
+designed rather than failing. Banking's denials land on `send_money`, which
+carries a recipient, so the floor validated it and the action is allowed.
+Travel's land on `reserve_hotel` and `create_calendar_event`, which carry no
+external destination, so the floor never examined them and they step up instead.
+
+Hard denials still fall 4 to 1, so the loss becomes recoverable. But the
+headline banking result is **specific to tools whose actions carry a destination
+the binding floor can vouch for**, and quoting it as a general utility recovery
+would overstate it.
+
+## What repetition says about every number here
+
+The same three repeats give the variance answer. Within this experiment the
+widest run-to-run spread was 12 points, and `envelope-taint` was perfectly
+stable at 75%, 75%, 75%.
+
+That is *narrower* than the 25-point swing seen earlier in the day, when the
+same configuration on the same suite produced 50% and then 75%. Both
+observations are real, which is the point: run-to-run spread is itself unstable,
+so a single pair of runs cannot bound it. Treat differences under roughly 25
+points on these suites as unresolved unless repeats say otherwise, and prefer
+the action-level counts (hard denials, step-ups), which moved cleanly and in the
+predicted direction in every comparison here while the task-level percentages
+wandered.
+
 ## Two harness bugs found while measuring this
 
 Both would have published a fabricated improvement, and neither raised an error.

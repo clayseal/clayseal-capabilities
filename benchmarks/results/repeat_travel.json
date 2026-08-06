@@ -1,0 +1,38 @@
+{
+  "envelope-taint": {
+    "pooled": {
+      "point": 0.75,
+      "ci_low": 0.551,
+      "ci_high": 0.88,
+      "n": 24,
+      "level": 0.95,
+      "method": "wilson"
+    },
+    "per_run": [
+      0.75,
+      0.75,
+      0.75
+    ],
+    "spread": 0.0,
+    "hard_denies": 4,
+    "stepups": 0
+  },
+  "envelope-taint-deferallow": {
+    "pooled": {
+      "point": 0.6667,
+      "ci_low": 0.4671,
+      "ci_high": 0.8203,
+      "n": 24,
+      "level": 0.95,
+      "method": "wilson"
+    },
+    "per_run": [
+      0.75,
+      0.625,
+      0.625
+    ],
+    "spread": 0.125,
+    "hard_denies": 1,
+    "stepups": 10
+  }
+}
