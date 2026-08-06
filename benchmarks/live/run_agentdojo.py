@@ -231,9 +231,11 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
         taint = "taint" in ablation
         graduated = "graduated" in ablation
         defer = "defer" in ablation
+        defer_allow = "deferallow" in ablation
         harness = LiveBrokerHarness(mode=mode, planner=planner, recipient_map=rmap,
                                     provenance=provenance, taint=taint,
-                                    graduated=graduated, defer=defer)
+                                    graduated=graduated, defer=defer,
+                                    defer_allow=defer_allow)
         for e in pipe.elements:
             if isinstance(e, ToolsExecutionLoop):
                 e.elements = [BrokerToolsExecutor(harness) if isinstance(x, ToolsExecutor) else x

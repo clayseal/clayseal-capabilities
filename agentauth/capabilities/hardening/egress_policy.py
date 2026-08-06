@@ -94,6 +94,24 @@ class EgressPolicy:
         d = domain.lower()
         return any(d == a or d.endswith("." + a) for a in self.allowed_domains)
 
+    def binds(self, resource: str, args: dict) -> bool:
+        """Did this action actually carry a destination this policy validated?
+
+        ``check`` returns True both for "every destination was on the allow-list"
+        and for "there was no destination to check", and those are very different
+        pieces of evidence. A caller deciding how much to trust an action needs
+        to tell them apart: a transfer whose recipient matched the goal-derived
+        set has been positively vouched for, while a calendar-event creation has
+        simply not been examined by this policy at all.
+
+        Returns False under ``allow_all``, where nothing was really checked.
+        """
+        if self.allow_all:
+            return False
+        if any(True for _ in extract_destinations(resource, args)):
+            return True
+        return bool(self.bind_recipients and extract_recipients(args))
+
     def check(self, resource: str, args: dict) -> tuple[bool, str]:
         if self.allow_all:
             return True, "egress unrestricted"
