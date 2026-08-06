@@ -33,11 +33,32 @@ from benchmarks.live.summarize_ladder import summarize
 PY = str(Path(__file__).resolve().parent.parent.parent / ".venv-h2h" / "bin" / "python")
 
 
+def _env() -> dict:
+    """Credentials for the child, resolved here rather than assumed.
+
+    The first version inherited the caller's shell and every repeat failed with
+    'Missing credentials', wasting three full runs before reporting it. A
+    harness whose job is repetition should not depend on how it was invoked.
+    Azure is explicitly cleared for the same reason the ladder driver clears it:
+    the <azure-openai-resource> deployment is named gpt-4o-mini but serves gpt-5-mini.
+    """
+    import os
+
+    env = dict(os.environ)
+    if not env.get("OPENAI_API_KEY"):
+        key_file = Path.home() / ".openai_api_key"
+        if key_file.exists():
+            env["OPENAI_API_KEY"] = key_file.read_text().strip()
+    for var in ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_KEY", "AZURE_OPENAI_API_KEY"):
+        env.pop(var, None)
+    return env
+
+
 def one_run(suite: str, model: str, n_user: int, ablations: str, out: Path) -> dict:
     cmd = [PY, "-m", "benchmarks.live.diagnose_methodology",
            "--suite", suite, "--model", model, "--n-user", str(n_user),
            "--ablations", ablations, "--out", str(out)]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=_env())
     if proc.returncode != 0 or not out.exists():
         print(proc.stdout[-800:], file=sys.stderr)
         print(proc.stderr[-800:], file=sys.stderr)
