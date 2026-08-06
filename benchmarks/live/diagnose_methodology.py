@@ -60,8 +60,35 @@ def run(suite_name, model, n_user, ablations, out_path):
     recipient_map = _recipient_map(suite, user_ids)
     from benchmarks.live.run_agentdojo import OraclePlanner
     oracle_planner = OraclePlanner(oracle_map)
-    planners = {"envelope": llm_planner, "envelope-taint": llm_planner,
-                "oracle-envelope-egress": oracle_planner}
+    def planner_for(ablation: str):
+        """Pick a planner by SHAPE, not by exact name.
+
+        This was an exact-name dict, and adding an ablation without adding a key
+        silently produced `planner=None`, which builds no intent envelope at
+        all. The run then reports zero denials and full baseline utility — a
+        perfect score for a defense that was not running. It looked like a
+        50-point improvement.
+
+        Matching on shape means a new ablation gets the right planner by
+        default, and the failure mode becomes a wrong planner (loud, because the
+        numbers move the wrong way) rather than no defense (silent, and
+        flattering).
+        """
+        if ablation == "none":
+            return None
+        if "oracle" in ablation:
+            return oracle_planner
+        if "envelope" in ablation:
+            return llm_planner
+        return None
+
+    planners = {ab: planner_for(ab) for ab in ablations}
+    missing = [ab for ab in ablations if ab != "none" and planners[ab] is None]
+    if missing:
+        raise SystemExit(
+            f"no planner resolved for {missing}; these would run with no intent "
+            "envelope and report a defense that is not there"
+        )
 
     # per_task[query][ablation] = {"success": bool, "deny": [...], "stepup": [...]}
     per_task: dict = defaultdict(dict)

@@ -114,6 +114,28 @@ class SessionBroker:
     # send under supervision, which is the honest response to that ambiguity and
     # the desirable UX for a novel payee. Default off keeps the hard-deny.
     graduated: bool = False
+    # Defer to binding (opt-in): when the destination-binding floor is active and
+    # the action cleared it, treat an intent-envelope plan miss as a planner
+    # recall failure rather than as evidence of an attack.
+    #
+    # Why this is safe, and why it is worth doing. The floor runs first, so any
+    # action reaching the envelope is already in scope, within budget, and
+    # argument-bound, and under provenance/taint its destination traces to the
+    # sealed goal. The envelope's remaining objection is "the LLM planner did not
+    # list this step". That is a statement about the planner's recall, not about
+    # the action.
+    #
+    # It is also the single most expensive rule we run: across four models and
+    # four suites, `off-plan and consequential` accounts for 100% of the hard
+    # false blocks on the shippable path, and 10 of its 11 denials turned a task
+    # that would have succeeded into one that failed.
+    #
+    # The security argument is the provenance thesis restated: an injected step's
+    # destination is not in the sealed goal, so it never clears the binding floor
+    # and never reaches this gate. Deferring here therefore gives up nothing the
+    # floor was not already catching, which is a claim to verify by measurement
+    # rather than assert — see benchmarks/results/deferred_envelope.md.
+    defer_to_binding: bool = False
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
     receipt_sink: Callable[[dict[str, Any]], None] | None = None
@@ -167,6 +189,19 @@ class SessionBroker:
         inside it.
         """
         self._trajectory.context = [*self._trajectory.context, item]
+
+    @property
+    def _destination_bound(self) -> bool:
+        """Is an active destination-binding floor standing behind this decision?
+
+        Only true when an egress policy is configured, which is what makes
+        ``defer_to_binding`` conditional rather than a blanket relaxation. With
+        no egress policy the intent envelope is the only thing between an
+        injected send and the attacker's address, and deferring would hand the
+        attack through. With one, the destination has already been checked
+        against the goal-derived trusted set before this point.
+        """
+        return self.egress is not None
 
     # -- floor ---------------------------------------------------------------
     def _floor(self, action: Action) -> tuple[bool, str, dict, bool]:
@@ -267,6 +302,20 @@ class SessionBroker:
                 self._rollback(action, v_res, c_res)
                 self._record_triggers([f"intent: {reason}"])
                 if is_consequential(action):
+                    # A plan miss on an action the binding floor already cleared
+                    # is the planner failing to enumerate, not the agent going
+                    # rogue. Step up rather than deny: autonomous execution still
+                    # halts, so an attacker gains nothing, and the benign case
+                    # becomes recoverable instead of a hard loss.
+                    if self.defer_to_binding and self._destination_bound:
+                        request = build_step_up_request(
+                            request_id=str(uuid4()), query_id=self.goal.query_id,
+                            resource_ref=action.resource, operation=action.verb,
+                            violations=[reason])
+                        return self._finalize(
+                            action, Outcome.STEP_UP, "intent-envelope",
+                            (reason, "off-plan but destination-bound"), None,
+                            is_write, start, step_up=request, step_up_flag=True)
                     return self._finalize(action, Outcome.DENY, "intent-envelope",
                                           (reason, "off-plan and consequential"), None,
                                           is_write, start, blocked=True)
