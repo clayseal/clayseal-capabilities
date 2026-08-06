@@ -105,3 +105,34 @@ def test_plot_marks_overlapping_points():
     assert "same point" in out
     for name in ("a = a", "b = b", "c = c"):
         assert name in out
+
+
+def test_pool_averages_and_records_spread():
+    """Pooling must surface the spread, not hide it inside a mean.
+
+    A dominance call is a comparison of small differences, and at n=18 per cell
+    identical configurations have landed 25 points apart. A pooled mean without
+    its spread would make that invisible at exactly the moment it matters.
+    """
+    from benchmarks.live.frontier import pool
+
+    runs = [
+        [_pt("a", 0.0, 0.50, 1.0) | {"utility_under_attack": 0.3}],
+        [_pt("a", 0.2, 0.75, 1.0) | {"utility_under_attack": 0.3}],
+    ]
+    pooled = pool(runs)
+    assert len(pooled) == 1
+    entry = pooled[0]
+    assert entry["repeats"] == 2
+    assert entry["asr"] == 0.1
+    assert entry["asr_spread"] == 0.2
+    assert entry["clean_utility"] == 0.625
+    assert entry["clean_utility_spread"] == 0.25
+
+
+def test_pool_of_one_reports_zero_spread():
+    from benchmarks.live.frontier import pool
+
+    pooled = pool([[_pt("a", 0.1, 0.5, 0.2) | {"utility_under_attack": 0.4}]])
+    assert pooled[0]["repeats"] == 1
+    assert pooled[0]["asr_spread"] == 0.0
