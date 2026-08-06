@@ -125,12 +125,24 @@ def plot(points: list[dict], width: int = 46, height: int = 14) -> str:
     """
     grid = [[" "] * width for _ in range(height)]
     labels = {}
+    # Collisions matter here. Configurations that land on identical coordinates
+    # are the interesting ones — they are doing the same job by different means
+    # — and an earlier version silently overwrote them, so `envelope-taint`
+    # vanished behind `deferallow` and the plot showed 5 of 9 points with no
+    # indication that 4 were missing.
+    occupied: dict[tuple[int, int], list[str]] = {}
     for i, p in enumerate(points):
         x = min(width - 1, int((1 - p["asr"]) * (width - 1)))
         y = min(height - 1, int(p["clean_utility"] * (height - 1)))
         ch = chr(ord("a") + i) if i < 26 else "?"
-        grid[height - 1 - y][x] = ch
         labels[ch] = p["config"]
+        occupied.setdefault((x, y), []).append(ch)
+
+    overlaps = []
+    for (x, y), chars in occupied.items():
+        grid[height - 1 - y][x] = chars[0] if len(chars) == 1 else "*"
+        if len(chars) > 1:
+            overlaps.append("".join(chars))
 
     lines = ["  utility"]
     for row_i, row in enumerate(grid):
@@ -140,6 +152,10 @@ def plot(points: list[dict], width: int = 46, height: int = 14) -> str:
     lines.append("     0.0" + " " * (width - 14) + "safety (1-ASR) 1.0")
     lines.append("")
     lines += [f"  {ch} = {name}" for ch, name in labels.items()]
+    if overlaps:
+        lines.append("")
+        lines.append("  * = several configurations at the same point: "
+                     + "; ".join(overlaps))
     return "\n".join(lines)
 
 

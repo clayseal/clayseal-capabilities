@@ -90,3 +90,18 @@ def test_plot_renders_every_point():
     out = plot(points)
     assert "a = a" in out and "b = b" in out
     assert "utility" in out and "safety" in out
+
+
+def test_plot_marks_overlapping_points():
+    """Configurations landing on the same coordinates must not vanish.
+
+    The first version overwrote them silently: on banking that hid four of nine
+    points, including `envelope-taint` disappearing behind `deferallow`, which
+    is exactly the comparison a reader is there to make.
+    """
+    points = [_pt("a", 0.0, 0.5, 0.1), _pt("b", 0.0, 0.5, 0.9), _pt("c", 1.0, 0.0, 0.0)]
+    out = plot(points)
+    assert "*" in out
+    assert "same point" in out
+    for name in ("a = a", "b = b", "c = c"):
+        assert name in out
