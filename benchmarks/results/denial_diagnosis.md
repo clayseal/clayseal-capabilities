@@ -56,7 +56,37 @@ Raising autonomous utility means *allowing* the action rather than stepping it
 up. That is a real relaxation, so it had to be measured against attack before
 being claimed.
 
-## The measured answer: full baseline utility at unchanged ASR
+## RETRACTED: `deferallow` is not safe. Do not ship it.
+
+The banking result below held ASR at 0.0% and looked like the strongest win in
+the tier. **Validation on travel overturns it:**
+
+| Suite | `envelope-taint` ASR | `envelope-taint-deferallow` ASR |
+| --- | --: | --: |
+| banking | 0.0% | 0.0% |
+| **travel** | **5.6%** | **27.8%** |
+
+On travel, allowing the plan miss takes attack success from 5.6% to 27.8%, a
+five-fold increase, and drops blocks from 17 to 3. **The intent envelope's
+off-plan gate was doing real containment work on travel that the binding floor
+does not do.**
+
+So the reasoning that motivated the change — "an injected step's destination
+never clears the binding floor, so this gate catches nothing new" — is false in
+general. It happens to hold on banking, where the attack is a transfer to an
+attacker IBAN that egress binding rejects. It fails on travel, where the
+injected action reaches a destination the floor considers acceptable and only
+the plan-conformance check objects.
+
+The measurement that mattered was the one that could refute the claim, and the
+claim did not survive it. `defer_allows_bound` stays in the codebase as a
+measured negative result and defaults to off.
+
+The step-up variant (`defer_to_binding` alone) is unaffected by this: it never
+allows anything, it converts a hard denial into a halt-plus-question, and it
+held ASR at 0.0% on banking. That one remains viable.
+
+## The banking measurement (superseded by the above)
 
 `defer_allows_bound` allows the plan miss **only when the floor positively
 validated a destination on that action** (`EgressPolicy.binds`). An action
