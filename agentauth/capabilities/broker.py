@@ -137,9 +137,18 @@ class SessionBroker:
     # rather than assert — see benchmarks/results/deferred_envelope.md.
     defer_to_binding: bool = False
     # The stronger form: for an action whose destination the floor positively
-    # validated, allow rather than step up. Separate flag because it is a real
-    # relaxation and has to earn its place against a measured ASR, not against
-    # the argument that it ought to be safe.
+    # validated, allow rather than step up.
+    #
+    # MEASURED NEGATIVE RESULT — do not enable. The motivating argument was that
+    # an injected step's destination never clears the binding floor, so this gate
+    # catches nothing the floor missed. That holds on banking (ASR 0.0% with and
+    # without) and is FALSE on travel, where enabling it took ASR from 5.6% to
+    # 27.8% and dropped blocks from 17 to 3. The intent envelope's plan-
+    # conformance check does real containment work wherever the injected action
+    # reaches a destination the floor finds acceptable.
+    #
+    # Kept, defaulted off, and documented rather than deleted: the flag is how
+    # the result reproduces. See benchmarks/results/denial_diagnosis.md.
     defer_allows_bound: bool = False
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
