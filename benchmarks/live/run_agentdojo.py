@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import statistics
 import sys
 import time
@@ -232,10 +233,15 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
         graduated = "graduated" in ablation
         defer = "defer" in ablation
         defer_allow = "deferallow" in ablation
+        # "...-audit3" caps the session at 3 human interruptions. Sweeping this
+        # is what turns two operating points into a safety/usefulness curve.
+        m = re.search(r"audit(\d+)", ablation)
+        audit_budget = int(m.group(1)) if m else None
         harness = LiveBrokerHarness(mode=mode, planner=planner, recipient_map=rmap,
                                     provenance=provenance, taint=taint,
                                     graduated=graduated, defer=defer,
-                                    defer_allow=defer_allow)
+                                    defer_allow=defer_allow,
+                                    audit_budget=audit_budget)
         for e in pipe.elements:
             if isinstance(e, ToolsExecutionLoop):
                 e.elements = [BrokerToolsExecutor(harness) if isinstance(x, ToolsExecutor) else x
@@ -305,15 +311,26 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
     user_ids = list(suite.user_tasks)[:n_user]
     inj_ids = list(suite.injection_tasks)[:n_inj]
     oracle_planner = OraclePlanner(_oracle_map(suite, user_ids))
-    planners = {"floor": llm_planner, "envelope": llm_planner,
-                "envelope-provenance": llm_planner,
-                "envelope-taint": llm_planner,
-                "envelope-taint-graduated": llm_planner,
-                "envelope-taint-defer": llm_planner,
-                "envelope-provenance-defer": llm_planner,
-                "oracle": oracle_planner, "oracle-envelope": oracle_planner,
-                "oracle-egress": oracle_planner, "floor-egress": llm_planner,
-                "oracle-envelope-egress": oracle_planner}
+    def planner_for(ablation: str):
+        """Resolve by SHAPE, not by exact name.
+
+        This was an exact-name dict. The identical pattern in
+        diagnose_methodology silently produced `planner=None` for an unlisted
+        ablation, which builds NO intent envelope and reports a perfect score
+        for a defense that is not running. The frontier sweep generates ablation
+        names combinatorially, so an exact-name map here would fail the same way
+        on almost every new point.
+        """
+        if ablation == "none":
+            return None
+        if "oracle" in ablation:
+            return oracle_planner
+        return llm_planner
+
+    planners = {ab: planner_for(ab) for ab in ablations}
+    unresolved = [a for a in ablations if a != "none" and planners[a] is None]
+    if unresolved:
+        raise SystemExit(f"no planner for {unresolved}; they would run undefended")
     recipient_map = _recipient_map(suite, user_ids)
     print(f"suite={suite_name} model={model} attack={attack_name} | "
           f"{len(user_ids)} user x {len(inj_ids)} injection tasks = {len(user_ids)*len(inj_ids)} runs/ablation\n")
