@@ -69,7 +69,16 @@ the tier. **Validation on travel overturns it:**
 | slack | 0.0% | 0.0% |
 
 Final tally: two suites unaffected (banking, slack), two broken (travel,
-workspace). A change that is safe on half the suites and hands the attacker a
+workspace).
+
+**Update, and it weakens this evidence.** A later frontier sweep re-ran
+workspace `deferallow` under identical conditions and measured **0.0% ASR**, not
+27.8%. Same code, same suite, same model, same attack, n=18 both times. The
+retraction still stands on travel, which independently showed 5.6% to 27.8% and
+has not been contradicted, but the workspace half is now one result each way.
+See [frontier.md](frontier.md): ASR has run-to-run variance wide enough to flip
+a shipping decision, which we had wrongly assumed was a property of the utility
+axis only. A change that is safe on half the suites and hands the attacker a
 27.8% success rate on the other half is not a safe change, and the two suites
 where it looked fine are exactly the ones that would have been quoted.
 

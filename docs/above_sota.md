@@ -9,7 +9,7 @@ those two audiences want different evidence.
 
 | Axis | Us | Published SOTA | Verdict |
 | --- | --- | --- | --- |
-| ASR, deployable path | 0.0% on 3 of 4 suites, 5.6% travel | Progent 11-17%, CaMeL near-0 | **ahead of Progent, level with CaMeL** |
+| ASR, deployable path | 0.0% on 3 of 4 suites [0, 17.6] each, 5.6% travel | Progent 11-17%, CaMeL near-0 | ahead of Progent, level with CaMeL — **but see item 5** |
 | Utility cost, strong model | 3 pts (grok-4-1-fast, 81% baseline) | CaMeL 7 pts (84% baseline) | **ahead, n=32** |
 | Utility cost, weak model | 19-25 pts (gpt-4o-mini, gpt-oss) | CaMeL 7 pts on gpt-4o | **behind** |
 | Attention cost | 0.83-4.17 interruptions/task, now priced | not reported by anyone | **we are the only ones measuring it** |
@@ -77,8 +77,8 @@ score. Standards outlive scores.
 
 **One rule to publish with it:** a per-suite frontier is a per-suite
 recommendation. `deferallow` sits on the banking frontier and takes ASR to 27.8%
-on travel and workspace. The deployment decision is the intersection across
-suites, never the union.
+on travel. The deployment decision is the intersection across suites, never the
+union.
 
 ### 4. Evaluate against an escape-seeking adversary at the syscall boundary
 
@@ -96,9 +96,19 @@ to carry them but not a good place to stay.
 
 Everything above is gated on this. Today, at n=8-18 per cell:
 
-- identical configurations produced 50% and 75% on the same suite;
+- identical configurations produced 50% and 75% clean utility on the same suite;
+- **the same configuration produced 27.8% and 0.0% ASR on the same suite**, which
+  is wide enough to flip a shipping decision, and which we discovered only
+  because a later sweep happened to repeat a cell;
 - two claims died to single-suite and single-model artifacts;
 - two harness bugs reported perfect scores for defenses that were not running.
+
+The ASR variance is the one that should worry us most, because we had been
+treating that axis as solid. **Every 0% ASR in this repository comes from a
+single sweep**, and the Wilson upper bound on 0 of 18 is 17.6%. Pooling four
+suites brings it to 5.1%; twelve sweeps would bring it to 1.7%. Our headline
+security claim is currently supported to about one significant figure, and
+saying "0% ASR" without the interval overstates it.
 
 We are measurement-limited, not coverage-limited. Three seeds per cell and
 action-level scoring (denials and step-ups, which moved cleanly in every

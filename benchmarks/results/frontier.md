@@ -26,6 +26,57 @@ Three of nine configurations are on the frontier. Six are strictly worse than
 `envelope-taint` on all three axes at once, which is a useful thing to know
 about six configurations we have variously described as improvements.
 
+## workspace, same protocol
+
+| Configuration | ASR | clean utility | utility under attack | friction/task | |
+| --- | --: | --: | --: | --: | --- |
+| none | 83.3% | 100.0% | 27.8% | 0.00 | frontier (do-nothing corner) |
+| floor | 0.0% | 100.0% | 88.9% | 4.17 | dominated |
+| envelope | 0.0% | 100.0% | 88.9% | 4.50 | dominated |
+| **envelope-taint** | **0.0%** | **100.0%** | 83.3% | **1.50** | **frontier** |
+| envelope-taint-graduated | 0.0% | 100.0% | 94.4% | 6.00 | dominated |
+| envelope-taint-defer | 0.0% | 100.0% | 88.9% | 2.00 | dominated |
+| envelope-taint-deferallow | 0.0% | 100.0% | 88.9% | 2.33 | dominated |
+| ...-graduated-audit1 | 0.0% | 100.0% | 88.9% | 2.50 | dominated |
+| ...-graduated-audit3 | 0.0% | 100.0% | 88.9% | 4.17 | dominated |
+
+**This is the strongest single operating point in the repo: 0.0% ASR at 100%
+clean utility, matching the undefended baseline exactly, for 1.50 interruptions
+per task.** Attack success falls from 83.3% to zero and utility under attack
+rises from 27.8% to 83.3%, at no measured cost to clean work.
+
+Eight of nine configurations are dominated, and every one of them is dominated
+on the attention axis, since they all reach 0.0% ASR at 100% utility and differ
+only in how often they interrupt. Without that third axis this table would be
+eight-way tied and useless.
+
+## The variance finding, which cuts against our own retraction
+
+Compare `deferallow` on workspace across two runs of the same configuration:
+
+| Run | workspace `deferallow` ASR |
+| --- | --: |
+| validation sweep | **27.8%** |
+| frontier sweep | **0.0%** |
+
+Same code, same suite, same model, same attack, n=18 both times. **ASR itself
+has run-to-run variance wide enough to flip a shipping decision.**
+
+We had been treating utility as the noisy axis and ASR as solid. It is not. The
+`deferallow` retraction still stands, because travel independently showed 5.6%
+to 27.8% and nothing since has contradicted that, but the workspace half of the
+evidence is now one result for and one against. The retraction rests on travel
+alone.
+
+More importantly, this applies to **every 0% ASR in this repository**, including
+the ones we are proudest of. A single n=18 run showing 0.0% is consistent with a
+true rate meaningfully above zero. The Wilson upper bound on 0 of 18 is about
+18%, which is not a rounding error.
+
+The fix is the one already prioritised in [../../docs/above_sota.md](../../docs/above_sota.md):
+repeat every sweep and report the spread. `frontier.py --repeats N` now does
+this. No security claim should be published from a single sweep, ours included.
+
 ## What the curve says that a point could not
 
 **1. `envelope-taint` is the operating point to ship on this suite.** 0% ASR at
