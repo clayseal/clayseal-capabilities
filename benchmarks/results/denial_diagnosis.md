@@ -66,6 +66,12 @@ the tier. **Validation on travel overturns it:**
 | banking | 0.0% | 0.0% |
 | **travel** | **5.6%** | **27.8%** |
 | **workspace** | **0.0%** | **27.8%** |
+| slack | 0.0% | 0.0% |
+
+Final tally: two suites unaffected (banking, slack), two broken (travel,
+workspace). A change that is safe on half the suites and hands the attacker a
+27.8% success rate on the other half is not a safe change, and the two suites
+where it looked fine are exactly the ones that would have been quoted.
 
 On travel, allowing the plan miss takes attack success from 5.6% to 27.8% and
 drops blocks from 17 to 3. On workspace it takes ASR from **0.0% to 27.8%**, and
