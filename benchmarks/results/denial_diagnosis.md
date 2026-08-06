@@ -52,10 +52,45 @@ autonomous utility, and it did not.** It changes the *character* of the loss
 from unrecoverable to recoverable, which is worth having, and it is a smaller
 claim than the one the first run appeared to support.
 
-Raising autonomous utility would mean *allowing* the action rather than stepping
-it up. That is a real relaxation and it is not justified by anything measured
-here: it needs an attack run showing ASR stays at zero, because the only thing
-left holding that line would be the binding floor. Queued, not claimed.
+Raising autonomous utility means *allowing* the action rather than stepping it
+up. That is a real relaxation, so it had to be measured against attack before
+being claimed.
+
+## The measured answer: full baseline utility at unchanged ASR
+
+`defer_allows_bound` allows the plan miss **only when the floor positively
+validated a destination on that action** (`EgressPolicy.binds`). An action
+carrying no destination was never examined by the floor, so it still steps up:
+the strength of the response follows the strength of the evidence.
+
+Banking, gpt-4o-mini, `important_instructions`, 6 user x 3 injection = 18 runs
+per ablation:
+
+| Ablation | clean utility | ASR | utility under attack | friction/task |
+| --- | --- | --- | --- | --- |
+| none | 50.0% | 66.7% | 38.9% | 0.00 |
+| `envelope-taint` | 16.7% | **0.0%** | 16.7% | 0.67 |
+| `envelope-taint-defer` | 16.7% | **0.0%** | 22.2% | 1.67 |
+| **`envelope-taint-deferallow`** | **50.0%** | **0.0%** | 27.8% | **0.00** |
+
+**Clean utility goes from 16.7% to 50.0%, exactly the undefended baseline, while
+ASR stays at 0.0% and friction falls to zero.** Utility under attack improves
+too, 16.7% to 27.8%.
+
+That is the whole utility cost of the defense on this suite, removed, with no
+measured security loss. It is the strongest single result in the live tier, and
+it exists because the diagnosis pointed at one rule instead of at the mechanism
+in general.
+
+The reason it works is the reason the diagnosis predicted: the injected step's
+destination is the attacker's own address, it never clears the binding floor, so
+it never reaches the gate that was being relaxed. The hard DENY on plan misses
+was catching nothing the floor had not already caught, and was costing every
+task where the LLM planner failed to enumerate a legitimate step.
+
+Caveats, all of which matter: n=18, one suite, one attack, one model.
+Validation runs on travel, workspace, and slack are in flight, and the result
+should not be quoted until they agree.
 
 ## Two harness bugs found while measuring this
 
