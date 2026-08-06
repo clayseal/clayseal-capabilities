@@ -124,8 +124,11 @@ class LiveBrokerHarness:
 
     def __init__(self, mode: str, planner=None, recipient_map=None,
                  provenance: bool = False, taint: bool = False,
-                 graduated: bool = False) -> None:
+                 graduated: bool = False, defer: bool = False) -> None:
         self.graduated = graduated
+        # Treat an intent-envelope plan miss as planner recall failure when the
+        # destination-binding floor already cleared the action.
+        self.defer = defer
         self.mode = mode           # "floor" | "envelope"
         self.planner = planner
         # query -> set of authorized opaque recipients; enables egress recipient
@@ -187,7 +190,7 @@ class LiveBrokerHarness:
         self.broker = SessionBroker(
             goal=goal, scope=scope, egress=egress,
             intent_envelope=(envelope if self.mode == "envelope" else None), detector=None,
-            graduated=self.graduated)
+            graduated=self.graduated, defer_to_binding=self.defer)
         self.runs += 1
 
     def observe_output(self, result, source_args=None) -> None:

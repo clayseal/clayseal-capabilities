@@ -230,8 +230,10 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
         provenance = "provenance" in ablation
         taint = "taint" in ablation
         graduated = "graduated" in ablation
+        defer = "defer" in ablation
         harness = LiveBrokerHarness(mode=mode, planner=planner, recipient_map=rmap,
-                                    provenance=provenance, taint=taint, graduated=graduated)
+                                    provenance=provenance, taint=taint,
+                                    graduated=graduated, defer=defer)
         for e in pipe.elements:
             if isinstance(e, ToolsExecutionLoop):
                 e.elements = [BrokerToolsExecutor(harness) if isinstance(x, ToolsExecutor) else x
@@ -305,6 +307,8 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
                 "envelope-provenance": llm_planner,
                 "envelope-taint": llm_planner,
                 "envelope-taint-graduated": llm_planner,
+                "envelope-taint-defer": llm_planner,
+                "envelope-provenance-defer": llm_planner,
                 "oracle": oracle_planner, "oracle-envelope": oracle_planner,
                 "oracle-egress": oracle_planner, "floor-egress": llm_planner,
                 "oracle-envelope-egress": oracle_planner}
