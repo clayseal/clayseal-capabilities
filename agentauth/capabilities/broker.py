@@ -150,6 +150,27 @@ class SessionBroker:
     # Kept, defaulted off, and documented rather than deleted: the flag is how
     # the result reproduces. See benchmarks/results/denial_diagnosis.md.
     defer_allows_bound: bool = False
+    # Audit budget: how many times this session may interrupt the human.
+    #
+    # The control literature treats human attention as the scarce resource a
+    # protocol spends, and we have been treating it as free. That is why an
+    # oracle configuration can post 84% supervised utility at 0.72 endorsements
+    # per task and be reported as a win: nobody was charged for the 0.72.
+    #
+    # It is also a security property, not only a UX one. A step-up policy is
+    # attackable by exhaustion — issue enough benign-looking confirmations and
+    # the human stops reading — so an unbounded step-up count is an unbounded
+    # attack surface. With a budget, exceeding it is a decision the system has
+    # to make explicitly rather than a slope it slides down.
+    #
+    # None means unlimited, which is the current behaviour and stays the default
+    # so this does not silently change existing results.
+    audit_budget: int | None = None
+    # What to do once the budget is spent. Denying is the conservative choice and
+    # keeps the security claim intact at the cost of utility; allowing trades the
+    # other way and must never be the default.
+    on_audit_exhausted: str = "deny"   # "deny" | "allow"
+    audits_spent: int = 0
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
     receipt_sink: Callable[[dict[str, Any]], None] | None = None
@@ -391,6 +412,22 @@ class SessionBroker:
 
     def _finalize(self, action, outcome, layer, reasons, score, is_write, start, *,
                   blocked=False, step_up=None, step_up_flag=False) -> BrokerDecision:
+        # Charge the audit budget here rather than at each step-up site, so every
+        # path that asks a human is counted. There are four such sites today and
+        # adding a fifth without charging it would silently reintroduce the
+        # unlimited-attention assumption this is here to remove.
+        if step_up_flag and self.audit_budget is not None:
+            if self.audits_spent >= self.audit_budget:
+                exhausted = f"audit budget exhausted ({self.audit_budget} step-ups)"
+                if self.on_audit_exhausted == "allow":
+                    outcome, layer = Outcome.ALLOW, layer
+                    reasons = (*reasons, exhausted, "allowed: budget policy is allow-on-exhaust")
+                else:
+                    outcome, blocked = Outcome.DENY, True
+                    reasons = (*reasons, exhausted, "denied: no attention left to ask for")
+                step_up, step_up_flag = None, False
+            else:
+                self.audits_spent += 1
         self.metrics.record_action(blocked=blocked, step_up=step_up_flag, is_write=is_write,
                                    overhead_ms=(time.perf_counter() - start) * 1000)
         record = self.decision_log.append(

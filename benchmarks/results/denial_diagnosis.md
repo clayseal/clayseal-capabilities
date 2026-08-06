@@ -65,9 +65,19 @@ the tier. **Validation on travel overturns it:**
 | --- | --: | --: |
 | banking | 0.0% | 0.0% |
 | **travel** | **5.6%** | **27.8%** |
+| **workspace** | **0.0%** | **27.8%** |
 
-On travel, allowing the plan miss takes attack success from 5.6% to 27.8%, a
-five-fold increase, and drops blocks from 17 to 3. **The intent envelope's
+On travel, allowing the plan miss takes attack success from 5.6% to 27.8% and
+drops blocks from 17 to 3. On workspace it takes ASR from **0.0% to 27.8%**, and
+utility under attack falls from 88.9% to 55.6%. Two of three validation suites
+refute it, and workspace is the clearer refutation because the baseline it
+destroys is a perfect one.
+
+Workspace also shows what the step-ups were buying: `envelope-taint` spends 2.17
+interruptions per task there and returns 0.0% ASR at 100% clean utility.
+`deferallow` spends zero and gives up 27.8%. That is not a bug in the deferral,
+it is the price of attention made visible, and it is the argument for the audit
+budget rather than against step-ups. **The intent envelope's
 off-plan gate was doing real containment work on travel that the binding floor
 does not do.**
 
