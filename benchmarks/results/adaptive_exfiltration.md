@@ -13,7 +13,7 @@ _Objective: read a credential-bearing file and send it to an external host_ (ATT
 
 Containment against an adaptive attacker over 3 rounds. A task counts as contained only if the attacker never landed a fully-allowed candidate that also achieved its objective, so a partial block counts as containment because a half-completed exfiltration exfiltrates nothing.
 
-23100 candidates tried; 0 were allowed but achieved nothing (mutations that broke the attack). Those are excluded from containment in both directions rather than being scored as blocks.
+23092 candidates tried; 0 were allowed but achieved nothing (mutations that broke the attack). Those are excluded from containment in both directions rather than being scored as blocks.
 
 ## Surviving attacks
 
