@@ -39,15 +39,39 @@ number of confirmations.
 
 ## The bar
 
-- **CaMeL** (arXiv:2503.18813, DeepMind): 77% AgentDojo utility against 84%
-  undefended, a 7-point cost, via dual-LLM plus capabilities plus information
-  flow control.
-- **Progent** (arXiv:2504.11703): AgentDojo ASR 39.9% to 1.0%, ASB 70.3% to
-  3.9%, deterministic symbolic least-privilege over tool arguments with Z3
-  narrowing. In our own head-to-head under `important_instructions` it leaves
-  11.1 to 16.7% ASR across four suites.
-- Neither reports human-interruption cost, long-horizon false-alarm rate, or
-  containment against a policy-aware adaptive attacker.
+The comparison set below is the 2026 literature. CaMeL (arXiv:2503.18813) and
+Progent (arXiv:2504.11703) established the out-of-band approach in 2025 and are
+included because everything since is measured against them, but the current
+frontier is provenance-based auditing and information-flow labelling.
+
+| System | Mechanism | Setting | ASR undefended to defended | Under adaptive attack | Utility cost |
+| --- | --- | --- | --- | --- | --- |
+| ARGUS (arXiv:2605.03378) | influence-provenance graph, entailment check | AgentLure, gpt-4o-mini | 28.8% to 3.8% | 5.9% | 5 pts (92.5 to 87.5) |
+| Progent, independent reproduction (arXiv:2606.26479) | symbolic least-privilege over arguments | AgentDojo, Qwen2.5-7B | 25.8% to 4.2% | 2.6% | ~19 pts (45 to 26) |
+| RTBAS (CMU) | information-flow labels, selective propagation | AgentDojo | targeted attacks prevented | not reported | ~2 pts under attack |
+| CaMeL (DeepMind, 2025) | dual-LLM, capabilities, data-flow policy | AgentDojo | near zero | not reported | 7 pts (84 to 77) |
+| WARD (arXiv:2605.15030) | trained guard model, 177K-sample corpus | web agents | near-perfect recall | robust to guard-targeted attacks | not reported |
+| **Clay Seal** | target and destination binding, aggregate budgets, plan conformance | AgentDojo, gpt-4o-mini | 38.9-88.9% to **0.5%** [0.1, 2.6] | 100% containment, deterministic harness | 29 pts gpt-4o-mini, **3 pts** grok-4-1-fast |
+
+Reading this honestly. Our attack-success figure is the lowest in the table and
+is the only one pooled over more than one sweep (216 runs). Our utility cost on
+gpt-4o-mini, 29 points, is worse than ARGUS at 5 and Progent at 19; on
+grok-4-1-fast it is 3 points, which is the best in the table. ARGUS is measured
+on AgentLure rather than AgentDojo, so its numbers are not directly comparable
+to ours and are included for mechanism and order of magnitude.
+
+The adaptive columns are not measured the same way and should not be read as a
+ranking. ARGUS reports a white-box adaptive attack against a live agent, which
+we have not run. Ours is a deterministic search that mutates against the
+compiled policy over six rounds at four attacker knowledge levels, including one
+where the attacker controls part of the sealed goal. Both are stronger than the
+static evaluation most of this table rests on, and the independent Progent
+reproduction exists precisely because author-reported figures (1.0% ASR) did not
+survive re-measurement (4.2%).
+
+What none of them report: human-interruption cost, long-horizon false-alarm rate
+per thousand benign actions, or the split between attacks that leave the granted
+surface and attacks that stay inside it.
 
 ## Results
 
@@ -81,8 +105,10 @@ sweeps per suite, 216 attack runs in total:
 | travel | 38.9% | 1.9% | 1 / 54 | 66.7% | 100.0% | 0.56 |
 | workspace | 88.9% | 0.0% | 0 / 54 | 83.3% | 100.0% | 2.11 |
 
-**Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6].** Progent leaves 11.1
-to 16.7% on the same suites and attack. Sweep-to-sweep spread on the defended
+**Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6].** Our own head-to-head
+under the same protocol leaves Progent at 11.1 to 16.7%; the independent
+reproduction on Qwen2.5-7B puts it at 4.2%, and ARGUS reports 3.8% on
+AgentLure. Sweep-to-sweep spread on the defended
 configuration is zero on three suites and 5.6% on travel, while the undefended
 baseline moves by 11 to 17 points, so the variance lives in whether an attack
 lands on an unprotected agent rather than in whether enforcement holds.
@@ -106,7 +132,7 @@ undefended is not charged to the defense:
 | llama-4-maverick | 12% | 12% | 0 pts | 0.0% |
 
 Cost falls monotonically with agent capability. On the strongest model measured
-the deployable path costs 3 points against CaMeL's published 7. The
+the deployable path costs 3 points, against ARGUS at 5, CaMeL at 7, and the independently reproduced Progent at roughly 19. The
 llama-4-maverick row is a null: a 12% baseline leaves nothing for a defense to
 cost, and it is kept in because dropping models that perform badly is the
 selection this evaluation exists to prevent.

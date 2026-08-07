@@ -9,9 +9,9 @@ those two audiences want different evidence.
 
 | Axis | Us | Published SOTA | Verdict |
 | --- | --- | --- | --- |
-| ASR, deployable path | 0.0% on 3 of 4 suites [0, 17.6] each, 5.6% travel | Progent 11-17%, CaMeL near-0 | ahead of Progent, level with CaMeL — **but see item 5** |
-| Utility cost, strong model | 3 pts (grok-4-1-fast, 81% baseline) | CaMeL 7 pts (84% baseline) | **ahead, n=32** |
-| Utility cost, weak model | 19-25 pts (gpt-4o-mini, gpt-oss) | CaMeL 7 pts on gpt-4o | **behind** |
+| ASR, deployable path | **0.5%** [0.1, 2.6] pooled over 216 runs | ARGUS 3.8%, Progent 4.2% (indep.), CaMeL near-0 | **ahead, and the only pooled figure** |
+| Utility cost, strong model | 3 pts (grok-4-1-fast, 81% baseline) | ARGUS 5 pts, CaMeL 7 pts, RTBAS ~2 pts under attack | **ahead of most, n=32** |
+| Utility cost, weak model | 29 pts pooled (gpt-4o-mini) | ARGUS 5 pts on gpt-4o-mini | **behind, and this is the gap** |
 | Attention cost | 0.83-4.17 interruptions/task, now priced | not reported by anyone | **we are the only ones measuring it** |
 | Adaptive attacker | 100% containment at oracle knowledge | rarely evaluated | **ahead on methodology** |
 | Long horizon | 100% needle detection, 0 false alarms / 100k actions | benchmarks average 3 calls | **ahead, uncontested** |
