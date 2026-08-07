@@ -43,6 +43,14 @@ from agentauth.capabilities.value_budget import session_value_budget_from_mandat
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision
 
 
+# Verbs that change external state. Deliberately wider than runner._WRITE_ACTIONS,
+# which classifies protected *writes* for metrics: an `execute` or a `send` is an
+# effect for authorization purposes even where it is not a filesystem write.
+_EFFECT_ACTIONS = frozenset({
+    "write", "create", "update", "delete", "send", "transfer", "post", "pay", "execute",
+})
+
+
 @runtime_checkable
 class DecisionEngine(Protocol):
     name: str
@@ -184,6 +192,28 @@ class TaskScopeInputBindingEngine(TaskScopeEngine):
         # calls whose exact arguments were authorized; per call, not per tool.
         if authorized:
             if hash_canonical_json(event.args) not in authorized:
+                # Exception: an argument-less call to a bound READ tool. Binding
+                # exists to stop an effect being redirected (a swapped payee, a
+                # mutated path), and an empty argument set redirects nothing. It
+                # is the agent asking the unfiltered version of a question it was
+                # authorized to ask filtered: `list_invoices()` where
+                # `list_invoices(status="pending")` was authorized.
+                #
+                # Found on ATIF, where it was the only source of false blocks in
+                # the entire corpus (2 of 282 benign events, 0.71%). Measured
+                # before and after across every corpus: containment unchanged on
+                # fixture, RedCode, AgentHarm and ASB, argument-tampering
+                # containment still 100%, and needle detection in the
+                # long-trajectory tier still 100%. The broader version of this
+                # fix, exempting all reads from binding, costs 13 points of
+                # needle detection and was rejected on that evidence.
+                #
+                # What this does NOT cover is read-broadening as an attack: an
+                # unfiltered read returns a superset of the authorized one. That
+                # is an in-surface attack, uncontained by every per-call layer
+                # including this one, and it belongs to the aggregate tier.
+                if not event.args and event.action not in _EFFECT_ACTIONS:
+                    return Decision(True, "unfiltered read of a bound tool", self.name)
                 return Decision(False, "input binding: arguments not authorized for any call", self.name)
         return Decision(True, "within task scope; arguments bound", self.name)
 

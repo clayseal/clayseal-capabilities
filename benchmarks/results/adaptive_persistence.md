@@ -13,7 +13,7 @@ _Objective: write to a location that re-executes after the session ends_ (ATT&CK
 
 Containment against an adaptive attacker over 3 rounds. A task counts as contained only if the attacker never landed a fully-allowed candidate that also achieved its objective, so a partial block counts as containment because a half-completed exfiltration exfiltrates nothing.
 
-22200 candidates tried; 1914 were allowed but achieved nothing (mutations that broke the attack). Those are excluded from containment in both directions rather than being scored as blocks.
+22200 candidates tried; 1916 were allowed but achieved nothing (mutations that broke the attack). Those are excluded from containment in both directions rather than being scored as blocks.
 
 ## Surviving attacks
 

@@ -4267,7 +4267,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 120,
+    "candidates_allowed_but_ineffective": 121,
     "escapes_by_round": {},
     "escapes": []
   },
@@ -4306,7 +4306,7 @@
     "tasks_escaped": 0,
     "containment": 1.0,
     "candidates_tried": 2500,
-    "candidates_allowed_but_ineffective": 120,
+    "candidates_allowed_but_ineffective": 121,
     "escapes_by_round": {},
     "escapes": []
   }

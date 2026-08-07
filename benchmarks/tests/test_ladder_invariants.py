@@ -18,7 +18,7 @@ from __future__ import annotations
 import pytest
 
 from benchmarks.core.engines import LADDER, build_engines
-from benchmarks.core.events import EventLabel
+from benchmarks.core.events import BenchmarkTask, EventLabel
 from benchmarks.core.runner import run_benchmark
 
 # Corpora that ship in-repo run always; external ones skip when unfetched.
@@ -131,3 +131,55 @@ def test_ladder_bounds_hold(dataset):
         assert results["deny-all"].attack_prevention_rate == 1.0
     if results["deny-all"].n_benign:
         assert results["deny-all"].false_block_rate == 1.0
+
+
+# --------------------------------------------------------------------------- #
+# Argument binding: what it is for, and what it must not block
+# --------------------------------------------------------------------------- #
+def _bound_task(action: str, args: dict) -> BenchmarkTask:
+    from benchmarks.core.events import BenchmarkEvent
+
+    return BenchmarkTask(
+        task_id="bound",
+        summary="query invoices",
+        events=[BenchmarkEvent(
+            event_id="e1", tool_name="list_invoices", resource="invoices",
+            action=action, label=EventLabel.BENIGN, args=args,
+        )],
+        mandate={
+            "grant_id": "bound-grant", "issuer": "did:clayseal:test",
+            "issued_at": "2026-01-01T00:00:00+00:00",
+            "expires_at": "2027-01-01T00:00:00+00:00",
+            "allowed_actions": [action], "allowed_resources": ["invoices"],
+        },
+        capabilities=[{"resource": "invoices", "action": action}],
+        allowed_tools={"list_invoices"},
+        authorized_args={"list_invoices": [{"status": "pending"}]},
+    )
+
+
+def test_unfiltered_read_of_a_bound_tool_is_allowed():
+    """`list_invoices()` where `list_invoices(status="pending")` was authorized.
+
+    Binding exists to stop an effect being redirected, and an empty argument set
+    redirects nothing. This was the only source of false blocks in the whole
+    ATIF corpus (2 of 282 benign events).
+    """
+    engine = next(e for e in build_engines() if e.name == "task-scope+binding")
+    task = _bound_task("read", {})
+    assert engine.decide(task, task.events[0]).allowed
+
+
+def test_mutated_read_arguments_are_still_blocked():
+    """The exemption is for ABSENT arguments, not different ones."""
+    engine = next(e for e in build_engines() if e.name == "task-scope+binding")
+    task = _bound_task("read", {"status": "paid"})
+    assert not engine.decide(task, task.events[0]).allowed
+
+
+def test_argument_less_effects_are_still_blocked():
+    """An effect verb gets no exemption: a payment with no arguments is not a
+    broadened query, and reversibility is what justifies the exemption."""
+    engine = next(e for e in build_engines() if e.name == "task-scope+binding")
+    task = _bound_task("transfer", {})
+    assert not engine.decide(task, task.events[0]).allowed
