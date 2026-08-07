@@ -93,3 +93,6 @@ keys/signing/
 # Claude Code session/tooling
 .claude/
 SECURITY_AUDIT.md
+docs/*.aux
+docs/*.log
+docs/*.out
