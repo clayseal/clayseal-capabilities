@@ -55,6 +55,110 @@ tests. Instead we recognized the change had over-reached beyond what the evidenc
 implicated, reverted it, and kept only the read fix the data supported. A test
 that resists your change is data, not an obstacle.
 
+**6. Two vulnerabilities we shipped, found by attacking ourselves.** The adaptive
+red-team harness broke our own path scoping within an hour of existing.
+`path_matches_any` fnmatched the raw string, so a `/app/**` workspace grant
+returned True for `/app/../etc/passwd`, which `open()` reads as `/etc/passwd`.
+Every rung that scopes by path inherited it, and the protected-zone deny-list
+missed it too because it string-matched the same unresolved input, so defense in
+depth did not apply. The second was procfs re-entry: `/proc/self/root/etc/passwd`
+addresses the whole filesystem behind a prefix no pattern recognised, and
+resolving it lexically is actively wrong because popping a symlinked component
+is the wrong operation. Caught by building an adversary that searches rather
+than a corpus that replays.
+
+**7. A red-team harness that produced fabricated findings.** Three times, the
+adaptive search reported escapes that accomplished nothing. `/app/etc/passwd`
+matched the sensitive-path marker by substring while being a file inside the
+agent's own workspace. `/app/etc/cron.d/agent` scored as persistence for the
+same reason and handed `task-scope` a false 0%. And informed mutations consumed
+the whole per-round budget, crowding out the plain obfuscation that actually
+worked, so the persistence run reported 46% containment against an ORACLE
+attacker and 0% against a BLIND one. Published unchanged, that table would have
+claimed that disclosing your policy helps the defender. The lesson: an adaptive
+search optimises against whatever you actually wrote down, so the objective
+predicate is the experiment.
+
+**8. A 50-point improvement from a defense that was not running.** A new
+ablation name missed every key in an exact-name planner dictionary, got
+`planner=None`, and therefore built no intent envelope. The run reported 8 of 8
+tasks and zero denials: a perfect score for a defense that was absent, with no
+error raised. What caught it was the mechanism disagreeing with the number. The
+change converted hard denials into step-ups, and a step-up halts execution
+exactly as a denial does, so autonomous utility *could not* improve. The number
+said it had. The identical pattern was later found in a second file before it
+could do the same thing there. Silent and flattering is the failure mode to
+engineer against.
+
+**9. The strongest result of the session, retracted by validation.** Allowing an
+off-plan action when the binding floor had validated its destination took
+banking clean utility from 16.7% to 50.0% at 0.0% ASR, with friction to zero. It
+looked like the whole utility cost removed for free. Travel took ASR from 5.6%
+to 27.8%. The motivating argument, that the plan-conformance gate catches
+nothing the floor missed, is true on banking and false in general. The flag
+remains in the tree defaulted off, because that is how the negative result
+reproduces.
+
+**10. The axis we assumed was solid.** We treated clean utility as the noisy
+measurement and attack-success rate as reliable. The same workspace
+configuration then produced 27.8% ASR in one sweep and 0.0% in another: same
+code, same suite, same model, same attack, n=18 both times. Every 0% ASR in this
+repository comes from a single sweep, and the Wilson upper bound on 0 of 18 is
+17.6%. The security claim was supported to roughly one significant figure while
+being quoted to three.
+
+## The strongest results, with what each is not allowed to claim
+
+Reproduce the deterministic tiers with `benchmarks/run_all.sh` against the
+corpus pinned in `benchmarks/corpus_manifest.json`. A full pass is CPU-only and
+takes under a minute.
+
+**Long-horizon detection.** 200 sessions of 500 benign actions with one attack
+buried in each: **100% needle detection at zero false alarms across 100,000
+benign actions**, holding at 2,000-action sessions. This is the only tier where
+argument binding separates from path scoping, closing the final 17 points that
+`capability-token` and `task-scope` leave open. Published benchmarks average
+about three calls per trajectory and structurally cannot show that difference
+exists. *Does not claim:* anything about in-surface attacks, which this tier does
+not contain.
+
+**Adaptive containment.** 100% containment across exfiltration, persistence, and
+destruction objectives, flat across blind, feedback, and oracle attacker
+knowledge. Telling the attacker the compiled policy buys it nothing, because the
+defense constrains the outcome rather than the input. *Only as good as its
+control:* a prefix matcher without canonicalisation is checked in as a test that
+must keep failing, and it falls 80 of 80 at round 1.
+
+**Best live operating point (workspace).** 0.0% ASR at 100% clean utility,
+matching the undefended baseline exactly, for 1.50 interruptions per task.
+Attack success falls from 83.3% to zero and utility under attack rises from
+27.8% to 83.3%. *Caveat that matters:* single sweep, n=18, so the honest interval
+on that 0.0% is [0, 17.6%] until the pooled re-run lands.
+
+**Utility cost against the published bar.** Pooled over four suites and 32 clean
+tasks, paired per task so only defense-caused losses count: the deployable
+envelope costs **3 points on grok-4-1-fast** against an 81% baseline, where CaMeL
+reports 7 points against 84%. The cost falls monotonically with model strength
+(25 points on gpt-4o-mini, 19 on gpt-oss-120b, 3 on grok-4-1-fast), which says
+most of what we had been reporting as the cost of enforcement is the cost of a
+weak agent. *Does not claim:* that we beat CaMeL generally. On gpt-4o-mini we do
+not.
+
+**What the layer cannot decide, stated first.** 82% of pooled attack events
+leave the granted surface and we contain about 100% of them. The remaining 18%
+stay inside it, and every per-call authorizer including ours contains roughly
+none of that class. Pooled over all 3,410 events the full stack contains 82.1%,
+not the 100% the surface-leaving column alone suggests. Publishing the weighted
+number pre-empts the objection rather than waiting for it.
+
+**Cost.** 35us at p50 and 60us at p99 for the full stack, four orders of
+magnitude below the LLM round trip it gates.
+
+**Enforcement ladder on RedCode.** All 717 attacks leave the surface via the
+target alone, so `tool-allowlist` and `capability-token` contain **zero** while
+`task-scope` contains 100% at 0% false-block. A clean single-variable
+demonstration that authority must bind to the target rather than the tool name.
+
 ## The reusable tools
 
 - **Paired causal attribution.** Never attribute a failure to your system without
@@ -79,8 +183,49 @@ that resists your change is data, not an obstacle.
 - **Grade someone else's homework.** Our attacks are our own synthesis. That is
   fine for a mechanism claim and must be labeled, and validated against external
   corpora where they exist.
+- **Price every resource the defense spends, including attention.** A protocol
+  that reaches 0% ASR by asking the human about everything has relocated the
+  vulnerability, not removed it, and approval fatigue is an attack surface. On
+  banking, `graduated` reaches the same 0.0% ASR as the shipping configuration
+  while spending 4.17 interruptions per task against 0.83, for half the clean
+  utility. Measured on two axes that reads as a tie. Measured on three it is
+  strictly dominated. Human attention is now a bounded, charged resource
+  (`audit_budget`) rather than a free one.
+- **Choose the validation suite that could refute you, not the one that agrees.**
+  `deferallow` was safe on banking and slack and broke travel and workspace. The
+  two that agreed are exactly the two that would have been quoted. A per-suite
+  result is a per-suite recommendation, and the deployment decision is the
+  intersection across suites, never the union.
+- **Make the objective predicate independent of the defense.** An adaptive search
+  rewarded for "getting allowed" will find mutations that are allowed because
+  they no longer do anything. Every candidate is scored against a real-world
+  effect defined without reference to any engine, and predicates resolve paths
+  before judging them and ignore anything landing inside the granted workspace.
+- **Prefer failures that are loud over failures that flatter.** Both harness bugs
+  this session produced perfect scores and raised no error. Resolution by shape
+  with a hard refusal when nothing resolves turns a silent wrong answer into a
+  startup failure.
+- **Trust the mechanism over the number when they disagree.** The fabricated
+  50-point win was caught because the change could not raise autonomous utility
+  by construction, and the measurement said it had. When a result exceeds what
+  the mechanism can explain, the measurement is the suspect.
+- **Report per-action counts beside per-task rates.** At n=8 a single task is
+  12.5 points. Across every comparison this session the action-level counts
+  (hard denials, step-ups) moved cleanly and in the predicted direction while
+  the task-level percentages wandered.
 
-## The open question we did not resolve
+## The open questions we did not resolve
+
+**How many runs is a security claim?** Item 10 above is unresolved as of this
+writing. Every attack-success number here rests on a single sweep of n=18, and
+we have direct evidence that such a sweep can move 27.8 points. Pooling four
+suites would bring the interval on a clean result to about [0, 5.1%], and twelve
+sweeps to [0, 1.7%]. Until that lands, "0% ASR" should be written with its
+interval or not written at all. The tooling exists
+(`benchmarks.live.frontier --repeats N`), the run is queued, and no security
+claim should leave this repository ahead of it.
+
+
 
 AgentDojo utility is autonomous task completion. A system that asks a human to
 confirm an irreversible action is behaving correctly, yet the metric scores that
