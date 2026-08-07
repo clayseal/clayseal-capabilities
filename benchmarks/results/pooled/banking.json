@@ -1,0 +1,28 @@
+[
+  {
+    "config": "none",
+    "repeats": 3,
+    "asr": 0.6666666666666666,
+    "asr_spread": 0.11099999999999999,
+    "clean_utility": 0.5,
+    "clean_utility_spread": 0.0,
+    "utility_under_attack": 0.3516666666666666,
+    "utility_under_attack_spread": 0.05600000000000005,
+    "friction": 0.0,
+    "friction_spread": 0.0,
+    "dominated_by": null
+  },
+  {
+    "config": "envelope-taint",
+    "repeats": 3,
+    "asr": 0.0,
+    "asr_spread": 0.0,
+    "clean_utility": 0.16699999999999995,
+    "clean_utility_spread": 0.0,
+    "utility_under_attack": 0.20366666666666666,
+    "utility_under_attack_spread": 0.05500000000000002,
+    "friction": 0.5566666666666668,
+    "friction_spread": 0.34,
+    "dominated_by": null
+  }
+]
