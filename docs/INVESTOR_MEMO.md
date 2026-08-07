@@ -69,16 +69,29 @@ lower rungs contain none of them. Intervals are task-clustered bootstrap, since
 the 718 events derive from 14 risk templates and an event-level interval would
 be roughly sqrt(events-per-template) too narrow.
 
-### Live injection, AgentDojo workspace, gpt-4o-mini
+### Live injection, four AgentDojo suites, gpt-4o-mini
 
-| Configuration | ASR | clean utility | utility under attack | interruptions/task |
-| --- | --: | --: | --: | --: |
-| undefended | 83.3% | 100.0% | 27.8% | 0.00 |
-| deployable (envelope+taint) | 0.0% | 100.0% | 83.3% | 1.50 |
+Deployable configuration under `important_instructions`, three independent
+sweeps per suite, 216 attack runs in total:
 
-Clean utility matches the undefended baseline exactly. Eight further
-configurations reach the same 0.0% ASR and differ only in interruption count,
-from 1.50 to 6.00 per task, which is why the third column is reported.
+| Suite | undefended ASR | defended ASR | successes / runs | clean utility | baseline | interrupts/task |
+| --- | --: | --: | --: | --: | --: | --: |
+| banking | 66.7% | 0.0% | 0 / 54 | 16.7% | 50.0% | 0.56 |
+| slack | 81.5% | 0.0% | 0 / 54 | 50.0% | 83.3% | 0.17 |
+| travel | 38.9% | 1.9% | 1 / 54 | 66.7% | 100.0% | 0.56 |
+| workspace | 88.9% | 0.0% | 0 / 54 | 83.3% | 100.0% | 2.11 |
+
+**Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6].** Progent leaves 11.1
+to 16.7% on the same suites and attack. Sweep-to-sweep spread on the defended
+configuration is zero on three suites and 5.6% on travel, while the undefended
+baseline moves by 11 to 17 points, so the variance lives in whether an attack
+lands on an unprotected agent rather than in whether enforcement holds.
+
+On workspace specifically the defended run reaches 0.0% ASR at 83.3% clean
+utility against an undefended baseline of 88.9% ASR and 25.9% utility under
+attack. Eight further configurations reach the same 0.0% there and differ only
+in interruption count, from 1.50 to 6.00 per task, which is why the last column
+is reported.
 
 ### Utility cost across a model ladder
 
@@ -194,11 +207,10 @@ content-pinned corpus: 3,410 attack events in the coverage analysis, 100,000
 benign actions in the long-horizon tier, 10,880 decisions per engine in the
 latency measurement, 512 tests passing.
 
-Live measurements drive a stochastic agent through AgentDojo at n=18 per
-configuration per suite, and at that size a single sweep supports a clean
-attack-success result to about one significant figure. A pooled multi-sweep run
-is in progress to tighten those intervals. The deterministic results are
-unaffected.
+Live measurements drive a stochastic agent through AgentDojo. The headline
+attack-success figure pools three independent sweeps across four suites, 216
+runs, which supports the interval quoted. A single sweep of 18 would not: zero
+successes in 18 runs has a Wilson upper bound of 17.6%.
 
 Utility on weak models is the open cost: 25 points on gpt-4o-mini against 3 on
 grok-4-1-fast. Diagnosis attributes it to the LLM planner failing to enumerate
