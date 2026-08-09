@@ -165,11 +165,24 @@ a script whose purpose is harassment.
 | Corpus | attack events | contained |
 | --- | --: | --: |
 | AgentHarm | 652 | 6.3% |
-| SLEIGHT-Bench | 328 | 36.9% at 36.66% false-block |
+| SLEIGHT-Bench | 328 | 36.9% at 32.64% false-block |
 
-The 6.3% on AgentHarm is exactly the subset where the harmful twin needs a tool
-the benign grant did not include. The other 93.7% reuses granted tools against
-granted targets.
+**On AgentHarm, 6.3% is the ceiling rather than our score.** Its public data gives
+one field describing the agent's actions, `target_functions`, which is a list of
+tool names. Across every event our loader emits, 0 of 1,305 carry an argument, a
+path, or a resource distinguishable from the tool name. A per-action layer decides
+using the fields of the action, so on this corpus the best any mechanism can do is
+reason about tool identity, and an oracle handed the exact set of tools that
+appear only in harmful variants scores **3.1%**. Ours is higher because we ask the
+finer question: does the harmful twin need a tool *this behaviour's own benign
+variant* did not include. The harm lives in `prompt`, a task-level instruction,
+so AgentHarm measures model refusal rather than action authorization. See
+`agentharm_ceiling.md`.
+
+**SLEIGHT is where this axis should be judged**, and it is worse news. Its attack
+events do carry targets and arguments, and its sabotage tasks are a scheming agent
+under a legitimate user goal, which is our threat model rather than a
+malicious-user one.
 
 **SLEIGHT's 36.9% is not discrimination.** Containment and false-block move
 together at every operating point, so the layer is refusing a fraction of

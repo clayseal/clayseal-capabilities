@@ -1,0 +1,217 @@
+"""CLI: every tier, one table, with the caveat that makes each number readable.
+
+    python -m benchmarks.scoreboard
+
+Results were living in eight documents, which meant nobody could see whether a
+change helped or hurt overall, and a withdrawn number could sit in one file while
+its replacement sat in another. This runs everything and prints the current
+picture, so "are we improving" has one answer.
+
+Each row carries a CAVEAT, because five headline numbers in this project have
+been withdrawn after audit and every one of them looked fine as a bare number:
+
+* a velocity cap derived from the attack label;
+* a loader whose event ORDER carried the label;
+* a false-block rate measured on its own calibration set;
+* eighteen of twenty-four AgentThreatBench attack events the loader invented;
+* a replan path that took AgentDojo travel from 11.1% to 22.2% ASR.
+
+So the caveat column is not decoration. A number without it is not reportable.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from benchmarks.core.engines import build_engines
+from benchmarks.core.events import EventLabel
+from benchmarks.core.runner import run_benchmark
+from benchmarks.datasets.base import get_loader
+
+DEPLOYABLE = [
+    "tool-allowlist",
+    "capability-token",
+    "task-scope",
+    "task-scope+binding",
+    "task-scope+binding+budget",
+    "task-scope+binding+budget+velocity",
+]
+
+# What each corpus actually exercises, and what its number does NOT mean. Written
+# from the loader audits rather than from the papers.
+CAVEATS = {
+    "redcode": "path escapes from a fixed workspace boundary; the real result on this axis",
+    "asb": "every attack uses a tool the agent was never granted, so a tool allowlist suffices",
+    "ipi_coding": "injected instructions with out-of-scope targets",
+    "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
+    "sleight": "containment and false-block move together: no discrimination, not a result",
+    "agentharm": ("6.3% is the CEILING, not our score: every event carries only a tool "
+                  "name (0/1305 have args or a path), so an oracle gets 3.1%"),
+    "atif": "benign only; a false-block measurement",
+    "tau2": "benign only; the friction denominator that matters",
+    "bfcl": "benign only; the friction denominator that matters",
+}
+
+
+@dataclass
+class Row:
+    tier: str
+    measures: str
+    contained: str = "-"
+    false_block: str = "-"
+    n: str = ""
+    caveat: str = ""
+
+
+@dataclass
+class Scoreboard:
+    rows: list[Row] = field(default_factory=list)
+
+    def add(self, **kw) -> None:
+        self.rows.append(Row(**kw))
+
+    def render(self) -> str:
+        w_tier = max(len(r.tier) for r in self.rows) + 2
+        w_meas = max(len(r.measures) for r in self.rows) + 2
+        out = [
+            f"{'tier':<{w_tier}}{'measures':<{w_meas}}"
+            f"{'contained':>11}{'false-block':>13}{'n':>16}",
+            "-" * (w_tier + w_meas + 40),
+        ]
+        for r in self.rows:
+            out.append(
+                f"{r.tier:<{w_tier}}{r.measures:<{w_meas}}"
+                f"{r.contained:>11}{r.false_block:>13}{r.n:>16}"
+            )
+        out.append("")
+        out.append("caveats, without which none of the above is reportable:")
+        for r in self.rows:
+            if r.caveat:
+                out.append(f"  {r.tier:<{w_tier}}{r.caveat}")
+        return "\n".join(out)
+
+    def to_dict(self) -> dict:
+        return {"rows": [vars(r) for r in self.rows]}
+
+
+def _deterministic(board: Scoreboard, quick: bool) -> None:
+    corpora = ["redcode", "agentharm", "asb", "sleight", "ipi_coding",
+               "agent_threat_bench", "atif", "tau2", "bfcl"]
+    if quick:
+        corpora = ["redcode", "agentharm", "sleight", "agent_threat_bench"]
+    for name in corpora:
+        try:
+            tasks = list(get_loader(name).load())
+        except Exception:
+            board.add(tier=name, measures="deterministic replay",
+                      caveat="corpus not fetched")
+            continue
+        engines = [e for e in build_engines() if e.name in DEPLOYABLE]
+        result = run_benchmark(tasks, engines)[DEPLOYABLE[-1]]
+        board.add(
+            tier=name,
+            measures="deterministic replay",
+            contained=(f"{100 * result.attack_prevention_rate:.1f}%"
+                       if result.n_attack else "-"),
+            false_block=f"{100 * result.false_block_rate:.2f}%",
+            n=f"{result.n_attack}a / {result.n_benign}b",
+            caveat=CAVEATS.get(name, ""),
+        )
+
+
+def _burst(board: Scoreboard) -> None:
+    from benchmarks.burst import evaluate
+
+    for corpus in ("tau2", "bfcl"):
+        try:
+            r = evaluate(corpus, 10, count=400, seed=0)
+        except Exception:
+            continue
+        board.add(
+            tier=f"burst[{corpus}]",
+            measures="volume-defined harm",
+            contained=f"{100 * r.containment:.1f}%",
+            false_block=f"{100 * r.false_alarm_rate:.1f}%",
+            n=f"{r.sessions} sessions",
+            caveat=(f"burst of 10; blast radius {r.median_blast_radius:.0f} actions; "
+                    f"false alarms measured on HELD-OUT clean sessions"),
+        )
+
+
+def _flow(board: Scoreboard) -> None:
+    from benchmarks.flow import evaluate
+
+    for corpus in ("tau2", "bfcl"):
+        try:
+            r = evaluate(corpus, count=200, seed=0)
+        except SystemExit:
+            continue
+        except Exception:
+            continue
+        chunk_leaks = sum(v[0] for v in r.chunked.values())
+        fan_leaks = sum(v[0] for v in r.fanout.values())
+        board.add(
+            tier=f"flow[{corpus}]",
+            measures="sequence-defined harm",
+            contained=f"{100 * r.containment:.1f}%",
+            false_block=f"{100 * r.real_traffic_false_block:.2f}%",
+            n=f"{r.sessions} sessions",
+            caveat=(f"chunked leaks {chunk_leaks}, fan-out leaks {fan_leaks}; "
+                    f"blast radius is a constant (~12 chars), so a short "
+                    f"credential is detected, not prevented"),
+        )
+
+
+def _trajectory(board: Scoreboard) -> None:
+    from benchmarks.trajectory import build_trajectories, evaluate
+
+    try:
+        benign = list(get_loader("bfcl").load(limit=300))
+        attacks = list(get_loader("redcode").load(limit=300))
+    except Exception:
+        return
+    trajectories = build_trajectories(benign, attacks, length=200,
+                                      count=100, seed=0)
+    if not trajectories:
+        return
+    engines = [e for e in build_engines() if e.name in DEPLOYABLE]
+    results = evaluate(trajectories, engines)
+    r = results[DEPLOYABLE[-1]]
+    board.add(
+        tier="long-horizon",
+        measures="detection at session length",
+        contained=f"{100 * r.detection_rate:.1f}%",
+        false_block=f"{r.false_alarms_per_1k:.2f}/1k",
+        n=f"{r.benign_actions} actions",
+        caveat=("one needle per session, wearing the session's own tool and "
+                "resource; measures position-independence, not covert detection"),
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(description="Every tier, one table")
+    p.add_argument("--quick", action="store_true",
+                   help="fewer corpora, for a fast check during development")
+    p.add_argument("--json", type=Path, default=None)
+    args = p.parse_args(argv)
+
+    board = Scoreboard()
+    _deterministic(board, args.quick)
+    if not args.quick:
+        _burst(board)
+        _flow(board)
+        _trajectory(board)
+
+    print(board.render())
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(board.to_dict(), indent=2))
+        print(f"\nwrote {args.json}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,116 @@
+{
+  "rows": [
+    {
+      "tier": "redcode",
+      "measures": "deterministic replay",
+      "contained": "99.9%",
+      "false_block": "0.00%",
+      "n": "718a / 172b",
+      "caveat": "path escapes from a fixed workspace boundary; the real result on this axis"
+    },
+    {
+      "tier": "agentharm",
+      "measures": "deterministic replay",
+      "contained": "6.3%",
+      "false_block": "0.00%",
+      "n": "652a / 320b",
+      "caveat": "93.7% reuses the granted tool against a granted target; content-defined"
+    },
+    {
+      "tier": "asb",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "2040a / 102b",
+      "caveat": "every attack uses a tool the agent was never granted, so a tool allowlist suffices"
+    },
+    {
+      "tier": "sleight",
+      "measures": "deterministic replay",
+      "contained": "36.9%",
+      "false_block": "32.64%",
+      "n": "328a / 144b",
+      "caveat": "containment and false-block move together: no discrimination, not a result"
+    },
+    {
+      "tier": "ipi_coding",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "50a / 40b",
+      "caveat": "injected instructions with out-of-scope targets"
+    },
+    {
+      "tier": "agent_threat_bench",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "6a / 15b",
+      "caveat": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared"
+    },
+    {
+      "tier": "atif",
+      "measures": "deterministic replay",
+      "contained": "-",
+      "false_block": "1.94%",
+      "n": "0a / 155b",
+      "caveat": "benign only; a false-block measurement"
+    },
+    {
+      "tier": "tau2",
+      "measures": "deterministic replay",
+      "contained": "-",
+      "false_block": "0.03%",
+      "n": "0a / 7382b",
+      "caveat": "benign only; the friction denominator that matters"
+    },
+    {
+      "tier": "bfcl",
+      "measures": "deterministic replay",
+      "contained": "-",
+      "false_block": "0.00%",
+      "n": "0a / 1664b",
+      "caveat": "benign only; the friction denominator that matters"
+    },
+    {
+      "tier": "burst[tau2]",
+      "measures": "volume-defined harm",
+      "contained": "100.0%",
+      "false_block": "0.0%",
+      "n": "400 sessions",
+      "caveat": "burst of 10; blast radius 4 actions; false alarms measured on HELD-OUT clean sessions"
+    },
+    {
+      "tier": "burst[bfcl]",
+      "measures": "volume-defined harm",
+      "contained": "100.0%",
+      "false_block": "2.0%",
+      "n": "302 sessions",
+      "caveat": "burst of 10; blast radius 4 actions; false alarms measured on HELD-OUT clean sessions"
+    },
+    {
+      "tier": "flow[tau2]",
+      "measures": "sequence-defined harm",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "200 sessions",
+      "caveat": "chunked leaks 0, fan-out leaks 0; blast radius is a constant (~12 chars), so a short credential is detected, not prevented"
+    },
+    {
+      "tier": "flow[bfcl]",
+      "measures": "sequence-defined harm",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "91 sessions",
+      "caveat": "chunked leaks 0, fan-out leaks 0; blast radius is a constant (~12 chars), so a short credential is detected, not prevented"
+    },
+    {
+      "tier": "long-horizon",
+      "measures": "detection at session length",
+      "contained": "100.0%",
+      "false_block": "0.00/1k",
+      "n": "20000 actions",
+      "caveat": "one needle per session, wearing the session's own tool and resource; measures position-independence, not covert detection"
+    }
+  ]
+}
