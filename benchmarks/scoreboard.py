@@ -47,7 +47,8 @@ CAVEATS = {
     "asb": "every attack uses a tool the agent was never granted, so a tool allowlist suffices",
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
-    "sleight": "containment and false-block move together: no discrimination, not a result",
+    "sleight": ("grant derived from the paired BENIGN twin, so the false-block column "
+                "is NOT reportable here; ~2 points of discrimination either way"),
     "agentharm": ("6.3% is the CEILING, not our score: every event carries only a tool "
                   "name (0/1305 have args or a path), so an oracle gets 3.1%"),
     "atif": "benign only; a false-block measurement",
@@ -111,12 +112,17 @@ def _deterministic(board: Scoreboard, quick: bool) -> None:
             continue
         engines = [e for e in build_engines() if e.name in DEPLOYABLE]
         result = run_benchmark(tasks, engines)[DEPLOYABLE[-1]]
+        # A corpus whose mandate is derived from its own benign side cannot
+        # yield a friction number: that side is clean by construction. Saying so
+        # is the difference between this table and the five withdrawn results.
+        unscoreable = any(t.meta.get("false_block_unscoreable") for t in tasks)
         board.add(
             tier=name,
             measures="deterministic replay",
             contained=(f"{100 * result.attack_prevention_rate:.1f}%"
                        if result.n_attack else "-"),
-            false_block=f"{100 * result.false_block_rate:.2f}%",
+            false_block=("n/a" if unscoreable
+                         else f"{100 * result.false_block_rate:.2f}%"),
             n=f"{result.n_attack}a / {result.n_benign}b",
             caveat=CAVEATS.get(name, ""),
         )
