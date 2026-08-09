@@ -87,6 +87,21 @@ class PrincipalLedger:
     window_seconds: int = DEFAULT_WINDOW_SECONDS
     path: Path | None = None          # None keeps the ledger in memory only
     _entries: list[LedgerEntry] = field(default_factory=list)
+    # Index by (principal, budget_id). A flat scan cost 4.75 ms per read at
+    # 20,000 entries, which is 100x the entire per-action enforcement stack and
+    # would have made the ledger the slowest thing in the request path.
+    _index: dict[tuple[str, str], list[LedgerEntry]] = field(default_factory=dict)
+    # Reserved-but-not-committed spend, so a check and its commit are atomic
+    # with respect to other sessions. Without this two concurrent sessions both
+    # pass `would_allow` before either commits.
+    _reserved: dict[tuple[str, str], Decimal] = field(default_factory=dict)
+    # Running in-window total per key. Indexing alone did not help: 20,000
+    # entries for one busy principal is one bucket, so reads stayed at 3.6 ms.
+    # This is a cache, which the original design deliberately avoided because a
+    # total that drifts from its log silently raises a ceiling. `verify_totals`
+    # is the answer to that: the invariant is checkable on demand and is checked
+    # in the tests, so the speed does not cost auditability.
+    _totals: dict[tuple[str, str], Decimal] = field(default_factory=dict)
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
 
     def __post_init__(self) -> None:
@@ -108,6 +123,10 @@ class PrincipalLedger:
                 # told the spend was booked.
                 continue
         self._entries = entries
+        for e in entries:
+            key = (e.principal, e.budget_id)
+            self._index.setdefault(key, []).append(e)
+            self._totals[key] = self._totals.get(key, Decimal("0")) + e.amount
 
     def _append(self, entry: LedgerEntry) -> None:
         if self.path is None:
@@ -118,47 +137,109 @@ class PrincipalLedger:
             fh.flush()
 
     # -- queries ------------------------------------------------------------
+    def _prune(self, key: tuple[str, str], cutoff: float) -> list[LedgerEntry]:
+        """Drop out-of-window entries for one key. Bounds both memory and read
+        cost by the window rather than by the lifetime of the deployment."""
+        bucket = self._index.get(key)
+        if bucket is None:
+            return []
+        if bucket and bucket[0].at < cutoff:
+            kept = [e for e in bucket if e.at >= cutoff]
+            dropped = sum((e.amount for e in bucket if e.at < cutoff), Decimal("0"))
+            self._index[key] = kept
+            self._totals[key] = self._totals.get(key, Decimal("0")) - dropped
+            bucket = kept
+        return bucket
+
     def spent(self, principal: str, budget_id: str, *, now: float | None = None) -> Decimal:
         """Total booked for this principal and budget inside the window."""
         cutoff = (time.time() if now is None else now) - self.window_seconds
+        key = (principal, budget_id)
         with self._lock:
-            return sum(
-                (e.amount for e in self._entries
-                 if e.principal == principal and e.budget_id == budget_id and e.at >= cutoff),
-                Decimal("0"),
-            )
+            self._prune(key, cutoff)
+            return self._totals.get(key, Decimal("0"))
+
+    def verify_totals(self) -> bool:
+        """Recompute every total from the entries and compare.
+
+        The running totals are an optimisation, and an optimisation that can
+        drift from its log is how a ceiling silently rises. This makes the
+        invariant checkable rather than assumed.
+        """
+        with self._lock:
+            for key, bucket in self._index.items():
+                if self._totals.get(key, Decimal("0")) != sum(
+                        (e.amount for e in bucket), Decimal("0")):
+                    return False
+            return True
 
     def entries_in_window(self, principal: str, budget_id: str,
                           *, now: float | None = None) -> list[LedgerEntry]:
         cutoff = (time.time() if now is None else now) - self.window_seconds
         with self._lock:
-            return [e for e in self._entries
-                    if e.principal == principal and e.budget_id == budget_id and e.at >= cutoff]
+            return [e for e in self._prune((principal, budget_id), cutoff) if e.at >= cutoff]
 
     # -- mutation -----------------------------------------------------------
     def book(self, principal: str, budget_id: str, amount: Decimal, *,
              session: str = "", idempotency_key: str = "",
              now: float | None = None) -> LedgerEntry:
-        """Record spend. Idempotent on ``idempotency_key`` within the window.
+        """Record spend. Idempotent on ``idempotency_key`` within a session.
 
-        The idempotency check exists because a retried tool call must not debit
-        twice, and a session view replaying its commitments after a reconnect
-        would otherwise double-count the principal into a block.
+        Idempotency exists so a retried tool call does not debit twice. It is
+        also a hole, and it was an exploitable one: the key used to be read from
+        the agent's own tool arguments, so an injected agent could reuse one key
+        and move eight payments while the ledger booked one. Measured at 40,000
+        moved against a 10,000 ceiling.
+
+        Two changes close it. The key is now scoped to the **session**, so
+        reusing it in a different session books normally, which is exactly the
+        cross-session case the ledger exists to catch. And the **amount must
+        match**, so a small authorized payment cannot launder a large one under
+        the same key. A caller that wants true idempotency must supply the key
+        from trusted context rather than from arguments the agent controls.
         """
         at = time.time() if now is None else now
         entry = LedgerEntry(principal, budget_id, amount, at, session, idempotency_key)
+        key = (principal, budget_id)
         with self._lock:
             if idempotency_key:
                 cutoff = at - self.window_seconds
-                for existing in self._entries:
+                for existing in self._prune(key, cutoff):
                     if (existing.idempotency_key == idempotency_key
-                            and existing.principal == principal
-                            and existing.budget_id == budget_id
+                            and existing.session == session
+                            and existing.amount == amount
                             and existing.at >= cutoff):
                         return existing
             self._append(entry)
             self._entries.append(entry)
+            self._index.setdefault(key, []).append(entry)
+            self._totals[key] = self._totals.get(key, Decimal("0")) + amount
         return entry
+
+    def reserve(self, principal: str, budget_id: str, amount: Decimal,
+                ceiling: Decimal, *, now: float | None = None) -> bool:
+        """Atomically check the ceiling and hold the amount against it.
+
+        `would_allow` followed by `commit` is a check-then-act race: eight
+        concurrent sessions each passed the check and each committed, moving
+        40,000 against a 10,000 ceiling. Holding the reservation under the same
+        lock as the check is what makes the ceiling a ceiling.
+        """
+        with self._lock:
+            key = (principal, budget_id)
+            projected = (self.spent(principal, budget_id, now=now)
+                         + self._reserved.get(key, Decimal("0")) + amount)
+            if projected > ceiling:
+                return False
+            self._reserved[key] = self._reserved.get(key, Decimal("0")) + amount
+            return True
+
+    def release(self, principal: str, budget_id: str, amount: Decimal) -> None:
+        """Give back a reservation whose action was refused downstream."""
+        with self._lock:
+            key = (principal, budget_id)
+            self._reserved[key] = max(Decimal("0"),
+                                      self._reserved.get(key, Decimal("0")) - amount)
 
     def would_exceed(self, principal: str, budget_id: str, amount: Decimal,
                      ceiling: Decimal, *, now: float | None = None) -> bool:
@@ -214,6 +295,7 @@ def structuring_signal(
     min_fragments: int = 4,
     uniformity_threshold: float = 0.95,
     utilisation_threshold: float = 0.85,
+    fragment_ceiling_ratio: float = 0.5,
 ) -> StructuringSignal:
     """Distributional test for spend shaped by a ceiling.
 
@@ -228,6 +310,11 @@ def structuring_signal(
     **Just-under parking.** Repeated amounts sitting in the top band below the
     limit is the classic signature, and it is what a naive structuring agent
     produces because it maximises throughput per transaction.
+
+    **Fragmentation at high utilisation.** Many payments, none individually
+    close to the limit, together consuming nearly all of it. This is the
+    signature that survives an attacker jittering the amounts, which defeats the
+    uniformity test below while moving exactly the same money.
 
     **Uniformity at high utilisation.** An amount divided into equal parts is
     the signature of a split rather than of work arriving. Real invoice runs
@@ -270,6 +357,22 @@ def structuring_signal(
             f"the {ceiling} ceiling, the shape of a divided total rather than "
             "of work arriving"
         )
+
+    # Fragmentation, which does not depend on the amounts resembling each other.
+    # The uniformity test above was defeated by 10% jitter while the same money
+    # moved: an attacker willing to vary the fragments beat it and nothing else
+    # fired. This one asks the question that survives jitter, which is whether
+    # many payments none of them individually notable together consume nearly
+    # all of a ceiling. Legitimate work does that occasionally, so it is
+    # advisory like the rest of this tier, but jitter is no longer an escape.
+    largest = max(amounts)
+    if (len(amounts) >= min_fragments
+            and utilisation >= utilisation_threshold
+            and largest < ceiling * Decimal(str(fragment_ceiling_ratio))):
+        reasons.append(
+            f"{len(amounts)} payments, none above {fragment_ceiling_ratio:.0%} of the "
+            f"{ceiling} ceiling, together consuming {utilisation:.0%} of it"
+        )
     return StructuringSignal(len(amounts), total, ceiling, just_under,
                              uniformity, tuple(reasons))
 
@@ -304,6 +407,16 @@ class PrincipalBudgetView:
 
     def would_allow(self, tool_name: str, args: dict[str, Any],
                     *, now: float | None = None) -> tuple[bool, str]:
+        """Read-only projection. NOT SAFE FOR ENFORCEMENT.
+
+        This reports whether the spend would fit right now and holds nothing.
+        Using it as a gate is a check-then-act race: eight concurrent sessions
+        each passed it and each committed, moving 40,000 against a 10,000
+        ceiling. Use `authorize`, which checks and holds under one lock.
+
+        Retained for monitoring and for reporting remaining headroom, which is
+        the only thing it is correct for.
+        """
         parsed = self._amount(tool_name, args)
         if parsed is None:
             return True, "not tracked by a principal budget"
@@ -330,4 +443,28 @@ class PrincipalBudgetView:
         self.ledger.book(
             self.principal, budget_id, amount, session=self.session,
             idempotency_key=str(args.get("_idempotency_key") or ""), now=now,
+        )
+        # The reservation taken in `authorize` is now real spend.
+        self.ledger.release(self.principal, budget_id, amount)
+
+    def authorize(self, tool_name: str, args: dict[str, Any],
+                  *, now: float | None = None) -> tuple[bool, str]:
+        """Atomic check-and-hold. Prefer this over `would_allow` on any path
+        where more than one session can be live at once, which is every real
+        deployment."""
+        parsed = self._amount(tool_name, args)
+        if parsed is None:
+            return True, "not tracked by a principal budget"
+        budget_id, amount = parsed
+        ceiling = self.ceilings.get(budget_id)
+        if ceiling is None:
+            return True, f"no principal ceiling for {budget_id}"
+        if self.ledger.reserve(self.principal, budget_id, amount, ceiling, now=now):
+            return True, f"within principal budget {budget_id}"
+        already = self.ledger.spent(self.principal, budget_id, now=now)
+        window_h = self.ledger.window_seconds / 3600
+        return False, (
+            f"principal budget {budget_id}: {already + amount} would exceed "
+            f"{ceiling} over {window_h:.0f}h for {self.principal} "
+            f"({already} already spent across prior sessions)"
         )

@@ -119,7 +119,10 @@ def run_principal_scoped(total: Decimal, fragments: int, ceiling: Decimal) -> Re
             session=f"session-{attempt.session}",
         )
         args = {"amount": str(attempt.amount)}
-        ok, _ = view.would_allow("send_money", args)
+        # `authorize`, not `would_allow`: the latter is a read-only projection
+        # and using it as a gate is a check-then-act race that eight concurrent
+        # sessions walk straight through.
+        ok, _ = view.authorize("send_money", args)
         if ok:
             view.commit("send_money", args)
             allowed += attempt.amount
