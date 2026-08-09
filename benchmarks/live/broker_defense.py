@@ -125,7 +125,8 @@ class LiveBrokerHarness:
     def __init__(self, mode: str, planner=None, recipient_map=None,
                  provenance: bool = False, taint: bool = False,
                  graduated: bool = False, defer: bool = False,
-                 defer_allow: bool = False, audit_budget: int | None = None) -> None:
+                 defer_allow: bool = False, audit_budget: int | None = None,
+                 replan: bool = False) -> None:
         self.graduated = graduated
         # Treat an intent-envelope plan miss as planner recall failure when the
         # destination-binding floor already cleared the action.
@@ -134,6 +135,9 @@ class LiveBrokerHarness:
         # Cap on how often this session may interrupt the human. None = unlimited,
         # which is the historical behaviour and keeps prior results comparable.
         self.audit_budget = audit_budget
+        # Runtime replanning: grow the plan from the sealed goal rather than
+        # denying an unforeseen step. See agentauth/capabilities/replan.py.
+        self.replan = replan
         self.mode = mode           # "floor" | "envelope"
         self.planner = planner
         # query -> set of authorized opaque recipients; enables egress recipient
@@ -192,11 +196,24 @@ class LiveBrokerHarness:
                                   allowed_recipients=set(recips),
                                   allowed_domains=set(domains))
         self._egress = egress
+        extender = None
+        if self.replan and self.mode == "envelope" and self.planner is not None:
+            from agentauth.capabilities.replan import PlanExtender, llm_shape_judge
+
+            # The judge sees the SEALED goal and the tool catalog. It is
+            # deliberately not given the envelope's plan, the trajectory, or any
+            # tool output: the question is whether the goal implies this kind of
+            # step, not whether the agent has talked itself into one.
+            extender = PlanExtender(
+                judge=llm_shape_judge(self.planner.client, self.planner.model),
+                goal=query, catalog=sorted(allowed))
+
         self.broker = SessionBroker(
             goal=goal, scope=scope, egress=egress,
             intent_envelope=(envelope if self.mode == "envelope" else None), detector=None,
             graduated=self.graduated, defer_to_binding=self.defer,
-            defer_allows_bound=self.defer_allow, audit_budget=self.audit_budget)
+            defer_allows_bound=self.defer_allow, audit_budget=self.audit_budget,
+            plan_extender=extender)
         self.runs += 1
 
     def observe_output(self, result, source_args=None) -> None:
