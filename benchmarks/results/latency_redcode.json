@@ -2,71 +2,71 @@
   {
     "engine": "allow-all",
     "decisions": 10880,
-    "p50_us": 0.417,
-    "p95_us": 0.458,
-    "p99_us": 0.5,
-    "max_us": 0.917,
-    "mean_us": 0.408,
-    "cold_pass_ms": 0.21
+    "p50_us": 0.459,
+    "p95_us": 0.541,
+    "p99_us": 0.583,
+    "max_us": 6.75,
+    "mean_us": 0.471,
+    "cold_pass_ms": 0.231
   },
   {
     "engine": "tool-allowlist",
     "decisions": 10880,
-    "p50_us": 0.5,
-    "p95_us": 0.583,
-    "p99_us": 0.625,
-    "max_us": 7.5,
-    "mean_us": 0.502,
-    "cold_pass_ms": 0.273
+    "p50_us": 0.625,
+    "p95_us": 0.667,
+    "p99_us": 0.709,
+    "max_us": 6.208,
+    "mean_us": 0.614,
+    "cold_pass_ms": 0.313
   },
   {
     "engine": "capability-token",
     "decisions": 10880,
-    "p50_us": 2.708,
-    "p95_us": 3.125,
-    "p99_us": 3.417,
-    "max_us": 10.292,
-    "mean_us": 2.737,
-    "cold_pass_ms": 1.497
+    "p50_us": 3.125,
+    "p95_us": 4.084,
+    "p99_us": 4.667,
+    "max_us": 140.334,
+    "mean_us": 3.387,
+    "cold_pass_ms": 1.642
   },
   {
     "engine": "task-scope",
     "decisions": 10880,
-    "p50_us": 5.833,
-    "p95_us": 36.042,
-    "p99_us": 43.583,
-    "max_us": 146.625,
-    "mean_us": 16.25,
-    "cold_pass_ms": 10.423
+    "p50_us": 9.292,
+    "p95_us": 64.333,
+    "p99_us": 128.083,
+    "max_us": 1942.583,
+    "mean_us": 25.617,
+    "cold_pass_ms": 13.34
   },
   {
     "engine": "task-scope+binding",
     "decisions": 10880,
-    "p50_us": 9.542,
-    "p95_us": 36.458,
-    "p99_us": 42.875,
-    "max_us": 97.708,
-    "mean_us": 18.556,
-    "cold_pass_ms": 11.432
+    "p50_us": 12.5,
+    "p95_us": 57.0,
+    "p99_us": 95.459,
+    "max_us": 1632.625,
+    "mean_us": 24.732,
+    "cold_pass_ms": 14.952
   },
   {
     "engine": "task-scope+binding+budget",
     "decisions": 10880,
-    "p50_us": 12.542,
-    "p95_us": 39.542,
-    "p99_us": 48.708,
-    "max_us": 138.584,
-    "mean_us": 20.456,
-    "cold_pass_ms": 12.402
+    "p50_us": 13.042,
+    "p95_us": 49.541,
+    "p99_us": 76.625,
+    "max_us": 726.0,
+    "mean_us": 24.25,
+    "cold_pass_ms": 16.506
   },
   {
     "engine": "deny-all",
     "decisions": 10880,
-    "p50_us": 0.375,
-    "p95_us": 0.458,
-    "p99_us": 0.5,
-    "max_us": 2.875,
-    "mean_us": 0.397,
-    "cold_pass_ms": 0.183
+    "p50_us": 0.458,
+    "p95_us": 0.541,
+    "p99_us": 0.667,
+    "max_us": 83.917,
+    "mean_us": 0.464,
+    "cold_pass_ms": 0.242
   }
 ]
