@@ -196,6 +196,11 @@ class SessionBroker:
     # unlimited resources, so without this a single "the goal may write" verdict
     # let every write target in the catalog through.
     max_scope_extensions: int = 8
+    # Injectable so expiry is testable and so a replay can pin a moment. Defaults
+    # to real UTC now, which is what a deployment wants.
+    clock: Callable[[], Any] = field(
+        default_factory=lambda: (lambda: __import__("datetime").datetime.now(
+            __import__("datetime").timezone.utc)))
     audit_budget: int | None = None
     # What to do once the budget is spent. Denying is the conservative choice and
     # keeps the security claim intact at the cost of utility; allowing trades the
@@ -278,6 +283,20 @@ class SessionBroker:
         # denials hard-block; a scope miss steps up, because it is uncertainty,
         # not malice, and STEP_UP halts an attack just as hard while letting a
         # benign scope-missed effect be confirmed under supervision.
+        # EXPIRY FIRST. A grant that has stopped authorizing authorizes nothing,
+        # so this precedes every other check rather than sitting among them.
+        #
+        # This was enforced nowhere. Every mandate schema carries `expires_at`,
+        # thirteen benchmark loaders write one, `compile_task_scope` discarded it,
+        # and a grant that expired four hundred days ago allowed the action with
+        # an empty reason list. An expiry nobody reads is not a control.
+        #
+        # Hard, not a step-up: an expired grant is not uncertainty about scope,
+        # it is the absence of authority, and the answer is to get a new one.
+        if self.scope is not None and self.scope.is_expired(self.clock()):
+            return (False,
+                    f"mandate {self.scope.mandate_id or ''} expired at "
+                    f"{self.scope.expires_at}", {"expired": True}, True)
         path = _action_path(action)
         allow_exceptions = set(self.scope.allowed_paths) if self.scope else set()
         # HARD denials first: positive evidence of malice takes precedence over a

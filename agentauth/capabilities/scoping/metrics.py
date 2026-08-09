@@ -44,6 +44,9 @@ class ScopingMetrics:
     blocked_actions: int = 0
     step_up_prompts: int = 0
     false_blocks: int = 0
+    # Actions refused because the grant had stopped authorizing. Enforced
+    # nowhere until an audit found a mandate 400 days expired still allowed.
+    prevented_expired_grants: int = 0
     prevented_protected_reads: int = 0
     prevented_protected_writes: int = 0
     prevented_egress: int = 0
@@ -86,7 +89,10 @@ class ScopingMetrics:
         protected_read: bool = False,
         protected_write: bool = False,
         egress: bool = False,
+        expired: bool = False,
     ) -> None:
+        if expired:
+            self.prevented_expired_grants += 1
         if protected_read:
             self.prevented_protected_reads += 1
         if protected_write:
