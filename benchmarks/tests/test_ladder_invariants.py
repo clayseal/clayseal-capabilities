@@ -480,8 +480,8 @@ def test_holding_out_a_mandate_narrows_it_rather_than_widening_it():
 # --------------------------------------------------------------------------- #
 # Does the mechanism have a runtime input?
 # --------------------------------------------------------------------------- #
-def test_only_the_benchmark_harness_supplies_a_twin_reference():
-    """The twin corridor cannot run in deployment, and this pins that.
+def test_the_twin_corridor_now_has_a_runtime_reference():
+    """The corridor was benchmark-only and now is not.
 
     Its SLEIGHT containment is 94.4%, and every point of it comes from
     `assess(reference=benign_twin)`. Exactly one caller supplies a reference and
@@ -497,14 +497,17 @@ def test_only_the_benchmark_harness_supplies_a_twin_reference():
     from agentauth.capabilities import broker
 
     source = inspect.getsource(broker.SessionBroker)
-    assert "reference=" not in source, (
-        "SessionBroker now supplies a twin reference; the corridor may be "
-        "deployable and its SLEIGHT number should be re-measured live"
-    )
+    # WIRED. The reference is now the agent's own DECLARATION rather than a past
+    # clean run, which is an object a deployment has because the agent produces
+    # it. See python/tests/test_commit_then_reveal.py.
+    assert "reference=self.declared_plan" in source
+    # And it stays opt-in: no declaration, no corridor, so every existing
+    # number is unchanged.
+    assert "declared_plan: Trajectory | None = None" in source
 
 
-def test_the_delegation_rung_has_no_live_principal_yet():
-    """The delegation boundary contains 100% and nothing populates its input.
+def test_the_delegation_rung_has_a_live_principal():
+    """The delegation boundary contains 100% and now has an input.
 
     Unlike the twin corridor this is a WIRING gap rather than an information
     gap: any multi-agent orchestrator knows which sub-agent issued a call, and
@@ -516,10 +519,11 @@ def test_the_delegation_rung_has_no_live_principal_yet():
     from agentauth.capabilities import broker
 
     source = inspect.getsource(broker)
-    assert '"principal"' not in source and "'principal'" not in source, (
-        "the broker now handles a principal; the delegation result may be "
-        "deployable and should be requoted"
-    )
+    # WIRED. The acting principal is read from `action.meta["principal"]` and
+    # checked before anything else in the floor. See
+    # python/tests/test_broker_delegation.py.
+    assert '"principal"' in source
+    assert "delegation: Any | None = None" in source
 
 
 def test_the_flow_mechanism_does_have_a_live_input():

@@ -196,6 +196,42 @@ class SessionBroker:
     # unlimited resources, so without this a single "the goal may write" verdict
     # let every write target in the catalog through.
     max_scope_extensions: int = 8
+    # WHOSE authority this action is. Absent means a single-principal session,
+    # and the rung is a pass-through, so adding this changes nothing for an
+    # existing caller.
+    #
+    # `deputy.DelegationBoundary` contained 100% of sub-agent overreach in the
+    # benchmark and had no runtime input: it reads a principal that nothing
+    # populated. Any orchestrator knows which sub-agent issued a call, so the
+    # gap was plumbing rather than information, and this is the plumbing. The
+    # acting principal is read from `action.meta["principal"]` and the
+    # credential it presented from `delegation_envelopes`.
+    delegation: Any | None = None
+    delegation_envelopes: dict[str, Any] = field(default_factory=dict)
+    # COMMIT-THEN-REVEAL. The actions the agent said it was going to take, sealed
+    # before it takes any of them.
+    #
+    # The twin corridor in `monitor/sealed_plan.py` contains covert sabotage that
+    # every per-action rung misses, and it had no runtime input: it needs a clean
+    # run of the same task, which a benchmark ships and a deployment never has.
+    # A DECLARATION is the same shape of object and the agent produces it, so a
+    # deployment does have one.
+    #
+    # Measured on the case that matters, an agent that declares an honest backup
+    # and then adds an exfil copy at execution:
+    #
+    #     declared honestly, executed honestly     no flags
+    #     declared honestly, then sabotaged        destination not in sealed plan
+    #
+    # The limit is equally clear: an agent that DECLARES the sabotage passes the
+    # corridor, and the declaration then carries the attacker's destination in
+    # static text available before anything runs, which is a far easier object to
+    # judge than a trajectory. That is the trade this makes, and it is why the
+    # declaration should itself be checked against the sealed goal.
+    #
+    # None means no declaration, and the corridor stays off, so an existing
+    # caller is unchanged.
+    declared_plan: Trajectory | None = None
     # Injectable so expiry is testable and so a replay can pin a moment. Defaults
     # to real UTC now, which is what a deployment wants.
     clock: Callable[[], Any] = field(
@@ -297,6 +333,21 @@ class SessionBroker:
             return (False,
                     f"mandate {self.scope.mandate_id or ''} expired at "
                     f"{self.scope.expires_at}", {"expired": True}, True)
+        # WHOSE authority, before what it points at. An action nobody signed for
+        # is the confused deputy's best disguise, so an unattributed action in a
+        # delegating session fails closed.
+        if self.delegation is not None:
+            principal = (action.meta or {}).get("principal")
+            if principal is None:
+                return (False, "action carries no acting principal",
+                        {"delegation": True}, True)
+            verdict = self.delegation.authorize(
+                principal=principal, resource=action.resource,
+                action=action.verb,
+                envelope=self.delegation_envelopes.get(principal))
+            if not verdict.allowed:
+                return (False, f"{verdict.rule}: {verdict.reason}",
+                        {"delegation": True}, True)
         path = _action_path(action)
         allow_exceptions = set(self.scope.allowed_paths) if self.scope else set()
         # HARD denials first: positive evidence of malice takes precedence over a
@@ -614,7 +665,8 @@ class SessionBroker:
     def _behavioral(self) -> tuple[Outcome, list[str], float | None]:
         if self.detector is None:
             return Outcome.ALLOW, [], None
-        report = self.detector.assess(self._trajectory)
+        report = self.detector.assess(self._trajectory,
+                                      reference=self.declared_plan)
         score = report.anomaly_p
         if report.blocked:
             reasons = list(report.structural_reasons) or [
