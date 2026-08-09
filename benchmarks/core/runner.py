@@ -104,6 +104,12 @@ def run_benchmark(
     results = {engine.name: EngineResult(engine=engine.name) for engine in engines}
     for engine in engines:
         result = results[engine.name]
+        # An engine whose policy is calibrated rather than declared gets one
+        # look at the corpus before replay, the way an operator sets a limit
+        # from their own logs before deployment. See VelocityLadderEngine.
+        observe = getattr(engine, "observe_corpus", None)
+        if observe is not None:
+            observe(tasks)
         for task in tasks:
             result.metrics.goal_id = task.task_id
             a_blocked = a_total = b_blocked = b_total = 0

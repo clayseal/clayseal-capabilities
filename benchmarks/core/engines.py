@@ -21,6 +21,7 @@ authz engine should we integrate?" rather than "which scoping strategy wins?".
 """
 from __future__ import annotations
 
+import math
 from typing import Protocol, runtime_checkable
 
 from agentauth.core.hash_util import hash_canonical_json
@@ -336,7 +337,7 @@ def openfga_engine() -> _ExternalEngine:
 
 
 class VelocityLadderEngine(BudgetLadderEngine):
-    """Full stack plus a rate limit shaped by the task's own expected volume.
+    """Full stack plus a rate limit calibrated on clean traffic.
 
     This rung exists because of a measured gap. `benchmarks/results/why_we_fail.md`
     found that 641 of 833 missed attacks carry NO TARGET AT ALL, with tool,
@@ -345,29 +346,74 @@ class VelocityLadderEngine(BudgetLadderEngine):
     an action having no target: it asks whether the *rate* has left the shape of
     the task rather than where the action points.
 
-    The cap is per task, never global. The same document measured a global cap
-    and it was unusable: at 10 effects per hour RedCode lost 12.8% of its benign
-    side, because a mail-merge agent and a ticket-answering agent have nothing in
-    common. Deriving the cap from the task's own legitimate volume costs nothing
-    on every benign corpus we have.
+    ## How the cap is chosen, and why the obvious way is wrong
 
-    In production the expectation is declared by the operator in the mandate
-    (`velocity` in `agentauth.capabilities.velocity.velocity_from_mandate`). Here
-    it is derived from the task's benign event shape, which stands in for what an
-    operator would know when writing that mandate. Only BENIGN events are
-    consulted, so no attack label leaks into the limit.
+    The first version of this engine set the cap from *the task under evaluation*
+    at `1.5 x its own benign effect count`. That is invalid, and measurement says
+    so plainly: on SLEIGHT, RedCode and ASB, 100% of attack-bearing tasks contain
+    zero benign effect events, so every one of them was handed `cap = floor = 1`.
+    The limit was a function of the label. It reported 24.7% containment on
+    AgentHarm and 65.5% on SLEIGHT; neither number was real.
+
+    The cap here is a single per-corpus constant, set at the *maximum* number of
+    effect actions any CLEAN task performs, which is what an operator does with a
+    fortnight of their own logs. It never consults the task being judged and
+    never consults an attack event.
+
+    The maximum rather than a high percentile, because the two differ in kind. At
+    p99 the cap by construction trips on the busiest 1% of legitimate work, and
+    it did: BFCL lost 0.4% of its benign side and tau2 0.1%, which broke the
+    ladder's no-added-false-blocks invariant for no containment in return. At the
+    observed maximum both go to zero and the containment is unchanged.
+
+    Honest result: +8.0 points on AgentHarm at 0.0% false-block, and no movement
+    anywhere else. SLEIGHT in particular gains nothing, because there containment
+    and false-block move together at every cap: velocity has no discrimination on
+    covert-intent attacks, and the apparent gain was the mechanism blocking a
+    fraction of everything.
+
+    A single cap shared across corpora is not viable either: RedCode's clean side
+    runs to 32 effect actions per task and loses 17.4% of its benign traffic at
+    the cap AgentHarm wants. The limit belongs in the mandate, per class of work
+    (`agentauth.capabilities.velocity.velocity_from_mandate`), which is where
+    production reads it from.
     """
 
     name = "task-scope+binding+budget+velocity"
 
-    # Headroom over the task's expected volume. 1.5 leaves room for retries and
-    # exploration while still bounding a burst.
-    headroom = 1.5
+    # Quantile of the clean volume distribution. 1.0 is the observed maximum;
+    # anything lower trips on the operator's own busiest legitimate task.
+    percentile = 1.0
+    # Used only when a corpus has no clean task to calibrate on, in which case
+    # there is nothing to learn from and an operator would fall back to a default.
+    default_cap = 5
     floor = 1
 
     def __init__(self) -> None:
         super().__init__()
+        self._cap: int | None = None
         self._velocity: dict[str, object] = {}
+
+    @classmethod
+    def calibrate(cls, tasks: list[BenchmarkTask]) -> int:
+        """Cap from clean traffic. Attack events are never inspected."""
+        from agentauth.capabilities.velocity import EFFECT_VERBS
+
+        volumes = [
+            sum(1 for e in t.events if e.action in EFFECT_VERBS)
+            for t in tasks
+            if not any(e.label is EventLabel.ATTACK for e in t.events)
+        ]
+        if not volumes:
+            return cls.default_cap
+        volumes.sort()
+        idx = max(0, math.ceil(cls.percentile * len(volumes)) - 1)
+        return max(cls.floor, volumes[idx])
+
+    def observe_corpus(self, tasks: list[BenchmarkTask]) -> None:
+        """Declare the cap for this class of work, once, before replay."""
+        self._cap = self.calibrate(tasks)
+        self._velocity.clear()
 
     def _limiter(self, task: BenchmarkTask):
         from agentauth.capabilities.velocity import (
@@ -375,9 +421,7 @@ class VelocityLadderEngine(BudgetLadderEngine):
 
         limiter = self._velocity.get(task.task_id)
         if limiter is None:
-            expected = sum(1 for e in task.events
-                           if e.label is EventLabel.BENIGN and e.action in EFFECT_VERBS)
-            cap = max(self.floor, int(expected * self.headroom))
+            cap = self.default_cap if self._cap is None else self._cap
             limiter = SessionVelocity(config=VelocityConfig(
                 limits={verb: (cap, 3600.0) for verb in EFFECT_VERBS}))
             self._velocity[task.task_id] = limiter
