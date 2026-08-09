@@ -1,0 +1,24 @@
+{
+  "corpus": "tau2",
+  "sessions": 400,
+  "containment": 1.0,
+  "false_block": 0.0,
+  "cleared_below": 800,
+  "blocked_below": 0,
+  "multi_instance_refused": 0,
+  "multi_instance_total": 400,
+  "sweep": {
+    "1": {
+      "refused": 400,
+      "total": 400
+    },
+    "2": {
+      "refused": 800,
+      "total": 800
+    },
+    "3": {
+      "refused": 1200,
+      "total": 1200
+    }
+  }
+}
