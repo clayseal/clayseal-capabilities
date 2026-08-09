@@ -348,3 +348,25 @@ def test_no_lower_rung_contains_what_a_higher_rung_allows(dataset):
         f"{dataset}: {len(escapes)} attack events a lower rung contains and a "
         f"higher rung allows, e.g. {escapes[:3]}"
     )
+
+
+@pytest.mark.parametrize("dataset", DATASETS)
+def test_task_ids_are_unique(dataset):
+    """Stateful engines key per-task state on the id.
+
+    RedCode's `Index` repeats across source files, so 324 of its 768 tasks shared
+    an id with another task and two unrelated tasks shared one budget ledger and
+    one rate window. A collision is a silent measurement error: it cannot fail
+    loudly, it just makes one task's history count against another's.
+    """
+    from collections import Counter
+
+    tasks = _load(dataset)
+    if not tasks:
+        pytest.skip(f"{dataset}: no tasks")
+    counts = Counter(t.task_id for t in tasks)
+    dupes = {k: v for k, v in counts.items() if v > 1}
+    assert not dupes, (
+        f"{dataset}: {sum(v - 1 for v in dupes.values())} duplicate task ids, "
+        f"e.g. {list(dupes.items())[:3]}"
+    )
