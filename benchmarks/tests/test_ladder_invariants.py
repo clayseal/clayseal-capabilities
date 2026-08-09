@@ -57,6 +57,17 @@ def _decisions(tasks, engine_names):
     return out
 
 
+# Ladder order for the per-event monotonicity check, cheapest rung first.
+LADDER_ORDER = [
+    "tool-allowlist",
+    "capability-token",
+    "task-scope",
+    "task-scope+binding",
+    "task-scope+binding+budget",
+    "task-scope+binding+budget+velocity",
+]
+
+
 @pytest.mark.parametrize("dataset", DATASETS)
 def test_containment_is_monotone_up_the_ladder(dataset):
     """No attack event may be blocked by a rung and allowed by a rung above it.
@@ -298,3 +309,42 @@ def test_stateful_rungs_are_insensitive_to_event_order(dataset):
             f"({100*base[name].false_block_rate:.1f}% -> "
             f"{100*after[name].false_block_rate:.1f}%)"
         )
+
+
+@pytest.mark.parametrize("dataset", DATASETS)
+def test_no_lower_rung_contains_what_a_higher_rung_allows(dataset):
+    """Monotone containment, asserted per EVENT rather than per rate.
+
+    The rate-level assertion above passes while individual events regress, and
+    SLEIGHT proved it: the naive `tool-allowlist` rung contained four attacks
+    the full stack allowed, because a task whose scope is resource-shaped never
+    re-asked whether the tool itself was granted. A ladder that is monotone only
+    in aggregate is not a ladder.
+    """
+    tasks = _load(dataset)
+    if not tasks:
+        pytest.skip(f"{dataset}: no tasks")
+    engines = build_engines()
+    by_name = {e.name: e for e in engines}
+    order = [n for n in LADDER_ORDER if n in by_name]
+    for e in by_name.values():
+        obs = getattr(e, "observe_corpus", None)
+        if obs:
+            obs(tasks)
+
+    escapes = []
+    for task in tasks:
+        for event in task.events:
+            if event.label is not EventLabel.ATTACK:
+                continue
+            blocked_at = [n for n in order if not by_name[n].decide(task, event).allowed]
+            if not blocked_at:
+                continue
+            first = order.index(blocked_at[0])
+            for n in order[first:]:
+                if by_name[n].decide(task, event).allowed:
+                    escapes.append((event.event_id, blocked_at[0], n))
+    assert not escapes[:5], (
+        f"{dataset}: {len(escapes)} attack events a lower rung contains and a "
+        f"higher rung allows, e.g. {escapes[:3]}"
+    )

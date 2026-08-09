@@ -135,9 +135,17 @@ class TaskScopeEngine:
 
     def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
         scope = self._scope(task)
-        # Inherited from the rung below. Only when the task actually carries
-        # capabilities: a corpus with no capability grant would otherwise be
-        # denied wholesale rather than judged on scope.
+        # Both rungs below, carried forward, so the ladder is monotone by
+        # construction rather than by coincidence of corpus. The tool allowlist
+        # was missing and SLEIGHT caught it: the naive `tool-allowlist` rung
+        # contained four attacks that the full stack allowed, because a task
+        # whose scope is resource-shaped never re-asks whether the tool itself
+        # was granted.
+        if task.allowed_tools and event.tool_name not in task.allowed_tools:
+            return Decision(False, f"tool {event.tool_name!r} not granted", self.name)
+        # Only when the task actually carries capabilities: a corpus with no
+        # capability grant would otherwise be denied wholesale rather than
+        # judged on scope.
         if task.capabilities and not capability_allows(
             normalize_capabilities(task.capabilities), event.resource, event.action
         ):

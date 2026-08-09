@@ -51,6 +51,22 @@ DEFAULT_WINDOW_SECONDS = 24 * 60 * 60
 
 
 @dataclass(frozen=True)
+class Hold:
+    """An outstanding reservation. Opaque on purpose: it is a capability.
+
+    `release` used to take (principal, budget_id, amount) and subtract from a
+    pool shared by every session of the principal, so any session could release
+    an amount it never reserved and wipe every other session's hold. Holding a
+    reference is now the only way to give one back.
+    """
+
+    principal: str
+    budget_id: str
+    amount: Decimal
+    created_at: float
+
+
+@dataclass(frozen=True)
 class LedgerEntry:
     principal: str
     budget_id: str
@@ -95,6 +111,8 @@ class PrincipalLedger:
     # with respect to other sessions. Without this two concurrent sessions both
     # pass `would_allow` before either commits.
     _reserved: dict[tuple[str, str], Decimal] = field(default_factory=dict)
+    # The holds behind that total, so a release can be scoped to one of them.
+    _holds: dict[tuple[str, str], list[Hold]] = field(default_factory=dict)
     # Running in-window total per key. Indexing alone did not help: 20,000
     # entries for one busy principal is one bucket, so reads stayed at 3.6 ms.
     # This is a cache, which the original design deliberately avoided because a
@@ -227,33 +245,90 @@ class PrincipalLedger:
             self._totals[key] = self._totals.get(key, Decimal("0")) + amount
         return entry
 
+    # How long an unreleased hold survives. A reservation that never expires is
+    # a denial-of-service: an agent that authorizes and then dies (a timeout, a
+    # crash, an exception on the tool call) shrinks the principal's ceiling
+    # permanently, and enough abandoned holds take it to zero. The TTL should be
+    # of the order of the tool timeout.
+    reservation_ttl_seconds: float = 300.0
+
     def reserve(self, principal: str, budget_id: str, amount: Decimal,
-                ceiling: Decimal, *, now: float | None = None) -> bool:
+                ceiling: Decimal, *, now: float | None = None) -> "Hold | None":
         """Atomically check the ceiling and hold the amount against it.
 
         `would_allow` followed by `commit` is a check-then-act race: eight
         concurrent sessions each passed the check and each committed, moving
         40,000 against a 10,000 ceiling. Holding the reservation under the same
         lock as the check is what makes the ceiling a ceiling.
+
+        Returns an opaque `Hold` rather than a bool, and `release` takes that
+        Hold rather than an amount. The amount-keyed form was a cross-session
+        weapon: `release(principal, budget, 10000)` subtracted from the single
+        pool shared by every session of that principal, so any session could
+        wipe every other session's hold and then book above the ceiling. A Hold
+        can only be released once, and only by whoever holds it.
         """
         if not amount.is_finite() or amount <= 0:
             raise ValueError(
                 f"reservation amounts must be finite and positive, got {amount!r}")
+        at = time.time() if now is None else now
         with self._lock:
             key = (principal, budget_id)
-            projected = (self.spent(principal, budget_id, now=now)
-                         + self._reserved.get(key, Decimal("0")) + amount)
+            self._expire_holds(key, at)
+            held = sum((h.amount for h in self._holds.get(key, ())), Decimal("0"))
+            projected = self.spent(principal, budget_id, now=now) + held + amount
             if projected > ceiling:
-                return False
-            self._reserved[key] = self._reserved.get(key, Decimal("0")) + amount
-            return True
+                return None
+            hold = Hold(principal=principal, budget_id=budget_id,
+                        amount=amount, created_at=at)
+            self._holds.setdefault(key, []).append(hold)
+            self._reserved[key] = held + amount
+            return hold
 
-    def release(self, principal: str, budget_id: str, amount: Decimal) -> None:
-        """Give back a reservation whose action was refused downstream."""
+    def _expire_holds(self, key: tuple[str, str], at: float) -> None:
+        holds = self._holds.get(key)
+        if not holds:
+            return
+        cutoff = at - self.reservation_ttl_seconds
+        live = [h for h in holds if h.created_at >= cutoff]
+        if len(live) != len(holds):
+            self._holds[key] = live
+            self._reserved[key] = sum((h.amount for h in live), Decimal("0"))
+
+    def release(self, hold: "Hold | None") -> None:
+        """Give back a reservation whose action was refused downstream.
+
+        Idempotent, and scoped to the one hold. Releasing twice, or releasing a
+        hold that already expired, does nothing.
+        """
+        if hold is None:
+            return
         with self._lock:
-            key = (principal, budget_id)
-            self._reserved[key] = max(Decimal("0"),
-                                      self._reserved.get(key, Decimal("0")) - amount)
+            key = (hold.principal, hold.budget_id)
+            holds = self._holds.get(key)
+            if not holds:
+                return
+            for i, existing in enumerate(holds):
+                if existing is hold:
+                    holds.pop(i)
+                    break
+            else:
+                return
+            self._reserved[key] = sum((h.amount for h in holds), Decimal("0"))
+
+    def commit_hold(self, hold: "Hold | None", *, session: str = "",
+                    idempotency_key: str = "", now: float | None = None):
+        """Book exactly what was reserved, then drop the hold.
+
+        The amount comes from the Hold rather than from the caller, so a
+        reservation for 10 cannot be committed as 10,000.
+        """
+        if hold is None:
+            return None
+        entry = self.book(hold.principal, hold.budget_id, hold.amount,
+                          session=session, idempotency_key=idempotency_key, now=now)
+        self.release(hold)
+        return entry
 
     def would_exceed(self, principal: str, budget_id: str, amount: Decimal,
                      ceiling: Decimal, *, now: float | None = None) -> bool:
@@ -458,18 +533,41 @@ class PrincipalBudgetView:
             )
         return True, f"within principal budget {budget_id}"
 
+    # Holds this session is carrying between authorize and commit, keyed by the
+    # budget and amount they were taken for.
+    _holds: dict = field(default_factory=dict)
+
+    def release(self, tool_name: str, args: dict[str, Any]) -> None:
+        """Give back a hold for an action a later rung refused.
+
+        Without this an authorize that never commits leaves the hold to expire
+        on the TTL, which is correct but slow: the principal's ceiling stays
+        shrunk for the whole window in the meantime.
+        """
+        parsed = self._amount(tool_name, args)
+        if parsed is None:
+            return
+        budget_id, amount = parsed
+        self.ledger.release(self._holds.pop((budget_id, str(amount)), None))
+
     def commit(self, tool_name: str, args: dict[str, Any],
                *, now: float | None = None) -> None:
         parsed = self._amount(tool_name, args)
         if parsed is None:
             return
         budget_id, amount = parsed
+        # Commit the HOLD this session took in `authorize`, so the booked amount
+        # is the reserved amount rather than whatever the caller passes now.
+        hold = self._holds.pop((budget_id, str(amount)), None)
+        if hold is not None:
+            self.ledger.commit_hold(
+                hold, session=self.session,
+                idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
+            return
         self.ledger.book(
             self.principal, budget_id, amount, session=self.session,
             idempotency_key=str(args.get("_idempotency_key") or ""), now=now,
         )
-        # The reservation taken in `authorize` is now real spend.
-        self.ledger.release(self.principal, budget_id, amount)
 
     def authorize(self, tool_name: str, args: dict[str, Any],
                   *, now: float | None = None) -> tuple[bool, str]:
@@ -483,7 +581,9 @@ class PrincipalBudgetView:
         ceiling = self.ceilings.get(budget_id)
         if ceiling is None:
             return True, f"no principal ceiling for {budget_id}"
-        if self.ledger.reserve(self.principal, budget_id, amount, ceiling, now=now):
+        hold = self.ledger.reserve(self.principal, budget_id, amount, ceiling, now=now)
+        if hold is not None:
+            self._holds[(budget_id, str(amount))] = hold
             return True, f"within principal budget {budget_id}"
         already = self.ledger.spent(self.principal, budget_id, now=now)
         window_h = self.ledger.window_seconds / 3600

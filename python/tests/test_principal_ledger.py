@@ -424,3 +424,52 @@ def test_non_positive_and_non_finite_amounts_are_not_tracked(bad):
     ok, reason = v.authorize("send_money", {"amount": bad})
     v.commit("send_money", {"amount": bad})
     assert ledger.spent("p", "b") == Decimal("0")
+
+
+# --------------------------------------------------------------------------- #
+# Reservations are capabilities, not amounts
+# --------------------------------------------------------------------------- #
+def test_one_session_cannot_release_another_sessions_hold():
+    """`release(principal, budget, amount)` was a cross-session weapon.
+
+    The reservation pool is shared by every session of a principal, so any
+    session could subtract an amount it never reserved, wipe every other
+    session's hold, and then book above the ceiling. A hold is now a capability:
+    only whoever holds it can give it back.
+    """
+    ledger = PrincipalLedger()
+    ceiling = Decimal("10000")
+    honest = ledger.reserve("mandate:payouts", "usd", Decimal("9000"), ceiling)
+    assert honest is not None
+
+    # The attacker holds nothing and can release nothing.
+    ledger.release(None)
+    attacker = ledger.reserve("mandate:payouts", "usd", Decimal("9000"), ceiling)
+    assert attacker is None, "the honest session's hold was wiped"
+
+
+def test_a_hold_commits_the_amount_it_reserved():
+    ledger = PrincipalLedger()
+    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    ledger.commit_hold(hold, session="s")
+    assert ledger.spent("p", "usd") == Decimal("10")
+
+
+def test_releasing_a_hold_twice_is_harmless():
+    ledger = PrincipalLedger()
+    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    ledger.release(hold)
+    ledger.release(hold)
+    assert ledger.reserve("p", "usd", Decimal("1000"), Decimal("1000")) is not None
+
+
+def test_an_abandoned_hold_expires_instead_of_shrinking_the_ceiling_forever():
+    """An agent that authorizes and then dies used to shrink the principal's
+    ceiling permanently, and enough abandoned holds took it to zero."""
+    ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
+    ceiling = Decimal("1000")
+    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=0.0) is not None
+    # Same instant: no headroom.
+    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=0.0) is None
+    # After the TTL the abandoned hold no longer counts.
+    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=120.0) is not None
