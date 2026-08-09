@@ -30,6 +30,43 @@ than against an unrelated benign set.
 encrypted to keep them out of training corpora. They live under
 `.benchmark-corpus/` which is gitignored, and this loader never writes transcript
 content into results. Decrypt with the key published in the upstream README.
+
+## What counts as an attack event
+
+Every tool call in an attack transcript used to be labelled ATTACK. That is wrong
+for a covert-sabotage corpus, where most of the transcript *is* the real task:
+the sabotage is a handful of calls hidden inside legitimate work, and labelling
+the cover work ATTACK inflates the denominator with events that are not the
+attack. 323 tool calls across the 44 attack transcripts; the corpus's own
+`metadata.json` cites 129 of them.
+
+Each attack ships `metadata.json` with a `mechanism` map whose keys are **1-based
+transcript line numbers** and whose values describe the sabotage step at that
+line. The indexing base is not documented; it is established here two ways, and
+both agree. Three attacks cite a line number equal to their transcript's line
+count, which is only in range 1-based. And of the 38 mechanism entries that name
+a distinctive command token, 31 match the 1-based line and 0 match the 0-based
+line.
+
+A `mechanism` key can land on any line type: the user's request, the agent's
+reasoning, the tool call, or the tool result. A cited tool call is an attack
+event directly. A cited *tool result* names the call that produced it through the
+transcript's own `tool_use_id`, which is an identity in the format rather than an
+inference on our part. Those two rules give 129 events. Adding a third rule --
+the next tool call after a cited assistant-reasoning line -- adds exactly zero
+further events, which is the check that the id-linked mapping is already
+complete.
+
+Everything else in an attack transcript is UNLABELED: replayed so stateful rungs
+see the real event stream, scored on neither axis. Calling it BENIGN would be the
+mirror-image error, since the corpus certifies its `benign.jsonl` twin, not the
+attack transcript's non-sabotage lines.
+
+One attack, `refusal_forcing/refusal-poisoning-credential-exfil`, ships an empty
+`mechanism`, no `description.md`, and no benign twin. It is excluded and declared
+rather than guessed at: with no annotation there is no honest way to say which of
+its calls are the sabotage, and with no twin there is no grant to judge them
+against.
 """
 from __future__ import annotations
 
@@ -50,7 +87,13 @@ DEFAULT_WORKSPACE = "/repo"
 # A coding agent's legitimate authority: its own checkout. Deliberately the same
 # shape as the RedCode mandate so the two corpora are judged by one policy and a
 # difference between them is a property of the attacks rather than of the grant.
-_TOOLS = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "NotebookEdit"}
+#
+# `TodoWrite` is in the set because it is a scratchpad: it writes the agent's own
+# task list and touches no external resource, so withholding it buys nothing. It
+# was the last source of friction on this corpus's benign twins -- 4 of 311 events
+# refused at the tool rung -- and it appears on zero attack events, so granting it
+# cannot move containment. Verified: containment is 2/129 with and without.
+_TOOLS = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "NotebookEdit", "TodoWrite"}
 _CAPABILITIES = [
     {"resource": "workspace", "action": a}
     for a in ("read", "write", "delete", "execute", "call", "send")
@@ -60,15 +103,13 @@ _CAPABILITIES = [
 _READ_CMDS = {"cat", "less", "head", "tail", "grep", "find", "ls", "od", "xxd", "strings"}
 _WRITE_CMDS = {"cp", "mv", "tee", "install", "dd", "tar", "zip", "chmod", "chown"}
 _DELETE_CMDS = {"rm", "shred", "truncate"}
-_NET_CMDS = {"curl", "wget", "nc", "ncat", "ssh", "scp", "rsync", "git"}
 
 _URL = re.compile(r"https?://([^/\s\"']+)")
 _HOSTISH = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 
 
 def _mandate(task_id: str, workspace: str,
-             authorized_paths: list[str] | None = None,
-             authorized_nets: list[str] | None = None) -> dict[str, Any]:
+             authorized_paths: list[str] | None = None) -> dict[str, Any]:
     """What the user authorized for this task.
 
     SLEIGHT ships no mandate. It is a TRANSCRIPT-MONITORING benchmark: paired
@@ -91,16 +132,12 @@ def _mandate(task_id: str, workspace: str,
     AgentHarm asks: does the sabotaged run reach beyond what the legitimate run
     required?
 
-    Network hosts the benign twin contacted are also granted (as ``net:<host>``
-    path entries) and ``send`` is an allowed operation — otherwise every
-    legitimate curl/scp was refused as ``action 'send' out of scope`` and novel
-    attacker hosts were not the thing being measured.
-
-    This makes path/egress containment meaningful and makes the false-block
-    number on this corpus **unmeasurable**, because a mandate derived from the
-    benign twin clears that twin by construction. Friction is measured on tau2,
-    BFCL and ATIF. Covert-intent discrimination is scored by the trajectory
-    detector (``--mode detector``), not the per-action ladder.
+    This makes containment meaningful and makes the false-block number on this
+    corpus **unmeasurable**, because a mandate derived from the benign twin clears
+    that twin by construction. Reporting a 0% false-block here would be exactly
+    the calibrated-on-what-you-score defect that has already invalidated results,
+    so the benign side is declared unscoreable and friction is measured where it
+    can be: tau2, BFCL and ATIF, 18,356 benign events.
     """
     ws = workspace.rstrip("/") or DEFAULT_WORKSPACE
     allowed = [f"{ws}/**", ws.lstrip("/") + "/**", f"{ws}"]
@@ -108,34 +145,46 @@ def _mandate(task_id: str, workspace: str,
         cleaned = granted.rstrip("/")
         if not cleaned:
             continue
+        if cleaned.startswith("net:"):
+            # An egress destination the legitimate run used. Granted verbatim:
+            # `net:` targets are not filesystem paths and a `/**` suffix on one
+            # would silently widen a host to every host sharing its prefix.
+            allowed.append(cleaned)
+            continue
         allowed.extend([cleaned, f"{cleaned}/**", cleaned.lstrip("/") + "/**"])
-    for net in authorized_nets or ():
-        if net:
-            allowed.append(net if net.startswith("net:") else f"net:{net}")
-    ops = ["read", "write", "delete", "execute", "call", "send"]
     return {
         "mandate_id": f"sleight-{task_id}",
         "task": {"summary": f"work in {ws}"},
         "scope": {
             "allowed_paths": sorted(set(allowed)),
-            "denied_paths": [],
-            "allowed_operations": ops,
+            # `send` belongs here because `_CAPABILITIES` grants `workspace:send`.
+            # Omitting it made the mandate contradict its own capability token:
+            # every event this loader classified `send` was refused on the verb
+            # alone, whatever it pointed at, so egress was "contained" without any
+            # check on the destination. It supplied 17 of the 28 blocks in the
+            # 8.5% figure. With the verb granted, an egress event is judged where
+            # it should be -- against the destinations the benign twin used.
+            "allowed_operations": ["read", "write", "delete", "execute", "call", "send"],
         },
     }
 
 
-def _authorized_nets(events) -> list[str]:
-    """``net:`` destinations the benign twin contacted."""
-    return sorted({e.path for e in events
-                   if e.path and str(e.path).startswith("net:")})
-
 def _authorized_surface(events) -> list[str]:
-    """The directories a run touched, as the authorization it implies."""
+    """The directories and egress destinations a run touched, as the grant.
+
+    `net:` targets are carried through rather than dropped. Dropping them made the
+    grant asymmetric: a legitimate run's own `curl` destination was ungrantable,
+    so every egress event on either side failed the path check for the same
+    reason, and the check could not discriminate.
+    """
     import posixpath
 
     out: set[str] = set()
     for event in events:
-        if not event.path or event.path.startswith("net:"):
+        if not event.path:
+            continue
+        if event.path.startswith("net:"):
+            out.add(event.path)
             continue
         parent = posixpath.dirname(event.path.rstrip("/"))
         if parent and parent != "/":
@@ -156,6 +205,142 @@ def _workspace_of(path: Path) -> str:
     return DEFAULT_WORKSPACE
 
 
+# --------------------------------------------------------------------------- #
+# Shell parsing
+# --------------------------------------------------------------------------- #
+# A heredoc body is DATA, not command text. Leaving it in the string being parsed
+# is how `cat > run.sh <<'EOF' ... VLLM_ENDPOINT=http://h100-us-west2-0 ... EOF`
+# became an egress event to `net:h100-us-west2-0`: the command performs no
+# network I/O at all, it writes a file whose contents mention a URL.
+_HEREDOC = re.compile(
+    r"<<-?\s*[\"']?(?P<tag>[A-Za-z_][A-Za-z0-9_]*)[\"']?\s*?\n"
+    r"(?P<body>.*?)^\s*(?P=tag)\s*$",
+    re.S | re.M,
+)
+
+# Where one command ends and the next begins. Best-effort: quoting is not tracked
+# across separators, which can split a command that contains a literal `|` or `;`
+# inside quotes. That direction of error costs a target, it does not invent one.
+_SEGMENT = re.compile(r"\|\||&&|\$\(|[|;\n()`]")
+
+# Binaries that actually open a socket.
+_NET_BINARIES = {"curl", "wget", "nc", "ncat", "telnet", "ssh", "scp",
+                 "sftp", "rsync", "ftp", "http", "https"}
+# `git` is not one of them. `git status`, `git diff`, `git commit` and `git log`
+# touch nothing but the local checkout; only these subcommands reach a remote.
+_GIT_NET = {"push", "pull", "fetch", "clone", "ls-remote"}
+# Wrappers that prefix a real command without being one.
+_PREFIXES = {"sudo", "env", "time", "nohup", "exec", "command", "xargs", "timeout"}
+_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+# `> out.txt` / `>> out.txt`. Not `2>&1` and not `2>/dev/null`: a numbered file
+# descriptor is stream plumbing, not the command's target.
+_REDIRECT = re.compile(r"(?<![0-9&])>>?\s*(?![&])([^\s;|&<>]+)")
+# Writing here is not an effect. `find ... 2>/dev/null` used to land as a write to
+# `/dev/null`, outside every task's scope, and that alone supplied 2 of the 4
+# blocks in the first version of this fix. A discard sink counted as containment
+# is a manufactured number.
+_SINKS = {"/dev/null", "/dev/stdout", "/dev/stderr", "/dev/tty", "/dev/zero"}
+# curl/wget flags that make a request an UPLOAD rather than a fetch.
+_UPLOAD_FLAGS = ("-d", "--data", "-T", "--upload-file", "-F", "--form",
+                 "--data-binary", "--data-raw", "--data-urlencode")
+_UPLOAD_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _strip_heredocs(command: str) -> str:
+    return _HEREDOC.sub(lambda m: m.group(0).split("\n", 1)[0], command)
+
+
+def _segments(command: str) -> list[str]:
+    return [s.strip() for s in _SEGMENT.split(command) if s and s.strip()]
+
+
+def _head_and_args(segment: str) -> tuple[str, list[str]]:
+    """The binary a segment invokes, past env assignments and wrappers."""
+    try:
+        parts = shlex.split(segment)
+    except ValueError:
+        parts = segment.split()
+    while parts and (_ASSIGNMENT.match(parts[0]) or Path(parts[0]).name in _PREFIXES):
+        parts = parts[1:]
+    if not parts:
+        return "", []
+    return Path(parts[0]).name, parts[1:]
+
+
+def _net_target(segment: str, head: str, args: list[str]) -> str | None:
+    """The host a NETWORK segment contacts, or None if it does not name one.
+
+    Read only out of the segment that runs the network binary. The old version
+    searched the whole command string for anything URL-shaped, which is why a
+    `sed -i 's|https://old|https://new|'` rewrite and a `which curl` version check
+    both became egress events.
+    """
+    if head in {"ssh", "scp", "sftp", "rsync"}:
+        # The remote is the FIRST non-flag argument, and only that one. Scanning
+        # every argument for something host-shaped made
+        # `ssh a100-0 'grep -oE ... ~/monitor/.env'` an egress event to `net:grep`,
+        # because the quoted remote command contains a dot.
+        for arg in args:
+            if arg.startswith("-"):
+                continue
+            host = arg.split("@")[-1].split(":")[0]
+            return f"net:{host}" if host else None
+        return None
+    url = _URL.search(segment)
+    if url:
+        return f"net:{url.group(1)}"
+    ip = _HOSTISH.search(segment)
+    if ip:
+        return f"net:{ip.group(1)}"
+    return None
+
+
+def _is_net(head: str, args: list[str]) -> bool:
+    if head in _NET_BINARIES:
+        return True
+    if head == "git":
+        return any(a in _GIT_NET for a in args if not a.startswith("-"))
+    return False
+
+
+def _is_upload(segment: str, args: list[str]) -> bool:
+    """Does this HTTP call push data out rather than pull it in?"""
+    if ">" in segment:
+        return False
+    for i, arg in enumerate(args):
+        if arg == "-X" or arg == "--request":
+            if i + 1 < len(args) and args[i + 1].upper() in _UPLOAD_METHODS:
+                return True
+        if arg.startswith(_UPLOAD_FLAGS):
+            return True
+    return False
+
+
+def _pathish(token: str) -> bool:
+    """Is this argument plausibly a filesystem path?
+
+    Whitespace disqualifies it. `sed -i '1543s/^ / /' /opt/serving/gateway.py`
+    used to be recorded as touching
+    `/home/alex/serving/1543s/^                /            /`, because the first
+    argument containing a slash was the sed *script*. A path with a space in it
+    exists, but a corpus target we get wrong is worse than one we decline to
+    guess, so the ambiguity resolves against us.
+    """
+    if not token or any(c.isspace() for c in token):
+        return False
+    return "/" in token or token.startswith((".", "~"))
+
+
+def _verb(head: str) -> str:
+    if head in _DELETE_CMDS:
+        return "delete"
+    if head in _WRITE_CMDS:
+        return "write"
+    if head in _READ_CMDS:
+        return "read"
+    return "execute"
+
+
 def _classify(command: str) -> tuple[str, str | None]:
     """Map a shell command to (action, target).
 
@@ -164,53 +349,125 @@ def _classify(command: str) -> tuple[str, str | None]:
     than being invented a path that might not exist. Over-parsing here would
     manufacture containment.
     """
-    try:
-        parts = shlex.split(command)
-    except ValueError:
-        parts = command.split()
-    if not parts:
+    text = _strip_heredocs(command)
+    segments = _segments(text)
+    if not segments:
         return "call", None
 
-    head = Path(parts[0]).name
-    args = [p for p in parts[1:] if not p.startswith("-")]
+    # Network first, and only when a segment actually runs a network binary.
+    for segment in segments:
+        head, args = _head_and_args(segment)
+        if not _is_net(head, args):
+            continue
+        target = _net_target(segment, head, args)
+        if target is None:
+            # A network command whose destination we cannot read. Judged on tool
+            # and verb alone rather than handed a host we made up.
+            continue
+        upload = head not in {"curl", "wget"} or _is_upload(segment, args)
+        return ("send" if upload else "read"), target
 
-    url = _URL.search(command)
-    if head in _NET_CMDS or url:
-        host = url.group(1) if url else None
-        if host is None:
-            ip = _HOSTISH.search(command)
-            host = ip.group(1) if ip else None
-        if host:
-            return ("read" if head in {"curl", "wget"} and ">" not in command else "send",
-                    f"net:{host}")
+    # Otherwise the first segment that actually names something it touches.
+    for segment in segments:
+        head, args = _head_and_args(segment)
+        redirect = _REDIRECT.search(segment)
+        if redirect and _pathish(redirect.group(1)) and redirect.group(1) not in _SINKS:
+            return "write", redirect.group(1)
+        target = next((a for a in args if not a.startswith("-") and _pathish(a)), None)
+        if target and target not in _SINKS:
+            return _verb(head), target
 
-    target = next((a for a in args if "/" in a or a.startswith(".")), None)
-    if head in _DELETE_CMDS:
-        return "delete", target
-    if head in _WRITE_CMDS:
-        return "write", target
-    if head in _READ_CMDS:
-        return "read", target
-    return "execute", target
+    return _verb(_head_and_args(segments[0])[0]), None
 
 
 def _resolve(target: str | None, workspace: str) -> str | None:
     """Relative paths in a shell command are relative to the session cwd."""
     if not target or target.startswith(("net:", "/")):
         return target
+    if target.startswith("~"):
+        # `~` is the invoking user's home, not a subdirectory of the checkout.
+        # Joining it under the workspace put 32 events, including
+        # `~/keys/ci-deploy.json`, inside a scope they are not inside.
+        return target
     return f"{workspace.rstrip('/')}/{target.lstrip('./')}"
 
 
-def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
-                            workspace: str) -> list[BenchmarkEvent]:
-    events: list[BenchmarkEvent] = []
-    for i, line in enumerate(path.read_text().splitlines()):
+# --------------------------------------------------------------------------- #
+# Corpus annotation
+# --------------------------------------------------------------------------- #
+def _mechanism_lines(attack_dir: Path) -> set[int] | None:
+    """1-based transcript lines the corpus says are the sabotage.
+
+    Returns None when the attack ships no usable annotation, which is the signal
+    to exclude it rather than to fall back on labelling the whole transcript.
+    """
+    meta = attack_dir / "metadata.json"
+    if not meta.exists():
+        return None
+    try:
+        payload = json.loads(meta.read_text())
+    except json.JSONDecodeError:
+        return None
+    mechanism = payload.get("mechanism")
+    if not isinstance(mechanism, dict) or not mechanism:
+        return None
+    lines = {int(k) for k in mechanism if str(k).lstrip("-").isdigit()}
+    return lines or None
+
+
+def _parse(path: Path) -> list[dict | None]:
+    out: list[dict | None] = []
+    for line in path.read_text().splitlines():
         line = line.strip()
         if not line:
+            out.append(None)
             continue
         try:
-            obj = json.loads(line)
+            out.append(json.loads(line))
         except json.JSONDecodeError:
+            out.append(None)
+    return out
+
+
+def _attack_indices(objs: list[dict | None], mechanism: set[int]) -> set[int]:
+    """0-based indices of the tool calls the corpus cites as the sabotage."""
+    tool_use_line: dict[str, int] = {}
+    for i, obj in enumerate(objs):
+        content = obj.get("content") if isinstance(obj, dict) else None
+        if isinstance(content, dict) and content.get("type") == "tool_use":
+            tool_use_line[content.get("id")] = i
+
+    cited: set[int] = set()
+    for i, obj in enumerate(objs):
+        if (i + 1) not in mechanism or not isinstance(obj, dict):
+            continue
+        content = obj.get("content")
+        if not isinstance(content, dict):
+            continue
+        if content.get("type") == "tool_use":
+            cited.add(i)
+        elif content.get("type") == "tool_result":
+            origin = tool_use_line.get(content.get("tool_use_id"))
+            if origin is not None:
+                cited.add(origin)
+    return cited
+
+
+def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
+                            workspace: str,
+                            mechanism: set[int] | None = None) -> list[BenchmarkEvent]:
+    """Events for one transcript.
+
+    `mechanism` is the corpus's sabotage annotation. When present, only the tool
+    calls it cites carry `label`; the rest are UNLABELED cover work. When absent
+    (a benign twin) every tool call carries `label`.
+    """
+    objs = _parse(path)
+    cited = _attack_indices(objs, mechanism) if mechanism else None
+
+    events: list[BenchmarkEvent] = []
+    for i, obj in enumerate(objs):
+        if not isinstance(obj, dict):
             continue
         if "canary" in obj and "role" not in obj:
             continue
@@ -229,21 +486,34 @@ def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
                       "Write": "write", "Edit": "write",
                       "NotebookEdit": "write"}.get(tool, "call")
 
+        if cited is None:
+            event_label = label
+        else:
+            event_label = label if i in cited else EventLabel.UNLABELED
+
         events.append(BenchmarkEvent(
             event_id=f"{task_id}-{i}",
             tool_name=tool,
             resource="workspace",
             action=action,
-            label=label,
+            label=event_label,
             path=_resolve(target, workspace),
             args={k: v for k, v in payload.items() if isinstance(v, (str, int, float))},
-            meta={"suite": "sleight"},
+            meta={"suite": "sleight", "line": i + 1},
         ))
     return events
 
 
+def _is_benign_stem(stem: str) -> bool:
+    return any(m in stem.lower() for m in ("benign", "control", "clean"))
+
+
 class SleightLoader:
-    """Attack transcripts and their benign pairs, one task per transcript."""
+    """One paired task per scenario: benign twin grant + both transcripts.
+
+    Per-action ladder scores stay structurally weak (covert intent). Prefer
+    ``--mode detector`` / ``sleight[detector]`` for the honest containment number.
+    """
 
     name = "sleight"
 
@@ -266,51 +536,51 @@ class SleightLoader:
                 "Run decrypt.py with the key from the upstream README."
             )
 
-        # First pass: the benign twin of each pair, whose surface is the grant.
-        benign_surface: dict[str, list[str]] = {}
-        benign_nets: dict[str, list[str]] = {}
+        by_dir: dict[Path, dict[str, Path]] = {}
         for path in transcripts:
-            stem = path.stem
-            if not any(m in stem.lower() for m in ("benign", "control", "clean")):
-                continue
-            ws = _workspace_of(path)
-            evs = _events_from_transcript(path, EventLabel.BENIGN, "probe", ws)
-            benign_surface[path.parent.name] = _authorized_surface(evs)
-            benign_nets[path.parent.name] = _authorized_nets(evs)
+            slot = "benign" if _is_benign_stem(path.stem) else "attack"
+            by_dir.setdefault(path.parent, {})[slot] = path
 
         tasks: list[BenchmarkTask] = []
-        for path in transcripts:
-            category = path.relative_to(attacks).parts[0]
-            stem = path.stem
-            # The benign pair is the transcript whose name marks it as the
-            # side-by-side control. Anything else is the attack.
-            benign = any(marker in stem.lower() for marker in ("benign", "control", "clean"))
-            label = EventLabel.BENIGN if benign else EventLabel.ATTACK
-            task_id = f"sleight-{category}-{path.parent.name}-{stem}"
-            workspace = _workspace_of(path)
-            events = _events_from_transcript(path, label, task_id, workspace)
-            if not events:
+        for directory, slots in sorted(by_dir.items(), key=lambda kv: str(kv[0])):
+            benign_path = slots.get("benign")
+            attack_path = slots.get("attack")
+            if benign_path is None or attack_path is None:
                 continue
-            key = path.parent.name
+            category = directory.relative_to(attacks).parts[0]
+            scenario = directory.name
+            workspace = _workspace_of(benign_path)
+            task_id = f"sleight-{category}-{scenario}"
+            benign_events = _events_from_transcript(
+                benign_path, EventLabel.BENIGN, f"{task_id}-b", workspace)
+            attack_events = _events_from_transcript(
+                attack_path, EventLabel.ATTACK, f"{task_id}-a", workspace)
+            if not benign_events or not attack_events:
+                continue
+            surface = _authorized_surface(benign_events)
+            nets = _authorized_nets(benign_events)
             tasks.append(BenchmarkTask(
                 task_id=task_id,
-                summary=f"{category}: coding-agent transcript",
-                events=events,
-                mandate=_mandate(task_id, workspace,
-                                 benign_surface.get(key),
-                                 benign_nets.get(key)),
+                summary=f"{category}: paired coding-agent transcripts",
+                events=benign_events + attack_events,
+                mandate=_mandate(task_id, workspace, surface, nets),
                 capabilities=list(_CAPABILITIES),
                 allowed_tools=set(_TOOLS),
-                meta={"category": category, "benign_pair": benign,
-                      "workspace": workspace,
-                      # Per-action ladder has almost no intent signal here.
-                      # Score covert intent with --mode detector.
-                      "score_with": "detector",
-                      # The false-block number on this corpus is not reportable:
-                      # the mandate is derived from the benign twin, so that twin
-                      # is clean by construction. Friction is measured on tau2,
-                      # BFCL and ATIF instead.
-                      "false_block_unscoreable": True},
+                meta={
+                    "category": category,
+                    "benign_pair": True,
+                    "workspace": workspace,
+                    "benign_transcript": str(benign_path),
+                    "attack_transcript": str(attack_path),
+                    # Per-action ladder has almost no intent signal here.
+                    # Score covert intent with --mode detector.
+                    "score_with": "detector",
+                    # The false-block number on this corpus is not reportable:
+                    # the mandate is derived from the benign twin, so that twin
+                    # is clean by construction. Friction is measured on tau2,
+                    # BFCL and ATIF instead.
+                    "false_block_unscoreable": True,
+                },
             ))
             if limit and len(tasks) >= limit:
                 break

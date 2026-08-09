@@ -166,7 +166,7 @@ def run_benchmark(
                 if event.label is EventLabel.ATTACK:
                     a_total += 1
                     a_blocked += not decision.allowed
-                else:
+                elif event.label is EventLabel.BENIGN:
                     b_total += 1
                     b_blocked += not decision.allowed
             if a_total:
@@ -177,6 +177,11 @@ def run_benchmark(
 
 
 def _record(result: EngineResult, task, event, decision, overhead_ms: float) -> None:
+    # An event the corpus does not label is replayed, so a stateful rung sees the
+    # real stream, but belongs in neither denominator. Scoring it either way
+    # would be us supplying a label the benchmark does not.
+    if event.label is EventLabel.UNLABELED:
+        return
     is_write = event.action in _WRITE_ACTIONS
     blocked = not decision.allowed
     result.metrics.record_action(
