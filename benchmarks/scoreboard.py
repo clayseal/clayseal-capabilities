@@ -38,7 +38,7 @@ from benchmarks.datasets.base import get_loader
 # while adding nothing a per-action layer has to reason about, so they are
 # reported and EXCLUDED from any pooled figure. Quoting a pooled containment that
 # includes them would be the cheapest possible way to inflate this system.
-SATURATED = {"asb", "injecagent", "toolemu"}
+SATURATED = {"asb", "injecagent"}
 
 DEPLOYABLE = [
     "tool-allowlist",
@@ -56,8 +56,8 @@ CAVEATS = {
     "asb": "SATURATES AT THE NAIVE RUNG: every attack uses an ungranted tool; not a result",
     "injecagent": ("SATURATES AT THE NAIVE RUNG, and the corpus GRANTS the attacker "
                    "tools while we do not; containment is that narrowness alone"),
-    "toolemu": ("SATURATES AT THE NAIVE RUNG: 100% caught by tool-allowlist, "
-                "0/446 attack events carry a path or arguments"),
+    "toolemu": ("NO ATTACK EVENTS: its risk is underspecification described in prose, "
+                "and the authorized tool and the harmful one are the same call"),
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
     "sleight": ("grant derived from the paired BENIGN twin, so the false-block column "

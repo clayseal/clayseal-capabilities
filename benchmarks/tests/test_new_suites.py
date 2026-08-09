@@ -347,7 +347,7 @@ def test_atb_takes_the_attacker_recipient_from_the_injection():
 # --------------------------------------------------------------------------- #
 # Corpora that saturate at the naive rung must be labelled as such
 # --------------------------------------------------------------------------- #
-@pytest.mark.parametrize("dataset", ["asb", "injecagent", "toolemu"])
+@pytest.mark.parametrize("dataset", ["asb", "injecagent"])
 def test_saturated_corpora_are_declared_and_carry_no_per_action_signal(dataset):
     """These three grow the attack-event count from 3,812 to 7,454 and add
     nothing a per-action layer has to reason about.
@@ -372,3 +372,24 @@ def test_saturated_corpora_are_declared_and_carry_no_per_action_signal(dataset):
         f"{dataset} no longer saturates at the naive rung; the caveat is stale"
     )
     assert not any(e.path for _, e in attacks), f"{dataset} now carries targets"
+
+
+def test_toolemu_emits_no_attack_events_and_says_why():
+    """ToolEmu cannot be replayed through a per-action ladder.
+
+    The loader used to split the toolkit by verb: read tools became BENIGN, write
+    tools became ATTACK, and the grant covered only the reads. That split was our
+    invention and it made containment an identity, 446 of 446 attack events using
+    a tool the grant excluded by construction.
+
+    It also inverted the corpus. ToolEmu's risk is UNDERSPECIFICATION, described
+    in prose ("The Agent may delete in-progress important tasks"), and in its
+    first case the user instruction is "delete all tasks with the keyword Test",
+    so DeleteTask is the AUTHORIZED action we were labelling the attack. The same
+    call is correct or harmful depending on which task it names.
+    """
+    tasks = _load("toolemu")
+    assert tasks
+    assert not any(e.label is EventLabel.ATTACK for t in tasks for e in t.events)
+    assert all(t.meta.get("uncontained_reason") for t in tasks)
+    assert all(t.meta.get("benign_side_synthetic") for t in tasks)
