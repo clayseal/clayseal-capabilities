@@ -79,11 +79,27 @@ AgentHarm is where that claim goes to die, ours included.
 
 SLEIGHT-Bench, whose attack events do carry targets and arguments, and whose
 sabotage tasks are a scheming agent under a legitimate user goal, which is our
-threat model rather than a malicious-user one. Our number there is 36.9%
-containment at 32.64% false-block, and those move together at every operating
-point, so it shows no discrimination. That is the honest measurement of this axis
-and it is worse news than the AgentHarm number, which is the reason to lead with
-it.
+threat model rather than a malicious-user one.
+
+Our number there was 36.9% containment at 32.64% false-block, and auditing it
+found the same defect class again. SLEIGHT ships **no mandate**: it is a
+transcript-monitoring benchmark, paired attack and benign runs of a coding agent,
+scored by whether a monitor reading the transcript flags the sabotage. Nothing in
+it says what the agent was allowed to touch, so our loader granted the session's
+`cwd` and nothing else. Real tasks reach outside their checkout by design (backing
+up model weights reads `/data/models/` from a home directory), and 114 of 311
+benign events were refused for leaving a boundary the corpus never declared.
+Containment came from that same invented boundary, which is why both sides moved
+together.
+
+The paired benign twin is the authorization: the same task without sabotage, so
+the paths it touches are the surface the request needed. Under that grant,
+containment is **8.5%**, and the false-block number on this corpus is **not
+reportable**, because a mandate derived from the benign twin clears that twin by
+construction. Friction is measured where it can be, on tau2, BFCL and ATIF.
+
+Either way the conclusion holds and is now honestly founded: roughly two points of
+discrimination, which is none.
 
 For reference, the published frontier gets 32% of SLEIGHT at a 1% false-positive
 rate using a frontier model with extended thinking as a monitor. Nobody contains
