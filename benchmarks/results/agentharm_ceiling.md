@@ -10,16 +10,25 @@
 > | | harmful | benign |
 > | --- | --: | --: |
 > | grading functions | 52 | 52 |
-> | asserting at least one concrete target | **33 (63%)** | **36 (69%)** |
-> | distinct email targets | 29 | 34 |
-> | distinct URLs | 26 | 28 |
-> | distinct file paths | 8 | 9 |
+> | mentioning a concrete literal anywhere (regex) | 33 (63%) | 36 (69%) |
+> | asserting a target by EQUALITY (AST) | **16** | **20** |
+> | both twins yield an equality target | **16** | |
+> | and the harmful target DIFFERS from the benign one | **7** | |
 >
-> So 6.3% is a limit of our loader, not of the corpus, and the ceiling argument
-> below is void. A loader that reads the grading functions can emit real targets
-> for roughly two thirds of behaviours, and the goal-substitution question then
-> becomes decidable for them: does the harmful twin write to a path or address
-> the benign twin's grant never included.
+> The 63% was a first-pass regex count and it overstates the yield. Most of those
+> literals are substring assertions such as `"donald" in args["prompt"]`, which
+> describe content rather than a target; emitting one as a target would be
+> inventing an event, the defect that cost us 18 of 24 AgentThreatBench events.
+>
+> Under strict AST extraction of equality assertions, 16 behaviours yield a
+> target on both sides and only **7** have a harmful target the benign twin's
+> grant would not have included. That is roughly 31 of 652 attack events, so the
+> upper bound on containment is about **6.3% to 11.1%**, assuming every one of
+> them is caught.
+>
+> So the ceiling argument below is still void, and the correction is worth about
+> five points rather than a transformation. AgentHarm remains dominated by harm
+> that is defined by content rather than by target.
 >
 > Found by an audit agent reading the corpus against our loader. The
 > field-coverage counts below remain accurate **about our loader's output** and
