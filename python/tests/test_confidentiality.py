@@ -307,3 +307,51 @@ def test_a_large_payload_leaks_a_bounded_number_of_characters():
             break
     leaked = len("".join(out))
     assert leaked < 0.2 * len(payload), f"{leaked} of {len(payload)} characters leaked"
+
+
+@pytest.mark.parametrize("sinks", [2, 4, 11, 22])
+def test_fanning_out_across_sinks_does_not_escape(sinks):
+    """The obvious bypass of a per-sink accumulator, and it worked completely.
+
+    One fragment to each of twenty-two attacker addresses reassembles perfectly
+    while every individual sink sees a single character. An attacker controls
+    every sink they send to, so the pool of sinks the sealed goal did NOT name is
+    one adversary and is accumulated as one.
+    """
+    size = max(1, (len(SECRET) + sinks - 1) // sinks)
+    pieces = [SECRET[i:i + size] for i in range(0, len(SECRET), size)]
+    tracker = _tracker()
+    escaped = []
+    for i, piece in enumerate(pieces):
+        verdict = tracker.check(tool="send_mail", verb="send",
+                                resource=f"mail:evil{i}@test",
+                                args={"body": piece}, policy=POLICY)
+        if verdict.allowed:
+            escaped.append(piece)
+    assert "".join(escaped) != SECRET, f"the whole value escaped across {sinks} sinks"
+
+
+def test_pooling_does_not_block_ordinary_traffic_to_many_sinks():
+    """Pooling every non-declassified sink is the aggressive half of the fix, so
+    the legitimate case has to be asserted next to it: a session that writes to
+    fifty recipients after a sensitive read must not be stopped."""
+    tracker = _tracker()
+    allowed = sum(
+        tracker.check(tool="send_mail", verb="send", resource=f"mail:team{i}@corp",
+                      args={"body": f"status update {i}: all green"},
+                      policy=POLICY).allowed
+        for i in range(50)
+    )
+    assert allowed == 50
+
+
+def test_declassified_traffic_does_not_enter_the_pool():
+    """Content sent to the sink the goal named is authorized, so it must not make
+    a later unrelated write to another sink look like a leak."""
+    tracker = _tracker()
+    for i in range(0, len(SECRET), 4):
+        tracker.check(tool="send_mail", verb="send",
+                      resource="mail:board@example.com",
+                      args={"body": SECRET[i:i + 4]}, policy=POLICY)
+    assert tracker.check(tool="send_mail", verb="send", resource="mail:other@corp",
+                         args={"body": "unrelated note"}, policy=POLICY).allowed
