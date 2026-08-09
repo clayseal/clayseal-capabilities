@@ -323,7 +323,17 @@ turns on what an agent later believes rather than on what an action touches, and
 is addressed in the roadmap.
 
 \textbf{AgentDyn} (arXiv:2602.03117), the 2026 successor to AgentDojo with
-open-ended tasks that require runtime planning, is wired and running.
+open-ended tasks that require runtime planning, returns zero clean utility on
+its shopping and github suites. The plan-conformance layer denies substantially
+every step, because these tasks are built so the correct next action cannot be
+known before execution. Attack success is also zero, which is what blocking
+everything achieves and is not a security result.
+
+This is the same rule that accounts for all of our hard false blocks on
+AgentDojo, where it costs utility only at the margin because those tasks are
+largely specified up front. Runtime replanning, described in the roadmap, is the
+fix, and this result moves it to the top of the queue. The utility figures above
+are AgentDojo figures and should be read as applying to tasks of that shape.
 
 \subsection{Enforcement cost}
 
