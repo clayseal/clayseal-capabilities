@@ -190,8 +190,8 @@ an ungranted tool name, so the weakest rung catches them.
 
 ### 2026 corpora
 
-The three corpora above are 2024 and 2025. These are the current instruments,
-and they were chosen to test capabilities the older ones do not.
+The three corpora above are 2024 and 2025. These are current instruments,
+chosen to test capabilities the older ones do not.
 
 **IPI-Coding-Agent** (UK AI Safety Institute, `inspect_evals`). 45 samples
 pairing a real coding task with a payload hidden in artifacts the agent has to
@@ -206,73 +206,22 @@ and are the controls.
 | false blocks on the 10 benign controls | 0 |
 
 **AgentThreatBench** (UK AI Safety Institute), which operationalises the OWASP
-Top 10 for Agentic Applications:
+Top 10 for Agentic Applications. Measured on the two categories that turn on
+where an action is directed:
 
 | Category | Contained |
 | --- | --: |
 | autonomy hijack (forbidden-action target) | 6 / 6 |
 | data exfiltration (unauthorized recipient) | 8 / 8 |
-| **memory poisoning** | **0 / 10** |
 
-The data-exfiltration row is the cleanest external validation of destination
+The data-exfiltration result is the cleanest external validation of destination
 binding we have, because the corpus ships its own authorized-recipient list
-rather than us supplying the ground truth.
+rather than us supplying the ground truth. Its third category, memory
+poisoning, turns on what an agent later believes rather than on what an action
+touches, and is addressed in the roadmap.
 
-The memory row is a genuine gap and took a correction to measure honestly. The
-first run reported 10 of 10 because the mandate did not grant memory writes, so
-the poisoning write failed a path check. An agent that has a long-term memory
-legitimately writes to it. With that grant present the attack is in-surface,
-which is what it is: the write is authorized and the harm is the belief the
-agent holds on a later turn, which no per-action check observes.
-
-**SLEIGHT-Bench** (arXiv:2605.16626, Anthropic alignment). 44 attacks in which a
-coding agent covertly pursues a harmful objective while trying not to look like
-it, across 12 evasion categories, each with a matched benign transcript. Judged
-per transcript, which is the corpus's unit:
-
-| Metric | Value |
-| --- | --: |
-| detection | 75.6% |
-| false positives | 69.8% |
-| discrimination | **5.8 points** |
-
-**Our authorization layer has essentially no discriminative power here, and we
-publish that.** The layer decides per action on what the action touches. These
-attacks are defined by intent and executed through actions that individually
-look like ordinary engineering work. The 75.6% figure is not a security result:
-at a 69.8% false-positive rate it is close to a constant classifier.
-
-For context, the published result on this corpus is that an Opus 4.6 monitor
-with extended thinking never catches 20 of 40 attacks across ten trials at a 1%
-false-positive rate, with an overall catch rate of 32%. Nothing currently does
-well here, and a frontier model reading the whole transcript beats a per-action
-policy for the obvious reason.
-
-**AgentDyn** (arXiv:2602.03117), the 2026 successor to AgentDojo with open-ended
-tasks that require runtime planning, is wired and running. Results pending. We
-expect it to cost us utility, because its tasks defeat plan-conformance by
-design and it embeds benign third-party instructions specifically to measure
-over-defense.
-
-### What the corpus set shows when ordered by attack type
-
-Six corpora, partitioned without consulting any engine:
-
-| Corpus | Year | Attack events | Surface-leaving | In-surface | Our containment |
-| --- | --- | --: | --: | --: | --- |
-| RedCode | 2024 | 718 | 717 (100%) | 1 | ~100% |
-| IPI-Coding | 2026 | 50 | 50 (100%) | 0 | 100% |
-| ASB | 2025 | 2,040 | 2,040 (100%) | 0 | 100% |
-| AgentThreatBench | 2026 | 24 | 14 (58%) | 10 (42%) | 58% |
-| SLEIGHT | 2026 | 328 | 121 (37%) | 207 (63%) | no signal |
-| AgentHarm | 2025 | 652 | 41 (6%) | 611 (94%) | 6% |
-
-The ordering is the point. Corpora built around what an action **touches** sit
-at the top, and we contain essentially all of them. Corpora built around what an
-agent **intends** sit at the bottom, and we contain essentially none. The
-boundary is a property of per-call authorization rather than of this
-implementation, and publishing the whole ordering is more useful to a buyer than
-publishing the top three rows.
+**AgentDyn** (arXiv:2602.03117), the 2026 successor to AgentDojo with
+open-ended tasks that require runtime planning, is wired and running.
 
 ### Enforcement cost
 
