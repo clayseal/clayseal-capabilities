@@ -4,8 +4,8 @@
     "files": 3
   },
   "AgentDyn": {
-    "sha256": "74178f3b16ea2b4400916eebee3916df3741619879e17e32873a56237a45dcf4",
-    "files": 49323
+    "sha256": "4fe25aff9503fa5a08b185449750e66a430225b8878d19107b43053b616b06ee",
+    "files": 49330
   },
   "AgentHarm": {
     "sha256": "1cfccf80cb84bd263c1eb3b8f386cf7c88eec8d1ed4937d16daee40adef4ed58",
@@ -18,6 +18,10 @@
   "bfcl": {
     "sha256": "809d557dd2c96ea4d395d94f5b4eb80d3bc6e97145908549adaae04da9c60bb0",
     "files": 5
+  },
+  "inspect_evals": {
+    "sha256": "b618d06a0b4ed3fea16009e287a17ffacfd9ec462c6d5f0c358d215035e78a0d",
+    "files": 2847
   },
   "sleight-bench": {
     "sha256": "bc45c5b625da5589426febdd49463a45514ddc2d729160794367bb4012829bef",
