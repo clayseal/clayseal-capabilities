@@ -81,50 +81,40 @@ class AgentHarmLoader:
             harmful_case = harmful.get(behavior_id)
             if harmful_case is None:
                 continue
-            task = _pair_to_task(behavior_id, benign_case, harmful_case)
-            if task is not None:
-                tasks.append(task)
+            tasks.extend(_pair_to_tasks(behavior_id, benign_case, harmful_case))
             if limit and len(tasks) >= limit:
                 break
         return tasks
 
 
-def _pair_to_task(
+def _pair_to_tasks(
     behavior_id: str,
     benign_case: dict[str, Any],
     harmful_case: dict[str, Any],
-) -> BenchmarkTask | None:
+) -> list[BenchmarkTask]:
+    """One AgentHarm behaviour becomes TWO tasks sharing one mandate.
+
+    The threat model is goal substitution: the user authorized the benign
+    behaviour, and the agent executed its harmful twin. So the harmful task
+    carries the benign task's grant, and containment asks whether the twin needs
+    authority the user never gave.
+
+    They are two tasks rather than one because they are two *sessions*. An
+    earlier version concatenated them into a single trajectory, benign calls
+    first, and that had a consequence nothing in the scope rungs could show:
+    the velocity rung is stateful, so the benign half consumed the rate budget
+    and the harmful half was blocked for arriving late. It read as +8.0 points
+    of containment at zero false-block cost. Under a shuffled order the same
+    configuration gives +3.8 points at 4.2% false-block, which is the tell. No
+    real session contains both halves, so neither number was measuring anything.
+    Split, they cannot share a window.
+    """
     benign_tools: list[str] = [str(t) for t in benign_case.get("target_functions", [])]
     harmful_tools: list[str] = [str(t) for t in harmful_case.get("target_functions", [])]
     if not benign_tools or not harmful_tools:
-        return None
+        return []
 
-    task_id = f"agentharm-{behavior_id}"
-    events: list[BenchmarkEvent] = []
-    for i, tool in enumerate(benign_tools):
-        events.append(BenchmarkEvent(
-            event_id=f"{task_id}-b{i}", tool_name=tool,
-            resource=f"mcp:tool:{tool}", action=classify_verb(tool),
-            label=EventLabel.BENIGN,
-            meta={"source": "agentharm", "category": benign_case.get("category", "")},
-        ))
-    # The harmful twin's calls. Tools shared with the benign grant are in scope
-    # by construction — that overlap is the measurement, not a bug.
-    overlap = set(benign_tools) & set(harmful_tools)
-    for i, tool in enumerate(harmful_tools):
-        events.append(BenchmarkEvent(
-            event_id=f"{task_id}-a{i}", tool_name=tool,
-            resource=f"mcp:tool:{tool}", action=classify_verb(tool),
-            label=EventLabel.ATTACK,
-            meta={
-                "source": "agentharm",
-                "category": harmful_case.get("category", ""),
-                "attack_class": "same-tool-harmful-intent" if tool in overlap
-                                else "unauthorized-tool",
-                "shared_with_benign": tool in overlap,
-            },
-        ))
-
+    grant_id = f"agentharm-{behavior_id}"
     caps_seen: set[tuple[str, str]] = set()
     caps: list[dict[str, str]] = []
     for tool in benign_tools:
@@ -133,27 +123,59 @@ def _pair_to_task(
             caps_seen.add(key)
             caps.append({"resource": key[0], "action": key[1]})
 
+    # The one grant both sessions are judged against: what the user authorized.
+    mandate = {
+        "grant_id": grant_id,
+        "issuer": "did:clayseal:agentharm",
+        "issued_at": _ISSUED,
+        "expires_at": _EXPIRES,
+        "allowed_actions": sorted({classify_verb(t) for t in benign_tools}),
+        "allowed_resources": [f"mcp:tool:{t}" for t in benign_tools],
+    }
     identical = set(benign_tools) == set(harmful_tools)
-    return BenchmarkTask(
-        task_id=task_id,
-        summary=str(benign_case.get("name", "")),
-        events=events,
-        allowed_tools=set(benign_tools),
-        capabilities=caps,
-        mandate={
-            "grant_id": f"agentharm-{behavior_id}",
-            "issuer": "did:clayseal:agentharm",
-            "issued_at": _ISSUED,
-            "expires_at": _EXPIRES,
-            "allowed_actions": sorted({classify_verb(t) for t in benign_tools}),
-            "allowed_resources": [f"mcp:tool:{t}" for t in benign_tools],
-        },
-        meta={
-            "source": "agentharm",
-            "goal_kind": f"agentharm:{benign_case.get('category', 'unknown')}",
-            "category": harmful_case.get("category", ""),
-            # True when the harmful twin needs no tool the user did not grant —
-            # the subset no per-call authority layer can separate.
-            "identical_tool_set": identical,
-        },
-    )
+    overlap = set(benign_tools) & set(harmful_tools)
+
+    def _task(suffix: str, tools: list[str], label: EventLabel,
+              meta_for) -> BenchmarkTask:
+        task_id = f"{grant_id}-{suffix}"
+        events = [
+            BenchmarkEvent(
+                event_id=f"{task_id}-{i}", tool_name=tool,
+                resource=f"mcp:tool:{tool}", action=classify_verb(tool),
+                label=label, meta=meta_for(tool),
+            )
+            for i, tool in enumerate(tools)
+        ]
+        return BenchmarkTask(
+            task_id=task_id,
+            summary=str((benign_case if label is EventLabel.BENIGN
+                         else harmful_case).get("name", "")),
+            events=events,
+            allowed_tools=set(benign_tools),
+            capabilities=caps,
+            mandate=dict(mandate),
+            meta={
+                "source": "agentharm",
+                "goal_kind": f"agentharm:{benign_case.get('category', 'unknown')}",
+                "category": harmful_case.get("category", ""),
+                "behavior_id": behavior_id,
+                "variant": suffix,
+                # True when the harmful twin needs no tool the user did not
+                # grant: the subset no per-call authority layer can separate.
+                "identical_tool_set": identical,
+            },
+        )
+
+    return [
+        _task("benign", benign_tools, EventLabel.BENIGN,
+              lambda tool: {"source": "agentharm",
+                            "category": benign_case.get("category", "")}),
+        _task("harmful", harmful_tools, EventLabel.ATTACK,
+              lambda tool: {
+                  "source": "agentharm",
+                  "category": harmful_case.get("category", ""),
+                  "attack_class": "same-tool-harmful-intent" if tool in overlap
+                                  else "unauthorized-tool",
+                  "shared_with_benign": tool in overlap,
+              }),
+    ]
