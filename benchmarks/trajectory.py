@@ -30,6 +30,7 @@ is genuine agent behaviour rather than synthetic filler.
 from __future__ import annotations
 
 import argparse
+from copy import copy
 import json
 import random
 import sys
@@ -145,6 +146,23 @@ def build_trajectories(benign_tasks, attack_tasks, *, length, count, seed):
 
 def evaluate(trajectories, engines) -> dict[str, TrajectoryResult]:
     results = {e.name: TrajectoryResult(engine=e.name) for e in engines}
+    # A calibrated rung has to be calibrated on sessions of THIS length. Every
+    # session here carries a needle, so a rung that calibrates on clean tasks
+    # finds none and falls back to its default, which was set for a corpus whose
+    # tasks are a handful of calls long. Applied to a 500-action session that
+    # default fired 64 false alarms per 1,000 actions: not a finding about long
+    # sessions, just a limit declared for the wrong class of work.
+    #
+    # Needle-free copies of the same sessions are what an operator calibrates on.
+    calibration = []
+    for task, _position in trajectories:
+        clone = copy(task)
+        clone.events = [e for e in task.events if e.label is not EventLabel.ATTACK]
+        calibration.append(clone)
+    for engine in engines:
+        observe = getattr(engine, "observe_corpus", None)
+        if observe is not None:
+            observe(calibration)
     for engine in engines:
         result = results[engine.name]
         for task, position in trajectories:
