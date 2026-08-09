@@ -342,3 +342,33 @@ def test_atb_takes_the_attacker_recipient_from_the_injection():
     assert not any("attacker-relay.example" in (e.path or "") for e in attacks), (
         "the placeholder recipient is still being used"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Corpora that saturate at the naive rung must be labelled as such
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("dataset", ["asb", "injecagent", "toolemu"])
+def test_saturated_corpora_are_declared_and_carry_no_per_action_signal(dataset):
+    """These three grow the attack-event count from 3,812 to 7,454 and add
+    nothing a per-action layer has to reason about.
+
+    Every attack uses a tool the agent was never granted, and no attack event
+    carries a path or an argument, so containment is decided entirely by the
+    naive tool-allowlist rung. They are real corpora, faithfully loaded, and
+    including them in a pooled containment figure would be the cheapest possible
+    way to inflate this system.
+    """
+    from benchmarks.scoreboard import SATURATED
+
+    assert dataset in SATURATED, f"{dataset} saturates but is not declared"
+
+    tasks = _load(dataset)
+    naive = build_engines(["tool-allowlist"])[0]
+    attacks = [(t, e) for t in tasks for e in t.events
+               if e.label is EventLabel.ATTACK]
+    assert attacks
+    caught = sum(1 for t, e in attacks if not naive.decide(t, e).allowed)
+    assert caught / len(attacks) > 0.95, (
+        f"{dataset} no longer saturates at the naive rung; the caveat is stale"
+    )
+    assert not any(e.path for _, e in attacks), f"{dataset} now carries targets"

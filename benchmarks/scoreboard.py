@@ -31,6 +31,14 @@ from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 
+# Corpora whose containment saturates at the naive tool-allowlist rung. They are
+# real corpora faithfully loaded, and they measure exactly one thing: whether we
+# check tool names. Wiring them grows the attack-event count from 3,812 to 7,454
+# while adding nothing a per-action layer has to reason about, so they are
+# reported and EXCLUDED from any pooled figure. Quoting a pooled containment that
+# includes them would be the cheapest possible way to inflate this system.
+SATURATED = {"asb", "injecagent", "toolemu"}
+
 DEPLOYABLE = [
     "tool-allowlist",
     "capability-token",
@@ -44,7 +52,11 @@ DEPLOYABLE = [
 # from the loader audits rather than from the papers.
 CAVEATS = {
     "redcode": "path escapes from a fixed workspace boundary; the real result on this axis",
-    "asb": "every attack uses a tool the agent was never granted, so a tool allowlist suffices",
+    "asb": "SATURATES AT THE NAIVE RUNG: every attack uses an ungranted tool; not a result",
+    "injecagent": ("SATURATES AT THE NAIVE RUNG: 99.9% caught by tool-allowlist, "
+                   "0/3196 attack events carry a path or arguments"),
+    "toolemu": ("SATURATES AT THE NAIVE RUNG: 100% caught by tool-allowlist, "
+                "0/446 attack events carry a path or arguments"),
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
     "sleight": ("grant derived from the paired BENIGN twin, so the false-block column "
@@ -100,7 +112,8 @@ class Scoreboard:
 
 def _deterministic(board: Scoreboard, quick: bool) -> None:
     corpora = ["redcode", "agentharm", "asb", "sleight", "ipi_coding",
-               "agent_threat_bench", "atif", "tau2", "bfcl"]
+               "agent_threat_bench", "injecagent", "toolemu",
+               "atif", "tau2", "bfcl"]
     if quick:
         corpora = ["redcode", "agentharm", "sleight", "agent_threat_bench"]
     for name in corpora:
