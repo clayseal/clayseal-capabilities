@@ -52,6 +52,24 @@
       "contained": 1.0
     }
   },
+  "fanout": {
+    "2": {
+      "whole_value_leaked": 0,
+      "sessions": 300
+    },
+    "4": {
+      "whole_value_leaked": 0,
+      "sessions": 300
+    },
+    "11": {
+      "whole_value_leaked": 0,
+      "sessions": 300
+    },
+    "22": {
+      "whole_value_leaked": 0,
+      "sessions": 300
+    }
+  },
   "chunked": {
     "2": {
       "whole_value_leaked": 0,

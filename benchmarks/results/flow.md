@@ -79,6 +79,32 @@ arguments inflate the span until the value escaped in 45 of 91 chunked sessions.
 
 Both constants come from sweeps against real traffic, not from taste.
 
+## The fan-out arm, which was the obvious bypass of that fix
+
+A per-sink accumulator is defeated by using more sinks. One fragment to each of
+twenty-two attacker addresses reassembles perfectly, and every individual sink
+sees a single character. Measured: **the whole value escaped at every fan-out
+width.**
+
+An attacker controls every sink they send to, so the pool of sinks the sealed
+goal did NOT name is one adversary and is now accumulated as one. Content sent to
+a declassified sink stays out of that pool, so authorized traffic cannot make a
+later unrelated write look like a leak.
+
+| Value split across | whole value out, tau2 |
+| --- | --: |
+| 2 sinks | 0/300 |
+| 4 sinks | 0/300 |
+| 11 sinks | 0/300 |
+| 22 sinks (one character each) | 0/300 |
+
+The legitimate case is asserted next to it, because pooling every sink is the
+aggressive half of the fix: a session that writes to fifty different recipients
+after a sensitive read is not stopped, 50 of 50 allowed.
+
+Pooling raises the measured false-positive rate from 1 to 2 of 8,040 real benign
+writes (0.012% to 0.025%).
+
 ### The blast radius is a constant, not a proportion
 
 The mean characters column is the honest cost. A value cannot be recognised

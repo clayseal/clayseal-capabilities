@@ -253,6 +253,14 @@ class FlowTracker:
     # closes the seam, and only ALLOWED content accumulates, because a refused
     # write never happened.
     _emitted: dict[str, str] = field(default_factory=dict)
+    # The same content again, pooled across EVERY non-declassified sink.
+    #
+    # A per-sink buffer is defeated by fanning out: one fragment to each of
+    # twenty-two attacker addresses reassembles perfectly and each sink sees a
+    # single character. Measured, and it walked the whole secret out at every
+    # fan-out width. An attacker controls every sink they send to, so the pool of
+    # sinks the goal did not name is one adversary and is accumulated as one.
+    _emitted_pooled: str = ""
     # Bound on retained content per sink. A session that writes for hours must
     # not grow without limit inside the authorization path.
     max_emitted_chars: int = 65536
@@ -305,26 +313,36 @@ class FlowTracker:
         # that completes it.
         candidate = _compact(_flatten(args))
         sink_key = path or resource
+        declassified = policy.is_declassified(resource, path)
         with self._lock:
             history = self._emitted.get(sink_key, "")
+            pooled = self._emitted_pooled
+
         carried = self._carried(args)
         if not carried and candidate:
             carried = self._carried_after_normalisation(history + candidate)
         if not carried and candidate:
             carried = self._carried_across_writes(history + candidate)
+        # Then against every sink the goal did not name, pooled. Skipped for a
+        # declassified sink, whose traffic is authorized and must not make later
+        # unrelated writes look like a leak.
+        if not carried and candidate and declassified is None:
+            carried = self._carried_across_writes(pooled + candidate)
 
         if not carried:
             with self._lock:
-                merged = (history + candidate)[-self.max_emitted_chars:]
-                self._emitted[sink_key] = merged
+                self._emitted[sink_key] = (
+                    history + candidate)[-self.max_emitted_chars:]
+                if declassified is None:
+                    self._emitted_pooled = (
+                        pooled + candidate)[-self.max_emitted_chars:]
             return FlowVerdict(True, "carries no value from a sensitive read")
 
         # A sink the sealed goal named is authorized to receive this.
-        sink = policy.is_declassified(resource, path)
-        if sink is not None:
+        if declassified is not None:
             return FlowVerdict(
-                True, f"sensitive data to {sink}, which the sealed goal named",
-                tuple(sorted(carried)), sink)
+                True, f"sensitive data to {declassified}, which the sealed goal named",
+                tuple(sorted(carried)), declassified)
 
         # The destination is legitimate for this task and the DATA is not. The
         # write is refused, so its content does not join the sink's history.
