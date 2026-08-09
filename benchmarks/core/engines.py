@@ -452,13 +452,20 @@ class VelocityLadderEngine(BudgetLadderEngine):
 
     def _limiter(self, task: BenchmarkTask):
         from agentauth.capabilities.velocity import (
-            EFFECT_VERBS, SessionVelocity, VelocityConfig)
+            EFFECT_CLASS, SessionVelocity, VelocityConfig)
 
         limiter = self._velocity.get(task.task_id)
         if limiter is None:
             cap = self.default_cap if self._cap is None else self._cap
+            # The cap is calibrated on TOTAL effect volume per clean task, so it
+            # is enforced on the aggregate class, not per verb. The two used to
+            # disagree: a cap of 9 derived from total volume was applied to each
+            # of nine verbs separately, so a session could spend nine times what
+            # was calibrated. It also made the 0.00% false-block a theorem rather
+            # than a measurement, since a per-verb count is bounded by the task
+            # total, which is bounded by the cap.
             limiter = SessionVelocity(config=VelocityConfig(
-                limits={verb: (cap, 3600.0) for verb in EFFECT_VERBS}))
+                limits={EFFECT_CLASS: (cap, 3600.0)}))
             self._velocity[task.task_id] = limiter
         return limiter
 
