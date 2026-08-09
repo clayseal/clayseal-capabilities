@@ -167,7 +167,11 @@ a script whose purpose is harassment.
 | AgentHarm | 652 | 6.3% |
 | SLEIGHT-Bench | 328 | 36.9% at 32.64% false-block |
 
-**On AgentHarm, 6.3% is the ceiling rather than our score.** Its public data gives
+**On AgentHarm, 6.3% is a limit of our loader.** An earlier version of this
+section called it an information-theoretic ceiling. That was wrong: AgentHarm's
+grading functions assert concrete file paths, email recipients and URLs for 63%
+of harmful behaviours, and our loader reads only the JSON, which carries tool
+names alone. The corrected reading is below; see `agentharm_ceiling.md`. Its public data gives
 one field describing the agent's actions, `target_functions`, which is a list of
 tool names. Across every event our loader emits, 0 of 1,305 carry an argument, a
 path, or a resource distinguishable from the tool name. A per-action layer decides
