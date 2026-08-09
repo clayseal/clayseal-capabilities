@@ -40,7 +40,7 @@ from agentauth.capabilities.authorizers import (
 from agentauth.capabilities.call_budget import session_call_budget_from_mandate
 from agentauth.capabilities.value_budget import session_value_budget_from_mandate
 
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision
+from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel
 
 
 # Verbs that change external state. Deliberately wider than runner._WRITE_ACTIONS,
@@ -335,6 +335,68 @@ def openfga_engine() -> _ExternalEngine:
     )
 
 
+class VelocityLadderEngine(BudgetLadderEngine):
+    """Full stack plus a rate limit shaped by the task's own expected volume.
+
+    This rung exists because of a measured gap. `benchmarks/results/why_we_fail.md`
+    found that 641 of 833 missed attacks carry NO TARGET AT ALL, with tool,
+    resource and action all granted, so every rung below binds to something the
+    action does not have. Velocity is the only deterministic signal that survives
+    an action having no target: it asks whether the *rate* has left the shape of
+    the task rather than where the action points.
+
+    The cap is per task, never global. The same document measured a global cap
+    and it was unusable: at 10 effects per hour RedCode lost 12.8% of its benign
+    side, because a mail-merge agent and a ticket-answering agent have nothing in
+    common. Deriving the cap from the task's own legitimate volume costs nothing
+    on every benign corpus we have.
+
+    In production the expectation is declared by the operator in the mandate
+    (`velocity` in `agentauth.capabilities.velocity.velocity_from_mandate`). Here
+    it is derived from the task's benign event shape, which stands in for what an
+    operator would know when writing that mandate. Only BENIGN events are
+    consulted, so no attack label leaks into the limit.
+    """
+
+    name = "task-scope+binding+budget+velocity"
+
+    # Headroom over the task's expected volume. 1.5 leaves room for retries and
+    # exploration while still bounding a burst.
+    headroom = 1.5
+    floor = 1
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._velocity: dict[str, object] = {}
+
+    def _limiter(self, task: BenchmarkTask):
+        from agentauth.capabilities.velocity import (
+            EFFECT_VERBS, SessionVelocity, VelocityConfig)
+
+        limiter = self._velocity.get(task.task_id)
+        if limiter is None:
+            expected = sum(1 for e in task.events
+                           if e.label is EventLabel.BENIGN and e.action in EFFECT_VERBS)
+            cap = max(self.floor, int(expected * self.headroom))
+            limiter = SessionVelocity(config=VelocityConfig(
+                limits={verb: (cap, 3600.0) for verb in EFFECT_VERBS}))
+            self._velocity[task.task_id] = limiter
+        return limiter
+
+    def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        base = super().decide(task, event)
+        if not base.allowed:
+            return Decision(base.allowed, base.reason, self.name)
+        limiter = self._limiter(task)
+        # Deterministic clock: the replay has no real time, and the window only
+        # has to be wide enough to hold one task.
+        verdict = limiter.check(event.tool_name, event.action, now=0.0)
+        if not verdict.allowed:
+            return Decision(False, verdict.reason, self.name)
+        limiter.record(event.tool_name, event.action, now=0.0)
+        return Decision(True, "within task scope, bound, budgeted and paced", self.name)
+
+
 # --------------------------------------------------------------------------- #
 # Registry
 # --------------------------------------------------------------------------- #
@@ -345,6 +407,7 @@ LADDER = [
     "task-scope",
     "task-scope+binding",
     "task-scope+binding+budget",
+    "task-scope+binding+budget+velocity",
     "deny-all",
 ]
 
@@ -358,6 +421,7 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
         "task-scope": TaskScopeEngine,
         "task-scope+binding": TaskScopeInputBindingEngine,
         "task-scope+binding+budget": BudgetLadderEngine,
+        "task-scope+binding+budget+velocity": VelocityLadderEngine,
         "opa": opa_engine,
         "cedar": cedar_engine,
         "openfga": openfga_engine,
