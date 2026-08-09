@@ -29,44 +29,44 @@ Tool outputs deserve a note: the broker itself does not see them, but
 loop and calls `observe_output`. That is a real integration point that a
 deployment can build, and the flow mechanism's numbers rest on it.
 
-**Available but not wired.** The information exists at runtime and nothing plumbs
-it.
+**Available but not wired. FIXED.** The acting principal is now read from
+`action.meta["principal"]` and checked in `SessionBroker._floor` before anything
+else, because an action nobody signed for is the confused deputy's best disguise
+and must fail closed. `delegation_envelopes` carries the credential each
+principal presented. A session with no delegation configured is a pass-through,
+so every existing number is unchanged.
 
-| input | mechanism | status |
-| --- | --- | --- |
-| the acting principal | `deputy.py`, delegation boundary | `Action.meta` can carry it and nothing populates it |
+**Not available at all. FIXED by changing the input.** The corridor needed a
+clean run of the same task, which a deployment never has: you either have not run
+the task honestly yet, or you have, and then you did not need the check.
 
-Any multi-agent orchestrator knows which sub-agent issued a call; that is the one
-thing it cannot not know. So the delegation result is a **wiring** gap rather
-than an information gap, and closing it means passing a principal the runtime
-already has. Until that happens the 100% is not deployable, and it should be
-quoted as "measured, pending integration".
+The intent envelope does not bridge it. It carries tool names, verbs and resource
+classes, while `compile_sealed_plan` reads shell command strings, heredoc bodies
+and file contents. The envelope knows the agent will run Bash; it does not know
+what the command will say, and what it says is the entire signal.
 
-**Not available at all.** The input cannot be produced without already having the
-answer.
+**Commit-then-reveal supplies a reference the deployment does have**: the actions
+the agent SAID it would take, sealed before it takes any. A declaration is the
+same shape of object and the agent produces it. `SessionBroker.declared_plan`
+carries it and the detector receives it as the reference.
 
-| input | mechanism | why |
-| --- | --- | --- |
-| a clean run of the same task | twin corridor (`sealed_plan` under `assess(reference=...)`) | you either have not run the task honestly yet, or you have, and then you did not need the check |
+Measured on the case that matters:
 
-Exactly one caller in the repository supplies a reference, and it is the
-benchmark harness:
+| | result |
+| --- | --- |
+| declared honestly, executed honestly | no flags |
+| **declared honestly, then sabotaged** | **`destination 'net:s3:exfil-bucket' not in sealed plan`** |
+| declared the sabotage up front | passes the corridor |
 
-```
-benchmarks/core/detector_eval.py:242   det.assess(a, reference=b)
-agentauth/capabilities/broker.py:617   self.detector.assess(self._trajectory)
-```
+The third row is the honest limit. An agent willing to declare its sabotage
+defeats the corridor, because the corridor only asks whether execution matched
+the declaration. What it buys is that the attacker's destination is then in
+**static text available before anything runs**, which is a far easier object to
+judge than a trajectory, and it is why the declaration should itself be checked
+against the sealed goal.
 
-So the twin corridor's SLEIGHT containment, 94.4%, is unreachable by the shipped
-system. In deployment the same corpus scores the population tiers only, which is
-0 to 5.6%.
-
-The obvious bridge does not fit either. The intent envelope compiles a plan from
-the sealed goal before execution, but it carries tool names, verbs and resource
-classes, while `compile_sealed_plan` reads the shell command strings, the heredoc
-bodies and the file contents. The envelope knows the agent will run Bash. It does
-not know what the command will say, and what the command says is the entire
-signal.
+None means no declaration and the corridor stays off, so an existing caller is
+unchanged.
 
 ## Why SLEIGHT makes this trap easy
 

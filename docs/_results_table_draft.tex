@@ -1,0 +1,87 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+\usepackage[T1]{fontenc}
+
+\newcolumntype{B}[1]{>{\bfseries\raggedright\arraybackslash}p{#1}}
+\newcolumntype{I}[1]{>{\itshape\raggedright\arraybackslash}p{#1}}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\bfseries\raggedleft\arraybackslash}p{#1}}
+
+\begin{document}
+\pagestyle{empty}
+
+\noindent
+\begin{center}
+{\footnotesize
+\begin{tabular}{@{} B{3.05cm} I{3.55cm} P{5.1cm} R{2.35cm} @{}}
+\toprule
+\normalfont\bfseries Benchmark
+  & \normalfont\bfseries What it isolates
+  & \normalfont\bfseries Best alternative
+  & \normalfont\bfseries Ours \\
+\midrule
+RedCode-Exec
+  & granted tool, ungranted target
+  & 0\% (RBAC / capability token)
+  & 99.9\% \\
+AgentDojo (live)
+  & prompt-injection ASR
+  & 5.6\% built-in; Progent 11--17\%
+  & $\approx$0\% \\
+AgentDojo (replay)
+  & injection / arg swap on traces
+  & 77.9\% below binding
+  & 100\% \\
+IPI / ATB / AdvBench / MCP / ToolEmu
+  & unauthorized recipient / poisoned tool
+  & 0--40\% below binding
+  & 100\% \\
+Business-process (live)
+  & authorized sequence, composite rule
+  & $\approx$100\% viol.\ (Progent / CaMeL)
+  & 0\% viol. \\
+Burst + flow + BFCL detector
+  & authorized bursts \& chunked leaks
+  & 0\% (per-call ladder)
+  & 100\% / 0\% FA \\
+SLEIGHT (twins)
+  & covert intent, same tools/paths
+  & $\approx$6\% ($n$-gram)
+  & $\approx$98\% \\
+Adaptive red-team
+  & exfil / persist / destroy, mutating
+  & 0\% (RBAC / capability token)
+  & 100\% \\
+Long-horizon
+  & needle in session's own tool
+  & 0--83\% (lower rungs)
+  & 100\% / 0 FA \\
+Cross-session + drift
+  & split spend; baseline poison
+  & session ledger fails; rolling 0.5\%
+  & holds / 82\% \\
+Mandate quality
+  & incomplete grant (held-out FB)
+  & 47.9\% FB on $\tau^2$
+  & 0.05\% FB \\
+iVisor + latency
+  & syscall escape / egress; cost
+  & floor misses BPL; CaMeL minutes
+  & 8/8; $\sim$20\,$\mu$s \\
+Utility cost
+  & clean-task cost (deployable)
+  & ARGUS $\sim$5; CaMeL $\sim$7; Progent $\sim$19
+  & 3 pts (grok) \\
+ULB / IBM AML
+  & peer deviation + fan-out
+  & 0.86 AUC
+  & 0.914; 15/15 \\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+
+\end{document}
