@@ -475,3 +475,65 @@ def test_holding_out_a_mandate_narrows_it_rather_than_widening_it():
         assert narrowed <= original
         assert set(held.allowed_tools) <= set(task.allowed_tools)
     assert checked > 0
+
+
+# --------------------------------------------------------------------------- #
+# Does the mechanism have a runtime input?
+# --------------------------------------------------------------------------- #
+def test_only_the_benchmark_harness_supplies_a_twin_reference():
+    """The twin corridor cannot run in deployment, and this pins that.
+
+    Its SLEIGHT containment is 94.4%, and every point of it comes from
+    `assess(reference=benign_twin)`. Exactly one caller supplies a reference and
+    it is the benchmark harness; `SessionBroker._behavioral` calls `assess` with
+    none. So the shipped system scores the population tiers only, 0 to 5.6%.
+
+    If a live caller ever does supply one, this test should fail and the number
+    should be requoted, which is the point of asserting it rather than writing
+    it in a document. See benchmarks/results/runtime_inputs.md.
+    """
+    import inspect
+
+    from agentauth.capabilities import broker
+
+    source = inspect.getsource(broker.SessionBroker)
+    assert "reference=" not in source, (
+        "SessionBroker now supplies a twin reference; the corridor may be "
+        "deployable and its SLEIGHT number should be re-measured live"
+    )
+
+
+def test_the_delegation_rung_has_no_live_principal_yet():
+    """The delegation boundary contains 100% and nothing populates its input.
+
+    Unlike the twin corridor this is a WIRING gap rather than an information
+    gap: any multi-agent orchestrator knows which sub-agent issued a call, and
+    `Action.meta` can carry it. Until something does, the number is "measured,
+    pending integration" and must not be quoted as deployed.
+    """
+    import inspect
+
+    from agentauth.capabilities import broker
+
+    source = inspect.getsource(broker)
+    assert '"principal"' not in source and "'principal'" not in source, (
+        "the broker now handles a principal; the delegation result may be "
+        "deployable and should be requoted"
+    )
+
+
+def test_the_flow_mechanism_does_have_a_live_input():
+    """The contrast case, so the check is not read as 'nothing is deployable'.
+
+    The broker does not see tool outputs, but the live harness intercepts every
+    tool result and calls `observe_output`. That is an integration point a
+    deployment can build, which is what separates this from the corridor.
+    """
+    # Read the source rather than importing it: the live harness needs the
+    # agentdojo package, which is an optional benchmark extra.
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[1]
+              / "live" / "broker_defense.py").read_text()
+    assert "def observe_output" in source
+    assert "observe_output(result" in source
