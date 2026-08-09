@@ -224,7 +224,10 @@ class LiveBrokerHarness:
             intent_envelope=(envelope if self.mode == "envelope" else None), detector=None,
             graduated=self.graduated, defer_to_binding=self.defer,
             defer_allows_bound=self.defer_allow, audit_budget=self.audit_budget,
-            plan_extender=extender)
+            plan_extender=extender,
+            # The resource list below is the LLM planner's guess at which
+            # tools the task needs, not an operator grant.
+            scope_is_advisory=True)
         self.runs += 1
 
     def observe_output(self, result, source_args=None) -> None:
