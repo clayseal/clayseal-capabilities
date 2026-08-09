@@ -366,11 +366,23 @@ class VelocityLadderEngine(BudgetLadderEngine):
     ladder's no-added-false-blocks invariant for no containment in return. At the
     observed maximum both go to zero and the containment is unchanged.
 
-    Honest result: +8.0 points on AgentHarm at 0.0% false-block, and no movement
-    anywhere else. SLEIGHT in particular gains nothing, because there containment
-    and false-block move together at every cap: velocity has no discrimination on
-    covert-intent attacks, and the apparent gain was the mechanism blocking a
-    fraction of everything.
+    Measured result on this evidence: **+0.0 points on every corpus**, at 0.0%
+    false-block. An earlier revision of this docstring claimed +8.0 on AgentHarm.
+    That came from the AgentHarm loader concatenating a behaviour's benign
+    variant and its harmful twin into one trajectory, benign first, so the benign
+    half consumed the rate budget and the harmful half was blocked for arriving
+    late. The loader now emits them as two tasks and the gain is gone. See
+    benchmarks/results/why_we_fail.md for the table.
+
+    SLEIGHT gains nothing at any cap either, and there the tell is different:
+    containment and false-block move together at every point (65.5/65.6,
+    55.5/55.3, 49.7/49.8), so the mechanism was blocking a fraction of everything
+    and being credited for the attack share.
+
+    The rung ships because it costs nothing and is the only deterministic signal
+    that survives an action having no target. Its containment claim rests on
+    `benchmarks/burst.py`, which supplies the burst none of these corpora
+    contains, not on anything measured here.
 
     A single cap shared across corpora is not viable either: RedCode's clean side
     runs to 32 effect actions per task and loses 17.4% of its benign traffic at
@@ -433,11 +445,12 @@ class VelocityLadderEngine(BudgetLadderEngine):
             return Decision(base.allowed, base.reason, self.name)
         limiter = self._limiter(task)
         # Deterministic clock: the replay has no real time, and the window only
-        # has to be wide enough to hold one task.
-        verdict = limiter.check(event.tool_name, event.action, now=0.0)
+        # has to be wide enough to hold one task. `try_acquire` rather than
+        # check-then-record, because the two-call form is a race that let forty
+        # concurrent actions through a cap of five.
+        verdict = limiter.try_acquire(event.tool_name, event.action, now=0.0)
         if not verdict.allowed:
             return Decision(False, verdict.reason, self.name)
-        limiter.record(event.tool_name, event.action, now=0.0)
         return Decision(True, "within task scope, bound, budgeted and paced", self.name)
 
 

@@ -135,31 +135,73 @@ class ParameterProvenance:
 
     def is_grounded(self, value: Any, *, authorized_tools: set[str] | None = None,
                     require_structured: bool = True) -> tuple[bool, str]:
-        """Did an authorized observation supply this value?
+        """Did an authorized observation supply **all** of this value?
 
         ``authorized_tools`` is the set of sources the mandate permits for this
         parameter. None means any observed source counts, which is weaker and is
         the setting to use while the mandate does not yet declare per-parameter
         sources.
-        """
-        sources = self.sources_of(value)
-        if not sources:
-            return False, "value appears in no observation this session"
 
-        candidates = sources
-        if authorized_tools is not None:
-            candidates = {s for s in sources if s.tool in authorized_tools}
-            if not candidates:
-                seen = ", ".join(sorted({s.tool for s in sources}))
-                return False, (
-                    f"value came from {seen}, which is not an authorized source "
-                    "for this parameter"
-                )
-        if require_structured and not any(s.structured for s in candidates):
-            return False, (
-                "value appears only in free text, which is where injected "
-                "content also lives"
-            )
-        best = next(iter(sorted(candidates, key=lambda s: (not s.structured,
-                                                           not s.goal_named, s.tool))))
-        return True, f"value grounded in {best.describe()}"
+        Every attributable token has to be grounded, not any of them. Asking
+        whether *some* token was observed lets one legitimate token launder an
+        entire composite value, and each of these passed before the check was
+        tightened:
+
+            "alice@corp.example, attacker@evil.test"        (a BCC)
+            "https://evil.test/exfil?to=alice@corp.example" (a URL exfil)
+            ["alice@corp.example", "attacker@evil.test"]    (a recipient list)
+
+        Structuredness is likewise evaluated on the token that actually matched,
+        rather than on the union: a value used to satisfy `require_structured`
+        because some *other* token in it came from a named field.
+        """
+        tokens = self._tokens(value)
+        if not tokens:
+            return False, "value contains nothing attributable"
+
+        # The edge-trimmed and raw forms of one token are the same value, so
+        # matching either is enough. Group them so a sentence-final value is not
+        # counted as two tokens, one of which is ungrounded.
+        with self._lock:
+            groups: list[list[str]] = []
+            for token in tokens:
+                trimmed = token.strip(_EDGE)
+                for group in groups:
+                    if trimmed and trimmed in (t.strip(_EDGE) for t in group):
+                        group.append(token)
+                        break
+                else:
+                    groups.append([token])
+
+            for group in groups:
+                sources: set[Source] = set()
+                for token in group:
+                    sources |= self._origins.get(token, set())
+                if not sources:
+                    return False, (
+                        f"{group[0]!r} appears in no observation this session"
+                    )
+                candidates = sources
+                if authorized_tools is not None:
+                    candidates = {s for s in sources if s.tool in authorized_tools}
+                    if not candidates:
+                        seen = ", ".join(sorted({s.tool for s in sources}))
+                        return False, (
+                            f"{group[0]!r} came from {seen}, which is not an "
+                            "authorized source for this parameter"
+                        )
+                if require_structured and not any(s.structured for s in candidates):
+                    return False, (
+                        f"{group[0]!r} appears only in free text, which is where "
+                        "injected content also lives"
+                    )
+
+            first = groups[0]
+            sources = set()
+            for token in first:
+                sources |= self._origins.get(token, set())
+            if authorized_tools is not None:
+                sources = {s for s in sources if s.tool in authorized_tools}
+            best = next(iter(sorted(sources, key=lambda s: (not s.structured,
+                                                            not s.goal_named, s.tool))))
+        return True, f"every part of the value is grounded, first in {best.describe()}"

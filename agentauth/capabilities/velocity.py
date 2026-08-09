@@ -124,6 +124,56 @@ class SessionVelocity:
         return VelocityVerdict(True, f"within {action_class} velocity",
                                observed + 1, max_actions, window)
 
+    def try_acquire(self, tool_name: str, action: str, *,
+                    now: float | None = None) -> VelocityVerdict:
+        """Count and record under one lock. The only safe enforcement entry point.
+
+        `check` followed by `record` is a check-then-act race, and it is not a
+        theoretical one: forty concurrent sends passed a cap of five, because
+        every thread counted before any thread recorded. A rate limit whose
+        window can be entered concurrently is not a rate limit.
+
+        `check` remains available as a read-only projection, for reporting what
+        the limiter would say without consuming a slot.
+        """
+        at = time.time() if now is None else now
+        action_class = self.config.class_for(tool_name, action)
+        if action_class is None:
+            return VelocityVerdict(True, "not a rate-limited action class")
+        limit = self.config.limit_for(action_class)
+        if limit is None:
+            return VelocityVerdict(True, f"no velocity limit for {action_class!r}")
+
+        max_actions, window = limit
+        with self._lock:
+            observed = len(self._recent(action_class, window, at))
+            if observed + 1 > max_actions:
+                return VelocityVerdict(
+                    False,
+                    f"velocity: {observed + 1} {action_class} actions in "
+                    f"{window:.0f}s exceeds the {max_actions} this task declared",
+                    observed + 1, max_actions, window,
+                )
+            self._events.setdefault(action_class, []).append(at)
+            return VelocityVerdict(True, f"within {action_class} velocity",
+                                   observed + 1, max_actions, window)
+
+    def release(self, tool_name: str, action: str, *, now: float | None = None) -> None:
+        """Give back a slot acquired for an action a later rung then refused."""
+        action_class = self.config.class_for(tool_name, action)
+        if action_class is None:
+            return
+        with self._lock:
+            stamps = self._events.get(action_class)
+            if not stamps:
+                return
+            at = now if now is not None else stamps[-1]
+            for i in range(len(stamps) - 1, -1, -1):
+                if stamps[i] == at:
+                    stamps.pop(i)
+                    return
+            stamps.pop()
+
     def record(self, tool_name: str, action: str, *, now: float | None = None) -> None:
         at = time.time() if now is None else now
         action_class = self.config.class_for(tool_name, action)

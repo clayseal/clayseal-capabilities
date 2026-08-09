@@ -43,8 +43,11 @@ is the blast radius: how many of the burst's actions completed before the first
 block. A defense that catches the burst on its 40th action has not prevented
 much.
 
-False alarms are counted over the clean sessions, which use the same calibration
-and the same cap. A cap that trips on legitimate work is not a defense.
+False alarms are counted on HELD-OUT clean sessions. Calibrating the cap and then
+measuring false alarms on the same sessions is a tautology: the cap is the maximum
+of that set's volume, so nothing in it can exceed the cap and 0.0% is arithmetic
+rather than evidence. Half the clean sessions set the cap; the false-alarm rate is
+reported on the other half, which the cap has never seen.
 """
 from __future__ import annotations
 
@@ -113,12 +116,18 @@ def build_sessions(
     *,
     count: int = 200,
     seed: int = 0,
-) -> tuple[list[BenchmarkTask], list[BenchmarkTask]]:
-    """Return (compromised sessions, clean sessions) from real benign traffic.
+) -> tuple[list[BenchmarkTask], list[BenchmarkTask], list[BenchmarkTask]]:
+    """Return (compromised, calibration, held-out clean) from real benign traffic.
 
     A session is eligible only if it already performs an effect action, because
     the burst has to wear a shape the session legitimately used. That is what
     makes every lower rung allow it.
+
+    The clean sessions are SPLIT. Calibrating the cap and then measuring false
+    alarms on the same sessions is a tautology: the cap is the maximum of that
+    set's volume, so nothing in it can exceed the cap and 0.0% is arithmetic
+    rather than evidence. Half the clean sessions set the cap, and the false-alarm
+    rate is reported on the other half, which the cap has never seen.
     """
     rng = random.Random(seed)
     pool = [t for t in get_loader(corpus).load() if _effect_events(t)]
@@ -126,7 +135,9 @@ def build_sessions(
         raise SystemExit(f"{corpus}: no benign task performs an effect action")
     rng.shuffle(pool)
 
-    clean = pool[: min(count, len(pool))]
+    clean_all = pool[: min(count, len(pool))]
+    split = max(1, len(clean_all) // 2)
+    calibration, holdout = clean_all[:split], clean_all[split:]
     compromised: list[BenchmarkTask] = []
     for i in range(min(count, len(pool))):
         host = pool[i % len(pool)]
@@ -156,7 +167,7 @@ def build_sessions(
             authorized_args=getattr(host, "authorized_args", {}) or {},
             meta={**dict(host.meta), "burst_size": burst_size},
         ))
-    return compromised, clean
+    return compromised, calibration, holdout
 
 
 def evaluate(
@@ -167,19 +178,18 @@ def evaluate(
     seed: int = 0,
     cap: int | None = None,
 ) -> BurstResult:
-    compromised, clean = build_sessions(corpus, burst_size, count=count, seed=seed)
+    compromised, calibration, holdout = build_sessions(
+        corpus, burst_size, count=count, seed=seed)
 
     engine = VelocityLadderEngine()
-    if cap is None:
-        # Calibrated from clean sessions only, the same way production declares
-        # the limit. No attack event is consulted.
-        engine.observe_corpus(clean)
-    else:
-        engine.observe_corpus(clean)
+    # Calibrated on the calibration half only. No attack event is consulted, and
+    # neither is any session the false-alarm number is measured on.
+    engine.observe_corpus(calibration)
+    if cap is not None:
         engine._cap = cap
 
     result = BurstResult(burst_size=burst_size, cap=engine._cap,
-                         sessions=len(compromised), clean_sessions=len(clean))
+                         sessions=len(compromised), clean_sessions=len(holdout))
 
     for task in compromised:
         completed = 0
@@ -198,10 +208,11 @@ def evaluate(
             result.actions_to_alarm.append(completed)
 
     clean_engine = VelocityLadderEngine()
-    clean_engine.observe_corpus(clean)
+    clean_engine.observe_corpus(calibration)
     if cap is not None:
         clean_engine._cap = cap
-    for task in clean:
+    # HELD OUT: these sessions did not set the cap.
+    for task in holdout:
         if any(not clean_engine.decide(task, e).allowed
                for e in task.events if e.label is EventLabel.BENIGN):
             result.clean_false_alarms += 1

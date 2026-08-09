@@ -35,22 +35,28 @@ asserts it does not move when the burst grows by a factor of a hundred.
 
 ## Result
 
-200 sessions per cell, cap calibrated per corpus.
+400 sessions per cell. The cap is calibrated on half the clean sessions, and the
+false-alarm rate is reported on the **held-out** other half.
 
-| Corpus | cap | burst | contained | blast radius | clean false alarms |
+That split matters and it changed the answer. Calibrating and then measuring
+false alarms on the same sessions is a tautology: the cap is the maximum of that
+set's volume, so nothing in it can exceed the cap and 0.0% is arithmetic rather
+than evidence. Held out, tau2 stays at 0.0% and BFCL costs 2.0%.
+
+| Corpus | cap | burst | contained | blast radius | held-out false alarms |
 | --- | --: | --: | --: | --: | --: |
-| tau2 | 7 | 2 | 6.5% | 1 | 0.0% |
-| tau2 | 7 | 5 | 76.5% | 3 | 0.0% |
+| tau2 | 7 | 2 | 5.0% | 1 | 0.0% |
+| tau2 | 7 | 5 | 74.8% | 3 | 0.0% |
 | tau2 | 7 | 10 | **100%** | 4 | **0.0%** |
 | tau2 | 7 | 20 | 100% | 4 | 0.0% |
 | tau2 | 7 | 50 | 100% | 4 | 0.0% |
 | tau2 | 7 | 100 | 100% | 4 | 0.0% |
-| BFCL | 6 | 2 | 0.5% | 0 | 0.0% |
-| BFCL | 6 | 5 | 27.0% | 4 | 0.0% |
-| BFCL | 6 | 10 | **100%** | 5 | **0.0%** |
-| BFCL | 6 | 20 | 100% | 5 | 0.0% |
-| BFCL | 6 | 50 | 100% | 5 | 0.0% |
-| BFCL | 6 | 100 | 100% | 5 | 0.0% |
+| BFCL | 5 | 2 | 2.3% | 1 | 2.0% |
+| BFCL | 5 | 5 | **100%** | 4 | **2.0%** |
+| BFCL | 5 | 10 | 100% | 4 | 2.0% |
+| BFCL | 5 | 20 | 100% | 4 | 2.0% |
+| BFCL | 5 | 50 | 100% | 4 | 2.0% |
+| BFCL | 5 | 100 | 100% | 4 | 2.0% |
 
 **Blast radius** is how many of the burst's actions completed before the first
 block, and it is the number that decides whether containment was worth having. A
@@ -60,14 +66,18 @@ the layer stops it, whether it was trying for 10 or for 100.
 **A burst of two is not contained, and should not be.** Two extra authorized
 actions have not left the shape of the task, and a layer that flagged them would
 be blocking legitimate work at the same rate. The detection threshold sits
-between 5 and 10 on both corpora.
+between 2 and 5 on BFCL and between 5 and 10 on tau2.
+
+**BFCL costs 2.0% of held-out legitimate sessions.** That is the price of the
+tighter cap its traffic calibrates to, and it is the number to quote, not the
+0.0% the calibration set reports.
 
 ## What this does and does not establish
 
 It establishes that the rung works on the threat it was built for: a compromise
 performing a high volume of individually authorized, correctly targeted,
-in-scope actions is stopped after a bounded number of them, with no false alarms
-across 400 real sessions.
+in-scope actions is stopped after a bounded number of them, at a held-out
+false-alarm cost of 0.0% on tau2 and 2.0% on BFCL.
 
 It does not establish anything about single-action harm, which is most of
 AgentHarm and all of the needle benchmark, and no rate limit will.
@@ -81,8 +91,8 @@ mandate rather than in the library.
 ## Reproduce
 
 ```bash
-.venv/bin/python -m benchmarks.burst --corpus tau2 --count 200 \
+.venv/bin/python -m benchmarks.burst --corpus tau2 --count 400 \
   --json benchmarks/results/burst_tau2.json
-.venv/bin/python -m benchmarks.burst --corpus bfcl --count 200 \
+.venv/bin/python -m benchmarks.burst --corpus bfcl --count 400 \
   --json benchmarks/results/burst_bfcl.json
 ```
