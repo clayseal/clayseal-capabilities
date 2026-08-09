@@ -122,3 +122,95 @@ def test_observed_counts_only_the_window():
     _run(limiter, 4, now=0.0)
     assert limiter.observed("send", 60.0, now=30.0) == 4
     assert limiter.observed("send", 60.0, now=120.0) == 0
+
+
+# --------------------------------------------------------------------------- #
+# Rate classes. Every one of these silently disabled the limit it appeared on.
+# --------------------------------------------------------------------------- #
+def test_a_per_verb_limit_does_not_leave_the_other_effect_verbs_unlimited():
+    """The hole an operator does not expect to have left open.
+
+    A mandate declaring 20 sends per hour has bounded sends and nothing else:
+    the other eight effect verbs went through the same tool unlimited. The
+    aggregate `effect` class bounds all of them at once.
+    """
+    v = velocity_from_mandate({"velocity": {"effect": {"max": 2, "window_seconds": 3600}}})
+    allowed = sum(
+        v.try_acquire("mailer", verb, now=0.0).allowed
+        for verb in ("send", "post", "write", "create", "update",
+                     "transfer", "delete", "pay", "execute")
+    )
+    assert allowed == 2
+
+
+def test_a_per_verb_limit_and_the_aggregate_both_bind():
+    v = velocity_from_mandate({"velocity": {
+        "effect": {"max": 10, "window_seconds": 3600},
+        "send": {"max": 2, "window_seconds": 3600},
+    }})
+    sends = sum(v.try_acquire("mailer", "send", now=0.0).allowed for _ in range(5))
+    assert sends == 2
+    # The aggregate still has room, and the two sends counted against it.
+    writes = sum(v.try_acquire("editor", "write", now=0.0).allowed for _ in range(20))
+    assert writes == 8
+
+
+def test_the_action_verb_is_normalised_before_lookup():
+    """The verb comes from the agent's own tool call. `SEND` used to miss a
+    limit declared on `send` entirely: twenty calls passed a cap of two."""
+    v = velocity_from_mandate({"velocity": {"send": {"max": 2, "window_seconds": 3600}}})
+    assert sum(v.try_acquire("m", "SEND", now=0.0).allowed for _ in range(20)) == 2
+    v2 = velocity_from_mandate({"velocity": {"send": {"max": 2, "window_seconds": 3600}}})
+    assert sum(v2.try_acquire("m", " send ", now=0.0).allowed for _ in range(20)) == 2
+
+
+@pytest.mark.parametrize("window", ["-inf", "0", "-1", "nan"])
+def test_a_window_that_disables_the_limit_is_rejected_not_stored(window):
+    v = velocity_from_mandate({"velocity": {"send": {"max": 1, "window_seconds": window}}})
+    assert "send" in v.config.rejected
+    assert v.config.limit_for("send") is None
+
+
+def test_a_max_below_one_is_rejected():
+    v = velocity_from_mandate({"velocity": {"send": {"max": 0, "window_seconds": 60}}})
+    assert "send" in v.config.rejected
+
+
+def test_a_boolean_max_is_rejected():
+    """bool is an int in Python, so `True` silently became a cap of one."""
+    v = velocity_from_mandate({"velocity": {"send": {"max": True, "window_seconds": 60}}})
+    assert "send" in v.config.rejected
+
+
+def test_an_unknown_rate_class_is_reported_rather_than_silently_inert():
+    """It used to be parsed, stored, and never applied, so the mandate said one
+    thing and the enforcement did another."""
+    v = velocity_from_mandate({"velocity": {"outbound_email": {"max": 1}}})
+    assert "outbound_email" in v.config.rejected
+    assert sum(v.try_acquire("mailer", "send", now=0.0).allowed for _ in range(10)) == 10
+
+
+def test_a_mandate_may_declare_its_own_classes_through_tool_classes():
+    v = velocity_from_mandate({"velocity": {
+        "tool_classes": {"mailer": "outbound_email"},
+        "outbound_email": {"max": 1, "window_seconds": 60},
+    }})
+    assert not v.config.rejected
+    assert sum(v.try_acquire("mailer", "send", now=0.0).allowed for _ in range(5)) == 1
+
+
+def test_strict_mode_raises_instead_of_dropping():
+    with pytest.raises(ValueError):
+        velocity_from_mandate(
+            {"velocity": {"send": {"max": 1, "window_seconds": 0}}}, strict=True)
+
+
+def test_a_refused_action_gives_back_every_class_it_acquired():
+    v = velocity_from_mandate({"velocity": {
+        "effect": {"max": 3, "window_seconds": 3600},
+        "send": {"max": 3, "window_seconds": 3600},
+    }})
+    assert v.try_acquire("m", "send", now=1.0).allowed
+    v.release("m", "send", now=1.0)
+    assert v.observed("effect", 3600.0, now=1.0) == 0
+    assert v.observed("send", 3600.0, now=1.0) == 0
