@@ -1,0 +1,114 @@
+{
+  "tier": "syscall_boundary",
+  "n_scenarios": 8,
+  "pass_rate": 1.0,
+  "rows": [
+    {
+      "scenario": "01-cred-exfil",
+      "name": "Credential harvest and exfiltration",
+      "star": "egress capability",
+      "events": 4,
+      "ivisor_denies": 1,
+      "clay_denies": 1,
+      "deny_layers": [
+        "egress"
+      ],
+      "pass": true,
+      "reason": "contained via egress",
+      "expect": "exfil connect to 203.0.113.5 denied (not-allowlisted)"
+    },
+    {
+      "scenario": "02-persistence",
+      "name": "Rootfs persistence (cron + library plant)",
+      "star": "task-scope floor",
+      "events": 6,
+      "ivisor_denies": 3,
+      "clay_denies": 3,
+      "deny_layers": [
+        "task-scope"
+      ],
+      "pass": true,
+      "reason": "contained via task-scope",
+      "expect": "writes to /etc, /usr, /root denied (EROFS, out of workspace)"
+    },
+    {
+      "scenario": "03-reverse-shell",
+      "name": "Reverse shell / C2 callback",
+      "star": "egress capability",
+      "events": 4,
+      "ivisor_denies": 1,
+      "clay_denies": 1,
+      "deny_layers": [
+        "egress"
+      ],
+      "pass": true,
+      "reason": "contained via egress",
+      "expect": "connect to 13.37.66.99:4444 denied (not-allowlisted)"
+    },
+    {
+      "scenario": "04-dns-tunnel",
+      "name": "DNS-tunnel exfiltration",
+      "star": "iVisor DNS intercept",
+      "events": 7,
+      "ivisor_denies": 4,
+      "clay_denies": 0,
+      "deny_layers": [],
+      "pass": true,
+      "reason": "contained via ivisor-floor",
+      "expect": "dns.query for exfil-c2.example denied (not-allowlisted, NXDOMAIN)"
+    },
+    {
+      "scenario": "05-host-escape",
+      "name": "Container / host escape",
+      "star": "iVisor syscall floor",
+      "events": 3,
+      "ivisor_denies": 0,
+      "clay_denies": 0,
+      "deny_layers": [],
+      "pass": true,
+      "reason": "syscall-floor scenario; ivisor_denies=0, clay_denies=0 (non-event on fd-3 is expected)",
+      "expect": "mount/ptrace/setns/unshare/init_module all ENOSYS; host paths absent"
+    },
+    {
+      "scenario": "06-audit-evasion",
+      "name": "Audit-channel evasion (forge the trace)",
+      "star": "unforgeable channel",
+      "events": 3,
+      "ivisor_denies": 0,
+      "clay_denies": 0,
+      "deny_layers": [],
+      "pass": true,
+      "reason": "syscall-floor scenario; ivisor_denies=0, clay_denies=0 (non-event on fd-3 is expected)",
+      "expect": "fd 3 unreachable from guest (OSError); forged verdict never enters the stream"
+    },
+    {
+      "scenario": "07-beaconing",
+      "name": "Beaconing over an allowed channel (BPL)",
+      "star": "behavioral limit (BPL)",
+      "events": 23,
+      "ivisor_denies": 0,
+      "clay_denies": 7,
+      "deny_layers": [
+        "budget[BPL]"
+      ],
+      "pass": true,
+      "reason": "contained via budget[BPL]",
+      "expect": "iVisor allows every connect; Clay Seal egress budget blocks beacons past 4"
+    },
+    {
+      "scenario": "08-exfil-allowed-channel",
+      "name": "Bulk exfil over an allowed channel (BPL)",
+      "star": "behavioral limit (BPL)",
+      "events": 19,
+      "ivisor_denies": 0,
+      "clay_denies": 6,
+      "deny_layers": [
+        "budget[BPL]"
+      ],
+      "pass": true,
+      "reason": "contained via budget[BPL]",
+      "expect": "iVisor allows every upload; Clay Seal egress budget blocks exfil past 3"
+    }
+  ],
+  "caveat": "Replay of captured iVisor fd-3 traces through demo/clayseal-ivisor capability evaluator (envelope / egress / task-scope / BPL budget). Not a live sandbox run. Scenarios 05/06 may be non-events on fd-3 by design and are scored as documented limits, not failures."
+}

@@ -36,7 +36,7 @@ places and closed in the same way.
 | Adaptive red-team | Does it hold when the adversary adapts? | seconds, CPU | yes | yes |
 | Long trajectory | What does it cost per *session*? | seconds, CPU | yes | yes |
 | Live agent | What does it cost real work? | dollars, API, noisy | no | yes |
-| Syscall boundary | Does it hold when the agent tries to escape? | minutes, VM | no | not yet |
+| Syscall boundary | Does it hold when the agent tries to escape? | minutes, VM | yes (trace replay) | yes (sample-trace harness; live VM still separate) |
 
 The live tier is deliberately excluded from the one-command run. It costs money,
 needs credentials, and carries sampling noise, so mixing it into a "run

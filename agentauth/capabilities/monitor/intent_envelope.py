@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from agentauth.capabilities.monitor.action import Action, Trajectory, resource_class
 from agentauth.capabilities.monitor.ontology import ToolOntology
@@ -36,7 +37,66 @@ class Deviation(str, Enum):
     OFF_VERB = "off-verb"
     OFF_RESOURCE = "off-resource"
     OUT_OF_ORDER = "out-of-order"
+    OFF_SLOT = "off-slot"
 
+
+class SlotSource(str, Enum):
+    """Where a typed-plan argument slot may be filled from."""
+
+    GOAL = "goal"                 # literal in the sealed goal
+    TRUSTED_READ = "trusted_read"  # structured / containing-object grounded
+    FREE = "free"                 # unconstrained (reads, searches)
+
+
+@dataclass(frozen=True)
+class ParameterSlot:
+    name: str
+    source: SlotSource
+
+    def to_dict(self) -> dict:
+        return {"name": self.name, "source": self.source.value}
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "ParameterSlot":
+        return cls(name=str(raw["name"]), source=SlotSource(raw.get("source", "free")))
+
+
+@dataclass(frozen=True)
+class CallTemplate:
+    """A declarative call shape with provenance-typed argument slots.
+
+    The planner emits these from the sealed goal only. At authorize time a
+    benign call matches a template's tool/verb and each constrained slot's
+    provenance; an injected call fails the slot check even when the tool is
+    on the allow-list.
+    """
+
+    tool: str
+    verb_class: str = ""
+    slots: tuple[ParameterSlot, ...] = ()
+
+    def to_dict(self) -> dict:
+        return {
+            "tool": self.tool,
+            "verb_class": self.verb_class,
+            "slots": [s.to_dict() for s in self.slots],
+        }
+
+    @classmethod
+    def from_dict(cls, raw: dict) -> "CallTemplate":
+        slots = tuple(ParameterSlot.from_dict(s) for s in raw.get("slots", [])
+                      if isinstance(s, dict))
+        return cls(tool=str(raw["tool"]), verb_class=str(raw.get("verb_class", "")),
+                   slots=slots)
+
+    def matches_shape(self, action: Action) -> bool:
+        if action.tool != self.tool:
+            return False
+        if self.verb_class and action.verb.lower() != self.verb_class.lower():
+            # Also accept verb-class groupings (send/transfer/post).
+            from agentauth.capabilities.replan import verb_class as vc
+            return vc(action.verb) == self.verb_class or vc(action.verb) == vc(self.verb_class)
+        return True
 
 @dataclass(frozen=True)
 class Phase:
@@ -118,11 +178,15 @@ class IntentEnvelope:
     goal_conditions: frozenset[str] = frozenset()
     initial_facts: frozenset[str] = frozenset()
     ontology: ToolOntology | None = None
+    # Typed call templates with provenance-typed slots. Empty ⇒ legacy
+    # tool/verb/resource membership only.
+    call_templates: tuple[CallTemplate, ...] = ()
 
     @classmethod
     def from_goal(cls, goal: GoalSpec, *, ontology: ToolOntology | None = None) -> "IntentEnvelope":
         intent = goal.structured_intent or {}
         phases = _parse_phases(intent.get("phases"))
+        templates = _parse_templates(intent.get("call_templates"))
 
         tools = set(intent.get("tools") or [])
         verbs = {str(v).lower() for v in (intent.get("verbs") or [])}
@@ -136,6 +200,10 @@ class IntentEnvelope:
             tools |= set(p.tools)
             verbs |= set(p.verbs)
             rclasses |= set(p.resource_classes)
+        for t in templates:
+            tools.add(t.tool)
+            if t.verb_class:
+                verbs.add(t.verb_class.lower())
 
         onto = ontology or (ToolOntology.from_dict(intent["ontology"])
                             if isinstance(intent.get("ontology"), list) else None)
@@ -147,8 +215,60 @@ class IntentEnvelope:
             goal_conditions=frozenset(str(g) for g in intent.get("goal_conditions", [])),
             initial_facts=frozenset(str(f) for f in intent.get("initial_facts", [])),
             ontology=onto,
+            call_templates=templates,
         )
 
+    def check_slots(
+        self,
+        action: Action,
+        *,
+        provenance: Any | None = None,
+        goal_text: str = "",
+        goal_named_objects: set[str] | None = None,
+    ) -> StepConformance | None:
+        """Return an OFF_SLOT deviation when a matching template's slots fail.
+
+        No templates, or no matching template shape, means this check is a
+        no-op (membership / phases still apply). A matching template with a
+        ``trusted_read`` slot requires structured grounding via provenance.
+        """
+        if not self.call_templates:
+            return None
+        matching = [t for t in self.call_templates if t.matches_shape(action)]
+        if not matching:
+            return None
+        template = matching[0]
+        for slot in template.slots:
+            if slot.source is SlotSource.FREE:
+                continue
+            value = action.args.get(slot.name)
+            if value is None:
+                # Also accept common destination aliases.
+                for alt in ("to", "recipient", "url", "destination", "address"):
+                    if alt in action.args:
+                        value = action.args[alt]
+                        break
+            if value is None:
+                continue
+            if slot.source is SlotSource.GOAL:
+                if str(value) not in goal_text:
+                    return StepConformance(
+                        action.step, Deviation.OFF_SLOT,
+                        f"slot {slot.name!r} value not present in sealed goal")
+                continue
+            if slot.source is SlotSource.TRUSTED_READ:
+                if provenance is None:
+                    return StepConformance(
+                        action.step, Deviation.OFF_SLOT,
+                        f"slot {slot.name!r} requires trusted_read provenance")
+                from agentauth.capabilities.parameter_provenance import DestinationTrust
+                trust, reason = provenance.check_destination(
+                    value, goal_named_objects=goal_named_objects)
+                if trust is not DestinationTrust.ALLOW:
+                    return StepConformance(
+                        action.step, Deviation.OFF_SLOT,
+                        f"slot {slot.name!r}: {reason}")
+        return None
     # -- membership ----------------------------------------------------------
     def _membership(self, action: Action) -> StepConformance | None:
         rc = resource_class(action.resource)
@@ -338,6 +458,7 @@ class IntentEnvelope:
             "goal_conditions": sorted(self.goal_conditions),
             "initial_facts": sorted(self.initial_facts),
             "ontology": self.ontology.to_dict() if self.ontology else [],
+            "call_templates": [t.to_dict() for t in self.call_templates],
         }
 
     @classmethod
@@ -354,8 +475,8 @@ class IntentEnvelope:
             goal_conditions=frozenset(raw.get("goal_conditions", [])),
             initial_facts=frozenset(raw.get("initial_facts", [])),
             ontology=ToolOntology.from_dict(raw["ontology"]) if raw.get("ontology") else None,
+            call_templates=_parse_templates(raw.get("call_templates")),
         )
-
 
 def sign_intent_envelope(envelope: IntentEnvelope, *, key) -> dict:
     """Sign an envelope as trusted control-plane data, like a mandate.
@@ -421,4 +542,14 @@ def _parse_phases(raw) -> tuple[Phase, ...]:
             min=int(p.get("min", 0)),
             repeatable=bool(p.get("repeatable", True)),
         ))
+    return tuple(out)
+
+
+def _parse_templates(raw) -> tuple[CallTemplate, ...]:
+    if not isinstance(raw, list):
+        return ()
+    out: list[CallTemplate] = []
+    for t in raw:
+        if isinstance(t, dict) and "tool" in t:
+            out.append(CallTemplate.from_dict(t))
     return tuple(out)

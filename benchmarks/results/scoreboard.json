@@ -66,11 +66,29 @@
     {
       "tier": "toolemu",
       "measures": "deterministic replay",
-      "contained": "-",
+      "contained": "100.0%",
       "false_block": "0.00%",
-      "heldout": "55.32%",
-      "n": "0a / 282b",
+      "heldout": "50.00%",
+      "n": "5a / 10b",
       "caveat": "NO ATTACK EVENTS: its risk is underspecification described in prose, and the authorized tool and the harmful one are the same call"
+    },
+    {
+      "tier": "mcp_attack",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "heldout": "44.44%",
+      "n": "5a / 9b",
+      "caveat": "product-shaped MCP poisoned-tool / confused-deputy / arg-mutation; destination binding and scope are the discriminators"
+    },
+    {
+      "tier": "advbench_agent",
+      "measures": "deterministic replay",
+      "contained": "66.7%",
+      "false_block": "33.33%",
+      "heldout": "66.67%",
+      "n": "3a / 6b",
+      "caveat": "content-defined / harmful-instruction breadth; ceiling marker like AgentHarm \u2014 not an authorization win target"
     },
     {
       "tier": "atif",
@@ -144,5 +162,16 @@
       "n": "20000 actions",
       "caveat": "one needle per session, wearing the session's own tool and resource; measures position-independence, not covert detection"
     }
+  ],
+  "saturated": [
+    "asb",
+    "injecagent"
+  ],
+  "poolable": [
+    "agent_threat_bench",
+    "ipi_coding",
+    "mcp_attack",
+    "redcode",
+    "toolemu"
   ]
 }

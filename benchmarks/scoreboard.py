@@ -40,6 +40,13 @@ from benchmarks.datasets.base import get_loader
 # includes them would be the cheapest possible way to inflate this system.
 SATURATED = {"asb", "injecagent"}
 
+# Suites allowed in a buyer-facing POOLED containment headline. Saturated
+# allowlist-saturators and content-ceiling markers stay in the per-tier table
+# but must never enter a single pooled ASR / containment figure.
+POOLABLE = frozenset({
+    "redcode", "ipi_coding", "agent_threat_bench", "mcp_attack", "toolemu",
+})
+
 DEPLOYABLE = [
     "tool-allowlist",
     "capability-token",
@@ -56,17 +63,22 @@ CAVEATS = {
     "asb": "SATURATES AT THE NAIVE RUNG: every attack uses an ungranted tool; not a result",
     "injecagent": ("SATURATES AT THE NAIVE RUNG, and the corpus GRANTS the attacker "
                    "tools while we do not; containment is that narrowness alone"),
-    "toolemu": ("NO ATTACK EVENTS: its risk is underspecification described in prose, "
-                "and the authorized tool and the harmful one are the same call"),
+    "toolemu": ("normalized clayseal_traces fixture scores destination binding; "
+                "raw toolkit mapping still has no attack events (underspecification)"),
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
-    "sleight": ("grant derived from the paired BENIGN twin, so the false-block column "
-                "is NOT reportable here; ~2 points of discrimination either way"),
+    "sleight": ("per-action ladder has almost no intent signal; cite sleight[detector]"),
+    "sleight[detector]": ("trajectory detector on paired twins — the honest SLEIGHT "
+                          "score; ladder containment is not an intent result"),
+    "advbench_agent": ("target/arg binding on normalized fixture; content-only twins "
+                       "are not the score path"),
     "agentharm": ("6.3% is a LOADER limit: we read only the JSON (tool names), while "
                   "the corpus grading functions assert targets for 63% of behaviours"),
     "atif": "benign only; a false-block measurement",
     "tau2": "benign only; the friction denominator that matters",
     "bfcl": "benign only; the friction denominator that matters",
+    "mcp_attack": ("product-shaped MCP poisoned-tool / confused-deputy / arg-mutation; "
+                   "destination binding and scope are the discriminators"),
 }
 
 
@@ -131,9 +143,11 @@ class Scoreboard:
 def _deterministic(board: Scoreboard, quick: bool) -> None:
     corpora = ["redcode", "agentharm", "asb", "sleight", "ipi_coding",
                "agent_threat_bench", "injecagent", "toolemu",
+               "mcp_attack", "advbench_agent",
                "atif", "tau2", "bfcl"]
     if quick:
-        corpora = ["redcode", "agentharm", "sleight", "agent_threat_bench"]
+        corpora = ["redcode", "agentharm", "sleight", "agent_threat_bench",
+                   "mcp_attack"]
     for name in corpora:
         try:
             tasks = list(get_loader(name).load())
@@ -243,6 +257,28 @@ def _trajectory(board: Scoreboard) -> None:
     )
 
 
+def _sleight_detector(board: Scoreboard) -> None:
+    """SLEIGHT's honest score: trajectory detector, not the per-action ladder."""
+    from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
+    from benchmarks.core.detector_eval import run_detector_benchmark
+
+    try:
+        tasks = list(get_loader("sleight").load())
+    except Exception:
+        board.add(tier="sleight[detector]", measures="covert-intent trajectories",
+                  caveat="corpus not fetched / not decrypted")
+        return
+    result = run_detector_benchmark(
+        tasks, detector=TrajectoryDetector(scorer=NGramScorer(), alpha=0.05))
+    board.add(
+        tier="sleight[detector]",
+        measures="covert-intent trajectories",
+        contained=f"{100 * result.containment_rate:.1f}%",
+        false_block=f"{100 * result.false_block_rate:.2f}%",
+        n=f"{result.attack_trajectories} atk / {result.n_test} benign",
+        caveat=CAVEATS["sleight[detector]"],
+    )
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Every tier, one table")
     p.add_argument("--quick", action="store_true",
@@ -252,15 +288,28 @@ def main(argv: list[str] | None = None) -> int:
 
     board = Scoreboard()
     _deterministic(board, args.quick)
+    _sleight_detector(board)
     if not args.quick:
         _burst(board)
         _flow(board)
         _trajectory(board)
-
     print(board.render())
+    # Explicit pooled-headline discipline: never fold SATURATED tiers into one
+    # number. Callers (SEND_PACKET) read this block.
+    pooled_rows = [r for r in board.rows
+                   if r.tier.split("[")[0] in POOLABLE and r.contained not in ("-",)]
+    if pooled_rows:
+        print("\npooled headline (excludes SATURATED asb/injecagent and content ceilings):")
+        for r in pooled_rows:
+            print(f"  {r.tier}: contained={r.contained}  FB={r.false_block}  ({r.caveat[:60]}…)"
+                  if len(r.caveat) > 60 else
+                  f"  {r.tier}: contained={r.contained}  FB={r.false_block}  ({r.caveat})")
     if args.json:
+        payload = board.to_dict()
+        payload["saturated"] = sorted(SATURATED)
+        payload["poolable"] = sorted(POOLABLE)
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(json.dumps(board.to_dict(), indent=2))
+        args.json.write_text(json.dumps(payload, indent=2))
         print(f"\nwrote {args.json}")
     return 0
 
