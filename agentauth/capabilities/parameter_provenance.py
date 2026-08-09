@@ -100,16 +100,33 @@ class ParameterProvenance:
                 self._origins.setdefault(token, set()).add(
                     Source(tool, False, goal_named))
 
+    # Attacker-shaped tool output reaches this. A deeply nested or
+    # self-referential payload raised RecursionError INSIDE the authorization
+    # path, which is a denial of service on the thing that decides whether
+    # actions are allowed. Bounded traversal, and the tokens found so far are
+    # returned rather than an exception raised: a payload we cannot fully walk
+    # grounds less, which fails toward refusing rather than allowing.
+    MAX_DEPTH = 24
+
     @staticmethod
-    def _tokens(value: Any) -> list[str]:
-        if value is None:
+    def _tokens(value: Any, *, _depth: int = 0, _seen: set[int] | None = None) -> list[str]:
+        if value is None or _depth > ParameterProvenance.MAX_DEPTH:
             return []
-        if isinstance(value, (list, tuple, set)):
-            return [t for v in value for t in ParameterProvenance._tokens(v)]
-        if isinstance(value, Mapping):
-            return [t for v in value.values() for t in ParameterProvenance._tokens(v)]
-        out: list[str] = []
-        seen: set[str] = set()
+        if isinstance(value, (list, tuple, set, Mapping)):
+            seen = _seen if _seen is not None else set()
+            marker = id(value)
+            if marker in seen:
+                return []
+            seen.add(marker)
+            items = value.values() if isinstance(value, Mapping) else value
+            out: list[str] = []
+            for item in items:
+                out.extend(ParameterProvenance._tokens(
+                    item, _depth=_depth + 1, _seen=seen))
+            seen.discard(marker)
+            return out
+        out = []
+        seen_tokens: set[str] = set()
         for raw in _TOKEN.findall(str(value)):
             for form in (raw, raw.strip(_EDGE)):
                 # Both forms, because the trimmed one recovers a value that ended
@@ -120,8 +137,8 @@ class ParameterProvenance:
                 # every observation in the live path, and a linear membership
                 # test over a growing list is quadratic in the token count of
                 # the payload.
-                if len(form) >= MIN_ATTRIBUTABLE and form not in seen:
-                    seen.add(form)
+                if len(form) >= MIN_ATTRIBUTABLE and form not in seen_tokens:
+                    seen_tokens.add(form)
                     out.append(form)
         return out
 
