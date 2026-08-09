@@ -57,20 +57,20 @@
     {
       "tier": "injecagent",
       "measures": "deterministic replay",
-      "contained": "100.0%",
+      "contained": "99.9%",
       "false_block": "n/a",
       "heldout": "-",
-      "n": "3196a / 2108b",
-      "caveat": "SATURATES AT THE NAIVE RUNG: 99.9% caught by tool-allowlist, 0/3196 attack events carry a path or arguments"
+      "n": "1598a / 1054b",
+      "caveat": "SATURATES AT THE NAIVE RUNG, and the corpus GRANTS the attacker tools while we do not; containment is that narrowness alone"
     },
     {
       "tier": "toolemu",
       "measures": "deterministic replay",
-      "contained": "100.0%",
+      "contained": "-",
       "false_block": "0.00%",
-      "heldout": "54.74%",
-      "n": "446a / 559b",
-      "caveat": "SATURATES AT THE NAIVE RUNG: 100% caught by tool-allowlist, 0/446 attack events carry a path or arguments"
+      "heldout": "55.32%",
+      "n": "0a / 282b",
+      "caveat": "NO ATTACK EVENTS: its risk is underspecification described in prose, and the authorized tool and the harmful one are the same call"
     },
     {
       "tier": "atif",
