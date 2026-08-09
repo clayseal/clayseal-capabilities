@@ -39,6 +39,19 @@ MIN_ATTRIBUTABLE = 6
 
 _TOKEN = re.compile(r"[A-Za-z0-9_.:@/+-]{%d,}" % MIN_ATTRIBUTABLE)
 
+# Punctuation that belongs to the sentence rather than to the value. The token
+# class has to contain these characters, because they appear inside real values
+# (paths, addresses, URLs), and that means a value at the end of a sentence
+# matches with the full stop attached.
+#
+# The confidentiality-flow benchmark found this by measurement rather than by
+# review: a secret recorded from a structured field and then written out as
+# "Here is the record you asked for: <secret>." was attributed to nothing,
+# because "<secret>." is not "<secret>". Containment on that arm was 0%.
+# Trimming the edges is the whole fix and it only ever makes attribution
+# stronger. See benchmarks/results/flow.md.
+_EDGE = ".:,;!?/+-_@"
+
 
 @dataclass(frozen=True)
 class Source:
@@ -95,7 +108,22 @@ class ParameterProvenance:
             return [t for v in value for t in ParameterProvenance._tokens(v)]
         if isinstance(value, Mapping):
             return [t for v in value.values() for t in ParameterProvenance._tokens(v)]
-        return _TOKEN.findall(str(value))
+        out: list[str] = []
+        seen: set[str] = set()
+        for raw in _TOKEN.findall(str(value)):
+            for form in (raw, raw.strip(_EDGE)):
+                # Both forms, because the trimmed one recovers a value that ended
+                # a sentence while the raw one keeps a path or address that
+                # legitimately ends in a separator.
+                #
+                # Deduplicated through a set rather than `in out`: this runs on
+                # every observation in the live path, and a linear membership
+                # test over a growing list is quadratic in the token count of
+                # the payload.
+                if len(form) >= MIN_ATTRIBUTABLE and form not in seen:
+                    seen.add(form)
+                    out.append(form)
+        return out
 
     def sources_of(self, value: Any) -> set[Source]:
         """Every observation that could have supplied this value."""

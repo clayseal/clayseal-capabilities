@@ -1,0 +1,55 @@
+{
+  "corpus": "tau2",
+  "seed": 0,
+  "sessions": 300,
+  "containment": 1.0,
+  "false_block": 0.0,
+  "label_creep": 0.0,
+  "leaks_total": 300,
+  "legitimate_total": 300,
+  "unrelated_total": 300,
+  "real_traffic_false_block": 0.0,
+  "real_total": 1100,
+  "evasion": {
+    "verbatim": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "embedded in prose": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "split in two": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "split into fours": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "base64": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "hex": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "reversed": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    },
+    "dotted": {
+      "refused": 300,
+      "total": 300,
+      "contained": 1.0
+    }
+  }
+}
