@@ -1,0 +1,28 @@
+{
+  "actions": 2000,
+  "ramp": 0.004,
+  "baseline": 10.0,
+  "target": 14.0,
+  "monitors": {
+    "rolling": {
+      "alarms": 12,
+      "first_alarm": 99,
+      "final_mu": 14.027,
+      "anchor_mu": 9.995,
+      "displacement_sigmas": 4.15,
+      "terminal_alarms": 5,
+      "terminal_actions": 1000,
+      "terminal_alarm_rate": 0.005
+    },
+    "anchored": {
+      "alarms": 1071,
+      "first_alarm": 99,
+      "final_mu": 9.995,
+      "anchor_mu": 9.995,
+      "displacement_sigmas": 0.0,
+      "terminal_alarms": 821,
+      "terminal_actions": 1000,
+      "terminal_alarm_rate": 0.821
+    }
+  }
+}

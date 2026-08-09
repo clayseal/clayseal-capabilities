@@ -60,6 +60,10 @@ echo "==> cross-session structuring (principal-scoped aggregates)"
 "${PY}" -m benchmarks.structuring --json "${RESULTS}/structuring.json" \
   | tee "${RESULTS}/structuring.md"
 
+echo "==> slow drift (does the DEFENSE's baseline move?)"
+"${PY}" -m benchmarks.drift --actions "$([ -n "${QUICK}" ] && echo 2000 || echo 10000)" \
+  --json "${RESULTS}/drift.json" | tee "${RESULTS}/drift.md"
+
 echo "==> enforcement latency"
 "${PY}" -m benchmarks.latency --dataset redcode --limit 200 --repeats 20 \
   --json "${RESULTS}/latency_redcode.json" \
