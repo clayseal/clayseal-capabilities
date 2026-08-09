@@ -483,3 +483,94 @@ def test_one_cleared_shape_does_not_admit_unlimited_resources():
             verb="write", args={"body": "x"}))
         allowed += decision.outcome is Outcome.ALLOW
     assert allowed <= 3, f"{allowed} distinct resources admitted under a cap of 3"
+
+
+def test_a_consequential_off_plan_action_needs_a_bound_destination_to_be_replanned():
+    """The interlock. Measured, not assumed.
+
+    Without it, replanning is `defer_allows_bound` under another name and fails
+    the same way: on AgentDojo travel it took ASR from 11.1% to 22.2% while
+    taking clean utility from 50.0% to 100.0%. A travel-booking goal plausibly
+    implies sending and booking, so an injected action of that shape passes the
+    shape check and only its destination distinguishes it.
+
+    The two checks are independent by design. An attacker needs both a shape the
+    goal implies AND a destination the floor accepts, and dropping either leaves
+    the shape check solely responsible for containment, which it cannot carry.
+    """
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+    from agentauth.capabilities.monitor import Action
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.core.task_scope import TaskScope
+
+    consulted = []
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            consulted.append((tool, verb))
+            return ReplanVerdict(True, "the goal implies sending")
+
+    class OffPlan:
+        def last_deviation(self, trajectory):
+            return type("D", (), {"reason": "send_email not in the compiled plan"})()
+
+        def feasible(self, trajectory):
+            return True, ""
+
+    def _broker(egress):
+        return SessionBroker(
+            goal=GoalSpec(query_id="q", summary="book my trip"),
+            scope=TaskScope(allowed_resources=["mcp:tool:send_email"], allowed_actions=[]),
+            egress=egress, intent_envelope=OffPlan(),
+            plan_extender=AlwaysYes(), scope_is_advisory=True)
+
+    def _send(to):
+        return Action(step=0, tool="send_email", resource="mcp:tool:send_email",
+                      verb="send", args={"to": to})
+
+    egress = EgressPolicy(bind_recipients=True, allow_all=False,
+                          allowed_recipients={"agent@travel.example"},
+                          allowed_domains={"travel.example"})
+
+    # The injected destination never clears the floor, so it never reaches the
+    # extender and stays refused.
+    consulted.clear()
+    assert _broker(egress).authorize(_send("attacker@evil.test")).outcome is not Outcome.ALLOW
+
+    # The goal's own destination clears the floor, so the plan may grow to cover it.
+    consulted.clear()
+    assert _broker(egress).authorize(_send("agent@travel.example")).outcome is Outcome.ALLOW
+    assert consulted, "a bound destination should have reached the extender"
+
+
+def test_replanning_without_any_egress_policy_cannot_pass_a_consequential_action():
+    """With no binding floor the intent envelope is the only thing between an
+    injected send and the attacker's address."""
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.monitor import Action
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.core.task_scope import TaskScope
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "yes")
+
+    class OffPlan:
+        def last_deviation(self, trajectory):
+            return type("D", (), {"reason": "off plan"})()
+
+        def feasible(self, trajectory):
+            return True, ""
+
+    broker = SessionBroker(
+        goal=GoalSpec(query_id="q", summary="book my trip"),
+        scope=TaskScope(allowed_resources=["mcp:tool:send_email"], allowed_actions=[]),
+        egress=None, intent_envelope=OffPlan(),
+        plan_extender=AlwaysYes(), scope_is_advisory=True)
+    decision = broker.authorize(Action(
+        step=0, tool="send_email", resource="mcp:tool:send_email",
+        verb="send", args={"to": "attacker@evil.test"}))
+    assert decision.outcome is not Outcome.ALLOW
