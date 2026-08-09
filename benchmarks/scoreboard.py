@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from benchmarks.core.engines import build_engines
+from benchmarks.core.heldout import circular_unsplittable, hold_out_corpus
 from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
@@ -75,6 +76,13 @@ class Row:
     measures: str
     contained: str = "-"
     false_block: str = "-"
+    # False blocks when the grant did NOT see the traffic it judges. Thirteen
+    # loaders build a task's grant from its own benign events, and on six corpora
+    # the grant IS the benign side exactly, so the column to its left cannot be
+    # anything but zero at the scope rung. Both numbers are real and they answer
+    # different questions: the first is "given a complete mandate, does the layer
+    # add friction", the second is "what does an incomplete mandate cost".
+    heldout: str = "-"
     n: str = ""
     caveat: str = ""
 
@@ -91,14 +99,16 @@ class Scoreboard:
         w_meas = max(len(r.measures) for r in self.rows) + 2
         out = [
             f"{'tier':<{w_tier}}{'measures':<{w_meas}}"
-            f"{'contained':>11}{'false-block':>13}{'n':>16}",
-            "-" * (w_tier + w_meas + 40),
+            f"{'contained':>11}{'FB(granted)':>13}{'FB(held out)':>14}{'n':>16}",
+            "-" * (w_tier + w_meas + 54),
         ]
         for r in self.rows:
             out.append(
                 f"{r.tier:<{w_tier}}{r.measures:<{w_meas}}"
-                f"{r.contained:>11}{r.false_block:>13}{r.n:>16}"
+                f"{r.contained:>11}{r.false_block:>13}{r.heldout:>14}{r.n:>16}"
             )
+        out.append("")
+        out.append(self.LEGEND)
         out.append("")
         out.append("caveats, without which none of the above is reportable:")
         for r in self.rows:
@@ -108,6 +118,14 @@ class Scoreboard:
 
     def to_dict(self) -> dict:
         return {"rows": [vars(r) for r in self.rows]}
+
+    LEGEND = (
+        "FB(granted)  friction given a COMPLETE mandate. On six corpora the grant is\n"
+        "             the benign side restated, so this is 0.00% by construction at the\n"
+        "             scope rung and is not evidence on its own.\n"
+        "FB(held out) friction when the grant was built from half the benign events and\n"
+        "             judged against the other half: what an INCOMPLETE mandate costs."
+    )
 
 
 def _deterministic(board: Scoreboard, quick: bool) -> None:
@@ -129,6 +147,20 @@ def _deterministic(board: Scoreboard, quick: bool) -> None:
         # yield a friction number: that side is clean by construction. Saying so
         # is the difference between this table and the five withdrawn results.
         unscoreable = any(t.meta.get("false_block_unscoreable") for t in tasks)
+        # Re-score with a grant built from half the benign events, so the number
+        # is a measurement rather than an identity.
+        held_tasks, corrected = hold_out_corpus(tasks, seed=0)
+        # Circular AND unsplittable: one benign event per task means there is
+        # nothing to hold out, so the granted column is an identity with no
+        # honest counterpart. Report neither rather than reporting the identity.
+        if not corrected and circular_unsplittable(tasks):
+            unscoreable = True
+        heldout = "-"
+        if corrected:
+            hr = run_benchmark(
+                held_tasks, [e for e in build_engines() if e.name in DEPLOYABLE]
+            )[DEPLOYABLE[-1]]
+            heldout = f"{100 * hr.false_block_rate:.2f}%"
         board.add(
             tier=name,
             measures="deterministic replay",
@@ -136,6 +168,7 @@ def _deterministic(board: Scoreboard, quick: bool) -> None:
                        if result.n_attack else "-"),
             false_block=("n/a" if unscoreable
                          else f"{100 * result.false_block_rate:.2f}%"),
+            heldout=heldout,
             n=f"{result.n_attack}a / {result.n_benign}b",
             caveat=CAVEATS.get(name, ""),
         )

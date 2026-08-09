@@ -370,3 +370,68 @@ def test_task_ids_are_unique(dataset):
         f"{dataset}: {sum(v - 1 for v in dupes.values())} duplicate task ids, "
         f"e.g. {list(dupes.items())[:3]}"
     )
+
+
+# --------------------------------------------------------------------------- #
+# A false-block number must be a measurement, not an identity
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("dataset", DATASETS)
+def test_a_benign_derived_grant_is_declared_or_held_out(dataset):
+    """Thirteen loaders build a task's grant from its own benign events.
+
+    On six corpora the grant IS the benign side exactly (tau2, BFCL, ATIF,
+    InjecAgent, ToolEmu, ASB at 100% of tasks, AgentHarm at 50%), so no benign
+    event can fall outside its own grant and 0.00% follows by arithmetic. Our
+    strongest published claim, zero false blocks across 18,356 benign events, is
+    a tautology at the scope rung.
+
+    The number is still worth reporting, because it says the enforcement layer
+    adds no friction beyond the mandate. It is not worth reporting ALONE, so the
+    scoreboard carries a held-out column beside it, and this asserts the
+    machinery that produces it still applies wherever the grant is circular.
+    """
+    from benchmarks.core.heldout import _grant_is_benign_side, hold_out_corpus
+
+    tasks = _load(dataset)
+    if not tasks:
+        pytest.skip(f"{dataset}: no tasks")
+    circular = [t for t in tasks if _grant_is_benign_side(t)]
+    if not circular:
+        return
+
+    from benchmarks.core.heldout import circular_unsplittable
+
+    held, corrected = hold_out_corpus(tasks, seed=0)
+    if not corrected:
+        # A task with one benign event cannot be split. Then no held-out number
+        # exists and the granted one must be declared unscoreable instead.
+        assert circular_unsplittable(tasks) == len(circular), (
+            f"{dataset}: {len(circular)} circular grants, none held out and not "
+            f"all unsplittable; the false-block number would be an identity"
+        )
+        return
+    # Attack events must be untouched: only the friction side may change.
+    before = sum(1 for t in tasks for e in t.events if e.label is EventLabel.ATTACK)
+    after = sum(1 for t in held for e in t.events if e.label is EventLabel.ATTACK)
+    assert before == after, "holding out the mandate changed the attack denominator"
+
+
+def test_holding_out_a_mandate_narrows_it_rather_than_widening_it():
+    """A held-out grant must never admit MORE than the original, or the
+    containment number would move for the wrong reason."""
+    from benchmarks.core.heldout import hold_out_mandate
+
+    tasks = _load("tau2")
+    if not tasks:
+        pytest.skip("tau2 unavailable")
+    checked = 0
+    for task in tasks[:200]:
+        held = hold_out_mandate(task, seed=0)
+        if held is None:
+            continue
+        checked += 1
+        original = set(task.mandate.get("allowed_resources") or ())
+        narrowed = set(held.mandate.get("allowed_resources") or ())
+        assert narrowed <= original
+        assert set(held.allowed_tools) <= set(task.allowed_tools)
+    assert checked > 0
