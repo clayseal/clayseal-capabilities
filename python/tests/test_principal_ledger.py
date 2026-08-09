@@ -137,13 +137,27 @@ def test_a_torn_final_line_is_skipped_not_fatal(tmp_path):
     assert reopened.spent("p", "usd_payout") == Decimal("100")
 
 
-def test_totals_are_derived_from_entries_not_cached():
-    """A cached total beside the log can drift from it. Deriving is slower and
-    means a lost write cannot silently raise a ceiling."""
+def test_totals_are_cached_but_verifiable():
+    """A deliberate reversal, recorded rather than quietly made.
+
+    The first version derived every total from the log on each read, so a lost
+    write could not silently raise a ceiling. That cost 4.75 ms per read at
+    20,000 entries, which is 100x the entire per-action enforcement stack and
+    would have made the ledger the slowest thing in the request path.
+
+    The property is now maintained by an explicit check rather than by
+    construction: totals are cached, and `verify_totals` recomputes from the log
+    and compares. That is weaker, and it is why the check is exercised here and
+    after pruning rather than being assumed.
+    """
     ledger = PrincipalLedger()
     ledger.book("p", "usd_payout", Decimal("100"))
-    ledger._entries.clear()
-    assert ledger.spent("p", "usd_payout") == Decimal("0")
+    assert ledger.spent("p", "usd_payout") == Decimal("100")
+    assert ledger.verify_totals()
+
+    # Corrupting the log behind the cache is exactly what the check catches.
+    ledger._index[("p", "usd_payout")].clear()
+    assert not ledger.verify_totals()
 
 
 # --------------------------------------------------------------------------- #
@@ -253,3 +267,101 @@ def test_signal_respects_the_window():
         ledger.book("p", "usd_payout", Decimal("2500"), idempotency_key=f"k{i}", now=t0)
     assert structuring_signal(ledger, "p", "usd_payout", CEILING, now=t0).suspicious
     assert not structuring_signal(ledger, "p", "usd_payout", CEILING, now=t0 + 7200).suspicious
+
+
+# --------------------------------------------------------------------------- #
+# Adversarial: four attacks that worked against the first version of this file
+# --------------------------------------------------------------------------- #
+def test_idempotency_key_reuse_cannot_launder_spend():
+    """The key came from agent-controlled tool arguments, so an injected agent
+    reused one and moved 40000 against a 10000 ceiling while the ledger booked
+    5000. Now scoped to session AND amount."""
+    ledger = PrincipalLedger()
+    moved = Decimal("0")
+    for i in range(8):
+        v = _view(ledger, session=f"s{i}")
+        args = {"amount": "5000", "_idempotency_key": "SAME-KEY"}
+        ok, _ = v.authorize("send_money", args)
+        if ok:
+            v.commit("send_money", args)
+            moved += Decimal("5000")
+    assert moved <= CEILING
+    assert ledger.spent("mandate:payouts", "usd_payout") == moved
+
+
+def test_idempotency_still_dedupes_a_genuine_retry():
+    """The fix must not break what idempotency is for: one session, one amount,
+    the same key twice is one debit."""
+    ledger = PrincipalLedger()
+    for _ in range(3):
+        ledger.book("p", "usd_payout", Decimal("500"),
+                    session="s1", idempotency_key="call-1")
+    assert ledger.spent("p", "usd_payout") == Decimal("500")
+
+
+def test_concurrent_sessions_cannot_race_past_the_ceiling():
+    """would_allow then commit is check-then-act: eight concurrent sessions
+    each passed and each committed. `authorize` holds under the same lock."""
+    import threading
+
+    ledger = PrincipalLedger()
+    committed = []
+    barrier = threading.Barrier(8)
+
+    def racer(i):
+        v = _view(ledger, session=f"s{i}")
+        args = {"amount": "5000"}
+        ok, _ = v.authorize("send_money", args)
+        barrier.wait()
+        if ok:
+            v.commit("send_money", args)
+            committed.append(Decimal("5000"))
+
+    threads = [threading.Thread(target=racer, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert sum(committed, Decimal("0")) <= CEILING
+
+
+def test_jittered_fragments_do_not_evade_detection():
+    """10% jitter defeated the uniformity signal while the same money moved.
+    The fragmentation signal does not depend on the amounts resembling each
+    other."""
+    from agentauth.capabilities.principal_ledger import structuring_signal
+
+    for amounts in (["2500", "2475", "2520", "2505"],       # 1%
+                    ["2500", "2250", "2750", "2500"],       # 10%
+                    ["2500", "1750", "3250", "2500"]):      # 30%
+        ledger = PrincipalLedger()
+        _book_all(ledger, amounts)
+        assert structuring_signal(ledger, "p", "usd_payout", CEILING).suspicious, amounts
+
+
+def test_running_totals_never_drift_from_the_log():
+    """The totals are an optimisation, and an optimisation that drifts from its
+    log is how a ceiling silently rises."""
+    ledger = PrincipalLedger(window_seconds=100)
+    t0 = 1_000_000.0
+    for i in range(50):
+        ledger.book("p", "usd_payout", Decimal("10"),
+                    idempotency_key=f"k{i}", now=t0 + i)
+    assert ledger.verify_totals()
+    ledger.spent("p", "usd_payout", now=t0 + 120)     # forces a prune
+    assert ledger.verify_totals()
+
+
+def test_reads_stay_cheap_at_scale():
+    """4.75 ms per read at 20k entries would have made the ledger the slowest
+    thing in the enforcement path, against 35 us for the whole stack."""
+    import time
+
+    ledger = PrincipalLedger()
+    for i in range(20_000):
+        ledger.book("p", "usd_payout", Decimal("1"), idempotency_key=f"k{i}")
+    start = time.perf_counter()
+    for _ in range(100):
+        ledger.spent("p", "usd_payout")
+    per_call_ms = (time.perf_counter() - start) / 100 * 1000
+    assert per_call_ms < 0.5, f"{per_call_ms:.2f} ms per read"
