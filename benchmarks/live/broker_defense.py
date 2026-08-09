@@ -138,6 +138,12 @@ class LiveBrokerHarness:
         # Runtime replanning: grow the plan from the sealed goal rather than
         # denying an unforeseen step. See agentauth/capabilities/replan.py.
         self.replan = replan
+        # Parameter provenance: which observation supplied a value. Recorded
+        # alongside taint so the two can be compared on the same runs. The taint
+        # set answers "is this destination trusted"; provenance answers "which
+        # tool produced it and was that tool an authorized source", which is the
+        # axis the slack failure actually turns on.
+        self._provenance = None
         self.mode = mode           # "floor" | "envelope"
         self.planner = planner
         # query -> set of authorized opaque recipients; enables egress recipient
@@ -196,6 +202,11 @@ class LiveBrokerHarness:
                                   allowed_recipients=set(recips),
                                   allowed_domains=set(domains))
         self._egress = egress
+        if self._provenance is None:
+            from agentauth.capabilities.parameter_provenance import ParameterProvenance
+
+            self._provenance = ParameterProvenance()
+
         extender = None
         if self.replan and self.mode == "envelope" and self.planner is not None:
             from agentauth.capabilities.replan import PlanExtender, llm_shape_judge
@@ -232,6 +243,23 @@ class LiveBrokerHarness:
         trusted source. So only STRUCTURED-field recipients are auto-trusted; a
         free-text recipient (task_0) is not auto-trustable and its correct
         handling is STEP_UP (graduated response, ask the human), not auto-trust."""
+        # Provenance is recorded whether or not taint is enabled, because it is
+        # an observation log rather than a trust decision. Nothing consults it
+        # unless a caller asks.
+        if self._provenance is not None:
+            tool = ""
+            if source_args:
+                tool = str(source_args.get("_tool") or "")
+            structured = {}
+            for d in _iter_dicts(result):
+                structured.update({k: v for k, v in d.items()
+                                   if isinstance(v, (str, int, float))})
+            self._provenance.record_observation(
+                tool or "tool", result, structured_fields=structured,
+                goal_named=bool(self._named and source_args and any(
+                    nm in " ".join(str(v) for v in source_args.values())
+                    for nm in self._named)))
+
         if not self.taint or self._egress is None:
             return
         for d in _iter_dicts(result):
