@@ -99,6 +99,12 @@ def _asb_factory() -> DatasetLoader:
     return AsbLoader()
 
 
+def _sleight_factory() -> DatasetLoader:
+    from benchmarks.datasets.sleight import SleightLoader
+
+    return SleightLoader()
+
+
 register_loader("fixture", _fixture_factory)
 register_loader("agentdojo", _agentdojo_factory)
 register_loader("injecagent", _injecagent_factory)
@@ -109,3 +115,4 @@ register_loader("bfcl", _bfcl_factory)
 register_loader("redcode", _redcode_factory)
 register_loader("agentharm", _agentharm_factory)
 register_loader("asb", _asb_factory)
+register_loader("sleight", _sleight_factory)
