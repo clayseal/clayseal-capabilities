@@ -438,7 +438,28 @@ class SessionBroker:
                 # detector and to every later `feasible` and `last_deviation`
                 # check. Replanning grows the PLAN and has no authority over
                 # budgets; an extended action executed, so it pays.
-                if self.plan_extender is not None and replannable:
+                # A CONSEQUENTIAL off-plan action may only be replanned when the
+                # binding floor positively validated where it points.
+                #
+                # MEASURED. Without this interlock, replanning is
+                # `defer_allows_bound` under another name and fails the same way:
+                # on AgentDojo travel it took ASR from 11.1% to 22.2% while
+                # taking clean utility from 50.0% to 100.0%. The shape check is
+                # not enough on its own, because a travel-booking goal plausibly
+                # implies sending and booking, so the injected action is
+                # shape-consistent and only the destination distinguishes it.
+                #
+                # The two checks are independent, which is the whole design: an
+                # attacker needs both a shape the goal implies AND a destination
+                # the floor accepts. Dropping either one gives the shape check
+                # sole responsibility for containment, and it cannot carry it.
+                extendable = replannable and (
+                    not is_consequential(action)
+                    or (self._destination_bound
+                        and self.egress is not None
+                        and self.egress.binds(action.resource, action.args))
+                )
+                if self.plan_extender is not None and extendable:
                     verdict = self.plan_extender.consider(action.tool, action.verb)
                     if verdict.extended:
                         self._record_triggers([f"replan: {verdict.reason}"])
