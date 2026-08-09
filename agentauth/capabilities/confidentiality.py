@@ -74,6 +74,7 @@ from __future__ import annotations
 
 import fnmatch
 import threading
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -81,8 +82,16 @@ from typing import Any
 from agentauth.capabilities.parameter_provenance import ParameterProvenance
 
 # Verbs whose RESULT moves data outward. Kept for callers that ask about the
-# response rather than the request.
-SINK_VERBS = frozenset({"write", "send", "post", "share", "create", "update", "pay"})
+# response rather than the request, and no longer the gate: see SOURCE_VERBS.
+SINK_VERBS = frozenset({
+    "write", "send", "post", "share", "create", "update", "pay",
+    # These were absent while the gate was a CLOSED allowlist, so each of them
+    # carried the verbatim secret out unchecked. `upload` and `publish` are not
+    # exotic verbs; they are what a tool catalogue actually calls its sinks.
+    "upload", "put", "email", "publish", "push", "export", "patch", "append",
+    "commit", "copy", "move", "notify", "delete", "call", "invoke", "execute",
+    "transfer", "sync", "deploy", "submit", "reply", "forward", "broadcast",
+})
 
 # Every call is a sink for its own ARGUMENTS, whatever its verb.
 #
@@ -111,6 +120,21 @@ SINK_VERBS = frozenset({"write", "send", "post", "share", "create", "update", "p
 # that names none behaves exactly as before.
 
 # Verbs that bring data in, and can therefore taint it.
+#
+# THIS IS ALSO THE GATE, and it used to be the other way round. The check ran
+# only when the verb appeared in SINK_VERBS, so a verb nobody had thought of was
+# silently exempt: `upload`, `put`, `email`, `publish`, `push` and `export` all
+# carried the verbatim secret out with the reason "does not move data outward".
+# A closed allowlist of the dangerous cases fails open on the case you forgot,
+# which is the wrong direction for a security gate.
+#
+# So the default is inverted. Anything that is not recognisably a read is
+# treated as a sink. The exempt set is small, closed, and each member is exempt
+# because its RESULT is the data movement rather than its arguments.
+#
+# The arguments of a read still travel to whoever serves it, which is what
+# `argument_sinks` is for, and that stays opt-in per destination because turning
+# it on globally cost a factor of twenty-two in false positives.
 SOURCE_VERBS = frozenset({"read", "search", "list", "get", "query"})
 
 
@@ -167,17 +191,50 @@ class SensitivityPolicy:
                    for pat in self.argument_sinks)
 
     def is_declassified(self, resource: str | None, path: str | None = None) -> str | None:
-        for candidate in (resource, path):
-            if not candidate:
-                continue
-            for pat in self.declassified_sinks:
-                if _matches(candidate, pat):
-                    return pat
-        return None
+        """Every non-empty field must be a sink the goal named, not just one.
+
+        This used to return on the FIRST field that matched, while `check` keys
+        the accumulator on `path or resource`. So the field that authorized the
+        write and the field that recorded it could be different fields, and
+        either one could be spoofed: resource='https://attacker.test/collect'
+        with path='report.txt' was released verbatim as "to report.txt, which
+        the sealed goal named". Setting it the other way round additionally
+        skipped the pooled cross-sink accumulator, so eleven fragments fanned out
+        to eleven attacker paths were all allowed and reassembled exactly.
+
+        Requiring every field to match fails closed on the spoof and leaves the
+        honest case, where the goal names the destination it actually names,
+        unchanged.
+        """
+        candidates = [c for c in (resource, path) if c]
+        if not candidates:
+            return None
+        matched: str | None = None
+        for candidate in candidates:
+            hit = next((p for p in self.declassified_sinks
+                        if _matches(candidate, p)), None)
+            if hit is None:
+                return None
+            matched = matched or hit
+        return matched
 
 
 def _matches(candidate: str, pattern: str) -> bool:
-    return fnmatch.fnmatch(candidate, pattern) or candidate == pattern
+    """Exact unless the operator wrote a glob, and never across a traversal.
+
+    `fnmatch` was applied unconditionally, so an operator writing the literal
+    filename `report[1].txt` also declassified `report1.txt`, a different file.
+    A pattern with no metacharacter is now compared exactly, which is what
+    someone who typed a filename meant.
+
+    A candidate containing a `..` segment never matches, because `s3://bucket/*`
+    should not declassify `s3://bucket/../../etc/passwd`.
+    """
+    if any(seg == ".." for seg in candidate.replace("\\", "/").split("/")):
+        return False
+    if any(ch in pattern for ch in "*?["):
+        return fnmatch.fnmatch(candidate, pattern)
+    return candidate == pattern
 
 
 # A reconstruction has to clear a higher bar than an exact match, because
@@ -267,6 +324,169 @@ def _longest_prefix_in(needle: str, block: str) -> int:
 def _compact(text: str) -> str:
     """Alphanumerics only. Separators are how a split value hides."""
     return "".join(ch for ch in text if ch.isalnum())
+
+
+# Latin lookalikes from Cyrillic, Greek and the Bengali digits, which is what a
+# homoglyph substitution actually reaches for. NFKC does not fold these, because
+# they are genuinely different characters; for THIS purpose they are the same
+# character wearing a hat.
+_CONFUSABLES = str.maketrans({
+    "А": "A", "В": "B", "С": "C", "Е": "E", "Н": "H", "І": "I", "Ј": "J",
+    "К": "K", "М": "M", "О": "O", "Р": "P", "Ѕ": "S", "Т": "T", "Х": "X",
+    "а": "a", "с": "c", "е": "e", "і": "i", "ј": "j", "о": "o", "р": "p",
+    "ѕ": "s", "х": "x", "у": "y", "Υ": "Y", "Ζ": "Z", "Ν": "N", "Ρ": "P",
+    "Α": "A", "Β": "B", "Ε": "E", "Η": "H", "Ι": "I", "Κ": "K", "Μ": "M",
+    "Ο": "O", "Τ": "T", "Χ": "X", "ο": "o", "ν": "v", "৪": "8", "০": "0",
+})
+
+
+def _fold(text: str) -> str:
+    """One canonical spelling, so a cosmetic change is not a new string.
+
+    Case-folding is here because a single `.lower()` defeated the whole
+    single-write reconstruction pass. The compact form is already lossy, so
+    folding costs nothing that was being relied on.
+    """
+    return unicodedata.normalize("NFKC", text).translate(_CONFUSABLES).casefold()
+
+
+def _compact_fold(text: str) -> str:
+    return "".join(ch for ch in _fold(text) if ch.isalnum())
+
+
+def _rot13(text: str) -> str:
+    out = []
+    for ch in text:
+        if "a" <= ch <= "z":
+            out.append(chr((ord(ch) - 97 + 13) % 26 + 97))
+        elif "A" <= ch <= "Z":
+            out.append(chr((ord(ch) - 65 + 13) % 26 + 65))
+        else:
+            out.append(ch)
+    return "".join(out)
+
+
+_OPAQUE = __import__("re").compile(r"\S{16,}")
+_DECIMAL_RUN = __import__("re").compile(r"(?:\b\d{1,3}\b[ ,]+){11,}\b\d{1,3}\b")
+_MAX_DECODE_TOKENS = 8
+
+
+def _decode_layer(blob: str) -> list[str]:
+    """One round of every mechanical decoding, tried and discarded on failure.
+
+    Decoded rather than pattern-matched, so a false positive would need the
+    payload to actually decode to the sensitive value.
+    """
+    import base64
+    import binascii
+    import gzip
+    import zlib
+
+    out: list[str] = []
+    if "\\" in blob:
+        try:
+            unescaped = blob.encode("utf-8", "ignore").decode("unicode_escape")
+            if unescaped != blob:
+                out.append(unescaped)
+        except (UnicodeDecodeError, ValueError):
+            pass
+    if "%" in blob:
+        from urllib.parse import unquote
+        try:
+            out.append(unquote(blob))
+        except (UnicodeDecodeError, ValueError):
+            pass
+    for run in _DECIMAL_RUN.findall(blob)[:4]:
+        try:
+            out.append("".join(chr(int(n)) for n in run.replace(",", " ").split()
+                               if 0 < int(n) < 0x110000))
+        except ValueError:
+            pass
+    # Ordered strictest-first and stopped at the first success, because base85
+    # accepts nearly any byte string and would otherwise turn every opaque token
+    # into noise. This runs inside the authorization path, so the bound matters
+    # as much as the coverage.
+    for chunk in _OPAQUE.findall(blob)[:_MAX_DECODE_TOKENS]:
+        for attempt in (
+            lambda c: bytes.fromhex(c),
+            lambda c: base64.b32decode(c + "=" * (-len(c) % 8), casefold=True),
+            lambda c: base64.b64decode(c + "=" * (-len(c) % 4), validate=True),
+            lambda c: base64.urlsafe_b64decode(c + "=" * (-len(c) % 4)),
+            lambda c: base64.b85decode(c),
+        ):
+            try:
+                raw = attempt(chunk)
+            except (binascii.Error, ValueError, TypeError):
+                continue
+            if not raw:
+                continue
+            out.append(raw.decode("utf-8", "ignore"))
+            # Magic bytes rather than try-everything: gzip is 1f 8b and a zlib
+            # stream starts 78 01/9c/da. Guessing costs a decompress per token.
+            if raw[:2] == b"\x1f\x8b":
+                try:
+                    out.append(gzip.decompress(raw).decode("utf-8", "ignore"))
+                except (OSError, zlib.error, ValueError):
+                    pass
+            elif raw[:1] == b"\x78":
+                try:
+                    out.append(zlib.decompress(raw).decode("utf-8", "ignore"))
+                except (OSError, zlib.error, ValueError):
+                    pass
+            break
+    return [o for o in out if o]
+
+
+# Renderings kept per write. Each one is searched by the block cover, so this is
+# a direct multiplier on the cost of the authorization path.
+_MAX_VARIANTS = 8
+
+
+def _join(variants: Sequence[str]) -> str:
+    """One write's spellings as one searchable string.
+
+    The separator is non-alphanumeric and sensitive targets are compacted to
+    alphanumerics, so no match can span two spellings.
+    """
+    return "\x00".join(variants)
+# Total characters kept across a write's renderings.
+_MAX_VARIANT_CHARS = 8192
+
+
+def _variants(blob: str) -> tuple[str, ...]:
+    """Every spelling of this payload we are willing to call the same payload.
+
+    The FIRST element is the plain compacted form, which is what accumulates as
+    the sink's stream. The rest are alternative renderings of the SAME write.
+
+    This exists because normalisation used to happen only for a single write,
+    against the raw blob, while the cross-write accumulators matched raw text.
+    So encoding each FRAGMENT separately walked the whole value out at every
+    chunk width and every fan-out width: the fragments never matched raw, and no
+    single write held enough to normalise. Normalising per write BEFORE
+    accumulating closes that, because the accumulator then compares fragments in
+    the same space the single-write pass uses.
+
+    What is still open, and named rather than implied: keyed transforms (a
+    Caesar shift, digitwise arithmetic, anything with a secret), encryption, and
+    paraphrase. Those need the key or the semantics, and no taint system has
+    them. The set below is a lower bound on evasion, not a closed list.
+    """
+    if not blob:
+        return ()
+    seen: dict[str, None] = {}
+    decoded = _decode_layer(blob)
+    # One further round, which is what catches double base64 and base64-of-hex.
+    decoded += [d for c in decoded[:4] for d in _decode_layer(c)]
+    budget = _MAX_VARIANT_CHARS
+    for form in [blob, blob[::-1], _rot13(blob), *decoded]:
+        compact = _compact_fold(form)
+        if compact and compact not in seen:
+            seen[compact] = None
+            budget -= len(compact)
+        if len(seen) >= _MAX_VARIANTS or budget <= 0:
+            break
+    return tuple(seen)
 
 
 def _flatten(value: Any) -> str:
@@ -363,29 +583,47 @@ class FlowTracker:
     # ----------------------------------------------------------------- #
     def check(self, *, tool: str, verb: str, resource: str, args: Any,
               policy: SensitivityPolicy, path: str | None = None) -> FlowVerdict:
-        """May this action carry what it is carrying, to where it is going?"""
+        """May this action carry what it is carrying, to where it is going?
+
+        The whole body runs under ONE acquisition of the tracker lock. It used
+        to read the accumulated history under the lock, release it, do all the
+        matching, then commit under the lock again using the values it had read.
+        That is a lost update, and it is not a narrow race: concurrent writers
+        each read the same empty history, each saw only its own fragment, each
+        allowed it, and the commits clobbered one another. Eleven fragments of a
+        22-character key issued in parallel reassembled in 9 of 12 trials, where
+        the same fragments sent sequentially escaped in 0 of 12.
+
+        `_lock` is an RLock and the helpers below take it re-entrantly, so
+        holding it here costs an uncontended re-acquisition rather than a
+        redesign.
+        """
         if not policy.active:
             return FlowVerdict(True, "no confidentiality policy declared")
-        if (verb not in SINK_VERBS
+        if (verb in SOURCE_VERBS
                 and not policy.sends_its_arguments(tool, resource, path)):
             return FlowVerdict(
                 True,
-                f"{verb!r} does not move data outward and {resource!r} is not "
+                f"{verb!r} only brings data in, and {resource!r} is not "
                 f"declared an argument sink")
 
+        with self._lock:
+            return self._check_locked(resource=resource, args=args,
+                                      policy=policy, path=path)
+
+    def _check_locked(self, *, resource: str, args: Any,
+                      policy: SensitivityPolicy, path: str | None) -> FlowVerdict:
         # Judged against everything this sink has already received PLUS this
         # write, so a value assembled across several writes is caught on the one
         # that completes it.
-        candidate = _compact(_flatten(args))
+        variants = _variants(_flatten(args))
+        candidate = variants[0] if variants else ""
         sink_key = path or resource
         declassified = policy.is_declassified(resource, path)
-        with self._lock:
-            history = self._emitted.get(sink_key, "")
-            pooled = self._emitted_pooled
+        history = self._emitted.get(sink_key, "")
+        pooled = self._emitted_pooled
 
         carried = self._carried(args)
-        if not carried and candidate:
-            carried = self._carried_after_normalisation(history + candidate)
         if not carried and candidate:
             carried = self._carried_across_writes(history + candidate)
         # Then against every sink the goal did not name, pooled. Skipped for a
@@ -395,26 +633,28 @@ class FlowTracker:
             carried = self._carried_across_writes(pooled + candidate)
         # Finally, order-independently: can the value be ASSEMBLED from the
         # pieces this sink received, in any order?
-        if not carried and candidate:
-            with self._lock:
-                blocks = list(self._blocks.get(sink_key, ()))
-                if declassified is None:
-                    blocks += list(self._blocks.get(_POOL, ()))
-            carried = self._carried_from_blocks(blocks + [candidate])
+        #
+        # For a non-declassified sink the pool is used ALONE. It is a superset
+        # of that sink's own history, and adding both put every same-sink write
+        # into the cover pool twice, which defeated the `pool.pop` that stops one
+        # write from covering two segments of the value.
+        if not carried and variants:
+            blocks = list(self._blocks.get(_POOL if declassified is None
+                                           else sink_key, ()))
+            carried = self._carried_from_blocks(blocks + [_join(variants)])
 
         if not carried:
-            with self._lock:
-                self._emitted[sink_key] = (
-                    history + candidate)[-self.max_emitted_chars:]
-                if candidate:
-                    self._blocks.setdefault(sink_key, []).append(candidate)
-                    del self._blocks[sink_key][:-self.max_blocks]
-                if declassified is None:
-                    self._emitted_pooled = (
-                        pooled + candidate)[-self.max_emitted_chars:]
-                    if candidate:
-                        self._blocks.setdefault(_POOL, []).append(candidate)
-                        del self._blocks[_POOL][:-self.max_blocks]
+            self._emitted[sink_key] = (
+                history + candidate)[-self.max_emitted_chars:]
+            if variants:
+                self._blocks.setdefault(sink_key, []).append(_join(variants))
+                del self._blocks[sink_key][:-self.max_blocks]
+            if declassified is None:
+                self._emitted_pooled = (
+                    pooled + candidate)[-self.max_emitted_chars:]
+                if variants:
+                    self._blocks.setdefault(_POOL, []).append(_join(variants))
+                    del self._blocks[_POOL][:-self.max_blocks]
             return FlowVerdict(True, "carries no value from a sensitive read")
 
         # A sink the sealed goal named is authorized to receive this.
@@ -464,7 +704,7 @@ class FlowTracker:
             tokens = list(self._sensitive_tokens.items())
         found: set[str] = set()
         for token, origins in tokens:
-            target = _compact(token)
+            target = _compact_fold(token)
             if len(target) < _MIN_RECONSTRUCTED:
                 continue
             remaining = target
@@ -473,8 +713,16 @@ class FlowTracker:
             while remaining and progressed:
                 progressed = False
                 best_i, best_n = -1, 0
-                for i, block in enumerate(pool):
-                    n = _longest_prefix_in(remaining, block)
+                for i, renderings in enumerate(pool):
+                    # One write, several spellings. The best spelling counts and
+                    # the WRITE is consumed, so encoding each fragment does not
+                    # buy an attacker extra blocks.
+                    #
+                    # The spellings are searched as ONE string joined by a
+                    # non-alphanumeric separator. Targets are alphanumeric-only,
+                    # so no match can span the join, and this is the same answer
+                    # as a max over separate searches at a fraction of the cost.
+                    n = _longest_prefix_in(remaining, renderings)
                     if n > best_n:
                         best_i, best_n = i, n
                 if best_n:
@@ -510,7 +758,7 @@ class FlowTracker:
             tokens = list(self._sensitive_tokens.items())
         found: set[str] = set()
         for token, origins in tokens:
-            compact_token = _compact(token)
+            compact_token = _compact_fold(token)
             if len(compact_token) < _MIN_RECONSTRUCTED:
                 continue
             target = min(len(compact_token), _MAX_NEEDLE)
@@ -532,64 +780,35 @@ class FlowTracker:
         return found
 
     def _carried_after_normalisation(self, args: Any) -> set[str]:
-        """Catch the cheap transforms, and be explicit about the rest.
+        """Does any spelling of this payload contain a sensitive value?
 
-        The confidentiality-flow benchmark measures which evasions work. Exact
-        token matching alone caught a verbatim value and nothing else: chunking
-        it, dotting it, base64ing it or hexing it all carried it out at 100%.
-        Each of those is a mechanical transform with a mechanical inverse, so
-        each is handled here.
+        `_variants` does the work. What is here is the comparison, folded on both
+        sides, because a single `.lower()` used to defeat this pass entirely.
 
-        What is deliberately NOT handled is anything requiring semantics: a
-        value the agent encrypts, paraphrases, or summarises out of existence.
-        That is the standing limit of every practical taint system, it is
-        published in `benchmarks/results/flow.md` rather than papered over, and
-        the honest reading is that flow control raises the cost of exfiltration
-        rather than making it impossible.
+        The dividing line the module claims is "mechanical transform with a
+        mechanical inverse is handled, semantics is not", and the implementation
+        used to violate it: rot13, base32, base85, gzip, and case are all
+        mechanical and all walked straight out. They are handled now. What
+        remains open is named in `_variants` and in flow.md rather than implied
+        by a list of eight fixed cases.
         """
-        import base64
-        import binascii
-
         blob = args if isinstance(args, str) else _flatten(args)
-        if not blob:
+        variants = _variants(blob)
+        if not variants:
             return set()
-
-        candidates = [
-            # Separator stripping recovers chunked and dotted values, since the
-            # sensitive token was indexed in its unseparated form.
-            "".join(ch for ch in blob if ch.isalnum()),
-            blob[::-1],
-        ]
-        compact = candidates[0]
-        candidates.append("".join(ch for ch in blob[::-1] if ch.isalnum()))
-
-        # Encodings, decoded rather than pattern-matched, so a false positive
-        # needs the payload to actually decode to the sensitive value.
-        for chunk in _TOKENS_FOR_DECODE(blob):
-            try:
-                candidates.append(base64.b64decode(chunk + "=" * (-len(chunk) % 4),
-                                                   validate=True).decode("utf-8", "ignore"))
-            except (binascii.Error, ValueError):
-                pass
-            try:
-                candidates.append(bytes.fromhex(chunk).decode("utf-8", "ignore"))
-            except ValueError:
-                pass
-
         with self._lock:
             found: set[str] = set()
-            for cand in candidates:
-                if not cand:
+            for token, origins in self._sensitive_tokens.items():
+                if len(token) < _MIN_RECONSTRUCTED:
                     continue
-                for token, origins in self._sensitive_tokens.items():
-                    if len(token) < _MIN_RECONSTRUCTED:
-                        continue
-                    compact_token = "".join(ch for ch in token if ch.isalnum())
-                    if (token in cand
-                            or (compact_token and compact_token in
-                                "".join(ch for ch in cand if ch.isalnum()))):
+                compact_token = _compact_fold(token)
+                folded = _fold(token)
+                if not compact_token:
+                    continue
+                for cand in variants:
+                    if compact_token in cand or folded in cand:
                         found |= origins
-            _ = compact
+                        break
             return found
 
     # ----------------------------------------------------------------- #
