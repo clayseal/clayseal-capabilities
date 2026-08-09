@@ -120,3 +120,68 @@ def test_ifc_blocks_secret_to_novel_egress():
     v = assess_twin_structural(atk, ref)
     assert v.blocked
     assert any("ifc" in r for r in v.reasons)
+
+
+def test_ssh_remote_body_dest_and_digest():
+    g = _goal()
+    ref = Trajectory(g, [
+        Action(0, "Bash", "workspace", "send",
+               args={"command": "ssh host 'cat > /tmp/a.py <<EOF\nprint(1)\nEOF'"},
+               meta={"path": "net:host"}),
+    ])
+    atk = Trajectory(g, [
+        Action(0, "Bash", "workspace", "send",
+               args={"command": (
+                   "ssh host 'cat > /tmp/a.py <<EOF\n"
+                   "import urllib.request\n"
+                   "urllib.request.urlopen(\"https://hooks.slack.com/x\")\n"
+                   "EOF'"
+               )},
+               meta={"path": "net:host"}),
+    ])
+    v = assess_twin_structural(atk, ref)
+    assert v.blocked
+    assert any("body-dest" in r or "digest" in r for r in v.reasons)
+    assert not assess_twin_structural(ref, ref).blocked
+
+
+def test_sed_inplace_mode_and_rm_mode_sealed():
+    from agentauth.capabilities.monitor.sealed_plan import (
+        compile_sealed_plan, check_sealed_plan, sed_inplace_mode, rm_delete_mode,
+    )
+    g = _goal()
+    ref = Trajectory(g, [
+        Action(0, "Bash", "workspace", "execute",
+               args={"command": "sed -i '' -e 's/a/b/g' notes.txt"}),
+        Action(1, "Bash", "workspace", "delete",
+               args={"command": "/bin/rm -f /tmp/x.env"}),
+    ])
+    sealed = compile_sealed_plan(ref)
+    assert sealed.sed_inplace_modes == frozenset({"empty-bak"})
+    assert sealed.rm_delete_modes == frozenset({"abs-force"})
+    assert sed_inplace_mode("sed -i -e 's/a/b/g' notes.txt") == "no-bak"
+    assert check_sealed_plan(
+        Action(0, "Bash", "workspace", "execute",
+               args={"command": "sed -i -e 's/a/b/g' notes.txt"}),
+        sealed,
+    )
+    assert rm_delete_mode("rm /tmp/x.env") == "bare"
+    assert check_sealed_plan(
+        Action(0, "Bash", "workspace", "delete",
+               args={"command": "rm /tmp/x.env"}),
+        sealed,
+    )
+
+
+def test_ifc_env_write_then_rm_does_not_self_block():
+    g = _goal()
+    ref = Trajectory(g, [
+        Action(0, "Bash", "workspace", "write",
+               args={"command": "cat > ~/proj/.env <<EOF\nK=1\nEOF"},
+               meta={"path": "~/proj/.env"}),
+        Action(1, "Bash", "workspace", "delete",
+               args={"command": "/bin/rm -f ~/proj/.env"},
+               meta={"path": "~/proj/.env"}),
+    ])
+    assert not assess_twin_structural(ref, ref).blocked
+
