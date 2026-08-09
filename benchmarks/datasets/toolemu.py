@@ -42,7 +42,12 @@ class ToolEmuLoader:
     name = "toolemu"
 
     def __init__(self, data_root: str | None = None) -> None:
-        self._data_root = Path(data_root) if data_root else None
+        # Default to the checked-out corpus, the way every other loader does.
+        # Requiring an explicit path meant the registry factory built a loader
+        # that could never load, so the corpus stayed dark even once fetched.
+        default = (Path(__file__).resolve().parents[2] / ".benchmark-corpus"
+                   / "ToolEmu" / "assets")
+        self._data_root = Path(data_root) if data_root else default
 
     def load(self, *, limit: int | None = None) -> list[BenchmarkTask]:
         if self._data_root is None or not self._data_root.exists():

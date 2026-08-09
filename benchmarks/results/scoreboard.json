@@ -14,7 +14,7 @@
       "contained": "6.3%",
       "false_block": "0.00%",
       "n": "652a / 320b",
-      "caveat": "93.7% reuses the granted tool against a granted target; content-defined"
+      "caveat": "6.3% is the CEILING, not our score: every event carries only a tool name (0/1305 have args or a path), so an oracle gets 3.1%"
     },
     {
       "tier": "asb",
@@ -22,15 +22,15 @@
       "contained": "100.0%",
       "false_block": "0.00%",
       "n": "2040a / 102b",
-      "caveat": "every attack uses a tool the agent was never granted, so a tool allowlist suffices"
+      "caveat": "SATURATES AT THE NAIVE RUNG: every attack uses an ungranted tool; not a result"
     },
     {
       "tier": "sleight",
       "measures": "deterministic replay",
-      "contained": "36.9%",
-      "false_block": "32.64%",
+      "contained": "8.5%",
+      "false_block": "n/a",
       "n": "328a / 144b",
-      "caveat": "containment and false-block move together: no discrimination, not a result"
+      "caveat": "grant derived from the paired BENIGN twin, so the false-block column is NOT reportable here; ~2 points of discrimination either way"
     },
     {
       "tier": "ipi_coding",
@@ -47,6 +47,22 @@
       "false_block": "0.00%",
       "n": "6a / 15b",
       "caveat": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared"
+    },
+    {
+      "tier": "injecagent",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "3196a / 2108b",
+      "caveat": "SATURATES AT THE NAIVE RUNG: 99.9% caught by tool-allowlist, 0/3196 attack events carry a path or arguments"
+    },
+    {
+      "tier": "toolemu",
+      "measures": "deterministic replay",
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "n": "446a / 559b",
+      "caveat": "SATURATES AT THE NAIVE RUNG: 100% caught by tool-allowlist, 0/446 attack events carry a path or arguments"
     },
     {
       "tier": "atif",
