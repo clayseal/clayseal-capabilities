@@ -54,8 +54,8 @@ DEPLOYABLE = [
 CAVEATS = {
     "redcode": "path escapes from a fixed workspace boundary; the real result on this axis",
     "asb": "SATURATES AT THE NAIVE RUNG: every attack uses an ungranted tool; not a result",
-    "injecagent": ("SATURATES AT THE NAIVE RUNG: 99.9% caught by tool-allowlist, "
-                   "0/3196 attack events carry a path or arguments"),
+    "injecagent": ("SATURATES AT THE NAIVE RUNG, and the corpus GRANTS the attacker "
+                   "tools while we do not; containment is that narrowness alone"),
     "toolemu": ("SATURATES AT THE NAIVE RUNG: 100% caught by tool-allowlist, "
                 "0/446 attack events carry a path or arguments"),
     "ipi_coding": "injected instructions with out-of-scope targets",
