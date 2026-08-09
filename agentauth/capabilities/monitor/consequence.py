@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from enum import IntEnum
 
-from agentauth.capabilities.monitor.action import Action
+from agentauth.capabilities.monitor.action import Action, path_hint
 
 # Security-relevant surfaces (kept in sync with aml.py's delegated-trust check).
 _SECURITY_SURFACE = ("auth", "permission", "role", "acl", "iam", "credential",
@@ -37,8 +37,10 @@ class ConsequenceLevel(IntEnum):
 
 
 def _touches_security_surface(action: Action) -> bool:
-    hay = " ".join([action.tool, action.resource,
-                    " ".join(str(v) for v in action.args.values())]).lower()
+    hay = " ".join([
+        action.tool, action.resource, path_hint(action),
+        " ".join(str(v) for v in action.args.values()),
+    ]).lower()
     return any(term in hay for term in _SECURITY_SURFACE)
 
 

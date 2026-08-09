@@ -18,6 +18,8 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from collections.abc import Callable
+
 from agentauth.capabilities.monitor.action import Trajectory, action_token
 from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
 
@@ -44,6 +46,7 @@ class PathEnvelope:
     count_slack: float = 1.5   # allow this multiple of the benign repetition max
     length_slack: float = 1.5
     min_samples: int = 25      # abstain on a bucket calibrated from too few paths
+    token_fn: Callable = action_token
     _buckets: dict[str, _BucketEnvelope] = field(default_factory=dict)
     _counts: dict[str, int] = field(default_factory=dict)
     _fitted: bool = False
@@ -56,7 +59,7 @@ class PathEnvelope:
             self._counts[bucket] = len(trajs)
             env = _BucketEnvelope()
             for traj in trajs:
-                tokens = [action_token(a) for a in traj.actions]
+                tokens = [self.token_fn(a) for a in traj.actions]
                 env.length_max = max(env.length_max, len(tokens))
                 counts: dict[str, int] = defaultdict(int)
                 prev = "<bos>"
@@ -83,7 +86,7 @@ class PathEnvelope:
 
         reasons: list[str] = []
         penalty = 0.0
-        tokens = [action_token(a) for a in traj.actions]
+        tokens = [self.token_fn(a) for a in traj.actions]
 
         if len(tokens) > env.length_max * self.length_slack:
             penalty += len(tokens) - env.length_max

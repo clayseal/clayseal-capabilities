@@ -5,7 +5,7 @@ agentharm           deterministic replay              21.6%        0.00%        
 sleight             deterministic replay               4.7%          n/a             -     129a / 311b
 agent_threat_bench  deterministic replay             100.0%        0.00%             -        6a / 24b
 mcp_attack          deterministic replay             100.0%        0.00%        44.44%         5a / 9b
-sleight[detector]   covert-intent trajectories         5.6%        0.00%             -18 atk / 18 benign
+sleight[detector]   covert-intent trajectories        27.8%        0.00%             -18 atk / 18 benign
 
 FB(granted)  friction given a COMPLETE mandate. On six corpora the grant is
              the benign side restated, so this is 0.00% by construction at the
@@ -19,7 +19,7 @@ caveats, without which none of the above is reportable:
   sleight             mechanism-cited sabotage only; ladder ~5% on binding+budget — velocity false-alarms coding agents; not an intent win
   agent_threat_bench  data_exfil only; memory_poison and autonomy_hijack are content-defined and declared
   mcp_attack          product-shaped MCP poisoned-tool / confused-deputy / arg-mutation; destination binding and scope are the discriminators
-  sleight[detector]   paired twins, goal sealed from benign; ngram ~6% at alpha=0.05 — prior ~60% was empty-goal artifact
+  sleight[detector]   twin corridor + intent two-signal + surface gate on sealed benign reference; population ngram alone ~6%
 
 pooled headline (excludes SATURATED asb/injecagent and content ceilings):
   redcode: contained=99.9%  FB=0.00%  (path escapes from a fixed workspace boundary; the real resul…)

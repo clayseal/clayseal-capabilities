@@ -12,6 +12,7 @@ from agentauth.capabilities.monitor.action import (
     Trajectory,
     TrustLevel,
     action_token,
+    fine_action_token,
     trajectory_tokens,
 )
 from agentauth.capabilities.monitor.aml import AmlAnalytics, AmlVerdict
@@ -54,6 +55,11 @@ from agentauth.capabilities.monitor.intent_envelope import (
 from agentauth.capabilities.monitor.ontology import ToolOntology, ToolSpec
 from agentauth.capabilities.monitor.reachability import EnvelopeDeparture, PathEnvelope
 from agentauth.capabilities.monitor.symbolic_planner import SymbolicPlanner, fact_landmarks
+from agentauth.capabilities.monitor.twin_corridor import (
+    TwinStructuralVerdict,
+    assess_twin_structural,
+    intent_from_reference,
+)
 from agentauth.capabilities.monitor.detector import (
     Decision,
     DetectionReport,
@@ -112,8 +118,12 @@ __all__ = [
     "TaintVerdict",
     "Trajectory",
     "TrajectoryDetector",
+    "TwinStructuralVerdict",
+    "assess_twin_structural",
+    "intent_from_reference",
     "TrustLevel",
     "TypedGoalEnvelope",
     "action_token",
+    "fine_action_token",
     "trajectory_tokens",
 ]

