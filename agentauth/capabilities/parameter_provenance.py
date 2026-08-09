@@ -31,6 +31,7 @@ import re
 import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 # Values shorter than this are too common to attribute: a "3" or an "ok" appears
@@ -53,18 +54,50 @@ _TOKEN = re.compile(r"[A-Za-z0-9_.:@/+-]{%d,}" % MIN_ATTRIBUTABLE)
 _EDGE = ".:,;!?/+-_@"
 
 
+class DestinationTrust(str, Enum):
+    """Policy verdict for a destination under containing-object provenance.
+
+    Structured fields of a trusted observation may auto-allow. Free text — even
+    from a goal-named containing object — never auto-allows: the measured limit
+    is that the legit recipient and an injected attacker IBAN can sit side by
+    side in one trusted file. That case steps up. Ungrounded or foreign-object
+    destinations deny.
+    """
+
+    ALLOW = "allow"
+    STEP_UP = "step_up"
+    DENY = "deny"
+
+
 @dataclass(frozen=True)
 class Source:
-    """Where a value came from."""
+    """Where a value came from.
+
+    ``containing_object`` is the trust root the improvements memo names: not the
+    field type, but the channel / file / resource the observation was taken from.
+    A recipient in a message from a channel the goal named is task-derived; the
+    same string in an unrelated webpage is not.
+    """
 
     tool: str
     structured: bool          # from a named field, rather than from free text
     goal_named: bool          # the producing call referenced something the goal named
+    containing_object: str = ""  # channel, file, or resource id of the observation
 
     def describe(self) -> str:
         where = "a structured field" if self.structured else "free text"
         named = " of a goal-named resource" if self.goal_named else ""
-        return f"{where} of {self.tool}{named}"
+        obj = f" in {self.containing_object!r}" if self.containing_object else ""
+        return f"{where} of {self.tool}{named}{obj}"
+
+    def object_trusted(self, goal_named_objects: set[str] | None) -> bool:
+        """Is the containing object itself on the sealed goal's named set?"""
+        if self.goal_named:
+            return True
+        if not goal_named_objects or not self.containing_object:
+            return False
+        obj = self.containing_object
+        return any(obj == g or g in obj or obj in g for g in goal_named_objects)
 
 
 @dataclass
@@ -84,22 +117,24 @@ class ParameterProvenance:
 
     def record_observation(self, tool: str, payload: Any, *,
                            structured_fields: Mapping[str, Any] | None = None,
-                           goal_named: bool = False) -> None:
+                           goal_named: bool = False,
+                           containing_object: str = "") -> None:
         """Note every attributable token this observation contained.
 
         Structured fields are recorded separately from the free-text body,
         because a value that appears only in prose carries much weaker evidence
-        than one that appears in a named field.
+        than one that appears in a named field. ``containing_object`` records
+        which channel/file/resource the observation was taken from — the axis
+        that separates the slack case from an unrelated webpage fetch.
         """
         with self._lock:
             for key, value in (structured_fields or {}).items():
                 for token in self._tokens(value):
                     self._origins.setdefault(token, set()).add(
-                        Source(tool, True, goal_named))
+                        Source(tool, True, goal_named, containing_object))
             for token in self._tokens(payload):
                 self._origins.setdefault(token, set()).add(
-                    Source(tool, False, goal_named))
-
+                    Source(tool, False, goal_named, containing_object))
     # Attacker-shaped tool output reaches this. A deeply nested or
     # self-referential payload raised RecursionError INSIDE the authorization
     # path, which is a denial of service on the thing that decides whether
@@ -220,5 +255,75 @@ class ParameterProvenance:
             if authorized_tools is not None:
                 sources = {s for s in sources if s.tool in authorized_tools}
             best = next(iter(sorted(sources, key=lambda s: (not s.structured,
-                                                            not s.goal_named, s.tool))))
+                                                            not s.goal_named,
+                                                            s.tool,
+                                                            s.containing_object))))
         return True, f"every part of the value is grounded, first in {best.describe()}"
+
+    def check_destination(
+        self,
+        value: Any,
+        *,
+        goal_named_objects: set[str] | None = None,
+        authorized_tools: set[str] | None = None,
+    ) -> tuple[DestinationTrust, str]:
+        """Containing-object provenance verdict for an egress destination.
+
+        - Structured field of an authorized (or any) observation → ALLOW.
+        - Free text whose containing object the goal named → STEP_UP (never
+          auto-trust: injection and legit recipient can share one source).
+        - Otherwise → DENY.
+        """
+        tokens = self._tokens(value)
+        if not tokens:
+            return DestinationTrust.DENY, "value contains nothing attributable"
+
+        with self._lock:
+            groups: list[list[str]] = []
+            for token in tokens:
+                trimmed = token.strip(_EDGE)
+                for group in groups:
+                    if trimmed and trimmed in (t.strip(_EDGE) for t in group):
+                        group.append(token)
+                        break
+                else:
+                    groups.append([token])
+
+            worst = DestinationTrust.ALLOW
+            reasons: list[str] = []
+            for group in groups:
+                sources: set[Source] = set()
+                for token in group:
+                    sources |= self._origins.get(token, set())
+                if not sources:
+                    return (
+                        DestinationTrust.DENY,
+                        f"{group[0]!r} appears in no observation this session",
+                    )
+                candidates = sources
+                if authorized_tools is not None:
+                    candidates = {s for s in sources if s.tool in authorized_tools}
+                    if not candidates:
+                        seen = ", ".join(sorted({s.tool for s in sources}))
+                        return (
+                            DestinationTrust.DENY,
+                            f"{group[0]!r} came from {seen}, not an authorized source",
+                        )
+                if any(s.structured for s in candidates):
+                    best = next(iter(sorted(
+                        (s for s in candidates if s.structured),
+                        key=lambda s: (not s.goal_named, s.tool))))
+                    reasons.append(f"{group[0]!r} structured via {best.describe()}")
+                    continue
+                if any(s.object_trusted(goal_named_objects) for s in candidates):
+                    worst = DestinationTrust.STEP_UP
+                    reasons.append(
+                        f"{group[0]!r} only in free text of a goal-named object; "
+                        "step up (never auto-trust free text)"
+                    )
+                    continue
+                return (
+                    DestinationTrust.DENY,
+                    f"{group[0]!r} only in free text of an untrusted containing object",
+                )
+        return worst, "; ".join(reasons) if reasons else "destination grounded"

@@ -179,11 +179,13 @@ def evaluate(corpus: str, *, limit: int = 400, sweep=(1, 2, 3)) -> IdempotenceRe
         if store.mark_used(f"tok-{i}-repeat", expiry) is True:
             result.legitimate_allowed += 1
 
-        # Multi-instance arm. The shipped default store is process-local and its
-        # own docstring says so: a token consumed on one instance is invisible to
-        # every other. That is the session-scoped ledger problem for the third
-        # time, after principal_ledger and velocity, so it is measured rather
-        # than left in a comment.
+        # Multi-instance arm. `InMemoryUsedTokenStore` is process-local and its
+        # own docstring says so, so this measures the DEV default rather than a
+        # hole in the system: `verify_commit_token` refuses outright when
+        # `is_production()` and no store is configured. The number is here
+        # because the dev default is what a benchmark reaches for by reflex, and
+        # because it is the session-scoped ledger shape for the third time after
+        # principal_ledger and velocity.
         other_instance = InMemoryUsedTokenStore()
         result.multi_instance_total += 1
         if other_instance.mark_used(f"tok-{i}", expiry) is False:
