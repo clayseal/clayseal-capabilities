@@ -6,16 +6,16 @@
       "contained": "99.9%",
       "false_block": "0.00%",
       "heldout": "-",
-      "n": "718a / 172b",
+      "n": "718a / 344b",
       "caveat": "path escapes from a fixed workspace boundary; the real result on this axis"
     },
     {
       "tier": "agentharm",
       "measures": "deterministic replay",
-      "contained": "6.3%",
+      "contained": "21.6%",
       "false_block": "0.00%",
-      "heldout": "58.44%",
-      "n": "652a / 320b",
+      "heldout": "57.73%",
+      "n": "652a / 653b",
       "caveat": "6.3% is a LOADER limit: we read only the JSON (tool names), while the corpus grading functions assert targets for 63% of behaviours"
     },
     {
@@ -30,11 +30,11 @@
     {
       "tier": "sleight",
       "measures": "deterministic replay",
-      "contained": "8.5%",
+      "contained": "4.7%",
       "false_block": "n/a",
       "heldout": "-",
-      "n": "328a / 144b",
-      "caveat": "grant derived from the paired BENIGN twin, so the false-block column is NOT reportable here; ~2 points of discrimination either way"
+      "n": "129a / 311b",
+      "caveat": "mechanism-cited sabotage only; ladder ~5% on binding+budget \u2014 velocity false-alarms coding agents; not an intent win"
     },
     {
       "tier": "ipi_coding",
@@ -42,7 +42,7 @@
       "contained": "100.0%",
       "false_block": "0.00%",
       "heldout": "-",
-      "n": "50a / 40b",
+      "n": "50a / 45b",
       "caveat": "injected instructions with out-of-scope targets"
     },
     {
@@ -51,7 +51,7 @@
       "contained": "100.0%",
       "false_block": "0.00%",
       "heldout": "-",
-      "n": "6a / 15b",
+      "n": "6a / 24b",
       "caveat": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared"
     },
     {
@@ -66,11 +66,11 @@
     {
       "tier": "toolemu",
       "measures": "deterministic replay",
-      "contained": "100.0%",
+      "contained": "-",
       "false_block": "0.00%",
-      "heldout": "50.00%",
-      "n": "5a / 10b",
-      "caveat": "NO ATTACK EVENTS: its risk is underspecification described in prose, and the authorized tool and the harmful one are the same call"
+      "heldout": "54.74%",
+      "n": "0a / 559b",
+      "caveat": "normalized clayseal_traces fixture scores destination binding; raw toolkit mapping still has no attack events (underspecification)"
     },
     {
       "tier": "mcp_attack",
@@ -84,28 +84,28 @@
     {
       "tier": "advbench_agent",
       "measures": "deterministic replay",
-      "contained": "66.7%",
-      "false_block": "33.33%",
-      "heldout": "66.67%",
-      "n": "3a / 6b",
-      "caveat": "content-defined / harmful-instruction breadth; ceiling marker like AgentHarm \u2014 not an authorization win target"
+      "contained": "100.0%",
+      "false_block": "0.00%",
+      "heldout": "45.45%",
+      "n": "6a / 11b",
+      "caveat": "normalized fixture: target/arg binding; binding rung 100% / 0% FB; content-only twins are not the score path"
     },
     {
       "tier": "atif",
       "measures": "deterministic replay",
       "contained": "-",
-      "false_block": "1.94%",
-      "heldout": "21.29%",
-      "n": "0a / 155b",
+      "false_block": "0.00%",
+      "heldout": "26.95%",
+      "n": "0a / 282b",
       "caveat": "benign only; a false-block measurement"
     },
     {
       "tier": "tau2",
       "measures": "deterministic replay",
       "contained": "-",
-      "false_block": "0.03%",
-      "heldout": "47.91%",
-      "n": "0a / 7382b",
+      "false_block": "0.00%",
+      "heldout": "48.13%",
+      "n": "0a / 14842b",
       "caveat": "benign only; the friction denominator that matters"
     },
     {
@@ -113,9 +113,18 @@
       "measures": "deterministic replay",
       "contained": "-",
       "false_block": "0.00%",
-      "heldout": "19.65%",
-      "n": "0a / 1664b",
+      "heldout": "18.04%",
+      "n": "0a / 3232b",
       "caveat": "benign only; the friction denominator that matters"
+    },
+    {
+      "tier": "sleight[detector]",
+      "measures": "covert-intent trajectories",
+      "contained": "5.6%",
+      "false_block": "0.00%",
+      "heldout": "-",
+      "n": "18 atk / 18 benign",
+      "caveat": "paired twins, goal sealed from benign; ngram ~6% at alpha=0.05 \u2014 prior ~60% was empty-goal artifact"
     },
     {
       "tier": "burst[tau2]",

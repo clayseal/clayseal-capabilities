@@ -193,23 +193,8 @@ def test_asb_is_saturated_at_the_allowlist_rung():
 
 
 # --------------------------------------------------------------------------- #
-# SLEIGHT-Bench (2026): covert-intent transcripts, benign-paired
+# SLEIGHT-Bench (2026): covert-intent transcripts — see test_sleight.py
 # --------------------------------------------------------------------------- #
-# Removed with the SLEIGHT fidelity rebuild: these asserted the shape of a
-# loader that labelled every tool call in an attack transcript ATTACK. See
-# benchmarks/tests/test_sleight.py for the replacements.
-
-# Removed with the SLEIGHT fidelity rebuild: these asserted the shape of a
-# loader that labelled every tool call in an attack transcript ATTACK. See
-# benchmarks/tests/test_sleight.py for the replacements.
-
-# Removed with the SLEIGHT fidelity rebuild: these asserted the shape of a
-# loader that labelled every tool call in an attack transcript ATTACK. See
-# benchmarks/tests/test_sleight.py for the replacements.
-
-# Removed with the SLEIGHT fidelity rebuild: these asserted the shape of a
-# loader that labelled every tool call in an attack transcript ATTACK. See
-# benchmarks/tests/test_sleight.py for the replacements.
 
 def test_agent_threat_bench_categories_present():
     tasks = _load("agent_threat_bench")
