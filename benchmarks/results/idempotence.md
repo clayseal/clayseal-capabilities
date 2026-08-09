@@ -68,22 +68,26 @@ Containment must be flat at one duplicate, or this is burst detection renamed.
 Velocity contains none of it at any count, which is the axis being distinct
 rather than argued to be.
 
-## The honest failure: it does not survive a second instance
+## The second-instance arm, and what it does and does not say
 
-`InMemoryUsedTokenStore` is process-local and its own docstring says so. A token
-consumed on one instance is invisible to every other, so **behind a load balancer
-the default store contains nothing**: 0 of 400.
+`InMemoryUsedTokenStore` is process-local. A token consumed on one instance is
+invisible to every other, so across two instances it refuses **0 of 400**.
 
-This is the session-scoped ledger problem for the third time. `principal_ledger.py`
-exists because a session-scoped money ledger resets when the agent opens another
-conversation. `PrincipalVelocity` exists because a session-scoped rate window does
-the same. The commit store has the identical shape one layer over, and the fix is
-the same: back the seam with a shared store (Redis `SET NX PX`, or a DynamoDB
-conditional put with a TTL) so single-use means single-use across the fleet.
+**That is a property of the dev default, not a hole in the system**, and an
+earlier version of this document overstated it. `verify_commit_token` already
+refuses outright when `is_production()` and no store is configured:
 
-The seam is already there, and the measurement is why it has to be used rather
-than defaulted through. `benchmarks/tests/test_idempotence.py` asserts the
-failure so it cannot be forgotten, rather than describing it in a comment.
+    "commit token replay store required in production
+     (configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store)"
+
+`RedisUsedTokenStore` and `DynamoDBUsedTokenStore` both ship, and
+`load_used_token_store_from_env` resolves either from the environment. So the
+production path fails closed and the shared implementations exist.
+
+The arm stays because the in-memory store is what a benchmark reaches for by
+reflex, and because this is the session-scoped ledger shape for the third time
+after `principal_ledger` and `PrincipalVelocity`. What it measures is the cost of
+defaulting through the seam rather than configuring it.
 
 ## Reproduce
 

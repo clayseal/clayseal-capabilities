@@ -75,15 +75,32 @@ def test_velocity_contains_none_of_it():
         assert refused == 0, f"velocity caught {refused}/{total} at {n} duplicates"
 
 
-def test_the_shipped_store_does_not_survive_a_second_instance():
-    """Measured rather than left in a docstring.
+def test_the_in_memory_store_does_not_survive_a_second_instance():
+    """The cost of defaulting through the seam rather than configuring it.
 
-    InMemoryUsedTokenStore is process-local and says so. A token consumed on one
-    instance is invisible to every other, which is the session-scoped ledger
-    problem for the third time after principal_ledger and velocity. Behind a load
-    balancer the default store contains nothing.
+    InMemoryUsedTokenStore is process-local and says so. This is a property of
+    the DEV default rather than a hole: verify_commit_token refuses outright when
+    is_production() and no store is configured, and RedisUsedTokenStore and
+    DynamoDBUsedTokenStore both ship. The arm exists because the in-memory store
+    is what a benchmark reaches for by reflex.
     """
     _available()
     r = evaluate("tau2", limit=120)
     assert r.multi_instance_total > 0
     assert r.multi_instance_refused == 0
+
+
+def test_production_refuses_to_run_without_a_replay_store():
+    """The half the second-instance arm does not measure.
+
+    A missing store is a configuration error in production, not a silent loss of
+    replay defence, and that is what makes the 0 of 400 above a dev-default
+    number rather than a vulnerability.
+    """
+    import inspect
+
+    from agentauth.capabilities import commit
+
+    source = inspect.getsource(commit.verify_commit_token)
+    assert "is_production()" in source
+    assert "replay store required in production" in source
