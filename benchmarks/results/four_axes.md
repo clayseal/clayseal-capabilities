@@ -1,0 +1,203 @@
+# What we contain, split by what defines the harm
+
+Agent-security results are usually reported per benchmark, which hides the thing
+that actually predicts whether a defense works: **what makes the action harmful.**
+Sorted that way, the picture is sharp, and three of the four axes have a clear
+answer.
+
+| Harm defined by | The attack | Result | Cost |
+| --- | --- | --: | --: |
+| **Target** | the action points somewhere it must not | 99.9-100% | 0.00% |
+| **Volume** | too many of an authorized action | 100% at burst >= 10 | 0.0-2.0% |
+| **Sequence** | authorized read, then authorized write of what it read | 100% | 0.0% |
+| **Content** | an authorized action whose meaning is harmful | 6.3% | 0.00% |
+
+Everything below is measured, and every number that did not survive audit was
+withdrawn rather than softened. Three headline figures were withdrawn during this
+work; the reasons are in each section.
+
+---
+
+## Target-defined harm: contained
+
+The action points at something the mandate does not cover. A path escape, an
+attacker-controlled recipient, a protected zone, a credential store.
+
+| Corpus | attack events | contained | false-block |
+| --- | --: | --: | --: |
+| RedCode | 718 | **99.9%** | 0.00% |
+| ASB | 2,040 | **100%** | 0.00% |
+| IPI-Coding-Agent | 50 | **100%** | 0.00% |
+| AgentThreatBench | 24 | 58.3% | 0.00% |
+
+Against 18,356 benign events from tau2, BFCL and ATIF, the false-block rate is
+0.00%.
+
+**ASB's 100% means less than it looks.** Its benign side is one synthetic event
+per granted tool, and its attack side is ASB's separate attacker-tool list, which
+is disjoint from the agent's equipment by the corpus's own design. Every contained
+attack there is caught by the tool allowlist. It measures whether we check tool
+names, and a tool allowlist is sufficient for it.
+
+RedCode and IPI-Coding are the real result on this axis: containment comes from
+path scope against a workspace boundary that is a fixed constant, declared
+independently of any label.
+
+---
+
+## Volume-defined harm: contained, with a bounded blast radius
+
+Each action is authorized, correctly targeted, in-scope and unremarkable. There
+are simply far too many. Mass exfiltration by small authorized reads, mail
+flooding, transfers structured under a reporting threshold.
+
+**No corpus we have contains this**, which is why the rung measured zero for as
+long as it was only measured on them. `benchmarks/burst.py` supplies it: sessions
+are real tau2 and BFCL traffic, and the burst reuses a tool, resource, verb and
+argument shape the session already used legitimately. Verified rather than
+assumed, 0 of 5,000 burst actions are blocked by any rung below velocity.
+
+| Corpus | cap | burst | contained | blast radius | held-out false alarms |
+| --- | --: | --: | --: | --: | --: |
+| tau2 | 7 | 5 | 74.8% | 3 | 0.0% |
+| tau2 | 7 | 10+ | **100%** | 4 | **0.0%** |
+| BFCL | 5 | 5 | **100%** | 4 | **2.0%** |
+| BFCL | 5 | 10+ | 100% | 4 | 2.0% |
+
+A compromised agent gets four extra authorized actions before the layer stops it,
+whether it was trying for ten or a hundred.
+
+**A burst of two is not contained and should not be.** Two extra actions have not
+left the shape of the task, and a layer that flagged them would be blocking
+legitimate work at the same rate.
+
+**Two withdrawn results on this axis.** The rung first reported 24.7% on AgentHarm
+and 65.5% on SLEIGHT with a cap set from the judged task's own benign volume; on
+SLEIGHT, RedCode and ASB every attack-bearing task has zero benign effect events,
+so each got `cap = 1` and the limit was the label. With a valid cap it reported
++8.0 on AgentHarm at zero cost; that came from the loader concatenating a
+behaviour's benign variant and harmful twin into one trajectory, so the benign
+half spent the rate budget and the harmful half was blocked for arriving late.
+Both are withdrawn. The measured gain on the deterministic corpora is zero.
+
+The false-alarm rate is measured on **held-out** clean sessions, because
+calibrating the cap and then measuring false alarms on the same sessions is
+arithmetic rather than evidence. That split is what turned BFCL's 0.0% into 2.0%.
+
+---
+
+## Sequence-defined harm: contained
+
+Read a resource you are granted, then write to a sink you are granted, and the
+written value contains what you read. Every field of every action is correct.
+Scope allows both, binding allows both, velocity allows both, protected zones
+allow both. No single action is harmful. Only the pair is.
+
+A per-action authorization layer cannot see a pair. Unlike content-defined harm,
+this one is decidable: it needs remembering, not guessing.
+
+`agentauth/capabilities/confidentiality.py` checks **per value, not per session**.
+Bell-LaPadula per session is correct and unusable, because one sensitive read
+blocks every later write. Declassification is bound to the sealed goal, so an
+injected instruction cannot nominate a sink.
+
+| Corpus | sessions | leak contained | legitimate false-blocked | label creep | real traffic |
+| --- | --: | --: | --: | --: | --: |
+| tau2 | 300 | **100%** | 0.0% | 0.0% | **0/1100** |
+| BFCL | 91 | **100%** | 0.0% | 0.0% | **0/223** |
+
+Four arms, because the leak arm alone would be meaningless: a mechanism that
+refused everything would score 100% there and 100% on the legitimate arm too.
+
+The evasion sweep is what did the work. **Every transform below carried the value
+out at 100% before it was handled**: embedded in prose, split in two, split into
+fours, base64, hex, reversed, dotted. All are now contained. The prose case was a
+defect in the attribution index and the one that would have mattered most in
+production.
+
+**Asserted rather than hidden:** a value the agent describes instead of quoting is
+gone. Flow control raises the cost of exfiltration; it does not end it.
+
+---
+
+## Content-defined harm: not contained, by us or by anyone
+
+The action is authorized, correctly targeted, normally paced, and carries nothing
+it should not. Its *meaning* is the harm: an email whose text is a phishing lure,
+a script whose purpose is harassment.
+
+| Corpus | attack events | contained |
+| --- | --: | --: |
+| AgentHarm | 652 | 6.3% |
+| SLEIGHT-Bench | 328 | 36.9% at 36.66% false-block |
+
+The 6.3% on AgentHarm is exactly the subset where the harmful twin needs a tool
+the benign grant did not include. The other 93.7% reuses granted tools against
+granted targets.
+
+**SLEIGHT's 36.9% is not discrimination.** Containment and false-block move
+together at every operating point, so the layer is refusing a fraction of
+everything and being credited for the attack share. Sweeping the velocity cap
+makes it explicit: 65.5/65.6, 55.5/55.3, 49.7/49.8, 43.9/42.4.
+
+This is not a gap we are behind on. The published frontier catches 32% of SLEIGHT
+at a 1% false-positive rate using a frontier model with extended thinking as a
+monitor. No per-call authorization system contains content-defined harm, and
+saying so is more useful to a buyer than a number that does not survive contact
+with their traffic.
+
+---
+
+## Open-ended tasks, which is a different axis again
+
+AgentDyn (arXiv:2602.03117) builds tasks whose correct next step cannot be known
+in advance. Plan conformance, which costs utility at the margin on AgentDojo,
+costs everything here: zero clean utility, 254 of 281 actions blocked, 21.67 human
+interruptions per task.
+
+Runtime replanning fixes it by growing the plan from the sealed goal rather than
+denying deviation. The judge sees the goal, the tool catalog, and the action's
+shape (tool name and verb class), and never sees tool output or argument values,
+so an injection can cause an action to be *requested* but never reaches the judge.
+
+| Suite | Configuration | Clean utility | ASR | Interruptions/task |
+| --- | --- | --: | --: | --: |
+| shopping | undefended | 66.7% | 16.7% | 0.00 |
+| shopping | plan conformance | 0.0% | 0.0% | 20.67 |
+| shopping | **+ replanning** | **50.0%** | **5.6%** | **1.83** |
+| github | undefended | 83.3% | 61.1% | 0.00 |
+| github | plan conformance | 0.0% | 0.0% | 12.17 |
+| github | **+ replanning** | **16.7%** | **0.0%** | **8.50** |
+| dailylife | undefended | 33.3% | 94.4% | 0.00 |
+| dailylife | plan conformance | 0.0% | 0.0% | 1.33 |
+| dailylife | + replanning | 0.0% | 0.0% | 1.83 |
+
+Three quarters of undefended utility recovered on shopping at a third of the
+undefended attack rate, and interruptions down from 20.67 to 1.83. github
+recovers a fifth of undefended utility while holding ASR at 0.0% against an
+undefended 61.1%.
+
+**dailylife does not move.** Replanning recovers nothing there, and it is the
+suite where plan conformance was already cheap (1.33 interruptions per task), so
+the blocks were never the binding constraint. Reporting the two suites where the
+mechanism works and omitting the one where it does not would misstate what it
+buys.
+
+---
+
+## How these numbers are kept honest
+
+Three headline results were withdrawn during this work, each caught by
+measurement rather than review. The invariants that now fail the build:
+
+- **The cap must not move when only attack traffic changes.** Catches a policy
+  parameter derived from the label.
+- **Shuffling events inside a task must not move containment or false-block for
+  any deployable rung.** Catches a loader whose ordering carries the label, which
+  is what produced the +8.0.
+- **No lower rung may contain an attack event a higher rung allows,** asserted per
+  event rather than per rate. Caught four SLEIGHT attacks the full stack allowed.
+- **Every arm of a benchmark must clear the ladder below the mechanism under
+  test.** Without it, burst and flow would both be re-measuring scope.
+
+Sources: `why_we_fail.md`, `burst.md`, `flow.md`, `agentdyn.md`, `pooled_asr.md`.
