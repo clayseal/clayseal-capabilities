@@ -165,6 +165,19 @@ class SessionBroker:
     #
     # None means unlimited, which is the current behaviour and stays the default
     # so this does not silently change existing results.
+    # Runtime replanning. When the intent envelope reports a deviation, ask
+    # whether the sealed goal plausibly requires an action of this SHAPE, and if
+    # so extend the plan rather than deny. The extender sees the goal, the tool
+    # catalog and the shape; never tool output and never argument values, which
+    # is what keeps an injection out of the decision. See
+    # agentauth/capabilities/replan.py for the trust argument, and
+    # benchmarks/results/agentdyn.md for the failure that motivated it (zero
+    # clean utility on open-ended tasks).
+    #
+    # This is NOT `defer_allows_bound`, which dropped the shape check and cost
+    # 22 points of ASR. The shape check survives here; only the plan it is
+    # checked against may grow.
+    plan_extender: Any | None = None
     audit_budget: int | None = None
     # What to do once the budget is spent. Denying is the conservative choice and
     # keeps the security claim intact at the cost of utility; allowing trades the
@@ -336,6 +349,18 @@ class SessionBroker:
             if reason is not None:
                 self._rollback(action, v_res, c_res)
                 self._record_triggers([f"intent: {reason}"])
+                # Runtime replanning, before any denial. An open-ended task
+                # cannot state its steps in advance, and refusing every
+                # unforeseen step is what produced zero utility on AgentDyn.
+                if self.plan_extender is not None:
+                    verdict = self.plan_extender.consider(action.tool, action.verb)
+                    if verdict.extended:
+                        self._record_triggers([f"replan: {verdict.reason}"])
+                        return self._finalize(
+                            action, Outcome.ALLOW, "intent-envelope",
+                            (reason, f"plan extended: {verdict.reason}"),
+                            None, is_write, start)
+
                 if is_consequential(action):
                     # A plan miss on an action the binding floor already cleared
                     # is the planner failing to enumerate, not the agent going

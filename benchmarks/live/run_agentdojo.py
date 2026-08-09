@@ -233,6 +233,7 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
         graduated = "graduated" in ablation
         defer = "defer" in ablation
         defer_allow = "deferallow" in ablation
+        replan = "replan" in ablation
         # "...-audit3" caps the session at 3 human interruptions. Sweeping this
         # is what turns two operating points into a safety/usefulness curve.
         m = re.search(r"audit(\d+)", ablation)
@@ -241,7 +242,8 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
                                     provenance=provenance, taint=taint,
                                     graduated=graduated, defer=defer,
                                     defer_allow=defer_allow,
-                                    audit_budget=audit_budget)
+                                    audit_budget=audit_budget,
+                                    replan=replan)
         for e in pipe.elements:
             if isinstance(e, ToolsExecutionLoop):
                 e.elements = [BrokerToolsExecutor(harness) if isinstance(x, ToolsExecutor) else x
