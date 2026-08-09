@@ -183,9 +183,11 @@ class LiveBrokerHarness:
 
     def start_run(self, query: str, runtime) -> None:
         self.query = query
-        # Resources the user explicitly named in the sealed goal. Only a unique
-        # destination read DIRECTLY from one of these is trusted (see observe_output).
-        self._named = set(_NAMED_FILE_RE.findall(query)) if self.taint else set()
+        # Resources the user explicitly named in the sealed goal. Containing-
+        # object provenance uses these as trust roots; free-text destinations
+        # from them step up rather than auto-allow (see observe_output).
+        self._named = (set(_NAMED_FILE_RE.findall(query))
+                       if (self.taint or self.provenance) else set())
         allowed, envelope = self._plan(query, runtime)
         goal = GoalSpec(query_id="live", summary=query,
                         allow_resources=[f"mcp:tool:{t}" for t in allowed])
@@ -225,30 +227,39 @@ class LiveBrokerHarness:
             graduated=self.graduated, defer_to_binding=self.defer,
             defer_allows_bound=self.defer_allow, audit_budget=self.audit_budget,
             plan_extender=extender,
+            provenance=self._provenance,
+            goal_named_objects=set(self._named),
             # The resource list below is the LLM planner's guess at which
             # tools the task needs, not an operator grant.
             scope_is_advisory=True)
         self.runs += 1
 
     def observe_output(self, result, source_args=None) -> None:
-        """Origin-based taint: mine STRUCTURED recipient fields of a tool output
-        and add them to the trusted egress set. The injection hides in free-text,
-        which extract_recipients ignores, so a description-field attacker IBAN
-        never enters the trusted set. This is sound and has held ASR at 0.
+        """Origin-based taint + containing-object provenance.
 
-        FUNDAMENTAL LIMIT (measured, do not retry as a predicate tweak): trusting
-        the FREE-TEXT of a goal-named resource is UNSAFE, because the injection is
-        placed inside the very resource the user asks to read. The goal-named bill
-        file 'bill-december-2023.txt' contains BOTH the legit recipient and the
-        injected attacker IBAN as free-text, side by side. A deterministic check
-        confirmed the attacker destination gets trusted (18 leaks, ASR 4.2%). No
-        source-provenance predicate can separate two free-text tokens sharing one
-        trusted source. So only STRUCTURED-field recipients are auto-trusted; a
-        free-text recipient (task_0) is not auto-trustable and its correct
-        handling is STEP_UP (graduated response, ask the human), not auto-trust."""
-        # Provenance is recorded whether or not taint is enabled, because it is
-        # an observation log rather than a trust decision. Nothing consults it
-        # unless a caller asks.
+        STRUCTURED recipient fields of a tool output widen the trusted egress
+        set (injection hides in free text, which extract_recipients ignores).
+        Free-text destinations are NEVER auto-trusted — even from a goal-named
+        containing object — because the legit recipient and an injected attacker
+        IBAN can sit side by side in one trusted file (measured ASR 4.2% when
+        we auto-trusted unique free-text). Free-text of a goal-named object
+        steps up via provenance on the authorize path instead.
+        """
+        containing = ""
+        goal_named = False
+        if source_args:
+            target = " ".join(str(v) for v in source_args.values())
+            for nm in self._named:
+                if nm in target:
+                    containing = nm
+                    goal_named = True
+                    break
+            if not containing:
+                containing = str(source_args.get("path")
+                                 or source_args.get("file")
+                                 or source_args.get("channel")
+                                 or "")
+
         if self._provenance is not None:
             tool = ""
             if source_args:
@@ -259,31 +270,14 @@ class LiveBrokerHarness:
                                    if isinstance(v, (str, int, float))})
             self._provenance.record_observation(
                 tool or "tool", result, structured_fields=structured,
-                goal_named=bool(self._named and source_args and any(
-                    nm in " ".join(str(v) for v in source_args.values())
-                    for nm in self._named)))
+                goal_named=goal_named, containing_object=containing)
 
         if not self.taint or self._egress is None:
             return
+        # Structured fields only — never free-text unique-dest widening.
         for d in _iter_dicts(result):
             for r in extract_recipients(d):
                 self._egress.allowed_recipients.add(r)
-        # Trust the UNIQUE destination in a resource the user NAMED in the goal,
-        # and nothing else. Strictly scoped: only a read whose own arguments name a
-        # goal-named file qualifies (so anything that file merely links to, or any
-        # chained read of another file, never does), and only that read's own
-        # returned content is scanned. Exactly one destination means the user
-        # directed the agent to it; a second destination (an additive injection
-        # placed in the same file) makes it non-unique, so nothing is trusted and
-        # the effect steps up. This resolves the free-text limit above by refusing
-        # on ambiguity rather than trying to separate two tokens with one origin.
-        if self._named and source_args:
-            target = " ".join(str(v) for v in source_args.values())
-            if any(nm in target for nm in self._named):
-                dests = _destinations_in(str(result))
-                if len(dests) == 1:
-                    self._egress.allowed_recipients |= dests
-
     def gate(self, tool_name: str, args: dict) -> tuple[bool, str]:
         action = Action(step=len(self.broker._trajectory.actions), tool=tool_name,
                         resource=f"mcp:tool:{tool_name}", verb=classify_verb(tool_name),

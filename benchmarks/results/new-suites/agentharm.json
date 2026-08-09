@@ -9,7 +9,7 @@
     "attack_allowed": 652,
     "benign_blocked": 0,
     "overhead_p50_ms": 0.0005,
-    "overhead_p95_ms": 0.0008,
+    "overhead_p95_ms": 0.0007,
     "overhead_p99_ms": 0.001,
     "containment_ci": {
       "point": 0.0,
@@ -37,8 +37,8 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 611,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.001,
-    "overhead_p95_ms": 0.0013,
+    "overhead_p50_ms": 0.0007,
+    "overhead_p95_ms": 0.001,
     "overhead_p99_ms": 0.0017,
     "containment_ci": {
       "point": 0.0629,
@@ -66,9 +66,9 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 611,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0028,
-    "overhead_p95_ms": 0.0065,
-    "overhead_p99_ms": 0.0453,
+    "overhead_p50_ms": 0.0029,
+    "overhead_p95_ms": 0.0055,
+    "overhead_p99_ms": 0.0212,
     "containment_ci": {
       "point": 0.0629,
       "ci_low": 0.0425,
@@ -95,9 +95,9 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 611,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0036,
-    "overhead_p95_ms": 0.0291,
-    "overhead_p99_ms": 0.3743,
+    "overhead_p50_ms": 0.004,
+    "overhead_p95_ms": 0.0114,
+    "overhead_p99_ms": 0.0231,
     "containment_ci": {
       "point": 0.0629,
       "ci_low": 0.0425,
@@ -124,9 +124,9 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 611,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.0045,
-    "overhead_p95_ms": 0.0209,
-    "overhead_p99_ms": 0.1632,
+    "overhead_p50_ms": 0.0044,
+    "overhead_p95_ms": 0.0146,
+    "overhead_p99_ms": 0.0234,
     "containment_ci": {
       "point": 0.0629,
       "ci_low": 0.0425,
@@ -153,9 +153,9 @@
     "benign_utility_rate": 1.0,
     "attack_allowed": 611,
     "benign_blocked": 0,
-    "overhead_p50_ms": 0.006,
-    "overhead_p95_ms": 0.0448,
-    "overhead_p99_ms": 0.3492,
+    "overhead_p50_ms": 0.0066,
+    "overhead_p95_ms": 0.0265,
+    "overhead_p99_ms": 0.0575,
     "containment_ci": {
       "point": 0.0629,
       "ci_low": 0.0425,
@@ -173,6 +173,35 @@
       "method": "rule-of-three"
     }
   },
+  "task-scope+binding+budget+velocity": {
+    "engine": "task-scope+binding+budget+velocity",
+    "n_benign": 320,
+    "n_attack": 652,
+    "attack_prevention_rate": 0.0629,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 611,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0095,
+    "overhead_p95_ms": 0.0342,
+    "overhead_p99_ms": 0.1015,
+    "containment_ci": {
+      "point": 0.0629,
+      "ci_low": 0.0425,
+      "ci_high": 0.084,
+      "n": 176,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0341,
+      "n": 88,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
   "deny-all": {
     "engine": "deny-all",
     "n_benign": 653,
@@ -183,8 +212,8 @@
     "attack_allowed": 0,
     "benign_blocked": 653,
     "overhead_p50_ms": 0.0005,
-    "overhead_p95_ms": 0.0009,
-    "overhead_p99_ms": 0.0449,
+    "overhead_p95_ms": 0.0008,
+    "overhead_p99_ms": 0.0011,
     "containment_ci": {
       "point": 1.0,
       "ci_low": 0.983,

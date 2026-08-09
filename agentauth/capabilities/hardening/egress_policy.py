@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-
+from typing import Any
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 _URL = re.compile(r"https?://([A-Za-z0-9.-]+\.[A-Za-z]{2,})", re.IGNORECASE)
 # Bare host with a recognizable TLD (attacker links are often written without a
@@ -125,3 +125,66 @@ class EgressPolicy:
                 if r not in self.allowed_recipients:
                     return False, f"recipient {r!r} not on allow-list"
         return True, "egress within policy"
+
+    def check_with_provenance(
+        self,
+        resource: str,
+        args: dict,
+        *,
+        provenance: Any,
+        goal_named_objects: set[str] | None = None,
+        authorized_tools: set[str] | None = None,
+    ) -> tuple[str, str]:
+        """Allow-list first, then containing-object provenance for misses.
+
+        Returns ``("allow"|"step_up"|"deny", reason)``. A destination already on
+        the allow-list (goal seed or structured widening) allows without asking
+        provenance. A miss consults ``ParameterProvenance.check_destination`` so
+        structured-field recipients recover utility and free-text destinations
+        step up rather than silently widen.
+        """
+        from agentauth.capabilities.parameter_provenance import DestinationTrust
+
+        if self.allow_all:
+            return "allow", "egress unrestricted"
+
+        # Domains still use the allow-list: provenance indexes opaque tokens and
+        # emails more reliably than bare hosts.
+        for domain in extract_destinations(resource, args):
+            if not self._permitted(domain):
+                # Try provenance on the full destination-bearing args blob.
+                if provenance is not None:
+                    trust, reason = provenance.check_destination(
+                        " ".join(
+                            str(v) for v in args.values()
+                            if isinstance(v, (str, int, float))
+                        ),
+                        goal_named_objects=goal_named_objects,
+                        authorized_tools=authorized_tools,
+                    )
+                    if trust is DestinationTrust.ALLOW:
+                        return "allow", reason
+                    if trust is DestinationTrust.STEP_UP:
+                        return "step_up", reason
+                return "deny", f"egress to {domain!r} not on allow-list"
+
+        if self.bind_recipients:
+            for r in extract_recipients(args):
+                if r in self.allowed_recipients:
+                    continue
+                if provenance is None:
+                    return "deny", f"recipient {r!r} not on allow-list"
+                trust, reason = provenance.check_destination(
+                    r,
+                    goal_named_objects=goal_named_objects,
+                    authorized_tools=authorized_tools,
+                )
+                if trust is DestinationTrust.ALLOW:
+                    # Structured grounding recovers utility without a flat widen
+                    # of every free-text token in the same observation.
+                    self.allowed_recipients.add(r)
+                    continue
+                if trust is DestinationTrust.STEP_UP:
+                    return "step_up", reason
+                return "deny", reason or f"recipient {r!r} not on allow-list"
+        return "allow", "egress within policy"

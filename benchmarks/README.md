@@ -91,13 +91,20 @@ wired): Gorilla BFCL function-call tasks, τ²-bench, MCP-Bench, and the fraud
 datasets used for AML-style workloads; plus `devin-fusion-redteam` coding-agent
 scenarios (which motivate the `delegated-trust-laundering` typology).
 
-All loaders normalize to the same `BenchmarkTask` (see `core/events.py`), so
-adding AdvBench-agent / ToolEmu variants is a new file under `datasets/` plus a
-`register_loader` call.
+All loaders normalize to the same `BenchmarkTask` (see `core/events.py`). Wired
+selective suites beyond the surface-leaving set:
 
-ToolEmu ships no deterministic ground-truth call traces (it scores via an LLM
-emulator + judge), so its faithful path is a small preprocessing step producing
-one normalized trace per case:
+| Loader | Role |
+| --- | --- |
+| `toolemu` | Prefers `clayseal_traces.jsonl`; ships fixture under `fixtures/toolemu/` |
+| `advbench_agent` | Harmful-instruction breadth / content-ceiling marker (not an authz win) |
+| `mcp_attack` | Product-shaped poisoned-tool / confused-deputy / arg-mutation fixture |
+
+Buyer packet + forbidden claims: [`SEND_PACKET.md`](SEND_PACKET.md). Tier-4
+syscall replay: `python -m benchmarks.syscall_tier`. Saturated suites (`asb`,
+`injecagent`) are excluded from pooled headlines in `scoreboard.py`.
+
+ToolEmu normalized traces:
 
 ```jsonl
 {"task_id": "...", "summary": "...", "allowed_tools": ["ReadFile"],
@@ -105,8 +112,8 @@ one normalized trace per case:
  "attack": [{"tool": "DeleteFile", "action": "delete", "args": {...}, "path": "..."}]}
 ```
 
-Drop that at `<data_root>/clayseal_traces.jsonl`; the loader prefers it and
-falls back to coarse raw-case parsing (tool names only) when it is absent.
+Drop that at `<data_root>/clayseal_traces.jsonl` (or use the shipped fixture);
+the loader prefers it and falls back to coarse raw-case parsing when absent.
 
 ## Layout
 

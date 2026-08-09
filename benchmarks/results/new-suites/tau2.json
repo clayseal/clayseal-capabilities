@@ -1,0 +1,234 @@
+{
+  "allow-all": {
+    "engine": "allow-all",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0006,
+    "overhead_p95_ms": 0.0007,
+    "overhead_p99_ms": 0.0008,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "tool-allowlist": {
+    "engine": "tool-allowlist",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0009,
+    "overhead_p95_ms": 0.0011,
+    "overhead_p99_ms": 0.0013,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "capability-token": {
+    "engine": "capability-token",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.004,
+    "overhead_p95_ms": 0.0062,
+    "overhead_p99_ms": 0.0205,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "task-scope": {
+    "engine": "task-scope",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.005,
+    "overhead_p95_ms": 0.0123,
+    "overhead_p99_ms": 0.0592,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "task-scope+binding": {
+    "engine": "task-scope+binding",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0086,
+    "overhead_p95_ms": 0.0293,
+    "overhead_p99_ms": 0.0639,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "task-scope+binding+budget": {
+    "engine": "task-scope+binding+budget",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0,
+    "benign_utility_rate": 1.0,
+    "attack_allowed": 0,
+    "benign_blocked": 0,
+    "overhead_p50_ms": 0.0106,
+    "overhead_p95_ms": 0.0411,
+    "overhead_p99_ms": 0.1209,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0012,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  },
+  "task-scope+binding+budget+velocity": {
+    "engine": "task-scope+binding+budget+velocity",
+    "n_benign": 7382,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 0.0003,
+    "benign_utility_rate": 0.9997,
+    "attack_allowed": 0,
+    "benign_blocked": 2,
+    "overhead_p50_ms": 0.0144,
+    "overhead_p95_ms": 0.0508,
+    "overhead_p99_ms": 0.129,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 0.0003,
+      "ci_low": 0.0,
+      "ci_high": 0.0008,
+      "n": 1273,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    }
+  },
+  "deny-all": {
+    "engine": "deny-all",
+    "n_benign": 14842,
+    "n_attack": 0,
+    "attack_prevention_rate": 0.0,
+    "false_block_rate": 1.0,
+    "benign_utility_rate": 0.0,
+    "attack_allowed": 0,
+    "benign_blocked": 14842,
+    "overhead_p50_ms": 0.0006,
+    "overhead_p95_ms": 0.0008,
+    "overhead_p99_ms": 0.0009,
+    "containment_ci": {
+      "point": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 1.0,
+      "n": 0,
+      "level": 0.95,
+      "method": "cluster-bootstrap"
+    },
+    "false_block_ci": {
+      "point": 1.0,
+      "ci_low": 0.9988,
+      "ci_high": 1.0,
+      "n": 2545,
+      "level": 0.95,
+      "method": "rule-of-three"
+    }
+  }
+}

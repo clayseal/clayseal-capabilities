@@ -355,3 +355,79 @@ def test_declassified_traffic_does_not_enter_the_pool():
                       args={"body": SECRET[i:i + 4]}, policy=POLICY)
     assert tracker.check(tool="send_mail", verb="send", resource="mail:other@corp",
                          args={"body": "unrelated note"}, policy=POLICY).allowed
+
+
+# --------------------------------------------------------------------------- #
+# A call's ARGUMENTS leave the boundary when the destination is outside it
+# --------------------------------------------------------------------------- #
+ARG_POLICY = SensitivityPolicy(
+    sensitive=("db:customers",),
+    declassified_sinks=("mail:board@example.com",),
+    argument_sinks=("search_*", "api:*"),
+)
+
+
+def _arg_tracker():
+    t = FlowTracker()
+    t.observe("read_table", "db:customers", SECRET, policy=ARG_POLICY,
+              structured_fields={"value": SECRET})
+    return t
+
+
+def test_a_read_served_by_a_third_party_leaks_its_query():
+    """The gap an outside corpus found.
+
+    This module checked only SINK_VERBS, on the reasoning that a read cannot
+    leak. That is true of what a read RETURNS and false of what it SENDS: a
+    read's arguments travel to whoever serves the call, so
+    `search_web(q=<the customer's diagnosis>)` hands the diagnosis to the search
+    provider and no write ever happens.
+
+    AgentLeak is built on that premise and is the first outside corpus for this
+    axis. As shipped we contained 6 of its 22 recorded tool calls, and all
+    sixteen misses were the same thing: the call was not a sink verb.
+    """
+    verdict = _arg_tracker().check(tool="search_web", verb="read",
+                                   resource="api:search", args={"q": SECRET},
+                                   policy=ARG_POLICY)
+    assert not verdict.allowed
+
+
+def test_an_internal_read_carrying_the_same_value_is_still_allowed():
+    """The reason this is a declared destination property and not a global flag.
+
+    Turning it on globally took false positives on tau2 and BFCL from 2 of 8,040
+    to 99 of 17,921. A read whose arguments carry the value the agent just
+    legitimately read is ordinary work, and refusing it is label creep in a new
+    costume.
+    """
+    verdict = _arg_tracker().check(tool="get_user", verb="read",
+                                   resource="db:users", args={"email": SECRET},
+                                   policy=ARG_POLICY)
+    assert verdict.allowed
+
+
+def test_a_mandate_naming_no_argument_sinks_behaves_as_before():
+    verdict = _tracker().check(tool="search_web", verb="read",
+                               resource="api:search", args={"q": SECRET},
+                               policy=POLICY)
+    assert verdict.allowed
+
+
+def test_argument_sinks_are_read_from_the_mandate():
+    policy = SensitivityPolicy.from_mandate({
+        "confidentiality": {"sensitive": ["db:*"], "argument_sinks": ["api:*"]}})
+    assert policy.sends_its_arguments("anything", "api:search")
+    assert not policy.sends_its_arguments("anything", "db:users")
+
+
+def test_a_declassified_argument_sink_may_still_receive_it():
+    """The goal named it, so handing it the value is the job."""
+    policy = SensitivityPolicy(
+        sensitive=("db:customers",), declassified_sinks=("api:search",),
+        argument_sinks=("api:*",))
+    tracker = FlowTracker()
+    tracker.observe("read_table", "db:customers", SECRET, policy=policy,
+                    structured_fields={"value": SECRET})
+    assert tracker.check(tool="search_web", verb="read", resource="api:search",
+                         args={"q": SECRET}, policy=policy).allowed

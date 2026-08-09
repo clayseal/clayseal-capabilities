@@ -521,11 +521,21 @@ attempting sandbox escape, which no published benchmark covers.
 \section{Reproduce}\label{sec:repro}
 
 \begin{Verbatim}[fontsize=\small, frame=single, framesep=4pt]
-benchmarks/fetch_corpora.sh          # pinned external corpora, ~4 MB
-benchmarks/run_all.sh                # all deterministic tiers, under a minute
+git rev-parse HEAD                   # record SHA beside results
+benchmarks/fetch_corpora.sh          # pinned external corpora (+ InjecAgent, ToolEmu fixture)
+python -m benchmarks.verify_corpus
+benchmarks/run_all.sh                # deterministic tiers + scoreboard + syscall_tier
+# Buyer checklist + forbidden claims: benchmarks/SEND_PACKET.md
+# Live keystones (API $) stay separate: head_to_head_injection, bpl, live_ladder
 python -m benchmarks.adaptive --dataset redcode --rounds 6
 python -m benchmarks.trajectory --length 500 --trajectories 200
-python -m benchmarks.live.frontier --suite workspace --repeats 3
+python -m benchmarks.syscall_tier
 \end{Verbatim}
+
+\noindent\textit{Honesty constraints.} Saturated suites (ASB, InjecAgent) never enter a
+pooled containment headline. AgentHarm / AdvBench-agent are content-defined
+ceilings, not product wins. Replay false-block is not an operational FP rate.
+AgentDyn open-ended utility remains a documented failure addressed by typed-plan
+reclearance. Tier-4 numbers from sample-trace replay are not live sandbox runs.
 
 \end{document}

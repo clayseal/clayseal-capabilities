@@ -41,10 +41,13 @@ from agentauth.capabilities.monitor.generation import (
 )
 from agentauth.capabilities.monitor.intent_envelope import (
     INTENT_ENVELOPE_SCHEMA,
+    CallTemplate,
     Deviation,
     IntentConformance,
     IntentEnvelope,
+    ParameterSlot,
     Phase,
+    SlotSource,
     sign_intent_envelope,
     verify_intent_envelope,
 )
@@ -66,6 +69,7 @@ __all__ = [
     "AmlAnalytics",
     "AmlVerdict",
     "INTENT_ENVELOPE_SCHEMA",
+    "CallTemplate",
     "CompiledEnvelope",
     "ConformalCalibrator",
     "ConsequenceLevel",
@@ -81,8 +85,9 @@ __all__ = [
     "Deviation",
     "IntentConformance",
     "IntentEnvelope",
+    "ParameterSlot",
     "Phase",
-    "ToolOntology",
+    "SlotSource",    "ToolOntology",
     "ToolSpec",
     "classify_consequence",
     "is_consequential",

@@ -117,6 +117,48 @@ def _sleight_factory() -> DatasetLoader:
     return SleightLoader()
 
 
+def _advbench_factory() -> DatasetLoader:
+    from benchmarks.datasets.advbench_agent import AdvBenchAgentLoader
+
+    return AdvBenchAgentLoader()
+
+
+def _mcp_attack_factory() -> DatasetLoader:
+    from benchmarks.datasets.mcp_attack import McpAttackLoader
+
+    return McpAttackLoader()
+
+
+
+def _atbench_factory() -> DatasetLoader:
+    from benchmarks.datasets.atbench import ATBenchLoader
+
+    return ATBenchLoader()
+
+
+def _atbench500_factory() -> DatasetLoader:
+    from benchmarks.datasets.atbench import ATBenchLoader
+
+    return ATBenchLoader(release="ATBench500")
+
+
+def _agentleak_factory() -> DatasetLoader:
+    from benchmarks.datasets.agentleak import AgentLeakLoader
+
+    return AgentLeakLoader()
+
+
+def _mind2web_sc_factory() -> DatasetLoader:
+    from benchmarks.datasets.mind2web_sc import Mind2WebScLoader
+
+    return Mind2WebScLoader()
+
+
+def _b3_factory() -> DatasetLoader:
+    from benchmarks.datasets.b3 import B3Loader
+
+    return B3Loader()
+
 register_loader("fixture", _fixture_factory)
 register_loader("agentdojo", _agentdojo_factory)
 register_loader("injecagent", _injecagent_factory)
@@ -130,3 +172,10 @@ register_loader("asb", _asb_factory)
 register_loader("sleight", _sleight_factory)
 register_loader("agent_threat_bench", _atb_factory)
 register_loader("ipi_coding", _ipi_coding_factory)
+register_loader("advbench_agent", _advbench_factory)
+register_loader("mcp_attack", _mcp_attack_factory)
+register_loader("atbench", _atbench_factory)
+register_loader("atbench500", _atbench500_factory)
+register_loader("agentleak", _agentleak_factory)
+register_loader("mind2web_sc", _mind2web_sc_factory)
+register_loader("b3", _b3_factory)

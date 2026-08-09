@@ -80,8 +80,35 @@ from typing import Any
 
 from agentauth.capabilities.parameter_provenance import ParameterProvenance
 
-# Verbs that move data outward. A read cannot leak; a write, send or post can.
+# Verbs whose RESULT moves data outward. Kept for callers that ask about the
+# response rather than the request.
 SINK_VERBS = frozenset({"write", "send", "post", "share", "create", "update", "pay"})
+
+# Every call is a sink for its own ARGUMENTS, whatever its verb.
+#
+# This module used to check only SINK_VERBS, on the reasoning that "a read cannot
+# leak". That is true of what a read returns and false of what it sends. A read's
+# arguments travel to whoever serves the call: `search_web(q=<the customer's
+# diagnosis>)` hands the diagnosis to the search provider, and no write ever
+# happens.
+#
+# AgentLeak (El Yagoubi et al.) is built on exactly that premise, and it is the
+# first outside corpus we have for this axis. As shipped we contained 6 of its 22
+# recorded tool calls, 27.3%, and all sixteen misses were the same thing: the
+# call was not a "sink verb". Treating the call's input as the sink takes it to
+# 22 of 22 with no false blocks.
+# Whether a call's arguments count as leaving is a PROPERTY OF THE DESTINATION,
+# declared by the mandate, not a global switch.
+#
+# Turning it on globally takes AgentLeak from 27.3% to 100% and takes false
+# positives on tau2 and BFCL from 2 of 8,040 to 99 of 17,921, a factor of
+# twenty-two. The reason is not a bug: a read whose arguments carry the value the
+# agent just legitimately read is ordinary work, `get_user(email=<the address
+# from the record>)`, and refusing it is label creep in a new costume.
+#
+# So `argument_sinks` names the destinations whose INPUT leaves the boundary:
+# third-party APIs, external search, anything served by someone else. A mandate
+# that names none behaves exactly as before.
 
 # Verbs that bring data in, and can therefore taint it.
 SOURCE_VERBS = frozenset({"read", "search", "list", "get", "query"})
@@ -108,6 +135,9 @@ class SensitivityPolicy:
     sensitive: tuple[str, ...] = ()
     # Sinks the sealed goal named. Sensitive data may reach these and only these.
     declassified_sinks: tuple[str, ...] = ()
+    # Destinations whose ARGUMENTS leave the boundary, whatever the verb. A read
+    # served by a third party hands it whatever the query contains.
+    argument_sinks: tuple[str, ...] = ()
 
     @classmethod
     def from_mandate(cls, mandate: Mapping[str, Any] | None) -> "SensitivityPolicy":
@@ -115,6 +145,7 @@ class SensitivityPolicy:
         return cls(
             sensitive=tuple(str(p) for p in (raw.get("sensitive") or ())),
             declassified_sinks=tuple(str(p) for p in (raw.get("declassified_sinks") or ())),
+            argument_sinks=tuple(str(p) for p in (raw.get("argument_sinks") or ())),
         )
 
     @property
@@ -127,6 +158,13 @@ class SensitivityPolicy:
         return any(_matches(c, pat)
                    for c in (resource, path) if c
                    for pat in self.sensitive)
+
+    def sends_its_arguments(self, tool: str, resource: str | None,
+                            path: str | None = None) -> bool:
+        """Does calling this hand its arguments to someone outside the boundary?"""
+        return any(_matches(c, pat)
+                   for c in (tool, resource, path) if c
+                   for pat in self.argument_sinks)
 
     def is_declassified(self, resource: str | None, path: str | None = None) -> str | None:
         for candidate in (resource, path):
@@ -328,8 +366,12 @@ class FlowTracker:
         """May this action carry what it is carrying, to where it is going?"""
         if not policy.active:
             return FlowVerdict(True, "no confidentiality policy declared")
-        if verb not in SINK_VERBS:
-            return FlowVerdict(True, f"{verb!r} does not move data outward")
+        if (verb not in SINK_VERBS
+                and not policy.sends_its_arguments(tool, resource, path)):
+            return FlowVerdict(
+                True,
+                f"{verb!r} does not move data outward and {resource!r} is not "
+                f"declared an argument sink")
 
         # Judged against everything this sink has already received PLUS this
         # write, so a value assembled across several writes is caught on the one

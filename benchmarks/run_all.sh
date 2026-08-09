@@ -69,7 +69,24 @@ echo "==> enforcement latency"
   --json "${RESULTS}/latency_redcode.json" \
   | tee "${RESULTS}/latency_redcode.md"
 
+echo "==> new product-shaped loaders (mcp_attack, advbench_agent, toolemu fixture)"
+for dataset in mcp_attack advbench_agent toolemu; do
+  echo "==> ${dataset}: enforcement ladder"
+  "${PY}" -m benchmarks.cli --dataset "${dataset}" --ci \
+    --json "${RESULTS}/new-suites/${dataset}.json" \
+    | tee "${RESULTS}/new-suites/${dataset}.md" || true
+done
+
+echo "==> Tier 4 syscall boundary (iVisor sample-trace replay)"
+"${PY}" -m benchmarks.syscall_tier \
+  --out "${RESULTS}/syscall_tier.md" || true
+
+echo "==> scoreboard rollup (excludes saturated suites from pooled headline)"
+"${PY}" -m benchmarks.scoreboard $([ -n "${QUICK}" ] && echo --quick) \
+  --json "${RESULTS}/scoreboard.json" | tee "${RESULTS}/scoreboard.md"
+
 echo
 echo "All deterministic benchmarks complete. Results in ${RESULTS}/."
 echo "Live-agent utility and false-block numbers are NOT included here; see"
 echo "docs/benchmark_program.md for why they are reported separately."
+echo "Buyer packet checklist: benchmarks/SEND_PACKET.md"

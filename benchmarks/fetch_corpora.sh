@@ -67,6 +67,35 @@ done
   curl -fsSL "${BF_URL}/multi_turn_func_doc/gorilla_file_system.json" \
     -o "${BF}/multi_turn_func_doc/gorilla_file_system.json"
 
+# --------------------------------------------------------------------------- #
+# InjecAgent — indirect prompt-injection tool-attack JSON (pinned for replay)
+# --------------------------------------------------------------------------- #
+if [ ! -d "${CORPUS}/InjecAgent/data" ]; then
+  echo "==> InjecAgent"
+  rm -rf "${CORPUS}/InjecAgent"
+  git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/uiuc-kang-lab/InjecAgent.git "${CORPUS}/InjecAgent"
+  git -C "${CORPUS}/InjecAgent" sparse-checkout set data
+else
+  echo "==> InjecAgent already present"
+fi
+
+# --------------------------------------------------------------------------- #
+# ToolEmu normalized traces — copy the shipped fixture when corpus assets lack
+# clayseal_traces.jsonl (honest path; raw toolkit mapping has no attack events).
+# --------------------------------------------------------------------------- #
+TE_ASSETS="${CORPUS}/ToolEmu/assets"
+FIXTURE_TE="${ROOT}/benchmarks/fixtures/toolemu/clayseal_traces.jsonl"
+if [ -f "${FIXTURE_TE}" ]; then
+  mkdir -p "${TE_ASSETS}"
+  if [ ! -s "${TE_ASSETS}/clayseal_traces.jsonl" ]; then
+    echo "==> ToolEmu clayseal_traces.jsonl (from fixture)"
+    cp "${FIXTURE_TE}" "${TE_ASSETS}/clayseal_traces.jsonl"
+  else
+    echo "==> ToolEmu clayseal_traces.jsonl already present"
+  fi
+fi
+
 echo
 echo "Corpora ready in ${CORPUS}"
 du -sh "${CORPUS}"/* 2>/dev/null || true
