@@ -37,6 +37,7 @@ bug, so the key is required rather than defaulted.
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -121,6 +122,7 @@ class PrincipalLedger:
     # in the tests, so the speed does not cost auditability.
     _totals: dict[tuple[str, str], Decimal] = field(default_factory=dict)
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
+    _tail_checked: bool = False
 
     def __post_init__(self) -> None:
         if self.path is not None and self.path.exists():
@@ -146,13 +148,54 @@ class PrincipalLedger:
             self._index.setdefault(key, []).append(e)
             self._totals[key] = self._totals.get(key, Decimal("0")) + e.amount
 
+    def _repair_torn_tail(self) -> None:
+        """Drop a partial final record before appending after it.
+
+        A crash mid-append leaves bytes with no trailing newline. The next
+        append then concatenates onto them, and the merged line parses as
+        neither record, so BOTH are lost on the next load: an acknowledged
+        booking of 500 vanished and the ledger reloaded at 100 instead of 600.
+
+        Under-counting is the failure direction that matters. An over-counted
+        ledger refuses work; an under-counted one raises a ceiling that an
+        operator believes is in force.
+
+        The torn record itself is correctly discarded, because it was never
+        acknowledged to any caller. What must not happen is it taking the next
+        one with it.
+        """
+        if self.path is None or not self.path.exists():
+            return
+        try:
+            size = self.path.stat().st_size
+            if size == 0:
+                return
+            with self.path.open("rb+") as fh:
+                fh.seek(-1, 2)
+                if fh.read(1) == b"\n":
+                    return
+                data = self.path.read_bytes()
+                cut = data.rfind(b"\n")
+                fh.truncate(cut + 1 if cut >= 0 else 0)
+        except OSError:
+            # A ledger that cannot repair itself must not take the session down;
+            # the load path already skips unparseable lines.
+            return
+
     def _append(self, entry: LedgerEntry) -> None:
         if self.path is None:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not self._tail_checked:
+            self._repair_torn_tail()
+            self._tail_checked = True
         with self.path.open("a") as fh:
             fh.write(json.dumps(entry.to_dict()) + "\n")
             fh.flush()
+            # Acknowledgement has to mean durable. Without this the caller is
+            # told the spend is booked while it sits in the OS page cache, and a
+            # power loss under-counts the ceiling.
+            os.fsync(fh.fileno())
 
     # -- queries ------------------------------------------------------------
     def _prune(self, key: tuple[str, str], cutoff: float) -> list[LedgerEntry]:

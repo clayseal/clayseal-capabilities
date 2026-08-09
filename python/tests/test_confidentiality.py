@@ -165,3 +165,49 @@ def test_policy_comes_from_the_mandate_not_from_runtime():
     assert policy.is_declassified("mail:board@example.com")
     assert not policy.is_declassified("mail:evil")
     assert not SensitivityPolicy.from_mandate({}).active
+
+
+# --------------------------------------------------------------------------- #
+# The traversal is bounded, because attacker-shaped output reaches it
+# --------------------------------------------------------------------------- #
+def test_deeply_nested_tool_output_does_not_crash_the_authorization_path():
+    """A RecursionError inside the thing that decides whether actions are
+    allowed is a denial of service on the authorization layer itself."""
+    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+
+    payload = SECRET
+    for _ in range(5000):
+        payload = [payload]
+    assert ParameterProvenance._tokens(payload) == []
+
+
+def test_a_self_referential_payload_terminates():
+    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+
+    cycle = []
+    cycle.append(cycle)
+    cycle.append(SECRET)
+    assert SECRET in ParameterProvenance._tokens(cycle)
+
+
+def test_ordinary_nesting_is_still_walked():
+    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+
+    tokens = ParameterProvenance._tokens(
+        {"to": "alice@corp.example", "cc": [{"addr": "bob@corp.example"}]})
+    assert "alice@corp.example" in tokens
+    assert "bob@corp.example" in tokens
+
+
+def test_an_unwalkable_payload_grounds_less_rather_than_more():
+    """Failing toward refusal. A payload we cannot fully traverse must not come
+    back grounded."""
+    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+
+    p = ParameterProvenance()
+    p.record_observation("read", "x", structured_fields={"v": SECRET})
+    payload = SECRET
+    for _ in range(5000):
+        payload = [payload]
+    ok, _ = p.is_grounded(payload)
+    assert not ok

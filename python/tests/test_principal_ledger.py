@@ -542,3 +542,46 @@ def test_the_signal_does_not_fire_below_high_utilisation():
         runs += 1
         fired += _signal([round(x * scale, 2) for x in raw]).suspicious
     assert fired == 0, f"{fired}/{runs} legitimate runs flagged below 75% utilisation"
+
+
+# --------------------------------------------------------------------------- #
+# Durability. Under-counting is the failure direction that matters.
+# --------------------------------------------------------------------------- #
+def test_a_torn_append_does_not_swallow_the_next_acknowledged_write(tmp_path):
+    """A crash mid-append leaves bytes with no trailing newline. The next append
+    concatenated onto them and the merged line parsed as neither record, so BOTH
+    were lost: an acknowledged booking of 500 vanished and the ledger reloaded at
+    100 instead of 600.
+
+    An over-counted ledger refuses work. An under-counted one raises a ceiling
+    the operator believes is in force.
+    """
+    path = tmp_path / "ledger.jsonl"
+    PrincipalLedger(path=path).book("p", "usd", Decimal("100"), session="s1")
+
+    with path.open("a") as fh:                      # simulate the crash
+        fh.write('{"principal": "p", "budget_id": "usd", "amoun')
+
+    PrincipalLedger(path=path).book("p", "usd", Decimal("500"), session="s2")
+    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal("600")
+
+
+def test_the_torn_record_itself_is_discarded(tmp_path):
+    """It was never acknowledged to any caller, so losing it is correct. What
+    must not happen is it taking the next one with it."""
+    path = tmp_path / "ledger.jsonl"
+    PrincipalLedger(path=path).book("p", "usd", Decimal("100"), session="s1")
+    with path.open("a") as fh:
+        fh.write('{"principal": "p", "budget_id": "usd", "amount": "999')
+    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal("100")
+
+
+def test_a_ledger_survives_repeated_crash_and_restart(tmp_path):
+    path = tmp_path / "ledger.jsonl"
+    for i in range(10):
+        PrincipalLedger(path=path).book("p", "usd", Decimal("10"), session=f"s{i}")
+        with path.open("a") as fh:
+            fh.write('{"partial')
+    final = PrincipalLedger(path=path)
+    assert final.spent("p", "usd") == Decimal("100")
+    assert final.verify_totals()
