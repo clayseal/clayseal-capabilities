@@ -384,19 +384,29 @@ class SessionBroker:
                 if not ok:
                     reason = why  # the action steered the mission out of reach
             if reason is not None:
-                self._rollback(action, v_res, c_res)
                 self._record_triggers([f"intent: {reason}"])
                 # Runtime replanning, before any denial. An open-ended task
                 # cannot state its steps in advance, and refusing every
                 # unforeseen step is what produced zero utility on AgentDyn.
+                #
+                # The rollback that used to sit above this point is now below
+                # it, and the ordering is load-bearing. Releasing the budget
+                # reservations and popping the action off the trajectory before
+                # asking the extender meant every extended action was free: the
+                # value and call ledgers never incremented, so a cumulative
+                # ceiling could never be reached however many actions were
+                # extended, and the action was invisible to the trajectory
+                # detector and to every later `feasible` and `last_deviation`
+                # check. Replanning grows the PLAN and has no authority over
+                # budgets; an extended action executed, so it pays.
                 if self.plan_extender is not None:
                     verdict = self.plan_extender.consider(action.tool, action.verb)
                     if verdict.extended:
                         self._record_triggers([f"replan: {verdict.reason}"])
-                        return self._finalize(
-                            action, Outcome.ALLOW, "intent-envelope",
+                        return self._commit_and_finalize(
+                            action, v_res, c_res, "intent-envelope",
                             (reason, f"plan extended: {verdict.reason}"),
-                            None, is_write, start)
+                            is_write, start)
 
                 if is_consequential(action):
                     # A plan miss on an action the binding floor already cleared
@@ -420,10 +430,13 @@ class SessionBroker:
                         if (self.defer_allows_bound
                                 and self.egress is not None
                                 and self.egress.binds(action.resource, action.args)):
-                            return self._finalize(
-                                action, Outcome.ALLOW, "intent-envelope",
+                            # Same rule as the replan path above: an allowed
+                            # action pays its budget and stays on the trajectory.
+                            return self._commit_and_finalize(
+                                action, v_res, c_res, "intent-envelope",
                                 (reason, "off-plan; destination validated by binding floor"),
-                                None, is_write, start)
+                                is_write, start)
+                        self._rollback(action, v_res, c_res)
                         request = build_step_up_request(
                             request_id=str(uuid4()), query_id=self.goal.query_id,
                             resource_ref=action.resource, operation=action.verb,
@@ -432,9 +445,11 @@ class SessionBroker:
                             action, Outcome.STEP_UP, "intent-envelope",
                             (reason, "off-plan but destination-bound"), None,
                             is_write, start, step_up=request, step_up_flag=True)
+                    self._rollback(action, v_res, c_res)
                     return self._finalize(action, Outcome.DENY, "intent-envelope",
                                           (reason, "off-plan and consequential"), None,
                                           is_write, start, blocked=True)
+                self._rollback(action, v_res, c_res)
                 request = build_step_up_request(
                     request_id=str(uuid4()), query_id=self.goal.query_id,
                     resource_ref=action.resource, operation=action.verb, violations=[reason])
@@ -466,11 +481,26 @@ class SessionBroker:
                                   is_write, start, step_up=request, step_up_flag=True)
 
         # Allow: commit reservations.
-        if v_res is not None:
+        return self._commit_and_finalize(action, v_res, c_res, "-", (),
+                                         is_write, start, score=score)
+
+    def _commit_and_finalize(self, action, v_res, c_res, layer, reasons,
+                             is_write, start, *, score=None) -> BrokerDecision:
+        """The only way to return ALLOW. Reservations become spend here.
+
+        Every allow path has to go through this. The alternative, each site
+        remembering to commit, is what produced the defect this replaces: the
+        replan and `defer_allows_bound` paths returned ALLOW after a rollback
+        had already released their reservations, so those actions executed
+        against a ledger that never recorded them and a cumulative ceiling could
+        never be reached.
+        """
+        if v_res is not None and v_res.allowed:
             v_res.commit()
-        if c_res is not None:
+        if c_res is not None and c_res.allowed:
             c_res.commit()
-        return self._finalize(action, Outcome.ALLOW, "-", (), score, is_write, start)
+        return self._finalize(action, Outcome.ALLOW, layer, reasons, score,
+                              is_write, start)
 
     def _finalize(self, action, outcome, layer, reasons, score, is_write, start, *,
                   blocked=False, step_up=None, step_up_flag=False) -> BrokerDecision:

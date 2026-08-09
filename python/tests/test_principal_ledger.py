@@ -365,3 +365,62 @@ def test_reads_stay_cheap_at_scale():
         ledger.spent("p", "usd_payout")
     per_call_ms = (time.perf_counter() - start) / 100 * 1000
     assert per_call_ms < 0.5, f"{per_call_ms:.2f} ms per read"
+
+
+# --------------------------------------------------------------------------- #
+# Sign. Found by an adversarial audit of this module, not by review.
+# --------------------------------------------------------------------------- #
+def test_a_negative_amount_cannot_lift_the_ceiling_for_other_sessions():
+    """One negative call used to be a global disable switch.
+
+    `reserve` adds the amount straight into `_reserved`, which is keyed by
+    (principal, budget) rather than by session. A single authorize() carrying
+    -1,000,000,000 therefore held a vast negative amount against the principal,
+    and every concurrent and subsequent session of that principal passed its
+    ceiling check. Measured at 499,950 moved against a ceiling of 10,000, with
+    nothing on disk to show the ledger had been touched.
+    """
+    ledger = PrincipalLedger()
+    ceilings = {"usd_payout": Decimal("10000")}
+    tracked = {"send_money": ("amount", "usd_payout")}
+
+    def view(session):
+        return PrincipalBudgetView(ledger=ledger, principal="mandate:payouts",
+                                   ceilings=ceilings, tracked=tracked, session=session)
+
+    view("attacker").authorize("send_money", {"amount": "-1000000000"})
+
+    moved = Decimal("0")
+    for i in range(50):
+        v = view(f"s{i}")
+        ok, _ = v.authorize("send_money", {"amount": "9999"})
+        if ok:
+            v.commit("send_money", {"amount": "9999"})
+            moved += Decimal("9999")
+    assert moved <= Decimal("10000"), f"{moved} moved against a 10000 ceiling"
+
+
+def test_a_negative_booking_cannot_manufacture_headroom():
+    """The `book` form of the same defect.
+
+    A booked credit drove the window total down, so `spent`, `remaining` and
+    `would_exceed` all reported headroom that did not exist, and
+    `verify_totals` still returned True because the cache and the log agreed on
+    the wrong number. 180,000 was moved against a 10,000 ceiling this way.
+    """
+    ledger = PrincipalLedger()
+    with pytest.raises(ValueError):
+        ledger.book("mandate:payouts", "usd_payout", Decimal("-9000"))
+    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal("0")
+    assert ledger.verify_totals()
+
+
+@pytest.mark.parametrize("bad", ["-1", "0", "NaN", "Infinity", "-Infinity"])
+def test_non_positive_and_non_finite_amounts_are_not_tracked(bad):
+    ledger = PrincipalLedger()
+    v = PrincipalBudgetView(
+        ledger=ledger, principal="p", ceilings={"b": Decimal("100")},
+        tracked={"send_money": ("amount", "b")}, session="s")
+    ok, reason = v.authorize("send_money", {"amount": bad})
+    v.commit("send_money", {"amount": bad})
+    assert ledger.spent("p", "b") == Decimal("0")
