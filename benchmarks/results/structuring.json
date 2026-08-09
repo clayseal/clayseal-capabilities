@@ -1,0 +1,170 @@
+[
+  {
+    "engine": "session-scoped",
+    "fragments": 1,
+    "attempted": "40000",
+    "allowed": "0",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 1,
+    "attempted": "40000",
+    "allowed": "0",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "session-scoped",
+    "fragments": 2,
+    "attempted": "40000",
+    "allowed": "0",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 2,
+    "attempted": "40000",
+    "allowed": "0",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "session-scoped",
+    "fragments": 4,
+    "attempted": "40000",
+    "allowed": "40000.00",
+    "ceiling": "10000",
+    "contained": false,
+    "overspend": "30000.00"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 4,
+    "attempted": "40000",
+    "allowed": "10000.00",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "session-scoped",
+    "fragments": 8,
+    "attempted": "40000",
+    "allowed": "40000.00",
+    "ceiling": "10000",
+    "contained": false,
+    "overspend": "30000.00"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 8,
+    "attempted": "40000",
+    "allowed": "10000.00",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "session-scoped",
+    "fragments": 16,
+    "attempted": "40000",
+    "allowed": "40000.00",
+    "ceiling": "10000",
+    "contained": false,
+    "overspend": "30000.00"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 16,
+    "attempted": "40000",
+    "allowed": "10000.00",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "engine": "session-scoped",
+    "fragments": 64,
+    "attempted": "40000",
+    "allowed": "40000.00",
+    "ceiling": "10000",
+    "contained": false,
+    "overspend": "30000.00"
+  },
+  {
+    "engine": "principal-scoped",
+    "fragments": 64,
+    "attempted": "40000",
+    "allowed": "10000.00",
+    "ceiling": "10000",
+    "contained": true,
+    "overspend": "0"
+  },
+  {
+    "pattern": "split to the ceiling",
+    "fragments": 4,
+    "total": "10000.00",
+    "ceiling": "10000",
+    "just_under": 0,
+    "uniformity": 1.0,
+    "utilisation": 1.0,
+    "suspicious": true,
+    "reasons": [
+      "4 near-identical payments consuming 100% of the 10000 ceiling, the shape of a divided total rather than of work arriving"
+    ]
+  },
+  {
+    "pattern": "parked just under",
+    "fragments": 4,
+    "total": "36000",
+    "ceiling": "10000",
+    "just_under": 4,
+    "uniformity": 1.0,
+    "utilisation": 3.6,
+    "suspicious": true,
+    "reasons": [
+      "4 payments parked between 80% of the 10000 ceiling and the ceiling itself",
+      "4 near-identical payments consuming 360% of the 10000 ceiling, the shape of a divided total rather than of work arriving"
+    ]
+  },
+  {
+    "pattern": "real invoice run",
+    "fragments": 5,
+    "total": "5880.74",
+    "ceiling": "10000",
+    "just_under": 0,
+    "uniformity": 0.0,
+    "utilisation": 0.588,
+    "suspicious": false,
+    "reasons": []
+  },
+  {
+    "pattern": "payroll (uniform, low use)",
+    "fragments": 5,
+    "total": "500",
+    "ceiling": "10000",
+    "just_under": 0,
+    "uniformity": 1.0,
+    "utilisation": 0.05,
+    "suspicious": false,
+    "reasons": []
+  },
+  {
+    "pattern": "one large payment",
+    "fragments": 1,
+    "total": "9900",
+    "ceiling": "10000",
+    "just_under": 1,
+    "uniformity": 0.0,
+    "utilisation": 0.99,
+    "suspicious": false,
+    "reasons": []
+  }
+]

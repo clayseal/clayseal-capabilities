@@ -56,6 +56,10 @@ echo "==> long-trajectory needle (deployability: alarms per session)"
 "${PY}" -m benchmarks.trajectory --length 500 --trajectories "$([ -n "${QUICK}" ] && echo 40 || echo 200)" \
   --json "${RESULTS}/trajectory.json" | tee "${RESULTS}/trajectory.md"
 
+echo "==> cross-session structuring (principal-scoped aggregates)"
+"${PY}" -m benchmarks.structuring --json "${RESULTS}/structuring.json" \
+  | tee "${RESULTS}/structuring.md"
+
 echo "==> enforcement latency"
 "${PY}" -m benchmarks.latency --dataset redcode --limit 200 --repeats 20 \
   --json "${RESULTS}/latency_redcode.json" \
