@@ -382,3 +382,104 @@ def test_an_extended_action_stays_on_the_trajectory():
             step=i, tool="send_email", resource="mcp:tool:send_email",
             verb="send", args={"to": "someone@example.com"}))
     assert len(broker._trajectory.actions) == 4
+
+
+def test_replanning_cannot_rescue_an_infeasible_goal():
+    """Deviation and infeasibility are different signals.
+
+    A deviation says the agent took a step the compiled plan did not list, which
+    on an open-ended task is usually the planner failing to enumerate. An
+    infeasibility says the action steered the mission out of reach. No amount of
+    shape plausibility restores a goal condition that can no longer be met, so
+    the extender is consulted for the first and not the second.
+    """
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.capabilities.monitor import Action
+    from agentauth.core.task_scope import TaskScope
+
+    consulted = []
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            consulted.append((tool, verb))
+            return ReplanVerdict(True, "yes")
+
+    class Infeasible:
+        def last_deviation(self, trajectory):
+            return None
+
+        def feasible(self, trajectory):
+            return False, "the goal can no longer be met"
+
+    broker = SessionBroker(
+        goal=GoalSpec(query_id="q", summary="summarise the inbox"),
+        scope=TaskScope(allowed_resources=["mcp:tool:send_email"], allowed_actions=[]),
+        intent_envelope=Infeasible(),
+        plan_extender=AlwaysYes(), scope_is_advisory=True)
+    decision = broker.authorize(Action(
+        step=0, tool="send_email", resource="mcp:tool:send_email",
+        verb="send", args={"to": "someone@example.com"}))
+    assert decision.outcome is not Outcome.ALLOW
+    assert not consulted, "the extender was asked to rescue an infeasible goal"
+
+
+def test_scope_extension_does_not_mutate_the_callers_scope():
+    """The extension set is session-local.
+
+    It used to append to `scope.allowed_resources`, which is the caller's own
+    TaskScope object, so authority granted by one session's replanning outlived
+    the broker and leaked into every other session sharing that instance.
+    """
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.capabilities.monitor import Action
+    from agentauth.core.task_scope import TaskScope
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "yes")
+
+    shared = TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[])
+    before = list(shared.allowed_resources)
+
+    first = SessionBroker(goal=GoalSpec(query_id="q", summary="s"), scope=shared,
+                          plan_extender=AlwaysYes(), scope_is_advisory=True)
+    assert first.authorize(_action()).outcome is Outcome.ALLOW
+    assert shared.allowed_resources == before, "the caller's scope was mutated"
+
+    # A second session sharing the scope must not inherit the grant.
+    second = SessionBroker(goal=GoalSpec(query_id="q", summary="s"), scope=shared)
+    assert second.authorize(_action()).outcome is not Outcome.ALLOW
+
+
+def test_one_cleared_shape_does_not_admit_unlimited_resources():
+    """`max_extensions` bounds SHAPES, and one shape admits many resources.
+
+    Without an independent cap, a single "this goal may write" verdict let every
+    write target in the catalog through.
+    """
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.capabilities.monitor import Action
+    from agentauth.core.task_scope import TaskScope
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "yes")
+
+    broker = SessionBroker(
+        goal=GoalSpec(query_id="q", summary="s"),
+        scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
+        plan_extender=AlwaysYes(), scope_is_advisory=True,
+        max_scope_extensions=3)
+    allowed = 0
+    for i in range(20):
+        decision = broker.authorize(Action(
+            step=i, tool=f"write_tool_{i}", resource=f"mcp:tool:write_tool_{i}",
+            verb="write", args={"body": "x"}))
+        allowed += decision.outcome is Outcome.ALLOW
+    assert allowed <= 3, f"{allowed} distinct resources admitted under a cap of 3"

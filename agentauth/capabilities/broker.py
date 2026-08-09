@@ -46,6 +46,7 @@ from agentauth.capabilities.monitor import (
     Trajectory,
     is_consequential,
 )
+from agentauth.capabilities.replan import verb_class
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.scoping.metrics import ScopingMetrics
 from agentauth.capabilities.step_up import StepUpRequest, build_step_up_request
@@ -190,6 +191,11 @@ class SessionBroker:
     # it. Default False keeps mandate-derived scopes rigid, so a caller has to
     # opt in by asserting the weaker provenance.
     scope_is_advisory: bool = False
+    # Independent cap on how many (resource, verb class) pairs replanning may
+    # admit. `PlanExtender.max_extensions` bounds SHAPES, and one shape admits
+    # unlimited resources, so without this a single "the goal may write" verdict
+    # let every write target in the catalog through.
+    max_scope_extensions: int = 8
     audit_budget: int | None = None
     # What to do once the budget is spent. Denying is the conservative choice and
     # keeps the security claim intact at the cost of utility; allowing trades the
@@ -301,6 +307,7 @@ class SessionBroker:
                 return False, f"action {action.verb!r} out of scope", {}, True
             if (self.scope.allowed_resources
                     and action.resource not in self.scope.allowed_resources
+                    and (action.resource, verb_class(action.verb)) not in self._extended
                     and action.verb != "read"):
                 # Read-permissive / effect-strict: containment scales with
                 # reversibility. An acquisition to an out-of-scope resource is
@@ -330,7 +337,30 @@ class SessionBroker:
                 if self.plan_extender is not None and self.scope_is_advisory:
                     verdict = self.plan_extender.consider(action.tool, action.verb)
                     if verdict.extended:
-                        self.scope.allowed_resources.append(action.resource)
+                        # Session-local, and bounded by the same cap as the
+                        # shapes. Two defects were fixed here at once.
+                        #
+                        # It used to append to `self.scope.allowed_resources`,
+                        # which is the caller's own TaskScope object. That
+                        # mutation outlived the broker, so authority granted by
+                        # one session's replanning leaked into every other
+                        # session sharing that scope instance.
+                        #
+                        # And `max_extensions` bounds SHAPES, so one cleared
+                        # shape admitted unlimited distinct resources: a single
+                        # "this goal may write" verdict let every write target
+                        # in the catalog through. The extension set is now
+                        # capped independently, and an admitted resource is
+                        # remembered with the verb class it was admitted for, so
+                        # it cannot be reused under a different one.
+                        key = (action.resource, verb_class(action.verb))
+                        if (key not in self._extended
+                                and len(self._extended) >= self.max_scope_extensions):
+                            return (False,
+                                    f"resource {action.resource!r} out of scope; "
+                                    f"scope already extended "
+                                    f"{self.max_scope_extensions} times", {}, False)
+                        self._extended.add(key)
                         self._record_triggers([f"scope extended: {verdict.reason}"])
                         return True, f"scope extended: {verdict.reason}", {}, True
                 return False, f"resource {action.resource!r} out of scope", {}, False
@@ -377,8 +407,17 @@ class SessionBroker:
         if self.intent_envelope is not None:
             dev = self.intent_envelope.last_deviation(self._trajectory)
             reason = None
+            # Two distinct signals, and only one of them is a planner-recall
+            # failure. A DEVIATION says the agent took a step the compiled plan
+            # did not list, which on an open-ended task is usually the planner
+            # failing to enumerate. INFEASIBILITY says the action steered the
+            # mission out of reach, and no amount of shape plausibility restores
+            # a goal condition that can no longer be met. Replanning may answer
+            # the first and must not answer the second.
+            replannable = False
             if dev is not None:
                 reason = dev.reason
+                replannable = True
             else:
                 ok, why = self.intent_envelope.feasible(self._trajectory)
                 if not ok:
@@ -399,7 +438,7 @@ class SessionBroker:
                 # detector and to every later `feasible` and `last_deviation`
                 # check. Replanning grows the PLAN and has no authority over
                 # budgets; an extended action executed, so it pays.
-                if self.plan_extender is not None:
+                if self.plan_extender is not None and replannable:
                     verdict = self.plan_extender.consider(action.tool, action.verb)
                     if verdict.extended:
                         self._record_triggers([f"replan: {verdict.reason}"])
@@ -557,6 +596,19 @@ class SessionBroker:
             v_res.release()
         if c_res is not None and c_res.allowed:
             c_res.release()
+
+    @property
+    def _extended(self) -> set:
+        """(resource, verb class) pairs replanning admitted, for THIS session.
+
+        Session-local by construction. The previous version appended to
+        `self.scope.allowed_resources`, which is the caller's own TaskScope
+        object, so authority granted by one session's replanning outlived the
+        broker and leaked into every other session sharing that instance.
+        """
+        if getattr(self, "_extended_pairs", None) is None:
+            self._extended_pairs = set()
+        return self._extended_pairs
 
     def _record_triggers(self, reasons: list[str]) -> None:
         joined = " ".join(reasons).lower()
