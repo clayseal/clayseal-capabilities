@@ -114,3 +114,45 @@ of SLEIGHT at a 1% false-positive rate.
 
 That boundary is worth stating plainly rather than obscuring, because a buyer
 who deploys this against content-defined harm will discover it in production.
+
+---
+
+## Implemented: velocity, and what it recovered
+
+`agentauth/capabilities/velocity.py`, exposed as the ladder rung
+`task-scope+binding+budget+velocity`.
+
+The cap is **per task**, derived from the volume that task legitimately needs,
+never a global constant. The global version was measured first and rejected: at
+10 effects per hour RedCode lost 12.8% of its benign side, because a mail-merge
+agent and a ticket-answering agent have nothing in common.
+
+At 1.5x the task's own expected effect volume:
+
+| Corpus | containment before | after | false-block before | after |
+| --- | --: | --: | --: | --: |
+| AgentHarm | 6.3% | **24.7%** | 0.00% | **0.00%** |
+| SLEIGHT | 35.7% | **65.5%** | 35.37% | **35.37%** |
+| RedCode | 99.9% | 99.9% | 0.00% | 0.00% |
+| ASB | 100% | 100% | 0.00% | 0.00% |
+| IPI-Coding | 100% | 100% | 0.00% | 0.00% |
+| tau2 (14,842 benign events) | n/a | n/a | 0.00% | **0.00%** |
+| BFCL (3,232 benign events) | n/a | n/a | 0.00% | **0.00%** |
+| ATIF | n/a | n/a | 0.00% | **0.00%** |
+
+**Containment nearly quadruples on AgentHarm and nearly doubles on SLEIGHT at
+zero measured false-block cost on any corpus**, including the three benign-only
+sets totalling over 18,000 legitimate events. The per-event ladder invariants
+still hold: monotone containment, no added friction at a higher rung.
+
+Two honest qualifications.
+
+The cap here is derived from each task's benign event count, standing in for
+what an operator declares in the mandate. Only benign events are consulted, so
+no attack label reaches the limit, but a deployment has to supply that
+expectation rather than discover it.
+
+It does not touch the first harmful action, and it never will. A quarter of
+AgentHarm is now contained because those attacks need volume. The rest is a
+single authorized-looking action whose harm is in its content, and no rate limit
+reaches that.
