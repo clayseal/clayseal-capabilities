@@ -225,7 +225,9 @@ _SEGMENT = re.compile(r"\|\||&&|\$\(|[|;\n()`]")
 
 # Binaries that actually open a socket.
 _NET_BINARIES = {"curl", "wget", "nc", "ncat", "telnet", "ssh", "scp",
-                 "sftp", "rsync", "ftp", "http", "https"}
+                 "sftp", "rsync", "ftp", "http", "https",
+                 # Object-store CLIs: destination is s3:// / gs:// (see _net_target).
+                 "aws", "gsutil", "gcloud", "rclone", "az"}
 # `git` is not one of them. `git status`, `git diff`, `git commit` and `git log`
 # touch nothing but the local checkout; only these subcommands reach a remote.
 _GIT_NET = {"push", "pull", "fetch", "clone", "ls-remote"}
@@ -285,6 +287,15 @@ def _net_target(segment: str, head: str, args: list[str]) -> str | None:
                 continue
             host = arg.split("@")[-1].split(":")[0]
             return f"net:{host}" if host else None
+        return None
+    if head in {"aws", "gsutil", "gcloud", "rclone", "az"}:
+        # Object-store destination beats a local source path in the same argv.
+        m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", segment, re.I)
+        if m:
+            return f"net:{m.group('scheme').lower()}:{m.group('bucket')}"
+        url = _URL.search(segment)
+        if url:
+            return f"net:{url.group(1)}"
         return None
     url = _URL.search(segment)
     if url:
