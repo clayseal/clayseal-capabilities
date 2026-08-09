@@ -214,3 +214,78 @@ def test_a_refused_action_gives_back_every_class_it_acquired():
     v.release("m", "send", now=1.0)
     assert v.observed("effect", 3600.0, now=1.0) == 0
     assert v.observed("send", 3600.0, now=1.0) == 0
+
+
+# --------------------------------------------------------------------------- #
+# Principal scope. The structuring lesson, applied here at last.
+# --------------------------------------------------------------------------- #
+def test_a_session_scoped_cap_is_reset_by_opening_another_session():
+    """The defect, pinned so it cannot come back.
+
+    SessionVelocity is per object, so a new session is a new empty window. A
+    declared cap of seven effect actions per hour admitted fifty-six when the
+    same work was split across eight sessions. The agent needs no capability it
+    did not already have: it opens another conversation.
+    """
+    mandate = {"velocity": {"effect": {"max": 7, "window_seconds": 3600}}}
+    total = 0
+    for _ in range(8):
+        limiter = velocity_from_mandate(mandate)
+        total += sum(limiter.try_acquire("m", "send", now=0.0).allowed for _ in range(7))
+    assert total == 56, "the session-scoped hole should still be demonstrable"
+
+
+def test_a_principal_scoped_cap_survives_new_sessions():
+    from agentauth.capabilities.velocity import (
+        PrincipalVelocity, PrincipalVelocityView)
+
+    mandate = {"velocity": {"effect": {"max": 7, "window_seconds": 3600}}}
+    ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
+    total = 0
+    for _ in range(8):
+        view = PrincipalVelocityView(ledger=ledger, principal="mandate:assistant")
+        total += sum(view.try_acquire("m", "send", now=0.0).allowed for _ in range(7))
+    assert total == 7
+
+
+def test_one_principal_does_not_consume_another_principals_rate():
+    from agentauth.capabilities.velocity import (
+        PrincipalVelocity, PrincipalVelocityView)
+
+    mandate = {"velocity": {"effect": {"max": 3, "window_seconds": 3600}}}
+    ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
+    a = PrincipalVelocityView(ledger=ledger, principal="mandate:a")
+    b = PrincipalVelocityView(ledger=ledger, principal="mandate:b")
+    assert sum(a.try_acquire("m", "send", now=0.0).allowed for _ in range(5)) == 3
+    assert sum(b.try_acquire("m", "send", now=0.0).allowed for _ in range(5)) == 3
+
+
+def test_the_principal_window_still_slides():
+    from agentauth.capabilities.velocity import (
+        PrincipalVelocity, PrincipalVelocityView)
+
+    mandate = {"velocity": {"effect": {"max": 2, "window_seconds": 100}}}
+    ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
+    view = PrincipalVelocityView(ledger=ledger, principal="p")
+    assert sum(view.try_acquire("m", "send", now=float(i)).allowed for i in range(5)) == 2
+    assert view.try_acquire("m", "send", now=500.0).allowed
+
+
+def test_a_patient_attacker_below_the_declared_rate_is_not_contained():
+    """The honest limit of any rate limit, asserted rather than left implicit.
+
+    Forty sends at ten-minute intervals pass a cap of seven per hour, because
+    four per hour is not a burst. A rate limit bounds the rate; it does not bound
+    the total, and a patient adversary simply goes slower. The burst benchmark's
+    100% means 100% of bursts ABOVE the declared rate, and quoting it without
+    this sentence would overstate it.
+    """
+    from agentauth.capabilities.velocity import (
+        PrincipalVelocity, PrincipalVelocityView)
+
+    mandate = {"velocity": {"effect": {"max": 7, "window_seconds": 3600}}}
+    ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
+    view = PrincipalVelocityView(ledger=ledger, principal="p")
+    allowed = sum(view.try_acquire("m", "send", now=float(i * 600)).allowed
+                  for i in range(40))
+    assert allowed == 40
