@@ -55,6 +55,15 @@ from agentauth.capabilities.monitor.intent_envelope import (
 from agentauth.capabilities.monitor.ontology import ToolOntology, ToolSpec
 from agentauth.capabilities.monitor.reachability import EnvelopeDeparture, PathEnvelope
 from agentauth.capabilities.monitor.symbolic_planner import SymbolicPlanner, fact_landmarks
+from agentauth.capabilities.monitor.sealed_plan import (
+    SealedPlanConstraints,
+    check_sealed_plan,
+    compile_sealed_plan,
+    extract_callees,
+    extract_destinations,
+    content_digest,
+    is_secret_path,
+)
 from agentauth.capabilities.monitor.twin_corridor import (
     TwinStructuralVerdict,
     assess_twin_structural,
@@ -121,6 +130,13 @@ __all__ = [
     "TwinStructuralVerdict",
     "assess_twin_structural",
     "intent_from_reference",
+    "SealedPlanConstraints",
+    "compile_sealed_plan",
+    "check_sealed_plan",
+    "extract_callees",
+    "extract_destinations",
+    "content_digest",
+    "is_secret_path",
     "TrustLevel",
     "TypedGoalEnvelope",
     "action_token",
