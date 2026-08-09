@@ -353,6 +353,7 @@ class StructuringSignal:
     ceiling: Decimal
     just_under: int          # entries deliberately parked below the limit
     uniformity: float        # 1.0 means every fragment identical
+    effective_fragments: float = 0.0   # inverse Herfindahl: equal parts equivalent
     reasons: tuple[str, ...] = ()
 
     @property
@@ -384,7 +385,10 @@ def structuring_signal(
     min_fragments: int = 4,
     uniformity_threshold: float = 0.95,
     utilisation_threshold: float = 0.85,
-    fragment_ceiling_ratio: float = 0.5,
+    # Effective equal-fragment count, from the inverse Herfindahl index. Two is
+    # the floor at which "this was divided" is meaningful: a lone payment scores
+    # exactly 1 and cannot be a split.
+    min_effective_fragments: float = 2.0,
 ) -> StructuringSignal:
     """Distributional test for spend shaped by a ceiling.
 
@@ -447,23 +451,37 @@ def structuring_signal(
             "of work arriving"
         )
 
-    # Fragmentation, which does not depend on the amounts resembling each other.
-    # The uniformity test above was defeated by 10% jitter while the same money
-    # moved: an attacker willing to vary the fragments beat it and nothing else
-    # fired. This one asks the question that survives jitter, which is whether
-    # many payments none of them individually notable together consume nearly
-    # all of a ceiling. Legitimate work does that occasionally, so it is
-    # advisory like the rest of this tier, but jitter is no longer an escape.
-    largest = max(amounts)
-    if (len(amounts) >= min_fragments
-            and utilisation >= utilisation_threshold
-            and largest < ceiling * Decimal(str(fragment_ceiling_ratio))):
+    # Concentration, which does not depend on the amounts resembling each other
+    # and has no cliff in it.
+    #
+    # Two earlier versions of this test were beaten. Uniformity alone fell to
+    # 10% jitter while the same money moved. Replacing it with "many payments,
+    # none individually large" introduced a threshold on the LARGEST fragment,
+    # and that threshold was itself a blind spot: one payment anywhere between
+    # 50% and 80% of the ceiling defeated the fragmentation gate at every
+    # fragment count while sitting below the just-under band, so four of five
+    # structuring patterns went unflagged.
+    #
+    # The measure here is the inverse Herfindahl index: the number of EQUAL
+    # fragments that would produce the same concentration. It moves smoothly, so
+    # there is no amount an attacker can pick to fall off the far side of it.
+    # One payment of 6,000 plus four of 1,000 has an effective count of 2.5, and
+    # a single payment has an effective count of exactly 1, which is why a lone
+    # large payment cannot be structuring.
+    shares = [float(a / total) for a in amounts] if total > 0 else []
+    hhi = sum(x * x for x in shares)
+    effective = (1.0 / hhi) if hhi > 0 else 0.0
+    if (effective >= min_effective_fragments
+            and utilisation >= utilisation_threshold):
         reasons.append(
-            f"{len(amounts)} payments, none above {fragment_ceiling_ratio:.0%} of the "
-            f"{ceiling} ceiling, together consuming {utilisation:.0%} of it"
+            f"{len(amounts)} payments with an effective concentration of "
+            f"{effective:.1f} equal parts consuming {utilisation:.0%} of the "
+            f"{ceiling} ceiling, the shape of a total divided to fit rather "
+            "than of work arriving"
         )
+
     return StructuringSignal(len(amounts), total, ceiling, just_under,
-                             uniformity, tuple(reasons))
+                             uniformity, effective, tuple(reasons))
 
 
 @dataclass

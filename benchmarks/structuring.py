@@ -180,9 +180,19 @@ def main(argv: list[str] | None = None) -> int:
     patterns = [
         ("split to the ceiling", [str((ceiling / 4).quantize(Decimal("0.01")))] * 4),
         ("parked just under", ["9000"] * 4),
+        ("jittered split", ["2400", "2600", "2550", "2450"]),
+        # The blind spot the concentration measure replaced. The fragmentation
+        # test used to require the largest fragment to sit below half the
+        # ceiling, so one payment anywhere between 50% and 80% of it defeated
+        # the test at every fragment count while staying under the just-under
+        # band. All three of these went unflagged.
+        ("dominant fragment at 60%", ["6000", "1000", "1000", "1000", "1000"]),
+        ("dominant fragment at 70%", ["7000", "800", "800", "800", "800"]),
+        ("dominant fragment at 55%", ["5500"] + ["500"] * 9),
         ("real invoice run", ["1200.50", "340", "2750.25", "89.99", "1500"]),
         ("payroll (uniform, low use)", ["100"] * 5),
         ("one large payment", ["9900"]),
+        ("two medium payments", ["3000", "3500"]),
     ]
     for label, amounts in patterns:
         led = PrincipalLedger()
