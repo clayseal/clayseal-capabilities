@@ -70,3 +70,25 @@ done
 echo
 echo "Corpora ready in ${CORPUS}"
 du -sh "${CORPUS}"/* 2>/dev/null || true
+
+# --------------------------------------------------------------------------- #
+# SLEIGHT-Bench (arXiv:2605.16626, 2026) — 44 covert-harm coding-agent
+# transcripts across 12 evasion categories, each with a benign pair.
+#
+# Canary-protected: the transcripts carry an explicit opt-out string and ship
+# encrypted so they stay out of training corpora. The key is published in the
+# upstream README on purpose, since the encryption stops automated scraping
+# rather than human access.
+# --------------------------------------------------------------------------- #
+SLEIGHT_KEY="8Od5ksQZ8pCPpxKSE9WA0MeBL2R_zL1MTz6C5pJFZmo="
+if [ ! -d "${CORPUS}/sleight-bench/attacks" ]; then
+  echo "==> SLEIGHT-Bench"
+  git clone --depth 1 https://github.com/safety-research/sleight-bench.git \
+    "${CORPUS}/sleight-bench"
+fi
+if [ -z "$(find "${CORPUS}/sleight-bench/attacks" -name '*.jsonl' -print -quit 2>/dev/null)" ]; then
+  echo "==> decrypting SLEIGHT-Bench"
+  (cd "${CORPUS}/sleight-bench" && python decrypt.py --key "${SLEIGHT_KEY}" >/dev/null)
+else
+  echo "==> SLEIGHT-Bench already decrypted"
+fi
