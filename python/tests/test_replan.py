@@ -253,3 +253,49 @@ def test_an_extension_is_recorded_on_the_audit_chain():
     ext.on_extend = seen.append
     ext.consider("send_email", "send")
     assert seen and "goal implies" in seen[0].reason
+
+
+def test_an_advisory_scope_may_be_widened_but_a_mandate_may_not():
+    """The distinction that resolves the tension above.
+
+    `allowed_resources` in the live path is the LLM planner's GUESS at which
+    tools the task needs. On an open-ended task it cannot know: AgentDyn
+    shopping needed `verify_shopping_account` and `cart_total`, and their
+    absence was the entire residual block set once plan conformance was fixed.
+    Extending a guess from the sealed goal is legitimate.
+
+    A mandate-derived resource list is an authorization, and no runtime judgment
+    may widen it. Nothing in the code expressed that difference until the test
+    above caught the ambiguity, so it is now an explicit flag that defaults to
+    the safe reading.
+    """
+    from agentauth.capabilities.broker import Outcome
+    from agentauth.capabilities.replan import ReplanVerdict
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "goal implies this")
+
+    # Mandate-derived (the default): stays refused.
+    strict = _broker(plan_extender=AlwaysYes())
+    assert strict.authorize(_action()).outcome is not Outcome.ALLOW
+
+    # Planner-derived: may grow.
+    advisory = _broker(plan_extender=AlwaysYes(), scope_is_advisory=True)
+    assert advisory.authorize(_action()).outcome is Outcome.ALLOW
+
+
+def test_widening_the_scope_does_not_disable_the_other_floor_checks():
+    """Extending which TOOL may be used must not extend where it may point."""
+    from agentauth.capabilities.broker import Outcome
+    from agentauth.capabilities.monitor import Action
+    from agentauth.capabilities.replan import ReplanVerdict
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "yes")
+
+    broker = _broker(plan_extender=AlwaysYes(), scope_is_advisory=True)
+    protected = Action(step=0, tool="write_file", resource="mcp:tool:write_file",
+                       verb="write", args={"file_path": "/home/u/.ssh/id_rsa"})
+    assert broker.authorize(protected).outcome is not Outcome.ALLOW

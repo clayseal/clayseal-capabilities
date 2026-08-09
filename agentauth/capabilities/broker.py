@@ -178,6 +178,18 @@ class SessionBroker:
     # 22 points of ASR. The shape check survives here; only the plan it is
     # checked against may grow.
     plan_extender: Any | None = None
+    # Whether `scope.allowed_resources` is a PLANNER GUESS rather than an
+    # operator grant. This distinction decides whether replanning may widen it,
+    # and nothing in the code expressed it until a security test caught the
+    # ambiguity.
+    #
+    # In the live path the resource list is built from the LLM planner's guess at
+    # which tools the task needs, so a missing tool is a recall failure and
+    # extending it from the sealed goal is legitimate. Where the list comes from
+    # a signed mandate it is an authorization, and no runtime judgment may widen
+    # it. Default False keeps mandate-derived scopes rigid, so a caller has to
+    # opt in by asserting the weaker provenance.
+    scope_is_advisory: bool = False
     audit_budget: int | None = None
     # What to do once the budget is spent. Denying is the conservative choice and
     # keeps the security claim intact at the cost of utility; allowing trades the
@@ -296,6 +308,31 @@ class SessionBroker:
                 # egress, so strict resource membership is reserved for the
                 # irreversible effect verbs where harm actually lands. Hard-
                 # denying benign reads here was the dominant clean-utility leak.
+                #
+                # Runtime replanning applies here as well as at the envelope.
+                # The planner picks the tool scope up front, and on an
+                # open-ended task it cannot know which tools the job will need:
+                # AgentDyn shopping needed `verify_shopping_account` and
+                # `cart_total`, and their absence from the scope was the entire
+                # residual block set once plan conformance was fixed (7 of 7
+                # remaining denials, all at this line).
+                #
+                # The trust basis is identical to the envelope case. The judge
+                # sees the sealed goal, the tool catalog and the action shape,
+                # so asking it here is the same question asked at a different
+                # gate, and is equivalent to having computed a more generous
+                # whitelist in the clean context up front. Every other floor
+                # check has already run and still applies.
+                #
+                # Gated on `scope_is_advisory`, because this is only defensible
+                # when the resource list was a planner guess. A mandate-derived
+                # grant is an authorization and is never widened here.
+                if self.plan_extender is not None and self.scope_is_advisory:
+                    verdict = self.plan_extender.consider(action.tool, action.verb)
+                    if verdict.extended:
+                        self.scope.allowed_resources.append(action.resource)
+                        self._record_triggers([f"scope extended: {verdict.reason}"])
+                        return True, f"scope extended: {verdict.reason}", {}, True
                 return False, f"resource {action.resource!r} out of scope", {}, False
         return True, "within floor", {}, True
 
