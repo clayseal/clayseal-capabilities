@@ -173,3 +173,83 @@ def test_extensions_are_observable():
     ext.on_extend = seen.append
     ext.consider("send_email", "send")
     assert seen and seen[0].extended and seen[0].shape.tool == "send_email"
+
+
+# --------------------------------------------------------------------------- #
+# Broker integration: the extender must sit in front of the deny, not replace it
+# --------------------------------------------------------------------------- #
+def _broker(**kw):
+    from agentauth.capabilities.broker import SessionBroker
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.core.task_scope import TaskScope
+
+    return SessionBroker(
+        goal=GoalSpec(query_id="q", summary="summarise the inbox"),
+        scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
+        **kw)
+
+
+def _action(tool="send_email", verb="send"):
+    from agentauth.capabilities.monitor import Action
+
+    return Action(step=0, tool=tool, resource=f"mcp:tool:{tool}", verb=verb,
+                  args={"to": "someone@example.com"})
+
+
+def test_broker_without_an_extender_is_unchanged():
+    """Default behaviour must not move: this is opt-in."""
+    from agentauth.capabilities.broker import Outcome
+
+    assert _broker().authorize(_action()).outcome is not Outcome.ALLOW
+
+
+def test_a_floor_denial_never_reaches_the_extender():
+    """The security property that keeps this from becoming defer_allows_bound.
+
+    Replanning grows the PLAN. It has no authority over scope, protected zones,
+    destination binding or budgets, so an action the floor refuses must be
+    refused whatever the extender would have said. Verified by giving the
+    extender an unconditional yes and checking it is never even asked.
+    """
+    from agentauth.capabilities.broker import Outcome
+    from agentauth.capabilities.replan import ReplanVerdict
+
+    consulted = []
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            consulted.append((tool, verb))
+            return ReplanVerdict(True, "yes to everything")
+
+    # `send_email` is outside this broker's resource scope, so the floor denies.
+    decision = _broker(plan_extender=AlwaysYes()).authorize(_action())
+    assert decision.outcome is not Outcome.ALLOW
+    assert not consulted, (
+        "the extender was consulted on a floor denial; replanning must not be "
+        "able to rescue an action the floor refused"
+    )
+
+
+def test_a_refused_extension_leaves_the_denial_intact():
+    from agentauth.capabilities.broker import Outcome
+    from agentauth.capabilities.replan import ReplanVerdict
+
+    class Refuse:
+        def consider(self, tool, verb):
+            return ReplanVerdict(False, "not implied by the goal")
+
+    assert _broker(plan_extender=Refuse()).authorize(_action()).outcome is not Outcome.ALLOW
+
+
+def test_an_extension_is_recorded_on_the_audit_chain():
+    """A plan that grew silently is an invisible widening of authority.
+
+    Exercised on the extender rather than through the broker, because reaching
+    the envelope stage needs a compiled envelope and the property under test is
+    that every extension is observable.
+    """
+    seen = []
+    ext = _extender(judge=lambda g, c, s: (True, "goal implies communicating"))
+    ext.on_extend = seen.append
+    ext.consider("send_email", "send")
+    assert seen and "goal implies" in seen[0].reason
