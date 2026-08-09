@@ -7,6 +7,7 @@ the containment axis the security datasets require.
 """
 from __future__ import annotations
 
+import random
 import time
 from dataclasses import dataclass, field
 
@@ -96,11 +97,49 @@ def _percentile(samples: list[float], q: float) -> float:
     return ordered[idx]
 
 
+def _calibration_split(
+    tasks: list[BenchmarkTask], seed: int
+) -> tuple[list[BenchmarkTask], list[BenchmarkTask]]:
+    """Half the CLEAN tasks calibrate; everything else is scored.
+
+    Attack-bearing tasks never calibrate anything, and they are all scored, so
+    the containment denominator is unchanged and only the friction denominator
+    shrinks. A corpus with fewer than two clean tasks has nothing to hold out, so
+    it calibrates on what it has and the caller sees the same number as before.
+    """
+    clean, rest = [], []
+    for task in tasks:
+        (clean if not any(e.label is EventLabel.ATTACK for e in task.events)
+         else rest).append(task)
+    if len(clean) < 2:
+        return tasks, tasks
+    shuffled = list(clean)
+    random.Random(seed).shuffle(shuffled)
+    half = max(1, len(shuffled) // 2)
+    return shuffled[:half], shuffled[half:] + rest
+
+
 def run_benchmark(
     tasks: list[BenchmarkTask],
     engines: list[DecisionEngine],
+    *,
+    calibration_seed: int | None = 0,
 ) -> dict[str, EngineResult]:
-    """Replay every event of every task through every engine."""
+    """Replay every event of every task through every engine.
+
+    ``calibration_seed`` controls how an engine that CALIBRATES its policy is
+    scored. Calibrating on the whole corpus and then scoring false blocks on that
+    same corpus is not a measurement: the velocity rung's cap is the maximum
+    clean effect volume, so no clean task can exceed it and 0.00% is arithmetic.
+
+    With a seed, half the clean tasks set the policy and the other half are
+    scored, which is what an operator gets when tomorrow's traffic is not
+    yesterday's. That split is the difference between the velocity rung
+    reporting 0.00% false blocks on RedCode and reporting 2.47%.
+
+    Pass ``None`` to calibrate on everything, which is only honest when reporting
+    an upper bound on containment rather than a friction cost.
+    """
     results = {engine.name: EngineResult(engine=engine.name) for engine in engines}
     for engine in engines:
         result = results[engine.name]
@@ -108,9 +147,14 @@ def run_benchmark(
         # look at the corpus before replay, the way an operator sets a limit
         # from their own logs before deployment. See VelocityLadderEngine.
         observe = getattr(engine, "observe_corpus", None)
+        scored = tasks
         if observe is not None:
-            observe(tasks)
-        for task in tasks:
+            if calibration_seed is None:
+                observe(tasks)
+            else:
+                calibration, scored = _calibration_split(tasks, calibration_seed)
+                observe(calibration)
+        for task in scored:
             result.metrics.goal_id = task.task_id
             a_blocked = a_total = b_blocked = b_total = 0
             for event in task.events:

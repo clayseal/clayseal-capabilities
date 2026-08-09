@@ -162,35 +162,46 @@ task must not move containment or false-block for any deployable rung.
 
 ### What velocity is actually worth on this evidence
 
-| Corpus | cap | containment before | after | false-block before | after |
-| --- | --: | --: | --: | --: | --: |
-| AgentHarm | 6 | 6.3% | 6.3% | 0.00% | 0.00% |
-| SLEIGHT | 17 | 35.7% | 35.7% | 35.37% | 35.37% |
-| RedCode | 32 | 99.9% | 99.9% | 0.00% | 0.00% |
-| ASB | 5 | 100% | 100% | 0.00% | 0.00% |
-| IPI-Coding | 1 | 100% | 100% | 0.00% | 0.00% |
-| AgentThreatBench | 5 | 58.3% | 58.3% | 0.00% | 0.00% |
-| tau2 (14,842 benign events) | 9 | n/a | n/a | 0.00% | 0.00% |
-| BFCL (3,232 benign events) | 7 | n/a | n/a | 0.00% | 0.00% |
-| ATIF | 3 | n/a | n/a | 0.00% | 0.00% |
+| Corpus | cap | containment before | after | false-block, in-sample | held-out mean | held-out worst |
+| --- | --: | --: | --: | --: | --: | --: |
+| RedCode | 32 | 99.9% | 99.9% | 0.00% | **2.47%** | **24.88%** |
+| AgentHarm | 6 | 6.3% | 6.3% | 0.00% | 0.12% | 1.23% |
+| ASB | 5 | 100% | 100% | 0.00% | n/a | n/a |
+| SLEIGHT | 17 | 36.9% | 36.9% | 36.66% | 38.84% | 53.09% |
+| IPI-Coding | 1 | 100% | 100% | 0.00% | 0.00% | 0.00% |
+| AgentThreatBench | 5 | 58.3% | 58.3% | 0.00% | n/a | n/a |
+| ATIF | 3 | n/a | n/a | 0.00% | 0.59% | 2.46% |
+| tau2 (14,842 benign events) | 9 | n/a | n/a | 0.00% | 0.01% | 0.03% |
+| BFCL (3,232 benign events) | 7 | n/a | n/a | 0.00% | 0.05% | 0.24% |
 
-**Nothing. Zero containment gain on every corpus, at zero false-block cost.**
+**No containment gain on any corpus, and a small but nonzero friction cost.**
 
-That is the honest reading and it is a statement about the benchmarks, not only
-about the mechanism. Velocity bounds the blast radius of a compromise already
-under way, and it is deliberately blind to the first occurrence. None of these
-corpora contains what it is built to catch: a high-volume burst of authorized
-actions inside a session whose legitimate volume is low. RedCode's attacks are
-single destructive calls, AgentHarm's are single harmful calls, SLEIGHT's are
-covert-intent calls, and the long-horizon needle benchmark inserts exactly one
-malicious action by construction.
+### The third withdrawal: the 0.00% false-block was a theorem
 
-So the rung ships enabled, because it costs nothing across 18,000+ benign events
-and it is the only deterministic signal that survives an action having no target.
-It carries no measured containment claim. Closing that gap needs a benchmark
-built for it; see the burst-volume work in `benchmarks/burst.py`.
+The in-sample column above is not a measurement. The cap is the maximum clean
+effect volume across the corpus, and the corpus is then scored against it, so no
+clean task can exceed its own maximum and 0.00% follows by arithmetic. Two
+further mistakes made it tighter still: the cap was calibrated on TOTAL effect
+volume per task but enforced PER VERB, so a session could spend nine times what
+was calibrated and a per-verb count was bounded by the task total anyway.
 
-### What the corrected measurement also shows
+Both are fixed. The cap is enforced on the aggregate `effect` class, which is
+what it was calibrated on, and `run_benchmark` now calibrates on half the clean
+tasks and scores the other half by default. Attack-bearing tasks never calibrate
+anything and are all still scored, so the containment denominator is unchanged.
+
+Held out over 20 seeds, RedCode costs 2.47% of its benign side on average and
+24.88% in the worst split. That is the number to quote.
+
+**The ship decision this changes.** On the deterministic corpora the rung buys
+nothing and costs something. It stays in the tree, and its containment claim
+rests entirely on `benchmarks/burst.py`, which supplies the burst none of these
+corpora contains: 100% contained at burst >= 10, blast radius 4 actions, held-out
+false alarms 0.0% on tau2 and 2.0% on BFCL. A deployment that faces bursts should
+enable it and a deployment that does not should not, and the mandate is where
+that choice belongs.
+
+### What the corrected measurement also shows### What the corrected measurement also shows
 
 **Velocity has no discrimination on SLEIGHT at any cap.** Sweeping the cap from 1
 to 50, containment and false-block move together at every point: 65.5/65.6,
