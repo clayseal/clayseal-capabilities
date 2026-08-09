@@ -61,8 +61,8 @@ CAVEATS = {
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
     "sleight": ("grant derived from the paired BENIGN twin, so the false-block column "
                 "is NOT reportable here; ~2 points of discrimination either way"),
-    "agentharm": ("6.3% is the CEILING, not our score: every event carries only a tool "
-                  "name (0/1305 have args or a path), so an oracle gets 3.1%"),
+    "agentharm": ("6.3% is a LOADER limit: we read only the JSON (tool names), while "
+                  "the corpus grading functions assert targets for 63% of behaviours"),
     "atif": "benign only; a false-block measurement",
     "tau2": "benign only; the friction denominator that matters",
     "bfcl": "benign only; the friction denominator that matters",

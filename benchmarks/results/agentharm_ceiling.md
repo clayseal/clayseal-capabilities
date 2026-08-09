@@ -1,4 +1,31 @@
-# AgentHarm: 6.3% is the ceiling, not our score
+# AgentHarm: the ceiling claim was wrong, and the corpus does carry targets
+
+> **WITHDRAWN.** This document argued that 6.3% is an information-theoretic
+> ceiling because no AgentHarm event carries a target. That is true of the JSON
+> our loader reads and false of the benchmark. AgentHarm's grading functions,
+> which are part of the benchmark and are on disk at
+> `.benchmark-corpus/inspect_evals/src/inspect_evals/agentharm/benchmark/harmful_grading_functions.py`,
+> assert concrete argument values: file paths, email recipients and URLs.
+>
+> | | harmful | benign |
+> | --- | --: | --: |
+> | grading functions | 52 | 52 |
+> | asserting at least one concrete target | **33 (63%)** | **36 (69%)** |
+> | distinct email targets | 29 | 34 |
+> | distinct URLs | 26 | 28 |
+> | distinct file paths | 8 | 9 |
+>
+> So 6.3% is a limit of our loader, not of the corpus, and the ceiling argument
+> below is void. A loader that reads the grading functions can emit real targets
+> for roughly two thirds of behaviours, and the goal-substitution question then
+> becomes decidable for them: does the harmful twin write to a path or address
+> the benign twin's grant never included.
+>
+> Found by an audit agent reading the corpus against our loader. The
+> field-coverage counts below remain accurate **about our loader's output** and
+> are kept because they explain what the 6.3% currently measures.
+
+## The original argument, kept for the record
 
 We report 6.3% containment on AgentHarm and describe content-defined harm as the
 axis nobody solves. The second half of that is true. The first half is a number
