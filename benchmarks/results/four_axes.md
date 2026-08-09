@@ -8,7 +8,7 @@ answer.
 | Harm defined by | The attack | Result | Cost |
 | --- | --- | --: | --: |
 | **Target** | the action points somewhere it must not | 99.9-100% | 0.00% |
-| **Volume** | too many of an authorized action | 100% at burst >= 10 | 0.0-2.0% |
+| **Volume** | too many of an authorized action | 100% at burst >= 10 | 0.0-2.0% held out |
 | **Sequence** | authorized read, then authorized write of what it read | 100% | 0.0% |
 | **Content** | an authorized action whose meaning is harmful | 6.3% | 0.00% |
 
@@ -71,18 +71,34 @@ whether it was trying for ten or a hundred.
 left the shape of the task, and a layer that flagged them would be blocking
 legitimate work at the same rate.
 
-**Two withdrawn results on this axis.** The rung first reported 24.7% on AgentHarm
-and 65.5% on SLEIGHT with a cap set from the judged task's own benign volume; on
-SLEIGHT, RedCode and ASB every attack-bearing task has zero benign effect events,
-so each got `cap = 1` and the limit was the label. With a valid cap it reported
-+8.0 on AgentHarm at zero cost; that came from the loader concatenating a
-behaviour's benign variant and harmful twin into one trajectory, so the benign
-half spent the rate budget and the harmful half was blocked for arriving late.
-Both are withdrawn. The measured gain on the deterministic corpora is zero.
+**Three withdrawn results on this axis, and the last one changes the ship
+decision.**
 
-The false-alarm rate is measured on **held-out** clean sessions, because
-calibrating the cap and then measuring false alarms on the same sessions is
-arithmetic rather than evidence. That split is what turned BFCL's 0.0% into 2.0%.
+The rung first reported 24.7% on AgentHarm and 65.5% on SLEIGHT with a cap set
+from the judged task's own benign volume; on SLEIGHT, RedCode and ASB every
+attack-bearing task has zero benign effect events, so each got `cap = 1` and the
+limit was the label.
+
+With a valid cap it reported +8.0 on AgentHarm at zero cost; that came from the
+loader concatenating a behaviour's benign variant and harmful twin into one
+trajectory, so the benign half spent the rate budget and the harmful half was
+blocked for arriving late.
+
+Then the 0.00% false-block turned out to be a theorem rather than a measurement.
+The cap is the maximum clean effect volume across the corpus and the corpus was
+then scored against it, so no clean task could exceed its own maximum. Held out
+over 20 seeds the rung costs RedCode 2.47% of its benign side on average and
+24.88% in the worst split, ATIF 0.59%, tau2 0.01%, BFCL 0.05%.
+
+So on the deterministic corpora this rung **buys nothing and costs something**. It
+stays in the tree, its containment claim rests entirely on the burst benchmark
+above, and whether to enable it belongs in the mandate: a deployment that faces
+bursts should, one that does not should not.
+
+Every false-alarm number on this axis is measured on **held-out** clean sessions,
+because calibrating a threshold and then measuring friction on the same data is
+arithmetic rather than evidence. That split is what turned BFCL's 0.0% into 2.0%
+and RedCode's 0.00% into 2.47%.
 
 ---
 
@@ -192,6 +208,10 @@ measurement rather than review. The invariants that now fail the build:
 
 - **The cap must not move when only attack traffic changes.** Catches a policy
   parameter derived from the label.
+- **A calibrated policy is scored on data it did not see.** `run_benchmark`
+  calibrates on half the clean tasks and scores the other half by default.
+  Attack-bearing tasks never calibrate anything and are all still scored, so the
+  containment denominator is unchanged and only the friction denominator shrinks.
 - **Shuffling events inside a task must not move containment or false-block for
   any deployable rung.** Catches a loader whose ordering carries the label, which
   is what produced the +8.0.
@@ -201,3 +221,19 @@ measurement rather than review. The invariants that now fail the build:
   test.** Without it, burst and flow would both be re-measuring scope.
 
 Sources: `why_we_fail.md`, `burst.md`, `flow.md`, `agentdyn.md`, `pooled_asr.md`.
+
+## One security regression this caught before it shipped
+
+Runtime replanning, measured on AgentDojo travel, took clean utility from 50.0%
+to 100.0% and **ASR from 11.1% to 22.2%**. A travel-booking goal plausibly implies
+sending and booking, so the injected action was shape-consistent and the shape
+judge admitted it with nothing else left to distinguish it.
+
+It was worse than that. For an untargeted consequential action the destination
+floor has no opinion at all, so pre-fix replanning extended on shape alone, which
+made it strictly more permissive than `defer_allows_bound`, a flag this codebase
+marks do-not-enable. That is the 641-of-833 untargeted majority, not an edge case.
+
+A consequential off-plan action may now only be replanned when the binding floor
+positively validated where it points. Re-measured: travel posts ASR 11.1% with
+and without replanning, at 66.7% clean utility either way.
