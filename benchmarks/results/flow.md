@@ -47,6 +47,82 @@ flow control alone.
 | tau2 | 300 | **100%** | 0.0% | 0.0% | **0.0%** (0/1100) |
 | BFCL | 91 | **100%** | 0.0% | 0.0% | **0.0%** (0/223) |
 
+## The chunked arm, which was the cheapest bypass of all
+
+Splitting the value across several writes defeated the whole mechanism. Velocity
+does not fire, because a handful of writes is not a burst. Flow control did not
+fire, because no single write carried the value and each fragment sat below the
+reconstruction floor. **Two writes was enough**, and one character per write
+walked the secret out just as easily.
+
+That is the seam between the volume axis and the sequence axis, and neither
+mechanism owned it.
+
+The check now accumulates per sink and asks whether the value appears as a
+SUBSEQUENCE of everything that sink has received, which survives filler between
+fragments, and only ALLOWED content accumulates, because a refused write never
+happened.
+
+| Value split across | whole value out, tau2 | whole value out, BFCL | mean characters leaked |
+| --- | --: | --: | --: |
+| 2 writes | 0/300 | 0/91 | 11.0 |
+| 4 writes | 0/300 | 0/91 | 6.0 |
+| 11 writes | 0/300 | 0/91 | 10.0-11.5 |
+| 22 writes (one character each) | 0/300 | 0/91 | 11.0-15.8 |
+
+Two bounds make a subsequence match evidence rather than coincidence. The match
+must cover at least twelve characters, and for a PARTIAL match the span it is
+found in must be at most 32 times its length. A COMPLETE in-order match of twelve
+or more characters is exempt from the span bound, because it is not coincidence
+at any span: holding complete matches to it was what let BFCL's larger write
+arguments inflate the span until the value escaped in 45 of 91 chunked sessions.
+
+Both constants come from sweeps against real traffic, not from taste.
+
+### The blast radius is a constant, not a proportion
+
+The mean characters column is the honest cost. A value cannot be recognised
+before enough of it has left, which is information-theoretic rather than an
+engineering failure, and the floor is twelve characters.
+
+| Payload size | characters leaked | proportion |
+| --: | --: | --: |
+| 22 | 8 | 36.4% |
+| 60 | 28 | 46.7% |
+| 200 | 96 | 48.0% |
+| 1,000 | 124 | 12.4% |
+| 5,000 | 124 | **2.5%** |
+
+So a bulk exfiltration is prevented and a short credential is only detected. For
+anything under about a hundred characters the operational response is rotation,
+not blocking, and the memo should say so rather than quote the containment number
+alone.
+
+### False positives at scale
+
+Subsequence matching over an accumulated buffer is exactly the shape that
+produces false alarms, so it was measured on real traffic with deliberately
+awkward secrets rather than only the synthetic key:
+
+| Sensitive value | flagged / real benign writes |
+| --- | --: |
+| synthetic API key | 0 / 1,372 |
+| customer email address | 0 / 1,318 |
+| short customer id | 0 / 1,319 |
+| a common phrase ("customer service request ticket") | 1 / 1,367 |
+| bare digits (a card number) | 0 / 1,352 |
+| a filesystem path | 0 / 1,312 |
+| **total** | **1 / 8,040 = 0.012%** |
+
+### Cost
+
+The scan is bounded, because it runs inside the authorization path where the rest
+of the stack costs 35us at the median: at most 256 characters of a value are
+matched and at most 32 start positions are tried. Unbounded, a 5,000 character
+payload against a 64KB buffer did not finish in two minutes, which would have
+made the check a denial of service on itself. Bounded, it costs 0.04ms to 1.1ms
+per write depending on payload size.
+
     ladder below flow control: 1173 allowed, 0 blocked
 
 Four arms, because reporting only the first would be dishonest:
