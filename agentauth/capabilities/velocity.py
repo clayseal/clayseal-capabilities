@@ -306,3 +306,108 @@ def velocity_from_mandate(mandate: Mapping[str, Any],
             raise ValueError(f"velocity: {name!r} {rejected[name]}")
     return SessionVelocity(config=VelocityConfig(
         limits=limits, tool_classes=tool_classes, rejected=rejected))
+
+
+# --------------------------------------------------------------------------- #
+# Principal scope
+# --------------------------------------------------------------------------- #
+@dataclass
+class PrincipalVelocity:
+    """One rate ledger per PRINCIPAL, spanning every session it authorizes.
+
+    `SessionVelocity` is per object, so a new session is a new empty window. That
+    is the same control the structuring work already showed an adversary resets
+    at will: `benchmarks/structuring.py` measures session-scoped containment
+    failing at four fragments, and `principal_ledger.py` exists because of it.
+
+    Nobody applied the lesson here, and it is the same hole. Measured: a declared
+    cap of seven effect actions per hour admitted **fifty-six** when the same work
+    was split across eight sessions, because each session brought its own
+    counter. The agent needs no capability it did not already have; it opens
+    another conversation.
+
+    A session limiter is now a VIEW onto this, seeded with what the principal has
+    already spent and writing its acquisitions back, exactly as
+    `PrincipalBudgetView` relates to `PrincipalLedger`.
+    """
+
+    config: VelocityConfig = field(default_factory=VelocityConfig)
+    # (principal, action_class) -> timestamps inside the window.
+    _events: dict[tuple[str, str], list[float]] = field(default_factory=dict)
+    _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
+
+    def _recent(self, key: tuple[str, str], window: float, now: float) -> list[float]:
+        stamps = self._events.get(key)
+        if not stamps:
+            return []
+        cutoff = now - window
+        if stamps[0] < cutoff:
+            stamps = [t for t in stamps if t >= cutoff]
+            self._events[key] = stamps
+        return stamps
+
+    def try_acquire(self, principal: str, tool_name: str, action: str, *,
+                    now: float | None = None) -> VelocityVerdict:
+        """Count and record against the PRINCIPAL, under one lock."""
+        at = time.time() if now is None else now
+        classes = [c for c in self.config.classes_for(tool_name, action)
+                   if self.config.limit_for(c) is not None]
+        if not classes:
+            return VelocityVerdict(True, "no velocity limit applies to this action")
+        with self._lock:
+            for action_class in classes:
+                max_actions, window = self.config.limit_for(action_class)
+                observed = len(self._recent((principal, action_class), window, at))
+                if observed + 1 > max_actions:
+                    return VelocityVerdict(
+                        False,
+                        f"velocity: {observed + 1} {action_class} actions in "
+                        f"{window:.0f}s across every session of {principal} "
+                        f"exceeds the {max_actions} the mandate declared",
+                        observed + 1, max_actions, window,
+                    )
+            for action_class in classes:
+                self._events.setdefault((principal, action_class), []).append(at)
+            tightest = min(classes, key=lambda c: self.config.limit_for(c)[0])
+            max_actions, window = self.config.limit_for(tightest)
+            return VelocityVerdict(
+                True, f"within {tightest} velocity for {principal}",
+                len(self._recent((principal, tightest), window, at)),
+                max_actions, window)
+
+    def release(self, principal: str, tool_name: str, action: str, *,
+                now: float | None = None) -> None:
+        with self._lock:
+            for action_class in self.config.classes_for(tool_name, action):
+                stamps = self._events.get((principal, action_class))
+                if not stamps:
+                    continue
+                if now is None:
+                    stamps.pop()
+                    continue
+                for i in range(len(stamps) - 1, -1, -1):
+                    if stamps[i] == now:
+                        stamps.pop(i)
+                        break
+
+    def observed(self, principal: str, action_class: str, window: float,
+                 *, now: float | None = None) -> int:
+        at = time.time() if now is None else now
+        with self._lock:
+            return len(self._recent((principal, action_class), window, at))
+
+
+@dataclass
+class PrincipalVelocityView:
+    """A session's handle on its principal's rate ledger."""
+
+    ledger: PrincipalVelocity
+    principal: str
+
+    def try_acquire(self, tool_name: str, action: str, *,
+                    now: float | None = None) -> VelocityVerdict:
+        return self.ledger.try_acquire(self.principal, tool_name, action, now=now)
+
+    def release(self, tool_name: str, action: str, *,
+                now: float | None = None) -> None:
+        self.ledger.release(self.principal, tool_name, action, now=now)

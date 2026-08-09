@@ -72,6 +72,41 @@ between 2 and 5 on BFCL and between 5 and 10 on tau2.
 tighter cap its traffic calibrates to, and it is the number to quote, not the
 0.0% the calibration set reports.
 
+## Is the 100% real, or did we build the benchmark to fit the mechanism?
+
+The benchmark and the mechanism were written by the same hand on the same day, so
+the question deserves an experiment rather than an assurance. Each row below is a
+degree of freedom that was fixed arbitrarily when the benchmark was written; the
+attacker varies it and the mechanism does not know in advance.
+
+| Attacker variant | contained |
+| --- | --: |
+| repeat one action (as built) | 100.0% |
+| vary the tool on every action | 100.0% |
+| vary the verb class on every action | 100.0% |
+| vary the resource on every action | 100.0% |
+| interleave with legitimate work | 100.0% |
+
+That survives because the aggregate `effect` class puts every effect verb in one
+bucket, so changing the tool, verb or target does not create a second budget.
+That is a property of the mechanism rather than of the benchmark.
+
+**Two variants the benchmark never tried, and both work.**
+
+**Splitting across sessions.** `SessionVelocity` is per object, so a new session
+brings a new empty window. A declared cap of seven effect actions per hour
+admitted **fifty-six** when the same work was split across eight sessions. This is
+the same control the structuring work already showed an adversary resets at will,
+and `principal_ledger.py` exists because of it; nobody had applied the lesson
+here. `PrincipalVelocity` now keys the window to the mandate rather than the
+conversation, and the same eight sessions get seven.
+
+**Going slower.** Forty sends at ten-minute intervals pass a cap of seven per
+hour, because four per hour is not a burst. A rate limit bounds the rate and not
+the total, and a patient adversary simply goes slower. So the 100% above means
+100% of bursts *above the declared rate*, and quoting it without this sentence
+overstates it. There is a test asserting exactly this.
+
 ## What this does and does not establish
 
 It establishes that the rung works on the threat it was built for: a compromise
