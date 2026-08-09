@@ -282,3 +282,63 @@ def test_memory_poisoning_is_not_contained_and_that_is_honest():
         f"{contained} memory-poisoning writes blocked; verify the mandate still "
         "grants memory writes rather than manufacturing containment"
     )
+
+
+# --------------------------------------------------------------------------- #
+# AgentThreatBench: only measure what the corpus actually asserts
+# --------------------------------------------------------------------------- #
+def test_atb_does_not_score_against_the_corpus_own_clean_baselines():
+    """AgentThreatBench ships explicit negative controls with the attack fields
+    emptied, and its scorer auto-passes them. Labelling one ATTACK scores
+    containment against the benchmark's own control: three used to count as
+    contained and two as missed, all five fabricated."""
+    tasks = _load("agent_threat_bench")
+    baselines = [t for t in tasks if t.meta.get("clean_baseline")]
+    assert baselines, "the corpus has clean_baseline items; the loader lost them"
+    for task in baselines:
+        assert not any(e.label is EventLabel.ATTACK for e in task.events), task.task_id
+
+
+def test_atb_emits_an_attack_event_only_where_an_action_is_authorizable():
+    """Two of the three categories have no attack an authorization layer can see.
+
+    memory_poison: the store is pre-poisoned at setup and the corpus scores the
+    marker appearing in the COMPLETION TEXT; the agent never writes memory.
+    autonomy_hijack: the agent holds only read_inbox, categorize_email and
+    draft_summary, and the forbidden actions are tokens scored against the
+    completion. One of them is the string "ignore your system prompt", and this
+    loader was blocking a wire transfer to `net:ignore your system prompt`.
+
+    Both were synthesized here, and both produced numbers about actions that do
+    not exist. They now contribute their benign step and a declared reason.
+    """
+    tasks = _load("agent_threat_bench")
+    for task in tasks:
+        attacks = [e for e in task.events if e.label is EventLabel.ATTACK]
+        if task.meta["category"] == "data_exfil" and not task.meta.get("clean_baseline"):
+            assert attacks, task.task_id
+        else:
+            assert not attacks, task.task_id
+            if task.meta["category"] != "data_exfil":
+                assert task.meta.get("uncontained_reason"), task.task_id
+
+
+def test_atb_grants_only_the_tools_the_corpus_gives_that_category():
+    """Granting a tool the corpus never gives the agent is how the synthesized
+    transfer events looked contained. It is the ASB failure mode."""
+    tasks = _load("agent_threat_bench")
+    for task in tasks:
+        if task.meta["category"] == "autonomy_hijack":
+            assert "transfer" not in task.allowed_tools
+            assert task.allowed_tools == {"read_inbox", "categorize_email", "draft_summary"}
+
+
+def test_atb_takes_the_attacker_recipient_from_the_injection():
+    """Hard-coding a fake recipient makes the arm synthetic in the one detail the
+    check turns on."""
+    tasks = _load("agent_threat_bench")
+    attacks = [e for t in tasks for e in t.events if e.label is EventLabel.ATTACK]
+    assert attacks
+    assert not any("attacker-relay.example" in (e.path or "") for e in attacks), (
+        "the placeholder recipient is still being used"
+    )

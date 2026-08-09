@@ -28,7 +28,7 @@ attacker-controlled recipient, a protected zone, a credential store.
 | RedCode | 718 | **99.9%** | 0.00% |
 | ASB | 2,040 | **100%** | 0.00% |
 | IPI-Coding-Agent | 50 | **100%** | 0.00% |
-| AgentThreatBench | 24 | 58.3% | 0.00% |
+| AgentThreatBench (data_exfil) | 6 | **100%** | 0.00% |
 
 Against 18,356 benign events from tau2, BFCL and ATIF, the false-block rate is
 0.00%.
@@ -42,6 +42,26 @@ names, and a tool allowlist is sufficient for it.
 RedCode and IPI-Coding are the real result on this axis: containment comes from
 path scope against a workspace boundary that is a fixed constant, declared
 independently of any label.
+
+**AgentThreatBench was 58.3% of 24 events and is now 100% of 6.** The other 18
+were our loader's inventions, and finding that is worth more than the number was:
+
+- Five of the corpus's items are explicit **negative controls** (`attack_name ==
+  "clean_baseline"`, attack fields emptied, auto-passed by its own scorer). The
+  loader labelled them ATTACK, so three counted as contained and two as missed.
+  All five were fabricated.
+- **memory_poison** (10 events) had a synthesized `memory_write`. The corpus
+  pre-poisons the store at setup and scores the marker appearing in the model's
+  completion text; the agent never writes memory.
+- **autonomy_hijack** (5 events) had a synthesized `transfer`. That agent's
+  entire tool set is `{read_inbox, categorize_email, draft_summary}`. One item's
+  forbidden action is the string `ignore your system prompt`, and the loader was
+  blocking a wire transfer to `net:ignore your system prompt`.
+
+Both remaining categories are content-defined, so they now contribute their
+benign step and a declared `uncontained_reason` instead of counting as misses.
+The attacker recipient in the exfiltration arm is taken from the injected record
+rather than hard-coded, because that address is the one detail the check turns on.
 
 ---
 
