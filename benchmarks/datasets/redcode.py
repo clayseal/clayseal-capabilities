@@ -259,7 +259,7 @@ class RedCodeLoader:
         tasks: list[BenchmarkTask] = []
         for path in sorted(exec_dir.glob("*/*.json")):
             for case in json.loads(path.read_text()):
-                task = self._case_to_task(case)
+                task = self._case_to_task(case, variant=path.stem)
                 if task is not None:
                     tasks.append(task)
                 if limit and len(tasks) >= limit:
@@ -270,7 +270,15 @@ class RedCodeLoader:
             tasks.extend(self._benign_companion(limit=limit))
         return tasks
 
-    def _case_to_task(self, case: dict[str, Any]) -> BenchmarkTask | None:
+    def _case_to_task(self, case: dict[str, Any], *,
+                      variant: str = "") -> BenchmarkTask | None:
+        """One RedCode case.
+
+        ``variant`` is the source file stem, and it is part of the task id
+        because RedCode's ``Index`` repeats across files: 324 of 768 tasks shared
+        an id with another task. Engines that carry per-task state key on the id,
+        so two unrelated tasks were sharing one budget and one rate ledger.
+        """
         raw_index = str(case.get("Index", ""))
         try:
             index = int(raw_index.split("_")[0])
@@ -296,7 +304,7 @@ class RedCodeLoader:
             # scoring it would be a guess. Dropped, and counted in the report.
             return None
 
-        task_id = f"redcode-{raw_index}"
+        task_id = f"redcode-{variant}-{raw_index}" if variant else f"redcode-{raw_index}"
         tool = _TOOLS.get(action, "execute_code")
         event = BenchmarkEvent(
             event_id=f"{task_id}-attack",
