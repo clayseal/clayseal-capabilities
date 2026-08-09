@@ -94,7 +94,12 @@ class ToolAllowlistEngine:
     name = "tool-allowlist"
 
     def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
-        if event.tool_name in task.allowed_tools:
+        from benchmarks.core.patterns import matches_any
+
+        granted = (matches_any(event.tool_name, task.tool_patterns)
+                   if task.tool_patterns is not None
+                   else event.tool_name in task.allowed_tools)
+        if granted:
             return Decision(True, f"tool {event.tool_name!r} on allowlist", self.name)
         return Decision(False, f"tool {event.tool_name!r} not on allowlist", self.name)
 
@@ -105,8 +110,13 @@ class CapabilityTokenEngine:
     name = "capability-token"
 
     def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        from benchmarks.core.patterns import capability_allows_patterns
+
         caps = normalize_capabilities(task.capabilities)
-        if capability_allows(caps, event.resource, event.action):
+        allowed = (capability_allows_patterns(caps, event.resource, event.action)
+                   if task.resource_patterns is not None
+                   else capability_allows(caps, event.resource, event.action))
+        if allowed:
             return Decision(True, f"capability {event.resource}:{event.action}", self.name)
         return Decision(False, f"no capability for {event.resource}:{event.action}", self.name)
 
@@ -148,7 +158,12 @@ class TaskScopeEngine:
         # contained four attacks that the full stack allowed, because a task
         # whose scope is resource-shaped never re-asks whether the tool itself
         # was granted.
-        if task.allowed_tools and event.tool_name not in task.allowed_tools:
+        from benchmarks.core.patterns import matches_any
+
+        if task.tool_patterns is not None:
+            if not matches_any(event.tool_name, task.tool_patterns):
+                return Decision(False, f"tool {event.tool_name!r} not granted", self.name)
+        elif task.allowed_tools and event.tool_name not in task.allowed_tools:
             return Decision(False, f"tool {event.tool_name!r} not granted", self.name)
         # Only when the task actually carries capabilities: a corpus with no
         # capability grant would otherwise be denied wholesale rather than

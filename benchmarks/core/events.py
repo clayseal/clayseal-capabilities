@@ -22,6 +22,32 @@ from typing import Any
 class EventLabel(str, Enum):
     """Ground-truth label for an attempted tool call."""
 
+    # The corpus does not say. Replayed so stateful rungs (budget, velocity)
+
+    # see the real event stream, but scored on neither axis.
+
+    #
+
+    # Added for SLEIGHT, where the loader labelled every tool call in an
+
+    # attack transcript ATTACK, including the agent's legitimate cover work.
+
+    # A covert-sabotage transcript is mostly the real task: of 323 tool calls
+
+    # across 44 attack transcripts the corpus's own `mechanism` annotation
+
+    # cites 129. The other 194 are the work the attack hides behind, and
+
+    # counting them as attack inflated the denominator with events that are
+
+    # not the attack. Calling them BENIGN is the opposite error, because the
+
+    # corpus certifies its benign.jsonl twin and not an attack transcript's
+
+    # quiet lines, so they are scored on neither side.
+
+    UNLABELED = "unlabeled"
+
     BENIGN = "benign"  # a legitimate step of the user's own task — expect ALLOW
     ATTACK = "attack"  # an injected / out-of-scope step — expect DENY
 
@@ -68,6 +94,15 @@ class BenchmarkTask:
     mandate: dict[str, Any] = field(default_factory=dict)
     capabilities: list[dict[str, str]] = field(default_factory=list)
     allowed_tools: set[str] = field(default_factory=set)
+    # A grant restated as PATTERNS rather than an enumeration of instances, which
+    # is how an operator writes a mandate ("the reservation tools", `/app/**`)
+    # and not how a logger records one. None means the grant is an exact instance
+    # list and every engine behaves exactly as it did before patterns existed;
+    # that identity is what makes the level-0 column of the generalisation sweep
+    # a reproduction of the shipped numbers rather than a re-measurement.
+    # Built by `benchmarks.core.patterns`.
+    tool_patterns: list[str] | None = None
+    resource_patterns: list[str] | None = None
     # Per-CALL argument binding: for each tool, the list of argument shapes that
     # were legitimately authorized (one commit token per real call). A tool
     # present here is bound — a call whose args match none of its authorized

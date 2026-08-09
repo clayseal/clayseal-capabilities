@@ -49,7 +49,10 @@ def _grant_is_benign_side(task: BenchmarkTask) -> bool:
 
 
 def hold_out_mandate(task: BenchmarkTask, seed: int = 0,
-                     fraction: float = 0.5) -> BenchmarkTask | None:
+                     fraction: float = 0.5, *,
+                     tool_level: int = 0, path_level: int = 0,
+                     verb_level: int = 0,
+                     namespaces: Any | None = None) -> BenchmarkTask | None:
     """Rebuild a task's grant from a fraction of its benign events.
 
     Returns None when the task has too few benign events to split, or when its
@@ -80,7 +83,7 @@ def hold_out_mandate(task: BenchmarkTask, seed: int = 0,
     capabilities = [c for c in task.capabilities
                     if c.get("resource") in set(granted_resources)] or task.capabilities
 
-    return replace(
+    held = replace(
         task,
         mandate=mandate,
         capabilities=capabilities,
@@ -88,15 +91,54 @@ def hold_out_mandate(task: BenchmarkTask, seed: int = 0,
         meta={**task.meta, "mandate_held_out": True,
               "observed_benign": len(observed), "total_benign": len(benign)},
     )
+    if tool_level <= 0 and path_level <= 0 and verb_level <= 0:
+        return held
+    # The operator saw the same half of the traffic, but wrote a PATTERN over it
+    # instead of an enumeration. The observed instances are the only input; the
+    # unobserved half is never consulted, so the grant is still built from data
+    # it is not scored on.
+    from benchmarks.core.patterns import generalize_task
+
+    observed_paths = [e.path for e in observed if e.path] or None
+    return generalize_task(
+        held,
+        tool_level=tool_level,
+        path_level=path_level,
+        verb_level=verb_level,
+        namespaces=namespaces,
+        observed_tools=granted_tools,
+        observed_resources=granted_resources,
+        observed_paths=observed_paths,
+    )
 
 
 def hold_out_corpus(tasks: list[BenchmarkTask], seed: int = 0,
-                    fraction: float = 0.5) -> tuple[list[BenchmarkTask], int]:
-    """Apply `hold_out_mandate` where it applies. Returns (tasks, n_corrected)."""
+                    fraction: float = 0.5, *,
+                    tool_level: int = 0,
+                    path_level: int = 0,
+                    verb_level: int = 0) -> tuple[list[BenchmarkTask], int]:
+    """Apply `hold_out_mandate` where it applies. Returns (tasks, n_corrected).
+
+    ``tool_level`` / ``path_level`` restate the rebuilt grant as patterns (see
+    ``benchmarks.core.patterns``). At level 0 this function is byte-for-byte the
+    behaviour it had before patterns existed.
+
+    The namespace level needs a surface to generalise TO, and it is learned from
+    the calibration half of the clean tasks using the runner's own split, so a
+    task that contributed to a namespace is never scored against it.
+    """
+    namespaces = None
+    if max(tool_level, path_level, verb_level) >= 3:
+        from benchmarks.core.patterns import calibration_indices, namespace_from
+
+        calib, _ = calibration_indices(tasks, seed)
+        namespaces = namespace_from(tasks, calib)
     out: list[BenchmarkTask] = []
     corrected = 0
     for task in tasks:
-        held = hold_out_mandate(task, seed=seed, fraction=fraction)
+        held = hold_out_mandate(task, seed=seed, fraction=fraction,
+                                tool_level=tool_level, path_level=path_level,
+                                verb_level=verb_level, namespaces=namespaces)
         if held is None:
             out.append(task)
         else:
