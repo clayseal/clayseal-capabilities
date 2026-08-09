@@ -64,6 +64,11 @@ _READ_VERBS = frozenset(
 )
 
 
+def _parallel_twins(task: BenchmarkTask) -> bool:
+    """SLEIGHT-style paired transcripts: attack is a parallel twin, not a suffix."""
+    return task.meta.get("trajectory_mode") == "parallel_twins"
+
+
 def task_to_trajectories(task: BenchmarkTask) -> tuple[Trajectory, Trajectory]:
     """Return ``(benign_trajectory, attack_trajectory)`` for a task.
 
@@ -74,13 +79,57 @@ def task_to_trajectories(task: BenchmarkTask) -> tuple[Trajectory, Trajectory]:
     ground-truth ATTACK label is never consulted to taint an action. The detector
     must therefore separate benign from attack by BEHAVIOUR — an untrusted-driven
     action that leaves the sealed goal — not by reading which events were injected.
+
+    Injection-style tasks (AgentDojo, fixtures): attack = benign prefix + injected
+    steps. Parallel-twin tasks (SLEIGHT): attack is the attack transcript alone,
+    under the goal sealed from the benign twin. Prepending the benign twin here
+    invents a session that never happened; scoring attack-only tasks with an
+    empty verb set is the other cheat (empty goal ⇒ ~60% fake containment).
     """
     goal = _goal_for(task)
-    benign_actions: list[Action] = []
-    attack_actions: list[Action] = []
-    context: list[ContextItem] = [
+    # Empty sealed verbs on an attack-only stream is the SLEIGHT artifact: every
+    # action looks out-of-goal. Refuse that shape when the task claims a twin.
+    if _parallel_twins(task) and not (goal.structured_intent or {}).get("verbs"):
+        raise ValueError(
+            f"parallel-twin task {task.task_id!r} sealed an empty verb set; "
+            "goal verbs must come from the benign twin"
+        )
+    context = [
         ContextItem("external-content", TrustLevel.UNTRUSTED, introduced_at_step=0)
     ]
+    if _parallel_twins(task):
+        benign_actions: list[Action] = []
+        attack_actions: list[Action] = []
+        ingested_b = ingested_a = False
+        for event in task.events:
+            if event.label is EventLabel.BENIGN:
+                act = Action(
+                    step=len(benign_actions), tool=event.tool_name,
+                    resource=event.resource, verb=event.action,
+                    args=dict(event.args),
+                    derived_from=("external-content",) if ingested_b else (),
+                )
+                if event.action.lower() in _READ_VERBS:
+                    ingested_b = True
+                benign_actions.append(act)
+            else:
+                # UNLABELED cover work stays in the attack twin stream.
+                act = Action(
+                    step=len(attack_actions), tool=event.tool_name,
+                    resource=event.resource, verb=event.action,
+                    args=dict(event.args),
+                    derived_from=("external-content",) if ingested_a else (),
+                )
+                if event.action.lower() in _READ_VERBS:
+                    ingested_a = True
+                attack_actions.append(act)
+        return (
+            Trajectory(goal=goal, actions=benign_actions, context=context),
+            Trajectory(goal=goal, actions=attack_actions, context=context),
+        )
+
+    benign_actions = []
+    attack_actions = []
     step = 0
     ingested = False
     for event in task.events:
@@ -93,7 +142,7 @@ def task_to_trajectories(task: BenchmarkTask) -> tuple[Trajectory, Trajectory]:
             ingested = True
         if event.label is EventLabel.BENIGN:
             benign_actions.append(act)
-        else:
+        elif event.label is not EventLabel.UNLABELED:
             attack_actions.append(act)
         step += 1
     benign = Trajectory(goal=goal, actions=benign_actions, context=context)
@@ -155,7 +204,13 @@ def run_detector_benchmark(
         b, a = task_to_trajectories(task)
         if b.actions:
             test_benign.append(b)
-        if len(a.actions) > len(b.actions):
+        # Injection-style: attack is a suffix, so it must be longer than benign.
+        # Parallel twins: the attack transcript is scored on its own; length is
+        # not a signal (benign and attack twins are often similar length).
+        if _parallel_twins(task):
+            if a.actions:
+                test_attack.append(a)
+        elif len(a.actions) > len(b.actions):
             test_attack.append(a)
 
     det = detector or TrajectoryDetector()

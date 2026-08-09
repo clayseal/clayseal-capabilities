@@ -47,13 +47,25 @@ POOLABLE = frozenset({
     "redcode", "ipi_coding", "agent_threat_bench", "mcp_attack", "toolemu",
 })
 
+# The deterministic ladder stops at the budget rung.
+#
+# Velocity stays in the tree and is NOT scored here. Measured across all nineteen
+# corpora, it contributes zero containment on every one of them and its only
+# effects are artifacts: it adds 1.94% false blocks on ATIF and 0.03% on tau2 for
+# nothing in return, and on SLEIGHT it reports 61 extra points of "containment"
+# that are transcript length rather than the attack. That last number swings 29.5
+# points when the events are shuffled, which is the order-invariance assertion
+# failing outright.
+#
+# Its containment claim rests on benchmarks/burst.py, which supplies the burst
+# none of these corpora contains and measures it against a held-out false-alarm
+# rate. That is the honest place for it.
 DEPLOYABLE = [
     "tool-allowlist",
     "capability-token",
     "task-scope",
     "task-scope+binding",
     "task-scope+binding+budget",
-    "task-scope+binding+budget+velocity",
 ]
 
 # What each corpus actually exercises, and what its number does NOT mean. Written
@@ -67,11 +79,12 @@ CAVEATS = {
                 "raw toolkit mapping still has no attack events (underspecification)"),
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
-    "sleight": ("per-action ladder has almost no intent signal; cite sleight[detector]"),
-    "sleight[detector]": ("trajectory detector on paired twins — the honest SLEIGHT "
-                          "score; ladder containment is not an intent result"),
-    "advbench_agent": ("target/arg binding on normalized fixture; content-only twins "
-                       "are not the score path"),
+    "sleight": ("mechanism-cited sabotage only; ladder ~5% on binding+budget — "
+                "velocity false-alarms coding agents; not an intent win"),
+    "sleight[detector]": ("paired twins, goal sealed from benign; ngram ~6% at "
+                          "alpha=0.05 — prior ~60% was empty-goal artifact"),
+    "advbench_agent": ("normalized fixture: target/arg binding; binding rung "
+                       "100% / 0% FB; content-only twins are not the score path"),
     "agentharm": ("6.3% is a LOADER limit: we read only the JSON (tool names), while "
                   "the corpus grading functions assert targets for 63% of behaviours"),
     "atif": "benign only; a false-block measurement",
@@ -155,8 +168,14 @@ def _deterministic(board: Scoreboard, quick: bool) -> None:
             board.add(tier=name, measures="deterministic replay",
                       caveat="corpus not fetched")
             continue
+        # Prefer a corpus-declared rung (SLEIGHT must not use velocity: long
+        # coding sessions trip the effect-action rate and invent containment).
+        rung = next((t.meta.get("ladder_rung") for t in tasks
+                     if t.meta.get("ladder_rung")), DEPLOYABLE[-1])
+        if rung not in DEPLOYABLE:
+            rung = DEPLOYABLE[-1]
         engines = [e for e in build_engines() if e.name in DEPLOYABLE]
-        result = run_benchmark(tasks, engines)[DEPLOYABLE[-1]]
+        result = run_benchmark(tasks, engines)[rung]
         # A corpus whose mandate is derived from its own benign side cannot
         # yield a friction number: that side is clean by construction. Saying so
         # is the difference between this table and the five withdrawn results.
@@ -173,7 +192,7 @@ def _deterministic(board: Scoreboard, quick: bool) -> None:
         if corrected:
             hr = run_benchmark(
                 held_tasks, [e for e in build_engines() if e.name in DEPLOYABLE]
-            )[DEPLOYABLE[-1]]
+            )[rung]
             heldout = f"{100 * hr.false_block_rate:.2f}%"
         board.add(
             tier=name,

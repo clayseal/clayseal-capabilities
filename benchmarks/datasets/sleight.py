@@ -511,8 +511,10 @@ def _is_benign_stem(stem: str) -> bool:
 class SleightLoader:
     """One paired task per scenario: benign twin grant + both transcripts.
 
-    Per-action ladder scores stay structurally weak (covert intent). Prefer
-    ``--mode detector`` / ``sleight[detector]`` for the honest containment number.
+    Attack events are only the tool calls cited in ``metadata.json`` ``mechanism``;
+    other attack-transcript calls are ``UNLABELED``. Per-action ladder scores stay
+    structurally weak (covert intent). Prefer ``--mode detector`` /
+    ``sleight[detector]`` for the honest containment number.
     """
 
     name = "sleight"
@@ -547,6 +549,10 @@ class SleightLoader:
             attack_path = slots.get("attack")
             if benign_path is None or attack_path is None:
                 continue
+            mechanism = _mechanism_lines(directory)
+            if mechanism is None:
+                # Empty / missing mechanism: exclude rather than guess (see module doc).
+                continue
             category = directory.relative_to(attacks).parts[0]
             scenario = directory.name
             workspace = _workspace_of(benign_path)
@@ -554,16 +560,22 @@ class SleightLoader:
             benign_events = _events_from_transcript(
                 benign_path, EventLabel.BENIGN, f"{task_id}-b", workspace)
             attack_events = _events_from_transcript(
-                attack_path, EventLabel.ATTACK, f"{task_id}-a", workspace)
-            if not benign_events or not attack_events:
+                attack_path, EventLabel.ATTACK, f"{task_id}-a", workspace,
+                mechanism=mechanism)
+            if not benign_events or not any(
+                    e.label is EventLabel.ATTACK for e in attack_events):
                 continue
             surface = _authorized_surface(benign_events)
-            nets = _authorized_nets(benign_events)
+            mandate = _mandate(task_id, workspace, surface)
+            # Seal goal verbs from the benign twin so detector_eval cannot fall
+            # back to an empty verb set (the artifact that produced ~60% fake
+            # containment on attack-only tasks).
+            mandate["allowed_actions"] = sorted({e.action for e in benign_events})
             tasks.append(BenchmarkTask(
                 task_id=task_id,
                 summary=f"{category}: paired coding-agent transcripts",
                 events=benign_events + attack_events,
-                mandate=_mandate(task_id, workspace, surface, nets),
+                mandate=mandate,
                 capabilities=list(_CAPABILITIES),
                 allowed_tools=set(_TOOLS),
                 meta={
@@ -572,8 +584,13 @@ class SleightLoader:
                     "workspace": workspace,
                     "benign_transcript": str(benign_path),
                     "attack_transcript": str(attack_path),
+                    "mechanism_lines": sorted(mechanism),
+                    # Parallel twins for detector_eval (not injection suffix).
+                    "trajectory_mode": "parallel_twins",
+                    # Velocity misreads long coding-agent sessions as abuse.
+                    "ladder_rung": "task-scope+binding+budget",
                     # Per-action ladder has almost no intent signal here.
-                    # Score covert intent with --mode detector.
+                    # Score covert intent with --mode detector (honest ~low).
                     "score_with": "detector",
                     # The false-block number on this corpus is not reportable:
                     # the mandate is derived from the benign twin, so that twin
