@@ -585,3 +585,61 @@ def test_a_ledger_survives_repeated_crash_and_restart(tmp_path):
     final = PrincipalLedger(path=path)
     assert final.spent("p", "usd") == Decimal("100")
     assert final.verify_totals()
+
+
+# --------------------------------------------------------------------------- #
+# The threshold's own just-under evasion
+# --------------------------------------------------------------------------- #
+def _windows(pattern, ceiling="10000", window=86400):
+    from agentauth.capabilities.principal_ledger import parks_below_the_gate
+
+    ledger = PrincipalLedger(window_seconds=window)
+    now = (len(pattern) + 1) * window
+    for i, util in enumerate(pattern):
+        at = now - (len(pattern) - i) * window + 1
+        for j in range(4):
+            ledger.book("p", "usd",
+                        Decimal(str(round(float(Decimal(ceiling)) * util / 4, 2))),
+                        session=f"w{i}s{j}", now=at)
+    return parks_below_the_gate(ledger, "p", "usd", Decimal(ceiling), now=now)
+
+
+def test_parking_just_under_the_gate_is_missed_by_the_single_window_test():
+    """The evasion, pinned so the limit stays visible.
+
+    `structuring_signal` fires above a utilisation threshold, and any threshold
+    has a just-under evasion by construction. Four equal payments totalling
+    84.99% of the ceiling trip nothing, and lowering the gate only moves it:
+    measured over 3,000 synthetic legitimate runs, gate 0.85 flags 12.2% of them
+    and gate 0.50 flags 40.0%, and at every one the attacker parked a basis point
+    below and was missed.
+    """
+    ledger = PrincipalLedger()
+    for i in range(4):
+        ledger.book("p", "usd", Decimal("2124.75"), session=f"s{i}")
+    assert not structuring_signal(ledger, "p", "usd", Decimal("10000")).suspicious
+
+
+def test_parking_there_window_after_window_is_its_own_signature():
+    """Real spend does not hug a line it cannot see. An agent shaping its
+    behaviour to a limit does."""
+    assert _windows([0.8499] * 6).suspicious
+    assert _windows([0.84, 0.83, 0.845, 0.838, 0.842, 0.849]).suspicious
+
+
+@pytest.mark.parametrize("pattern,label", [
+    ([0.2, 0.9, 0.35, 0.75, 0.1, 0.95], "ordinary bursty business"),
+    ([0.05] * 6, "low steady usage"),
+    ([0.5, 0.55, 0.45, 0.6, 0.5, 0.55], "steady mid usage"),
+    ([0.99] * 6, "consistently near the ceiling, caught by the single-window test"),
+])
+def test_ordinary_spend_does_not_look_like_parking(pattern, label):
+    assert not _windows(pattern).suspicious, label
+
+
+def test_reading_the_windows_does_not_destroy_them():
+    """`entries_in_window` prunes as it reads, so walking backwards through
+    windows with it evicts the history being measured and every window after the
+    first reports zero. This asserts the log is read without mutation."""
+    signal = _windows([0.8499] * 6)
+    assert signal.just_under == 6

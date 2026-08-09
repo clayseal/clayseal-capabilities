@@ -213,6 +213,19 @@ def _subsequence_coverage(needle: str, haystack: str) -> tuple[int, int | None]:
     return best_cov, best_span
 
 
+# Key for the pooled, non-declassified sink history.
+_POOL = "\x00pooled"
+
+
+def _longest_prefix_in(needle: str, block: str) -> int:
+    """Longest prefix of `needle` that appears contiguously inside `block`."""
+    limit = min(len(needle), len(block))
+    for n in range(limit, 0, -1):
+        if needle[:n] in block:
+            return n
+    return 0
+
+
 def _compact(text: str) -> str:
     """Alphanumerics only. Separators are how a split value hides."""
     return "".join(ch for ch in text if ch.isalnum())
@@ -253,6 +266,16 @@ class FlowTracker:
     # closes the seam, and only ALLOWED content accumulates, because a refused
     # write never happened.
     _emitted: dict[str, str] = field(default_factory=dict)
+    # The same content kept as the individual write payloads rather than one
+    # concatenation, because ORDER was doing the work and an attacker chooses it.
+    #
+    # Subsequence matching over a concatenated stream requires the fragments to
+    # arrive in order. Sending them reversed escaped at every width, and shuffled
+    # escaped from eleven fragments up. Each write is a contiguous piece of the
+    # value, so the value is assemblable from the pieces in SOME order, and that
+    # is the question to ask.
+    _blocks: dict[str, list[str]] = field(default_factory=dict)
+    max_blocks: int = 512
     # The same content again, pooled across EVERY non-declassified sink.
     #
     # A per-sink buffer is defeated by fanning out: one fragment to each of
@@ -328,14 +351,28 @@ class FlowTracker:
         # unrelated writes look like a leak.
         if not carried and candidate and declassified is None:
             carried = self._carried_across_writes(pooled + candidate)
+        # Finally, order-independently: can the value be ASSEMBLED from the
+        # pieces this sink received, in any order?
+        if not carried and candidate:
+            with self._lock:
+                blocks = list(self._blocks.get(sink_key, ()))
+                if declassified is None:
+                    blocks += list(self._blocks.get(_POOL, ()))
+            carried = self._carried_from_blocks(blocks + [candidate])
 
         if not carried:
             with self._lock:
                 self._emitted[sink_key] = (
                     history + candidate)[-self.max_emitted_chars:]
+                if candidate:
+                    self._blocks.setdefault(sink_key, []).append(candidate)
+                    del self._blocks[sink_key][:-self.max_blocks]
                 if declassified is None:
                     self._emitted_pooled = (
                         pooled + candidate)[-self.max_emitted_chars:]
+                    if candidate:
+                        self._blocks.setdefault(_POOL, []).append(candidate)
+                        del self._blocks[_POOL][:-self.max_blocks]
             return FlowVerdict(True, "carries no value from a sensitive read")
 
         # A sink the sealed goal named is authorized to receive this.
@@ -365,6 +402,46 @@ class FlowTracker:
             # Exact tokens missed. Try the reconstructions below, which cost a
             # normalisation of the outgoing payload and nothing else.
             return self._carried_after_normalisation(args)
+
+    def _carried_from_blocks(self, blocks: list[str]) -> set[str]:
+        """Can a sensitive value be assembled from these pieces, in ANY order?
+
+        Each write contributes a contiguous piece of whatever it carried, so a
+        value split across writes is assemblable from the pieces regardless of
+        the order they were sent in. Greedy cover: repeatedly take the block that
+        matches the longest prefix of what is still unassembled.
+
+        This is what closes the order hole. Subsequence matching over the
+        concatenated stream asked whether the value arrived in order, and an
+        attacker picks the order: reversed escaped at every width, shuffled from
+        eleven fragments up, both with zero refusals.
+        """
+        if not blocks:
+            return set()
+        with self._lock:
+            tokens = list(self._sensitive_tokens.items())
+        found: set[str] = set()
+        for token, origins in tokens:
+            target = _compact(token)
+            if len(target) < _MIN_RECONSTRUCTED:
+                continue
+            remaining = target
+            pool = list(blocks)
+            progressed = True
+            while remaining and progressed:
+                progressed = False
+                best_i, best_n = -1, 0
+                for i, block in enumerate(pool):
+                    n = _longest_prefix_in(remaining, block)
+                    if n > best_n:
+                        best_i, best_n = i, n
+                if best_n:
+                    remaining = remaining[best_n:]
+                    pool.pop(best_i)
+                    progressed = True
+            if not remaining:
+                found |= origins
+        return found
 
     def _carried_across_writes(self, stream: str) -> set[str]:
         """Has this sink received the whole value, spread over several writes?
