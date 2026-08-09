@@ -484,6 +484,48 @@ class VelocityLadderEngine(BudgetLadderEngine):
         return Decision(True, "within task scope, bound, budgeted and paced", self.name)
 
 
+class DelegationLadderEngine(VelocityLadderEngine):
+    """Full stack plus the question no rung below it asks: WHOSE authority.
+
+    Every rung below judges the action. This one judges the principal. It reads
+    the acting agent from ``event.meta["principal"]`` and the delegation that
+    agent presented from ``task.meta["delegation"]["presenters"]``, and refuses
+    an action the principal's own chain does not authorize even when the action
+    itself is inside the task's mandate.
+
+    ``task.meta["delegation"]`` absent means the task does not delegate, and the
+    rung is a pass-through. That is what keeps the deterministic tier unchanged:
+    none of RedCode, AgentHarm, ASB, SLEIGHT, IPI-Coding or AgentThreatBench has
+    a second principal, so on all of them this engine is the rung below it,
+    decision for decision.
+    """
+
+    name = "task-scope+binding+budget+velocity+delegation"
+
+    def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        base = super().decide(task, event)
+        if not base.allowed:
+            return Decision(False, base.reason, self.name)
+        wiring = (task.meta or {}).get("delegation")
+        if not wiring:
+            return Decision(True, base.reason, self.name)
+        principal = (event.meta or {}).get("principal")
+        if principal is None:
+            # A delegating task with an unattributed action. Fail closed: an
+            # action nobody signed for is the confused deputy's best disguise.
+            return Decision(False, "action carries no acting principal", self.name)
+        boundary = wiring["boundary"]
+        verdict = boundary.authorize(
+            principal=principal,
+            resource=event.resource,
+            action=event.action,
+            envelope=wiring["presenters"].get(principal),
+        )
+        if not verdict.allowed:
+            return Decision(False, f"{verdict.rule}: {verdict.reason}", self.name)
+        return Decision(True, "authorized for this principal", self.name)
+
+
 # --------------------------------------------------------------------------- #
 # Registry
 # --------------------------------------------------------------------------- #
@@ -509,6 +551,7 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
         "task-scope+binding": TaskScopeInputBindingEngine,
         "task-scope+binding+budget": BudgetLadderEngine,
         "task-scope+binding+budget+velocity": VelocityLadderEngine,
+        "task-scope+binding+budget+velocity+delegation": DelegationLadderEngine,
         "opa": opa_engine,
         "cedar": cedar_engine,
         "openfga": openfga_engine,
