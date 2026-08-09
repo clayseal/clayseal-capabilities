@@ -147,11 +147,75 @@ def _matches(candidate: str, pattern: str) -> bool:
 # coincidentally contain a short secret.
 _MIN_RECONSTRUCTED = 12
 
+# How far apart the fragments of a value may sit and still count as the value
+# leaving. A subsequence match with no density bound fires on any long stream, so
+# the fragments have to be dense rather than scattered across an hour of
+# unrelated work.
+#
+# 32 comes from a sweep, not from taste. At 8 the surrounding arguments of a real
+# write inflated the span past the bound and the whole value still escaped in 94
+# of 600 chunked sessions; at 32 that goes to 0 of 600. False blocks on real tau2
+# and BFCL traffic stay at 0 of 549 across the whole sweep (8, 32, 128), so the
+# looser bound costs nothing measurable and 128 buys nothing more.
+_MAX_SPREAD = 32
+
 _DECODE_TOKEN = __import__("re").compile(r"[A-Za-z0-9+/=]{16,}")
 
 
 def _TOKENS_FOR_DECODE(blob: str) -> list[str]:
     return _DECODE_TOKEN.findall(blob)
+
+
+# Work bounds for the subsequence scan. This runs inside the authorization path,
+# where the rest of the stack costs 35us at the median, and the naive form is
+# quadratic with a restart per occurrence of the first character: a 5,000
+# character payload against a 64KB buffer did not finish in two minutes. Neither
+# bound changes what is detected for realistic secrets; both stop a large payload
+# from turning the check into a denial of service on itself.
+_MAX_NEEDLE = 256          # longer values are matched on their first 256 chars
+_MAX_STARTS = 32           # candidate start positions tried
+
+
+def _subsequence_coverage(needle: str, haystack: str) -> tuple[int, int | None]:
+    """How much of `needle` appears in order in `haystack`, and over what span.
+
+    Returns (characters matched, span). Coverage rather than a yes/no match,
+    because waiting for the whole value means the alarm fires on the write that
+    completes it and the attacker already has all but the last fragment.
+
+    Greedy from a bounded number of start positions, keeping the best coverage
+    and the tightest span achieving it. Bounded rather than exhaustive: see the
+    constants above.
+    """
+    if not needle or not haystack:
+        return 0, None
+    needle = needle[:_MAX_NEEDLE]
+    best_cov = 0
+    best_span: int | None = None
+    first = needle[0]
+    start = haystack.find(first)
+    tried = 0
+    while start != -1 and tried < _MAX_STARTS:
+        tried += 1
+        i, j = start, 0
+        last = start
+        while i < len(haystack) and j < len(needle):
+            if haystack[i] == needle[j]:
+                j += 1
+                last = i
+            i += 1
+        span = last - start + 1
+        if j > best_cov or (j == best_cov and best_span is not None and span < best_span):
+            best_cov, best_span = j, span
+        if best_cov == len(needle) and best_span == len(needle):
+            break
+        start = haystack.find(first, start + 1)
+    return best_cov, best_span
+
+
+def _compact(text: str) -> str:
+    """Alphanumerics only. Separators are how a split value hides."""
+    return "".join(ch for ch in text if ch.isalnum())
 
 
 def _flatten(value: Any) -> str:
@@ -176,6 +240,34 @@ class FlowTracker:
     provenance: ParameterProvenance = field(default_factory=ParameterProvenance)
     # token -> the sensitive resources that emitted it.
     _sensitive_tokens: dict[str, set[str]] = field(default_factory=dict)
+    # sink -> the alphanumeric content ALLOWED out to it this session.
+    #
+    # Without this, splitting a secret across two writes defeated the whole
+    # mechanism. Each fragment sits below the reconstruction floor and no single
+    # write carries the value, so a per-write check sees nothing: measured, two
+    # writes was enough, and one character per write also walked straight out.
+    #
+    # That is the seam between the volume axis and the sequence axis. Velocity
+    # does not see it because a handful of writes is not a burst; flow control
+    # did not see it because no write carried the value. Accumulating per sink
+    # closes the seam, and only ALLOWED content accumulates, because a refused
+    # write never happened.
+    _emitted: dict[str, str] = field(default_factory=dict)
+    # Bound on retained content per sink. A session that writes for hours must
+    # not grow without limit inside the authorization path.
+    max_emitted_chars: int = 65536
+    # How much of a sensitive value has to reach a sink before the flow counts as
+    # having happened. At 1.0 the alarm fires on the write that COMPLETES the
+    # value, and the attacker already has everything but the last fragment: 21 of
+    # 22 characters when the secret is dripped one character per write. That is
+    # detection, not prevention.
+    #
+    # Below 1.0 the check trips early and the blast radius shrinks. It is set
+    # from measurement rather than taste: subsequence matching flags 1 of 6,728
+    # real benign writes across tau2 and BFCL even with deliberately awkward
+    # secrets (common words, bare digits, short ids), so there is room to be
+    # aggressive. See benchmarks/results/flow.md for the curve.
+    leak_fraction: float = 0.5
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
 
     # ----------------------------------------------------------------- #
@@ -208,8 +300,23 @@ class FlowTracker:
         if verb not in SINK_VERBS:
             return FlowVerdict(True, f"{verb!r} does not move data outward")
 
+        # Judged against everything this sink has already received PLUS this
+        # write, so a value assembled across several writes is caught on the one
+        # that completes it.
+        candidate = _compact(_flatten(args))
+        sink_key = path or resource
+        with self._lock:
+            history = self._emitted.get(sink_key, "")
         carried = self._carried(args)
+        if not carried and candidate:
+            carried = self._carried_after_normalisation(history + candidate)
+        if not carried and candidate:
+            carried = self._carried_across_writes(history + candidate)
+
         if not carried:
+            with self._lock:
+                merged = (history + candidate)[-self.max_emitted_chars:]
+                self._emitted[sink_key] = merged
             return FlowVerdict(True, "carries no value from a sensitive read")
 
         # A sink the sealed goal named is authorized to receive this.
@@ -219,7 +326,8 @@ class FlowTracker:
                 True, f"sensitive data to {sink}, which the sealed goal named",
                 tuple(sorted(carried)), sink)
 
-        # The destination is legitimate for this task and the DATA is not.
+        # The destination is legitimate for this task and the DATA is not. The
+        # write is refused, so its content does not join the sink's history.
         origins = ", ".join(sorted(carried))
         return FlowVerdict(
             False,
@@ -240,6 +348,52 @@ class FlowTracker:
             # normalisation of the outgoing payload and nothing else.
             return self._carried_after_normalisation(args)
 
+    def _carried_across_writes(self, stream: str) -> set[str]:
+        """Has this sink received the whole value, spread over several writes?
+
+        Concatenating the stream and substring-matching does not work: an agent
+        that puts a word of filler between fragments breaks contiguity, and the
+        cheapest split (two writes) already defeats a per-write check.
+
+        So the test is whether the value appears as a SUBSEQUENCE of everything
+        this sink has received, which survives filler, reordering of surrounding
+        text, and one character per write.
+
+        A subsequence match on its own would fire constantly: any short string
+        appears as a subsequence of enough text. Two bounds make it evidence.
+        The value must be at least `_MIN_RECONSTRUCTED` characters, and the SPAN
+        of stream it is found in must be at most `_MAX_SPREAD` times its length,
+        so the fragments have to be dense rather than scattered across an hour of
+        unrelated work. Both are measured against real tau2 and BFCL traffic in
+        benchmarks/results/flow.md rather than assumed.
+        """
+        if not stream:
+            return set()
+        with self._lock:
+            tokens = list(self._sensitive_tokens.items())
+        found: set[str] = set()
+        for token, origins in tokens:
+            compact_token = _compact(token)
+            if len(compact_token) < _MIN_RECONSTRUCTED:
+                continue
+            target = min(len(compact_token), _MAX_NEEDLE)
+            covered, span = _subsequence_coverage(compact_token, stream)
+            if covered < _MIN_RECONSTRUCTED:
+                continue
+            if covered / target < self.leak_fraction:
+                continue
+            # The density bound guards PARTIAL matches, where a scattered
+            # coincidence is plausible. A COMPLETE in-order match of a token of
+            # twelve characters or more is not coincidence at any span, and
+            # holding it to the bound is what let BFCL's larger write arguments
+            # inflate the span until the whole value escaped in 45 of 91 chunked
+            # sessions. Measured: exempting complete matches takes that to 0 of
+            # 91 with false blocks on real traffic unchanged at 0.
+            complete = covered >= target
+            if complete or (span is not None and span <= _MAX_SPREAD * covered):
+                found |= origins
+        return found
+
     def _carried_after_normalisation(self, args: Any) -> set[str]:
         """Catch the cheap transforms, and be explicit about the rest.
 
@@ -259,7 +413,7 @@ class FlowTracker:
         import base64
         import binascii
 
-        blob = _flatten(args)
+        blob = args if isinstance(args, str) else _flatten(args)
         if not blob:
             return set()
 

@@ -51,5 +51,27 @@
       "total": 300,
       "contained": 1.0
     }
+  },
+  "chunked": {
+    "2": {
+      "whole_value_leaked": 0,
+      "sessions": 300,
+      "mean_chars_leaked": 11.0
+    },
+    "4": {
+      "whole_value_leaked": 0,
+      "sessions": 300,
+      "mean_chars_leaked": 6.0
+    },
+    "11": {
+      "whole_value_leaked": 0,
+      "sessions": 300,
+      "mean_chars_leaked": 10.0
+    },
+    "22": {
+      "whole_value_leaked": 0,
+      "sessions": 300,
+      "mean_chars_leaked": 11.0
+    }
   }
 }
