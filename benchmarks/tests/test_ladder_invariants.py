@@ -241,3 +241,60 @@ def test_the_velocity_cap_sits_above_clean_traffic():
     engine = VelocityLadderEngine()
     engine.observe_corpus(corpus)
     assert engine._cap >= 30
+
+
+# --------------------------------------------------------------------------- #
+# Stateful rungs must not depend on how a loader happened to order events
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("dataset", DATASETS)
+def test_stateful_rungs_are_insensitive_to_event_order(dataset):
+    """The general form of a bug that produced a headline number.
+
+    Velocity and the budgets accumulate across a task. If a loader concatenates
+    two sessions into one task, the first session's events consume the second's
+    budget, and the layer looks like it is containing attacks when it is only
+    charging them for arriving late.
+
+    That is exactly what AgentHarm did: benign variant then harmful twin, in one
+    trajectory, giving +8.0 points of containment at zero false-block cost. The
+    tell is order sensitivity, so this asserts on it directly. Shuffling events
+    inside a task must not move either rate.
+
+    A corpus that genuinely records one ordered session is still fine here,
+    because within a real session the stateful rungs see the same events; what
+    fails is a task whose order carries the label.
+    """
+    import random
+    from copy import copy
+
+    tasks = _load(dataset)
+    if not tasks:
+        pytest.skip(f"{dataset}: no tasks")
+
+    engines = [e for e in build_engines() if e.name in DEPLOYABLE]
+    base = run_benchmark(tasks, engines)
+
+    rnd = random.Random(20260808)
+    shuffled = []
+    for task in tasks:
+        clone = copy(task)
+        events = list(task.events)
+        rnd.shuffle(events)
+        clone.events = events
+        shuffled.append(clone)
+    after = run_benchmark(shuffled, [e for e in build_engines() if e.name in DEPLOYABLE])
+
+    for name in DEPLOYABLE:
+        assert after[name].attack_prevention_rate == pytest.approx(
+            base[name].attack_prevention_rate, abs=1e-9), (
+            f"{dataset}/{name}: containment depends on event order "
+            f"({100*base[name].attack_prevention_rate:.1f}% -> "
+            f"{100*after[name].attack_prevention_rate:.1f}%); a stateful rung is "
+            f"reading the loader's layout"
+        )
+        assert after[name].false_block_rate == pytest.approx(
+            base[name].false_block_rate, abs=1e-9), (
+            f"{dataset}/{name}: false-block depends on event order "
+            f"({100*base[name].false_block_rate:.1f}% -> "
+            f"{100*after[name].false_block_rate:.1f}%)"
+        )

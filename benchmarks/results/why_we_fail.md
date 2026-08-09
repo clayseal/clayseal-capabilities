@@ -141,35 +141,54 @@ because the task was an attack. The limit was a function of the label. It
 reported 24.7% containment on AgentHarm and 65.5% on SLEIGHT. **Neither number
 was real and both are withdrawn.**
 
-### The version that holds
+### The second defect, which the fix exposed
 
-The cap is now a single per-mandate constant, set at the largest number of effect
-actions any *clean* task performs. That is what an operator sets from their own
-logs, it never consults the task being judged, and it never consults an attack
-event.
+With a valid cap the rung still showed +8.0 points on AgentHarm at zero
+false-block cost. That was also not real, and the tell was order sensitivity:
+shuffling the events inside each task moved it to +3.8 points at 4.2%
+false-block.
 
-The observed maximum rather than a high percentile, because the two differ in
-kind: at p99 the cap trips on the busiest 1% of legitimate work by construction,
-and it did, costing BFCL 0.4% of its benign side and tau2 0.1% for no containment
-in return.
+The AgentHarm loader paired each behaviour's benign variant with its harmful
+twin and concatenated them into one trajectory, benign calls first. Velocity is
+stateful and accumulates per task, so the benign half consumed the rate budget
+and the harmful half was blocked for arriving late. The two variants are two
+sessions that never coexist, so no deployment has that budget interaction.
+
+The loader now emits them as two tasks under one shared grant, which keeps the
+threat model (the user authorized the benign behaviour, the agent ran the
+harmful twin) and removes the shared window. `benchmarks/tests/test_ladder_invariants.py`
+now asserts the general property across every corpus: shuffling events inside a
+task must not move containment or false-block for any deployable rung.
+
+### What velocity is actually worth on this evidence
 
 | Corpus | cap | containment before | after | false-block before | after |
 | --- | --: | --: | --: | --: | --: |
-| AgentHarm | 5 | 6.3% | **14.3%** | 0.00% | **0.00%** |
+| AgentHarm | 6 | 6.3% | 6.3% | 0.00% | 0.00% |
 | SLEIGHT | 17 | 35.7% | 35.7% | 35.37% | 35.37% |
 | RedCode | 32 | 99.9% | 99.9% | 0.00% | 0.00% |
 | ASB | 5 | 100% | 100% | 0.00% | 0.00% |
 | IPI-Coding | 1 | 100% | 100% | 0.00% | 0.00% |
 | AgentThreatBench | 5 | 58.3% | 58.3% | 0.00% | 0.00% |
-| tau2 (14,842 benign events) | 9 | n/a | n/a | 0.00% | **0.00%** |
-| BFCL (3,232 benign events) | 7 | n/a | n/a | 0.00% | **0.00%** |
-| ATIF | 3 | n/a | n/a | 0.00% | **0.00%** |
+| tau2 (14,842 benign events) | 9 | n/a | n/a | 0.00% | 0.00% |
+| BFCL (3,232 benign events) | 7 | n/a | n/a | 0.00% | 0.00% |
+| ATIF | 3 | n/a | n/a | 0.00% | 0.00% |
 
-**AgentHarm containment more than doubles, 6.3% to 14.3%, at zero measured
-false-block cost on any corpus**, including the three benign-only sets totalling
-over 18,000 legitimate events. AgentHarm and ASB have no clean task to calibrate
-against, so both take the declared default of 5. The ladder invariants hold:
-monotone containment, no added friction at a higher rung.
+**Nothing. Zero containment gain on every corpus, at zero false-block cost.**
+
+That is the honest reading and it is a statement about the benchmarks, not only
+about the mechanism. Velocity bounds the blast radius of a compromise already
+under way, and it is deliberately blind to the first occurrence. None of these
+corpora contains what it is built to catch: a high-volume burst of authorized
+actions inside a session whose legitimate volume is low. RedCode's attacks are
+single destructive calls, AgentHarm's are single harmful calls, SLEIGHT's are
+covert-intent calls, and the long-horizon needle benchmark inserts exactly one
+malicious action by construction.
+
+So the rung ships enabled, because it costs nothing across 18,000+ benign events
+and it is the only deterministic signal that survives an action having no target.
+It carries no measured containment claim. Closing that gap needs a benchmark
+built for it; see the burst-volume work in `benchmarks/burst.py`.
 
 ### What the corrected measurement also shows
 

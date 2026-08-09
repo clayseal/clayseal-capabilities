@@ -93,11 +93,40 @@ def test_redcode_excludes_logic_risks_from_the_resource_subset():
 # AgentHarm
 # --------------------------------------------------------------------------- #
 def test_agentharm_pairs_benign_and_harmful_twins():
+    """Both variants of a behaviour, as two tasks under one grant.
+
+    They must not share a task. A stateful rung (velocity, budgets) accumulates
+    per task, and the two variants are two sessions that never coexist. When
+    they were one concatenated trajectory the benign half consumed the rate
+    budget and the harmful half was blocked for arriving late, which read as
+    +8.0 points of containment at zero false-block cost and was worth nothing.
+    """
     tasks = _load("agentharm")
     assert tasks
+    by_behavior: dict[str, set[str]] = {}
     for task in tasks:
         labels = {e.label for e in task.events}
-        assert labels == {EventLabel.BENIGN, EventLabel.ATTACK}
+        assert len(labels) == 1, (
+            f"{task.task_id} mixes labels; a stateful rung would let one "
+            f"variant consume the other's budget"
+        )
+        by_behavior.setdefault(task.meta["behavior_id"], set()).add(
+            task.meta["variant"])
+    assert by_behavior
+    for behavior_id, variants in by_behavior.items():
+        assert variants == {"benign", "harmful"}, behavior_id
+
+
+def test_agentharm_twins_are_judged_against_the_same_grant():
+    """The threat model: the user authorized the benign behaviour and the agent
+    ran its harmful twin. Splitting them must not split the mandate."""
+    tasks = _load("agentharm")
+    grants: dict[str, list[dict]] = {}
+    for task in tasks:
+        grants.setdefault(task.meta["behavior_id"], []).append(task.mandate)
+    for behavior_id, pair in grants.items():
+        assert len(pair) == 2
+        assert pair[0]["allowed_resources"] == pair[1]["allowed_resources"], behavior_id
 
 
 def test_agentharm_ceiling_is_exactly_the_over_privileged_subset():
