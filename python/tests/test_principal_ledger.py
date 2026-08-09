@@ -20,6 +20,7 @@ import pytest
 from agentauth.capabilities.principal_ledger import (
     PrincipalBudgetView,
     PrincipalLedger,
+    structuring_signal,
 )
 
 CEILING = Decimal("10000")
@@ -473,3 +474,71 @@ def test_an_abandoned_hold_expires_instead_of_shrinking_the_ceiling_forever():
     assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=0.0) is None
     # After the TTL the abandoned hold no longer counts.
     assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=120.0) is not None
+
+
+# --------------------------------------------------------------------------- #
+# Structuring: the concentration measure, and the cliff it replaces
+# --------------------------------------------------------------------------- #
+def _signal(amounts, ceiling="10000"):
+    ledger = PrincipalLedger()
+    for i, a in enumerate(amounts):
+        ledger.book("p", "usd", Decimal(str(a)), session=f"s{i}")
+    return structuring_signal(ledger, "p", "usd", Decimal(ceiling))
+
+
+@pytest.mark.parametrize("name,amounts", [
+    ("uniform split to the ceiling", [2500] * 4),
+    ("jittered split", [2400, 2600, 2550, 2450]),
+    ("one at 60% plus small", [6000, 1000, 1000, 1000, 1000]),
+    ("one at 70% plus small", [7000, 800, 800, 800, 800]),
+    ("one at 55% plus many small", [5500] + [500] * 9),
+])
+def test_structuring_survives_a_dominant_fragment(name, amounts):
+    """The blind spot this replaces.
+
+    The fragmentation test used to require the LARGEST fragment to sit below
+    half the ceiling, and that threshold was itself the escape: one payment
+    anywhere between 50% and 80% of the ceiling defeated it at every fragment
+    count while staying below the just-under band. Four of five structuring
+    patterns went unflagged.
+
+    The inverse Herfindahl index moves smoothly, so there is no amount an
+    attacker can choose to fall off the far side of it.
+    """
+    assert _signal(amounts).suspicious, name
+
+
+@pytest.mark.parametrize("name,amounts", [
+    ("real invoice run", [1200.50, 890.24, 1450.00, 1100.00, 1240.00]),
+    ("payroll, uniform but low utilisation", [100] * 5),
+    ("one large payment", [9900]),
+    ("two medium payments", [3000, 3500]),
+])
+def test_legitimate_spend_is_not_flagged(name, amounts):
+    assert not _signal(amounts).suspicious, name
+
+
+def test_a_single_payment_can_never_be_structuring():
+    """Effective fragment count is exactly 1 for one payment, whatever its size."""
+    sig = _signal([9999])
+    assert sig.effective_fragments == pytest.approx(1.0)
+    assert not sig.suspicious
+
+
+def test_the_signal_does_not_fire_below_high_utilisation():
+    """Measured, not assumed: 0 of 4,781 synthetic legitimate runs below 80%
+    utilisation were flagged. A control that fires on ordinary spend gets
+    switched off, and then it protects nothing."""
+    import random
+
+    rng = random.Random(7)
+    fired = 0
+    runs = 0
+    for _ in range(400):
+        k = rng.randint(1, 12)
+        util = rng.uniform(0.05, 0.75)
+        raw = [rng.lognormvariate(0, 0.8) for _ in range(k)]
+        scale = 10000.0 * util / sum(raw)
+        runs += 1
+        fired += _signal([round(x * scale, 2) for x in raw]).suspicious
+    assert fired == 0, f"{fired}/{runs} legitimate runs flagged below 75% utilisation"

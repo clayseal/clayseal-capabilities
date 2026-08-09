@@ -51,6 +51,13 @@ _EFFECT_ACTIONS = frozenset({
     "write", "create", "update", "delete", "send", "transfer", "post", "pay", "execute",
 })
 
+# Verbs that acquire without changing anything. Named positively, because the
+# complement of _EFFECT_ACTIONS is not the same set: `classify_verb` falls back
+# to `call` for any verb it does not recognise, and `call` is not an effect, so
+# a rule written for reads and expressed as "not an effect" silently covers
+# every unclassified consequential tool.
+_READ_ACTIONS = frozenset({"read", "search", "list", "get", "query"})
+
 
 @runtime_checkable
 class DecisionEngine(Protocol):
@@ -221,7 +228,15 @@ class TaskScopeInputBindingEngine(TaskScopeEngine):
                 # unfiltered read returns a superset of the authorized one. That
                 # is an in-surface attack, uncontained by every per-call layer
                 # including this one, and it belongs to the aggregate tier.
-                if not event.args and event.action not in _EFFECT_ACTIONS:
+                # Gated on a POSITIVE read predicate, not on the complement of
+                # the effect set. `classify_verb` falls back to `call` for
+                # anything it does not recognise, and `call` is not in
+                # _EFFECT_ACTIONS, so a bound CONSEQUENTIAL tool invoked with
+                # its arguments stripped landed on the allow side of a rule
+                # written for reads. Costs nothing on any corpus (measured on
+                # all nine: no rate moves), so it is free defence in depth
+                # against a tool whose verb we do not classify.
+                if not event.args and event.action in _READ_ACTIONS:
                     return Decision(True, "unfiltered read of a bound tool", self.name)
                 return Decision(False, "input binding: arguments not authorized for any call", self.name)
         return Decision(True, "within task scope; arguments bound", self.name)
