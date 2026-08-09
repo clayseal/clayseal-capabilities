@@ -105,6 +105,12 @@ def _atb_factory() -> DatasetLoader:
     return AgentThreatBenchLoader()
 
 
+def _ipi_coding_factory() -> DatasetLoader:
+    from benchmarks.datasets.ipi_coding import IpiCodingLoader
+
+    return IpiCodingLoader()
+
+
 def _sleight_factory() -> DatasetLoader:
     from benchmarks.datasets.sleight import SleightLoader
 
@@ -123,3 +129,4 @@ register_loader("agentharm", _agentharm_factory)
 register_loader("asb", _asb_factory)
 register_loader("sleight", _sleight_factory)
 register_loader("agent_threat_bench", _atb_factory)
+register_loader("ipi_coding", _ipi_coding_factory)

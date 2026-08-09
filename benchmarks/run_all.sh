@@ -29,7 +29,7 @@ echo "==> verifying corpus pinning"
 echo "==> invariant + harness tests"
 "${PY}" -m pytest benchmarks/tests -q
 
-for dataset in redcode agentharm asb; do
+for dataset in redcode agentharm asb sleight agent_threat_bench ipi_coding; do
   echo "==> ${dataset}: enforcement ladder (with confidence intervals)"
   "${PY}" -m benchmarks.cli --dataset "${dataset}" --ci \
     --json "${RESULTS}/new-suites/${dataset}.json" \
@@ -41,7 +41,7 @@ for dataset in redcode agentharm asb; do
 done
 
 echo "==> attack-class coverage (what the layer can and cannot decide)"
-"${PY}" -m benchmarks.coverage --datasets redcode,agentharm,asb \
+"${PY}" -m benchmarks.coverage --datasets redcode,agentharm,asb,sleight,agent_threat_bench,ipi_coding \
   --json "${RESULTS}/coverage.json" | tee "${RESULTS}/coverage.md"
 
 echo "==> adaptive red-team (all three knowledge levels)"
