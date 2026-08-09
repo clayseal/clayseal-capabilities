@@ -12,6 +12,8 @@ that looks like a policy decision.
 """
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 
 from agentauth.capabilities.replan import (
@@ -299,3 +301,84 @@ def test_widening_the_scope_does_not_disable_the_other_floor_checks():
     protected = Action(step=0, tool="write_file", resource="mcp:tool:write_file",
                        verb="write", args={"file_path": "/home/u/.ssh/id_rsa"})
     assert broker.authorize(protected).outcome is not Outcome.ALLOW
+
+
+# --------------------------------------------------------------------------- #
+# An extended action pays. Found by an adversarial audit, not by the tests above.
+# --------------------------------------------------------------------------- #
+def test_an_extended_action_still_spends_its_budget():
+    """The defect: replanning defeated two rungs of the ladder.
+
+    `authorize` rolled the action back before consulting the extender, which
+    released the value and call reservations and popped the action off the
+    trajectory. The extender then returned ALLOW without re-reserving. Every
+    extended action was therefore free: the ledgers never incremented, so a
+    cumulative ceiling could never be reached however many actions were
+    extended, and the action was invisible to the trajectory detector and to
+    every later feasibility check.
+
+    Nothing above caught it because no test built a broker with both a budget
+    and an extender.
+    """
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+    from agentauth.capabilities.monitor import Action
+    from agentauth.core.task_scope import TaskScope
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "goal implies this")
+
+    def _broker_with_budget():
+        return SessionBroker(
+            goal=GoalSpec(query_id="q", summary="pay the invoices"),
+            scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
+            value_budget=SessionValueBudget(config=ValueBudgetConfig(
+                ceilings={"usd": Decimal("1000")},
+                tracked={"transfer_money": ("amount", "usd")})),
+            call_budget=SessionCallBudget(config=CallBudgetConfig(
+                ceilings={"transfers": 10},
+                tracked={"transfer_money": "transfers"})),
+            plan_extender=AlwaysYes(), scope_is_advisory=True)
+
+    broker = _broker_with_budget()
+    allowed = 0
+    for i in range(10):
+        decision = broker.authorize(Action(
+            step=i, tool="transfer_money", resource="mcp:tool:transfer_money",
+            verb="transfer", args={"amount": "400", "to": "acct-1"}))
+        if decision.outcome is Outcome.ALLOW:
+            allowed += 1
+
+    assert allowed <= 2, (
+        f"{allowed} transfers of 400 allowed against a 1000 ceiling; extended "
+        f"actions are not spending their budget"
+    )
+
+
+def test_an_extended_action_stays_on_the_trajectory():
+    """The other half: a rolled-back action is invisible to the behavioural
+    layer, so an attacker whose actions are all extension-approved leaves no
+    trace for the detector or for any later feasibility check."""
+    from agentauth.capabilities.broker import Outcome, SessionBroker
+    from agentauth.capabilities.replan import ReplanVerdict
+    from agentauth.capabilities.scoping.goal import GoalSpec
+    from agentauth.capabilities.monitor import Action
+    from agentauth.core.task_scope import TaskScope
+
+    class AlwaysYes:
+        def consider(self, tool, verb):
+            return ReplanVerdict(True, "yes")
+
+    broker = SessionBroker(
+        goal=GoalSpec(query_id="q", summary="summarise the inbox"),
+        scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
+        plan_extender=AlwaysYes(), scope_is_advisory=True)
+    for i in range(4):
+        broker.authorize(Action(
+            step=i, tool="send_email", resource="mcp:tool:send_email",
+            verb="send", args={"to": "someone@example.com"}))
+    assert len(broker._trajectory.actions) == 4

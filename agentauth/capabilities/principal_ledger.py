@@ -201,6 +201,17 @@ class PrincipalLedger:
         at = time.time() if now is None else now
         entry = LedgerEntry(principal, budget_id, amount, at, session, idempotency_key)
         key = (principal, budget_id)
+        # A control must not trust its own callers. `_amount` already rejects
+        # non-positive values at the boundary, and this is the second gate: a
+        # negative booking drives the window total down, so `spent`,
+        # `remaining` and `would_exceed` all report headroom that does not
+        # exist while `verify_totals` still returns True, because the cache and
+        # the log agree on the wrong number. 180,000 was moved against a 10,000
+        # ceiling this way. Refunds, if they are ever needed, need an explicit
+        # entry point that a tracked tool argument cannot reach.
+        if not amount.is_finite() or amount <= 0:
+            raise ValueError(
+                f"ledger amounts must be finite and positive, got {amount!r}")
         with self._lock:
             if idempotency_key:
                 cutoff = at - self.window_seconds
@@ -225,6 +236,9 @@ class PrincipalLedger:
         40,000 against a 10,000 ceiling. Holding the reservation under the same
         lock as the check is what makes the ceiling a ceiling.
         """
+        if not amount.is_finite() or amount <= 0:
+            raise ValueError(
+                f"reservation amounts must be finite and positive, got {amount!r}")
         with self._lock:
             key = (principal, budget_id)
             projected = (self.spent(principal, budget_id, now=now)
@@ -401,9 +415,19 @@ class PrincipalBudgetView:
         if not isinstance(raw, (int, float, str, Decimal)) or isinstance(raw, bool):
             return None
         try:
-            return budget_id, Decimal(str(raw))
+            amount = Decimal(str(raw))
         except (ValueError, ArithmeticError):
             return None
+        # This value comes from the agent's own tool arguments. A negative one
+        # is a global disable switch for the principal's ceiling: `reserve` adds
+        # it straight into the shared hold, which is keyed by principal and
+        # budget rather than by session, so a single call of -1,000,000,000
+        # lifted the ceiling for every concurrent and subsequent session of that
+        # principal. Measured at 499,950 moved against a ceiling of 10,000.
+        # NaN and the infinities poison the same arithmetic without the sign.
+        if not amount.is_finite() or amount <= 0:
+            return None
+        return budget_id, amount
 
     def would_allow(self, tool_name: str, args: dict[str, Any],
                     *, now: float | None = None) -> tuple[bool, str]:
