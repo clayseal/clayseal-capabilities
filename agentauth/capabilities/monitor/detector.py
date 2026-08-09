@@ -37,6 +37,7 @@ from agentauth.capabilities.monitor.drift import CusumDrift
 from agentauth.capabilities.monitor.envelope import TypedGoalEnvelope
 from agentauth.capabilities.monitor.provenance import TaintTracker
 from agentauth.capabilities.monitor.reachability import EnvelopeDeparture, PathEnvelope
+from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
 from agentauth.capabilities.monitor.scoring.base import SequenceScorer
 from agentauth.capabilities.monitor.scoring.ngram import NGramScorer, goal_bucket
 
@@ -93,6 +94,9 @@ class TrajectoryDetector:
     calibration_frac: float = 0.4  # split-conformal: benign held out for calibration
     use_envelope: bool = True
     use_taint: bool = True
+    # When assess(..., reference=benign_twin) is supplied, run the twin
+    # corridor / intent two-signal / surface gate (SLEIGHT-style covert intent).
+    use_twin_reference: bool = True
     _fitted: bool = False
     _aml_benign_rate: float = 1.0  # AML flag rate on held-out benign (reason-only)
 
@@ -186,7 +190,19 @@ class TrajectoryDetector:
         whereas per-tier conformal control is robust — the deliberate trade here."""
         return {t: self.alpha for t in active}
 
-    def assess(self, traj: Trajectory) -> DetectionReport:
+    def assess(
+        self,
+        traj: Trajectory,
+        *,
+        reference: Trajectory | None = None,
+    ) -> DetectionReport:
+        """Score ``traj``. Optional ``reference`` is the sealed benign twin / plan.
+
+        Population tiers (scorer, drift, path envelope) use the fitted benign
+        corpus. When ``reference`` is set and ``use_twin_reference`` is true,
+        twin-calibrated structural checks can hard-block covert departures that
+        stay inside the coarse population corridor.
+        """
         bucket = goal_bucket(traj)
         envelope = TypedGoalEnvelope.from_goal(traj.goal) if self.use_envelope else None
         taint = TaintTracker.from_trajectory(traj) if self.use_taint else None
@@ -252,11 +268,24 @@ class TrajectoryDetector:
         if aml_v and aml_v.flagged:
             structural_reasons.extend(f"aml: {r}" for r in aml_v.reasons)
 
+        twin_block = False
+        if (
+            reference is not None
+            and self.use_twin_reference
+            and reference.actions
+        ):
+            twin = assess_twin_structural(traj, reference)
+            if twin.blocked:
+                twin_block = True
+                structural_reasons.extend(twin.reasons)
+
         return DetectionReport(
             verdicts=verdicts,
             path_departure=departure,
             aml=aml_v,
-            structural_block=combined_block,  # AML reasons are informational, never block
+            # Twin structural is a sealed-plan check, not a conformal population
+            # tier; it hard-blocks when the reference corridor says so.
+            structural_block=combined_block or twin_block,
             structural_reasons=tuple(structural_reasons),
             anomaly_p=min(traj_p, drift_p),
         )

@@ -608,27 +608,68 @@ class PrincipalBudgetView:
         parsed = self._amount(tool_name, args)
         if parsed is None:
             return
-        budget_id, amount = parsed
-        self.ledger.release(self._holds.pop((budget_id, str(amount)), None))
+        budget_id, _amount = parsed
+        held = self._holds.get(budget_id)
+        self.ledger.release(held.pop(0) if held else None)
 
     def commit(self, tool_name: str, args: dict[str, Any],
                *, now: float | None = None) -> None:
+        """Book the reservation `authorize` took. Fails closed without one.
+
+        The amount comes from the HOLD and never from `args`. Re-deriving it
+        from the caller was the whole defect: `commit` looked the hold up by
+        (budget_id, str(amount)), missed whenever the committed amount differed
+        from the authorized one, and fell through to a `book()` that takes no
+        ceiling and re-checks nothing.
+
+        Two measured consequences. Authorize 10 and commit 10,000, and 10,000 was
+        booked against a ceiling of 1,000 with the 10 hold still outstanding. And
+        two sessions each authorized 900 against a 1,000 ceiling, the second
+        correctly refused, yet both committed and the ledger recorded 1,800 with
+        `verify_totals()` still True, because the cache and the log agreed on a
+        number the ceiling never approved.
+
+        A caller with no reservation is refused rather than booked. Booking
+        unreserved spend is what made the reservation decorative, and any path
+        that genuinely needs it should say so by calling `PrincipalLedger.book`
+        directly, where the absence of a ceiling argument is visible.
+        """
         parsed = self._amount(tool_name, args)
         if parsed is None:
             return
         budget_id, amount = parsed
-        # Commit the HOLD this session took in `authorize`, so the booked amount
-        # is the reserved amount rather than whatever the caller passes now.
-        hold = self._holds.pop((budget_id, str(amount)), None)
-        if hold is not None:
+        held = self._holds.get(budget_id)
+        if not held:
+            # No reservation: the `would_allow` + `commit` flow. Keep it, but
+            # CHECK THE CEILING here rather than booking blind. The defect was
+            # never that this path existed, it was that it called `book()`,
+            # which takes no ceiling and re-checks nothing, so two sessions each
+            # refused at 900 against a 1,000 ceiling both committed and the
+            # ledger recorded 1,800.
+            ceiling = self.ceilings.get(budget_id)
+            if ceiling is None:
+                self.ledger.book(
+                    self.principal, budget_id, amount, session=self.session,
+                    idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
+                return
+            late = self.ledger.reserve(self.principal, budget_id, amount,
+                                       ceiling, now=now)
+            if late is None:
+                raise ValueError(
+                    f"commit for {budget_id!r} would exceed the {ceiling} ceiling "
+                    f"for {self.principal}; authorize() first"
+                )
             self.ledger.commit_hold(
-                hold, session=self.session,
+                late, session=self.session,
                 idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
             return
-        self.ledger.book(
-            self.principal, budget_id, amount, session=self.session,
-            idempotency_key=str(args.get("_idempotency_key") or ""), now=now,
-        )
+        hold = held.pop(0)
+        # The reservation is the authority, so the RESERVED amount is booked and
+        # the caller's number is ignored. Re-deriving it from args was the
+        # bypass: authorize 10, commit 10,000, and 10,000 was booked.
+        self.ledger.commit_hold(
+            hold, session=self.session,
+            idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
 
     def authorize(self, tool_name: str, args: dict[str, Any],
                   *, now: float | None = None) -> tuple[bool, str]:
@@ -644,7 +685,13 @@ class PrincipalBudgetView:
             return True, f"no principal ceiling for {budget_id}"
         hold = self.ledger.reserve(self.principal, budget_id, amount, ceiling, now=now)
         if hold is not None:
-            self._holds[(budget_id, str(amount))] = hold
+            # Queued per budget, NOT keyed on the amount. Keying on
+            # (budget_id, str(amount)) meant `commit` re-derived the key from
+            # the caller's own arguments, so a commit whose amount differed from
+            # the authorized one missed the hold entirely and fell through to an
+            # unchecked book(). Authorize 10, commit 10,000, and 10,000 was
+            # booked against a ceiling of 1,000 with the hold still outstanding.
+            self._holds.setdefault(budget_id, []).append(hold)
             return True, f"within principal budget {budget_id}"
         already = self.ledger.spent(self.principal, budget_id, now=now)
         window_h = self.ledger.window_seconds / 3600
