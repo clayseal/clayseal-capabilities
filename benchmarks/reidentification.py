@@ -19,6 +19,21 @@ Every rung below is blind by construction:
   argued: the `flow-blindness` line below runs the shipped `FlowTracker` over
   the attack under the configuration most favourable to it.
 
+  That line no longer reads zero, and the reason is worth stating exactly,
+  because it is not a claim that flow control learned to see aggregation. Flow
+  control used to check only a closed allowlist of seven sink verbs, so a
+  quasi-identifier call carrying any other verb was exempt without being looked
+  at. The gate is now inverted: anything not recognisably a read is a sink. The
+  attack reuses the carrier tool's own verb, so 9 of 14 tau2 arms and 9 of 38
+  BFCL arms now reach the check and are refused for carrying their own
+  arguments, under a policy that declares every resource sensitive.
+
+  The arm that settles the axis is the other one. When the attacker DOES write
+  the assembled profile to the sink the sealed goal named, flow control blocks
+  0 of 2 on tau2 and 0 of 4 on BFCL. Declassification allows it by design, and
+  no amount of taint tracking counts how many people the payload could name.
+  That is the gap this benchmark exists for and it is unchanged.
+
 ## Construction
 
 Sessions are real benign traffic from tau2 and BFCL, and the quasi-identifiers
