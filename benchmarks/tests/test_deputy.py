@@ -152,9 +152,14 @@ def test_a_refusal_does_not_creep_over_the_principal(corpus):
 # --------------------------------------------------------------------------- #
 # What the shipped primitive does and does not hold
 # --------------------------------------------------------------------------- #
-SHIPPED_HOLDS = {"own delegation", "onward re-delegation", "widened re-delegation",
-                 "wildcard action", "chain stripped", "expired grant"}
-SHIPPED_FAILS = {"no delegation", "parent's own token", "sibling sub-agent's token",
+# "no delegation" moved from FAILS to HOLDS when `verify_delegation_chain` began
+# treating an absent token as a violation rather than an empty list of them. The
+# fix is upstream of this boundary, so the row is re-measured here rather than
+# restated.
+SHIPPED_HOLDS = {"own delegation", "no delegation", "onward re-delegation",
+                 "widened re-delegation", "wildcard action", "chain stripped",
+                 "expired grant"}
+SHIPPED_FAILS = {"parent's own token", "sibling sub-agent's token",
                  "self-minted root", "self-minted chain", "second authority",
                  "revoked grant"}
 
@@ -169,7 +174,7 @@ def test_the_shipped_primitive_holds_attenuation_and_expiry(corpus):
 
 
 @pytest.mark.parametrize("corpus", ["tau2"])
-def test_the_shipped_primitive_admits_seven_presentation_strategies(corpus):
+def test_the_shipped_primitive_admits_six_presentation_strategies(corpus):
     """The finding. Each of these is a valid-looking credential the primitive
     returns no violations for, and an attacker needs one."""
     _available(corpus)
@@ -354,8 +359,11 @@ def test_absence_of_a_delegation_is_a_denial():
     boundary = DelegationBoundary(policy)
     assert not boundary.authorize(principal=sub, resource="db", action="read",
                                   envelope=None).allowed
-    # The shipped primitive's behaviour on the same input, pinned.
-    assert shipped_primitive_allows(resource="db", action="read", envelope=None)
+    # The shipped primitive now refuses the same input. It used to return no
+    # violations, which made "present nothing at all" the attacker's cheapest
+    # presentation. Pinned here so that if it ever regresses, the row in
+    # benchmarks/results/deputy.md is re-measured rather than trusted.
+    assert not shipped_primitive_allows(resource="db", action="read", envelope=None)
 
 
 def test_an_unpinned_signer_is_refused():

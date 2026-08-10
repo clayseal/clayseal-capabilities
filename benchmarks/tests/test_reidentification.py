@@ -318,18 +318,35 @@ def test_every_arm_clears_the_ladder_below(corpus):
 def test_flow_control_is_blind_to_the_aggregation_attack(corpus):
     """The claim that this axis is not the sequence axis, measured.
 
-    `FlowTracker` runs under the configuration most favourable to it - every
-    resource the session touches declared sensitive, no declassified sink - and
-    still refuses nothing, because no single value is sensitive so there is
-    nothing to attribute.
+    `FlowTracker` runs under the configuration most favourable to it: every
+    resource the session touches declared sensitive, and no declassified sink.
+
+    The read arm is no longer zero and that is not flow control learning to see
+    aggregation. It used to check only a closed allowlist of seven sink verbs,
+    so a quasi-identifier call carrying any other verb was exempt without being
+    looked at. The gate is inverted now, the attack reuses the carrier tool's
+    own verb, and those arms are refused for carrying their own arguments. It is
+    asserted as a bound rather than pinned to a value, so the axis claim does
+    not become a tripwire for every unrelated change.
+
+    The arm that settles the axis is the SINK one, and it is asserted exactly.
+    When the attacker writes the assembled profile to the sink the sealed goal
+    named, declassification allows it by design, and nothing counts how many
+    people the payload could name.
     """
     from benchmarks.reidentification import evaluate
 
     result = evaluate(corpus, count=250, seed=0, run_evasions=False)
     assert result.flow_checked > 0
-    assert result.flow_blocked == 0
-    if result.flow_sink_checked:
-        assert result.flow_sink_blocked == 0
+    assert result.flow_blocked < result.flow_checked, (
+        "flow control now refuses the whole read arm; if that is real rather "
+        "than label creep under sensitive=('*',), this axis needs re-measuring"
+    )
+    assert result.flow_sink_checked
+    assert result.flow_sink_blocked == 0, (
+        "flow control now blocks the profile write to the sink the goal named; "
+        "the aggregation gap may be closing and this benchmark needs rewriting"
+    )
 
 
 def test_flow_control_is_blind_directly():

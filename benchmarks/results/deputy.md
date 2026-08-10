@@ -75,9 +75,14 @@ hold. Measured per session across all four cells, never fewer than 100%:
 | tamper evidence: a link minted outside `issue_delegation` is caught by the chain walk at verify | 400/400 |
 | expiry of the presented token | 400/400 |
 
-It does not ask who is holding the token, and that is not a small omission. Seven
+It does not ask who is holding the token, and that is not a small omission. Six
 of the thirteen presentation strategies below are credentials
 `verify_delegation_chain` returns **no violations** for.
+
+That used to read seven. Presenting nothing at all was the seventh, and it is now
+refused inside `verify_delegation_chain` itself: an absent token is a violation
+rather than an empty list of them. The fix moved upstream, so this row is
+re-measured rather than restated.
 
 ## Result
 
@@ -108,8 +113,12 @@ principal acting:
     same action, same engine call  contained  100.0%  (400/400)
 
 **The shipped delegation primitive contains 0.0%** because containment is scored
-at the attacker's best presentation and the attacker's best presentation is
-presenting nothing at all: `verify_delegation_chain(None)` returns no violations.
+at the attacker's best presentation, and six presentations still return no
+violations. Closing the absent-token case moved the attacker one square across
+rather than off the board: presenting the parent's own token, a sibling's token,
+a self-minted root or chain, a second authority's delegation, or a revoked grant
+all still pass. Every one of them is the same question in different clothes,
+which is who is holding this token.
 
 ### Presentation sweep
 
@@ -119,7 +128,7 @@ Identical in every cell, so one table serves for all four.
 | Strategy | shipped primitive | this boundary |
 | --- | --: | --: |
 | own delegation (the honest sub-agent) | 100% | 100% |
-| no delegation presented | **0%** | 100% |
+| no delegation presented | 100% | 100% |
 | the parent's own token | **0%** | 100% |
 | a sibling sub-agent's token | **0%** | 100% |
 | self-minted root (valid signature, unauthorized key) | **0%** | 100% |
@@ -132,11 +141,11 @@ Identical in every cell, so one table serves for all four.
 | expired grant | 100% | 100% |
 | revoked grant | **0%** | 100% |
 
-The six the primitive holds are the capability, attenuation and expiry
-decisions, and this boundary does not reimplement any of them: it calls
-`verify_delegation_chain` and returns its answer. The seven it does not hold are
-all the same question in different clothes, *who is holding this token*, plus the
-fact that nothing in the codebase could revoke a delegation.
+The seven the primitive holds are the capability, attenuation and expiry
+decisions plus the absent token, and this boundary does not reimplement any of
+them: it calls `verify_delegation_chain` and returns its answer. The six it does
+not hold are all the same question in different clothes, *who is holding this
+token*, plus the fact that nothing in the codebase could revoke a delegation.
 
 ### Chain-shape sweep, and the two defects it found
 
