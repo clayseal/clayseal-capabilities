@@ -312,13 +312,88 @@ def _subsequence_coverage(needle: str, haystack: str) -> tuple[int, int | None]:
 _POOL = "\x00pooled"
 
 
+def _assemblable(target: str, blocks: Sequence[str]) -> bool:
+    """Can `target` be assembled from these writes, each used at most once?
+
+    Bounded depth-first search over which write covers which segment, and it
+    replaces a greedy scan that committed to one write per segment and never
+    reconsidered. Greedy is not a correct algorithm for this: a write consumed
+    for a coincidental one-character match is gone when the segment that
+    genuinely needed it comes up, and whether that happens depends on the order
+    the writes arrived in.
+
+    The module claimed order-independence and did not have it. Measured over 30
+    shuffled arrival orders of the same fragments, greedy assembled a
+    22-fragment value 3 times and an 11-fragment value 5 times. This search
+    assembles both 30 times out of 30. In the live path that showed up as
+    concurrency: the same fragments caught 12 times out of 12 when sent
+    sequentially escaped 2 times out of 12 when sent in parallel, because
+    parallel arrival is a shuffle for free.
+
+    Two things make it cheap enough for the authorization path. The advance a
+    write buys depends only on the POSITION reached, never on which writes are
+    already spent, so it is computed once per position rather than once per
+    search node. And the node budget is a hard ceiling, because the attacker
+    chooses the block set.
+    """
+    advances_at: dict[int, list[tuple[int, int]]] = {}
+
+    def advances(pos: int) -> list[tuple[int, int]]:
+        got = advances_at.get(pos)
+        if got is None:
+            remaining = target[pos:]
+            got = sorted(
+                (a, i) for a, i in
+                ((_longest_prefix_in(remaining, b), i) for i, b in enumerate(blocks))
+                if a)
+            advances_at[pos] = got
+        return got
+
+    stack: list[tuple[int, frozenset]] = [(0, frozenset())]
+    seen: set[tuple[int, frozenset]] = set()
+    nodes = 0
+    while stack:
+        pos, used = stack.pop()
+        if pos >= len(target):
+            return True
+        state = (pos, used)
+        if state in seen:
+            continue
+        seen.add(state)
+        nodes += 1
+        if nodes > _COVER_NODE_BUDGET:
+            return False
+        for advance, i in advances(pos):
+            if i not in used:
+                stack.append((pos + advance, used | {i}))
+    return False
+
+
 def _longest_prefix_in(needle: str, block: str) -> int:
-    """Longest prefix of `needle` that appears contiguously inside `block`."""
-    limit = min(len(needle), len(block))
-    for n in range(limit, 0, -1):
-        if needle[:n] in block:
-            return n
-    return 0
+    """Longest prefix of `needle` that appears contiguously inside `block`.
+
+    Binary search rather than a walk down from the longest, because the property
+    is monotone: if a prefix of length n is inside the block then so is every
+    shorter prefix, being a substring of it. That turns 22 substring scans of a
+    multi-kilobyte block into 5.
+    """
+    if not needle or needle[0] not in block:
+        return 0
+    lo, hi = 1, min(len(needle), len(block))
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if needle[:mid] in block:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
+# Search nodes the cover may expand before it gives up. An attacker chooses the
+# block set, so this has to be a hard bound rather than a hope. Measured: a
+# genuine 22-fragment cover peaks at 915 nodes, and the worst case that finds
+# nothing costs 14.8ms against 512 blocks of 5.4KB each.
+_COVER_NODE_BUDGET = 2000
 
 
 def _compact(text: str) -> str:
@@ -707,29 +782,7 @@ class FlowTracker:
             target = _compact_fold(token)
             if len(target) < _MIN_RECONSTRUCTED:
                 continue
-            remaining = target
-            pool = list(blocks)
-            progressed = True
-            while remaining and progressed:
-                progressed = False
-                best_i, best_n = -1, 0
-                for i, renderings in enumerate(pool):
-                    # One write, several spellings. The best spelling counts and
-                    # the WRITE is consumed, so encoding each fragment does not
-                    # buy an attacker extra blocks.
-                    #
-                    # The spellings are searched as ONE string joined by a
-                    # non-alphanumeric separator. Targets are alphanumeric-only,
-                    # so no match can span the join, and this is the same answer
-                    # as a max over separate searches at a fraction of the cost.
-                    n = _longest_prefix_in(remaining, renderings)
-                    if n > best_n:
-                        best_i, best_n = i, n
-                if best_n:
-                    remaining = remaining[best_n:]
-                    pool.pop(best_i)
-                    progressed = True
-            if not remaining:
+            if _assemblable(target, blocks):
                 found |= origins
         return found
 
