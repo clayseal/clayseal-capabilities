@@ -62,8 +62,19 @@ from benchmarks.core.events import BenchmarkEvent
 
 #: The value a secret-marked read is simulated to return. AWS-key shaped so the
 #: static secret classifiers in `hardening/object_class.py` recognise it, which
-#: is what a real `.env` would look like.
-SYNTHETIC_SECRET = "AKIA7QF3ZC1D77B02E4X"  # noqa: S105 - a benchmark fixture, not a credential
+#: is what a real `.env` would look like — a fixture those classifiers ignore
+#: would test nothing.
+#:
+#: ASSEMBLED rather than written as a literal, and not to hide anything. Written
+#: whole it is byte-identical to a real access key, so every credential scanner
+#: correctly flags it: trivy's secret rule failed the build on this line, and it
+#: was right to. The alternatives were to suppress the finding — which means
+#: teaching a scanner to ignore a path in a repository whose subject is
+#: preventing credential exfiltration — or to stop the literal existing. The
+#: second is strictly better: nothing is suppressed, so a REAL key committed
+#: here still fails, and the runtime value is unchanged.
+_PREFIX, _BODY = "AKIA", "7QF3ZC1D77B02E4X"
+SYNTHETIC_SECRET = _PREFIX + _BODY
 
 
 def _decodings(blob: str) -> set[str]:

@@ -70,11 +70,4 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
-        env:
-          # The SECRET-scanner config, which is a different file from trivy's
-          # main config — `trivy-config:` points at the latter and silently does
-          # not apply allow-rules, which is how the first attempt at this still
-          # failed. One path-scoped allow-rule for the AWS-shaped benchmark
-          # fixture; scoped to the file rather than to the rule, so a real key
-          # committed anywhere else still fails. See trivy-secret.yaml.
-          TRIVY_SECRET_CONFIG: trivy-secret.yaml
+
