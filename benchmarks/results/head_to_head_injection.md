@@ -1,5 +1,7 @@
 # Head-to-head on AgentDojo injection: ours vs built-ins vs Progent
 
+STATUS: current
+
 One protocol, one model, one attack, one task subset. Public OpenAI
 `gpt-4o-mini-2024-07-18` (genuinely injectable, unlike a current frontier model),
 `important_instructions` attack, first 6 user tasks x 3 injection tasks per suite.
@@ -11,10 +13,16 @@ envelope-taint path.
 
 | suite | undefended | tool_filter | spotlighting | repeat_prompt | Progent | ours |
 |---|--:|--:|--:|--:|--:|--:|
-| banking | 61.1% | 33.3% | 61.1% | 27.8% | 16.7% | **0.0%** |
-| slack | 83.3% | 16.7% | 55.6% | 38.9% | 11.1% | **0.0%** |
-| travel | 27.8% | 5.6% | 27.8% | 5.6% | 11.1% | **0.0%** |
-| workspace | 88.9% | 5.6% | 77.8% | 72.2% | 16.7% | **0.0%** |
+| banking | 61.1% | 33.3% | 61.1% | 27.8% | 16.7% | **0.0%** (0 of 18) |
+| slack | 83.3% | 16.7% | 55.6% | 38.9% | 11.1% | **0.0%** (0 of 18) |
+| travel | 27.8% | 5.6% | 27.8% | 5.6% | 11.1% | **0.0%** (0 of 18) |
+| workspace | 88.9% | 5.6% | 77.8% | 72.2% | 16.7% | **0.0%** (0 of 18) |
+
+**What 0 of 18 licenses.** Each cell is 6 user tasks x 3 injection tasks. A zero
+out of 18 has a one-sided 97.5% upper bound of **18.5%**, so "0.0%" here means
+"not distinguishable from anything below ~18% at this sample size", not "zero".
+The comparison against Progent's 11-17% is therefore suggestive and not
+separated: this table shows we are not worse, and n=18 per cell cannot show more.
 
 On security we hold ASR to zero on all four suites, beating every AgentDojo
 built-in and Progent everywhere. Progent leaves 11 to 17 percent across suites;

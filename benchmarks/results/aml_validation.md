@@ -1,5 +1,7 @@
 # AML analytics on real financial-crime data
 
+STATUS: current
+
 Two real-data validations of the anomaly layer's AML-derived analytics, one
 per-transaction and one per-entity-sequence.
 

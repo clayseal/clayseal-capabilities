@@ -2,6 +2,8 @@
 Wrote JSON results to benchmarks/results/new-suites/redcode.json
 # Clay Seal enforcement benchmark — redcode (768 tasks, 344 benign / 718 attack events)
 
+STATUS: current
+
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |
 | allow-all | 0.0% [0.0%, 0.4%] | 0.0% [0.0%, 6.0%] | 0.0005 / 0.0008 / 0.0109 | 718 |
