@@ -47,7 +47,7 @@ class NGramScorer:
         self._vocab: set[str] = set()
         self._fitted = False
 
-    def fit(self, trajectories: list[Trajectory]) -> "NGramScorer":
+    def fit(self, trajectories: list[Trajectory]) -> NGramScorer:
         for traj in trajectories:
             bucket = goal_bucket(traj)
             prev = "<bos>"

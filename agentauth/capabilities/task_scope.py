@@ -30,6 +30,7 @@ __all__ = [
     "TaskScope",
     "action_path_candidates",
     "apply_task_scope_to_authority",
+    "attenuate_biscuit_for_scope",
     "compile_human_authorization",
     "compile_mandate_scope",
     "compile_task_scope",
@@ -38,7 +39,6 @@ __all__ = [
     "resolve_task_mandate",
     "resource_scope_entries",
     "task_scope_allows_path",
-    "attenuate_biscuit_for_scope",
 ]
 
 

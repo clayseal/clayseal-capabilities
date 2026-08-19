@@ -34,7 +34,7 @@ class ToolSpec:
         }
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> "ToolSpec":
+    def from_dict(cls, raw: dict[str, Any]) -> ToolSpec:
         return cls(
             tool=str(raw["tool"]),
             preconditions=frozenset(str(x) for x in raw.get("preconditions", [])),
@@ -55,7 +55,7 @@ class ToolOntology:
         return [s.to_dict() for s in self.specs.values()]
 
     @classmethod
-    def from_dict(cls, raw: Any) -> "ToolOntology":
+    def from_dict(cls, raw: Any) -> ToolOntology:
         specs: dict[str, ToolSpec] = {}
         for item in raw or []:
             if isinstance(item, dict) and item.get("tool"):

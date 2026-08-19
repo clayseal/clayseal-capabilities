@@ -24,6 +24,14 @@ runtime, not only offline in the benchmark.
 """
 from __future__ import annotations
 
+from dataclasses import replace as _dc_replace
+from datetime import datetime, timezone
+
+
+def _utcnow():
+    return datetime.now(timezone.utc)
+
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -32,24 +40,35 @@ from typing import Any
 from uuid import uuid4
 
 from agentauth.core.hash_util import hash_canonical_json
+from agentauth.core.operations import capability_allows, normalize_capabilities
 from agentauth.core.task_scope import TaskScope, task_scope_allows_path
-from agentauth.capabilities.decision_log import DecisionLog
+
 from agentauth.capabilities.call_budget import SessionCallBudget
+from agentauth.capabilities.decision_log import DecisionLog
 from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.hardening.protected_zones import is_protected_path, protected_reason
+from agentauth.capabilities.hardening.protected_zones import (
+    is_protected_path,
+    protected_reason,
+)
 from agentauth.capabilities.monitor import (
     Action,
     ContextItem,
     Decision,
     IntentEnvelope,
-    TrajectoryDetector,
     Trajectory,
+    TrajectoryDetector,
     is_consequential,
 )
 from agentauth.capabilities.replan import verb_class
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.scoping.metrics import ScopingMetrics
-from agentauth.capabilities.step_up import StepUpRequest, build_step_up_request
+from agentauth.capabilities.session_grants import GrantSource, SessionGrants
+from agentauth.capabilities.step_up import (
+    StepUpRequest,
+    bind_to_action,
+    build_step_up_request,
+    verify_step_up_approval,
+)
 from agentauth.capabilities.value_budget import SessionValueBudget
 
 
@@ -66,6 +85,10 @@ class BrokerDecision:
     reasons: tuple[str, ...] = ()
     step_up: StepUpRequest | None = None
     record: dict[str, Any] | None = None  # tamper-evident decision record (L3 sink)
+    # Structured-field values the provenance graph trusts. Attached on egress
+    # deny / step-up so a blocked agent can retry with a grounded recipient
+    # (ARGUS-style). Empty when provenance is off or nothing is grounded.
+    trusted_candidates: tuple[str, ...] = ()
 
     @property
     def allowed(self) -> bool:
@@ -77,6 +100,10 @@ _EGRESS_ACTIONS = {"send", "post", "transfer", "share"}
 
 
 def _action_path(action: Action) -> str | None:
+    # Prefer meta path (loaders often resolve cwd-relative args to absolute).
+    meta_path = (action.meta or {}).get("path")
+    if isinstance(meta_path, str) and meta_path:
+        return meta_path
     for key in ("file_path", "path", "filename", "file"):
         v = action.args.get(key)
         if isinstance(v, str) and v:
@@ -115,6 +142,11 @@ class SessionBroker:
     # send under supervision, which is the honest response to that ambiguity and
     # the desirable UX for a novel payee. Default off keeps the hard-deny.
     graduated: bool = False
+    #: Refuse a consequential action whose payload carries a credential-shaped
+    #: value. Opt-in, but its false-positive rate is measured rather than
+    #: assumed: 0 of 761 benign string arguments across the whole BPL corpus,
+    #: 97.5% upper bound 0.5%. See `hardening/secret_content.py`.
+    refuse_credential_payloads: bool = False
     # Defer to binding (opt-in): when the destination-binding floor is active and
     # the action cleared it, treat an intent-envelope plan miss as a planner
     # recall failure rather than as evidence of an attack.
@@ -232,6 +264,15 @@ class SessionBroker:
     # None means no declaration, and the corridor stays off, so an existing
     # caller is unchanged.
     declared_plan: Trajectory | None = None
+    # Containing-object provenance (AuthGraph-shaped). Which observation supplied
+    # an opaque destination, and was that observation an authorized source.
+    # The live harness already recorded observations; the floor used to call
+    # bare ``egress.check`` and ignore this, so a grounded recipient discovered
+    # at runtime could only hard-deny. When set, misses consult
+    # ``EgressPolicy.check_with_provenance`` (structured → step-up, free-text of
+    # a goal-named object → step-up, else deny).
+    provenance: Any | None = None
+    goal_named_objects: set[str] = field(default_factory=set)
     # Injectable so expiry is testable and so a replay can pin a moment. Defaults
     # to real UTC now, which is what a deployment wants.
     clock: Callable[[], Any] = field(
@@ -242,18 +283,261 @@ class SessionBroker:
     # keeps the security claim intact at the cost of utility; allowing trades the
     # other way and must never be the default.
     on_audit_exhausted: str = "deny"   # "deny" | "allow"
+    #: `on_audit_exhausted="allow"` is a fail-open on the authorization path and
+    #: must be opted into deliberately, not inherited from a config default. A
+    #: caller that has not acknowledged it gets the safe branch regardless.
+    allow_on_exhaust_acknowledged: bool = False
+    #: How long a step-up request stays answerable.
+    step_up_ttl_seconds: int = 600
+    #: Requests this session issued, by commitment. An approval answering a
+    #: request we never asked is rejected before any signature work.
+    _pending: dict = field(default_factory=dict, repr=False)
+    #: Approval ids already spent, so one approval clears one action.
+    _consumed: set = field(default_factory=set, repr=False)
+    #: Authority acquired at runtime, from any source. See session_grants.py.
+    grants: SessionGrants = field(default_factory=SessionGrants)
+    #: Content-derivation tracking. Composes `provenance` and answers a question
+    #: parameter provenance cannot: does THIS write carry a value that came from
+    #: a sensitive read, however it was reshaped on the way out.
+    #:
+    #: Wired as a STEP_UP layer, never a DENY layer, and that is a measurement
+    #: rather than caution. `benchmarks/results/flow_window.md`: after the write
+    #: windowing the tracker refuses nothing at all on real benign traffic
+    #: (0 of 1,242 events) and closes the cheapest split there is (two writes,
+    #: 200/200 -> 0/200), but wide splits stay open (22 fragments out of order,
+    #: 162/200) and unkeyed encodings are open at every width (base85, decimal
+    #: byte codes, 100/100). Sound where it fires, incomplete in what it catches.
+    #: A layer with those properties should ask, not refuse.
+    flow: Any = None
+    sensitivity: Any = None
     audits_spent: int = 0
+    #: Serialises the whole mutating surface of a session.
+    #:
+    #: Every field this class mutates — the trajectory, `_pending`,
+    #: `_consumed`, `audits_spent`, `grants`, `session`, `_extended_pairs`, the
+    #: decision chain — was unsynchronised, and an agent gateway is concurrent by
+    #: construction: one session issues several tool calls at once. Two of those
+    #: races lose a control rather than a value.
+    #:
+    #: `audits_spent` is a read-modify-write on the human-attention ceiling, so
+    #: two step-ups racing past a budget of one both charge and both ask.
+    #: `_consumed` is the single-use ledger for approvals, so the same approval
+    #: verified twice concurrently clears two actions. Both are the exact
+    #: check-then-act shape `value_budget.reserve` already takes a lock for.
+    #:
+    #: Re-entrant because `authorize` calls `_finalize`, which calls into the
+    #: metrics and the decision log, and `resolve_step_up` reads `_pending`
+    #: while holding it.
+    _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
     receipt_sink: Callable[[dict[str, Any]], None] | None = None
     _trajectory: Trajectory = field(init=False)
+    # Fail-closed reasons from check_declaration_against_goal. Populated once
+    # when a declaration is present; every authorize() then denies.
+    _declaration_denials: tuple[str, ...] = field(default_factory=tuple, init=False)
+    # Soft entailment advisories from an optional plan-level judge (ARGUS-shaped).
+    # Never fail closed; first consequential authorize steps up instead.
+    entailment_judge: Any | None = None
+    _declaration_advisories: tuple[str, ...] = field(default_factory=tuple, init=False)
+    # Compiled constraints from an accepted declaration (argv / digest / callee).
+    # Used at authorize time so honest_declare→sabotage is on the gateway, not
+    # only in offline twin helpers.
+    _sealed_plan: Any | None = field(default=None, init=False)
+    # Cross-turn product memory (symlink/CSV/line-map/sealed-violation taints).
+    # One object for scoreboard / CTR / live — not per-corpus caches.
+    session: Any = field(default=None)
+    #: Run the corpus-derived session rule pack (`session_rules.py`).
+    #:
+    #: OFF here and ON in `DeployableStack.from_goal`, and the split is the
+    #: point. Those five rules are pattern matches written against specific
+    #: benchmark sabotage scenarios — one of them carries a corpus's project name
+    #: as a literal — so they belong to the measured profile, not to the library
+    #: primitive. Every published containment number was produced with them on,
+    #: which is why the profile keeps them on and says so rather than quietly
+    #: changing what the scoreboard reproduces.
+    #:
+    #: A deployment on a workload that does not look like those corpora should
+    #: measure both ways. They only ever STEP_UP, so the cost of leaving them on
+    #: is friction rather than blocked work.
+    session_rules: bool = False
+    # Ladder-parity floor grants (same checks as TaskScopeInputBindingEngine).
+    # Empty/None keeps prior broker behaviour for callers that only set scope.
+    allowed_tools: set[str] | None = None
+    tool_patterns: list[str] | None = None
+    capabilities: list[dict[str, str]] | None = None
+    # tool -> set of authorized argument hashes (commit-token binding).
+    authorized_arg_hashes: dict[str, set[str]] | None = None
+    # Soft: require a prior commit_plan before egress verbs (STEP_UP if missing).
+    # Off by default — coding corpora see high friction; opt in for mail/MCP.
+    require_declaration_for_egress: bool = False
 
     def __post_init__(self) -> None:
+        from agentauth.capabilities.session_memory import SessionMemory
+
+        if self.session is None:
+            self.session = SessionMemory()
         self._trajectory = Trajectory(goal=self.goal, actions=[], context=[])
         self.metrics.goal_id = self.goal.query_id
+        self._seed_goal_provenance()
+        if self.declared_plan is not None:
+            self._commit_plan_locked(self.declared_plan)
+
+    # Backward-compatible aliases (tests / broker_eval still use private names).
+    @property
+    def _symlink_taints(self):
+        return self.session.symlink_taints
+
+    @_symlink_taints.setter
+    def _symlink_taints(self, value) -> None:
+        self.session.symlink_taints = value
+
+    @property
+    def _sealed_violation_taint(self) -> bool:
+        return self.session.sealed_violation
+
+    @_sealed_violation_taint.setter
+    def _sealed_violation_taint(self, value: bool) -> None:
+        self.session.sealed_violation = bool(value)
+
+    @property
+    def _csv_columns(self):
+        return self.session.csv_columns
+
+    @_csv_columns.setter
+    def _csv_columns(self, value) -> None:
+        self.session.csv_columns = value
+
+    @property
+    def _file_text(self):
+        return self.session.file_text
+
+    @_file_text.setter
+    def _file_text(self, value) -> None:
+        self.session.file_text = value
+
+    @property
+    def _file_line_shift(self):
+        return self.session.file_line_shift
+
+    @_file_line_shift.setter
+    def _file_line_shift(self, value) -> None:
+        self.session.file_line_shift = value
+
+    def _seed_goal_provenance(self) -> None:
+        """Record destinations named in the sealed goal as structured observations.
+
+        Without this, a TRUSTED_READ slot fails even for ``bob@corp.example``
+        when the prompt itself named him — the allow-list admits the send and
+        the slot check then denies for "no observation". The sealed goal is the
+        one pre-contamination source that is always admissible.
+        """
+        if self.provenance is None:
+            return
+        summary = self.goal.summary or ""
+        structured: dict[str, str] = {}
+        try:
+            from agentauth.capabilities.hardening.egress_policy import (
+                extract_email_addresses,
+            )
+            for i, email in enumerate(extract_email_addresses({"to": summary})):
+                structured[f"goal_email_{i}"] = email
+        except Exception:  # noqa: BLE001, S110 - seeding is best-effort
+            # Deliberately total and deliberately silent. This runs in
+            # `__post_init__`: a goal summary that defeats the address extractor
+            # must not prevent the broker from being constructed, and the only
+            # consequence of the miss is that a goal-named recipient earns a
+            # STEP_UP instead of an ALLOW — the safe direction.
+            pass
+        import re
+        for i, m in enumerate(re.findall(r"\b[A-Z]{2}[0-9A-Z]{10,30}\b", summary)):
+            structured[f"goal_iban_{i}"] = m
+        if not structured and not summary.strip():
+            return
+        self.provenance.record_observation(
+            "sealed_goal", summary,
+            structured_fields=structured or None,
+            goal_named=True,
+            containing_object="sealed_goal",
+        )
+
+    def _commit_plan_locked(self, plan: Trajectory) -> list[str]:
+        """Seal a commit-then-reveal declaration before any side effect.
+
+        Returns goal-check denial reasons (empty ⇒ accepted). The plan is also
+        the twin-corridor reference for later ``authorize`` calls. A non-empty
+        result fails closed: every subsequent authorize denies.
+
+        When ``entailment_judge`` is set, also runs a soft plan-level entailment
+        check (content/meaning). Conflicts become ``_declaration_advisories`` and
+        step up on the first consequential authorize — they never hard-deny.
+
+        An accepted plan is compiled into ``_sealed_plan`` so later authorize
+        calls can STEP_UP on argv/digest/callee drift vs the declaration
+        (deployable twin corridor — no gifted clean twin required).
+        """
+        from agentauth.capabilities.monitor.declaration import (
+            check_declaration_against_goal,
+        )
+        from agentauth.capabilities.monitor.entailment import assess_plan_entailment
+        from agentauth.capabilities.monitor.sealed_plan import compile_sealed_plan
+
+        self.declared_plan = plan
+        reasons = check_declaration_against_goal(plan, self.goal)
+        self._declaration_denials = tuple(reasons)
+        # Soft advisories (deterministic ∪ optional LLM) even when the
+        # destination goal-check passes. Never hard-deny.
+        if not reasons:
+            advisory = assess_plan_entailment(
+                plan, self.goal.summary or "", self.entailment_judge)
+            self._declaration_advisories = advisory.reasons if advisory.escalate else ()
+            self._sealed_plan = compile_sealed_plan(plan)
+        else:
+            self._declaration_advisories = ()
+            self._sealed_plan = None
+        return reasons
+
+    # -- concurrency --------------------------------------------------------
+    #
+    # One session, several in-flight tool calls, is the ordinary shape of an
+    # agent gateway. Every method below mutates session state, so each takes the
+    # session lock and delegates to a `_*_locked` implementation. Splitting it
+    # this way rather than sprinkling `with self._lock:` through the bodies means
+    # a new mutating path cannot be added without either going through a facade
+    # or being conspicuously outside one.
+
+    def authorize(self, action: Action) -> BrokerDecision:
+        with self._lock:
+            return self._authorize_locked(action)
+
+    def resolve_step_up(self, approval) -> tuple[bool, str]:
+        with self._lock:
+            return self._resolve_step_up_locked(approval)
+
+    def commit_plan(self, plan: Trajectory) -> list[str]:
+        with self._lock:
+            return self._commit_plan_locked(plan)
+
+    def reclear(self, envelope: IntentEnvelope | None = None, *,
+                signed: dict | None = None, trusted_keys=None) -> bool:
+        with self._lock:
+            return self._reclear_locked(
+                envelope, signed=signed, trusted_keys=trusted_keys)
+
+    def observe_context(self, item: ContextItem) -> None:
+        with self._lock:
+            self._observe_context_locked(item)
+
+    def observe_output(self, *args: Any, **kwargs: Any) -> None:
+        with self._lock:
+            self._observe_output_locked(*args, **kwargs)
+
+    def note_edit(self, path: str, old: str, new: str) -> None:
+        with self._lock:
+            self._note_edit_locked(path, old, new)
 
     # -- re-clearance (ATC) --------------------------------------------------
-    def reclear(self, envelope: IntentEnvelope | None = None, *,
+    def _reclear_locked(self, envelope: IntentEnvelope | None = None, *,
                 signed: dict | None = None, trusted_keys=None) -> bool:
         """Adopt a new sealed envelope mid-session, the way Air Traffic Control
         issues a fresh clearance for a route change rather than letting the pilot
@@ -283,7 +567,7 @@ class SessionBroker:
         return True
 
     # -- provenance ----------------------------------------------------------
-    def observe_context(self, item: ContextItem) -> None:
+    def _observe_context_locked(self, item: ContextItem) -> None:
         """Register a piece of context the agent has been exposed to.
 
         Callers push tool output here, tagged ``TrustLevel.UNTRUSTED``, so the
@@ -296,6 +580,107 @@ class SessionBroker:
         inside it.
         """
         self._trajectory.context = [*self._trajectory.context, item]
+
+    def _observe_output_locked(
+        self,
+        tool: str,
+        payload: Any,
+        *,
+        structured_fields: dict[str, Any] | None = None,
+        goal_named: bool = False,
+        containing_object: str = "",
+        source_path: str = "",
+        source_args: dict | None = None,
+    ) -> None:
+        """Record which observation supplied which values (parameter provenance).
+
+        Call after a tool returns, before the next ``authorize``. Without this,
+        ``check_with_provenance`` has nothing to ground destinations against and
+        every novel recipient hard-denies — the banking utility cliff.
+
+        When ``source_path`` is a CSV and ``payload``'s first line looks like a
+        header, also bind column names for later awk ``$N`` checks. Read
+        payloads with ``N→`` line prefixes update the session file text used
+        by absolute-line sed checks after expanding Edits.
+        """
+        text = payload if isinstance(payload, str) else str(payload or "")
+        path = (source_path or "").strip()
+        if not path and source_args:
+            for key in ("path", "file_path", "filename", "file"):
+                v = source_args.get(key)
+                if isinstance(v, str) and v.strip():
+                    path = v.strip()
+                    break
+            if not path:
+                cmd = str(source_args.get("command") or "")
+                # head/cat/tail of a concrete file — bind that path for CSV/lines.
+                import re as _re
+                m = _re.search(
+                    r"\b(?:head|cat|tail)\b[^\n]*?\s(/[^\s;|&]+|"
+                    r"[A-Za-z0-9_./-]+\.csv)\b",
+                    cmd,
+                )
+                if m:
+                    path = m.group(1)
+        if path and text.strip():
+            # Strip Claude-style ``   12→`` line prefixes when present.
+            import re as _re
+            body = text
+            if _re.search(r"(?m)^\s*\d+→", text):
+                body = "\n".join(
+                    _re.sub(r"^\s*\d+→", "", ln) for ln in text.splitlines()
+                )
+                self._file_text[path] = body
+            # CSV header: wide comma row (head of .csv), not a numbered code line.
+            header_src = text if "→" not in text.splitlines()[0] else body
+            header_line = header_src.splitlines()[0].strip() if header_src.strip() else ""
+            if (
+                header_line
+                and "," in header_line
+                and not header_line[0].isdigit()
+            ):
+                cols = [
+                    c.strip().strip('"').lower() for c in header_line.split(",")
+                ]
+                if len(cols) >= 2 and all(cols):
+                    self._csv_columns[path] = cols
+        if self.provenance is not None:
+            self.provenance.record_observation(
+                tool, payload,
+                structured_fields=structured_fields,
+                goal_named=goal_named,
+                containing_object=containing_object,
+            )
+        if self.flow is not None and self.sensitivity is not None:
+            # Same ingestion boundary as parameter provenance, deliberately: the
+            # payload is already here, already has its source path, and adding a
+            # second entry point is how `observe_context` ended up dead.
+            try:
+                self.flow.observe(
+                    tool, containing_object or path or "", payload,
+                    policy=self.sensitivity, path=path or None,
+                    structured_fields=structured_fields,
+                )
+            except Exception:  # noqa: BLE001, S110 - observation is best-effort
+                # `observe_output` is called by the integrator after a tool
+                # returns, on arbitrary tool payloads. A tracker that raises on
+                # an unexpected shape would take down the agent run from the
+                # OBSERVATION path, which grants no authority at all. Missing an
+                # observation only costs precision at the next decision.
+                pass
+
+    def _note_edit_locked(self, path: str, old: str, new: str) -> None:
+        """Apply an Edit to session file text and accumulate line shift."""
+        if not path:
+            return
+        old_n = old.count("\n") + (1 if old else 0)
+        new_n = new.count("\n") + (1 if new else 0)
+        delta = new_n - old_n
+        if delta > 0:
+            self._file_line_shift[path] = self._file_line_shift.get(path, 0) + delta
+        cur = self._file_text.get(path)
+        if cur is not None and old and old in cur:
+            self._file_text[path] = cur.replace(old, new, 1)
 
     @property
     def _destination_bound(self) -> bool:
@@ -348,6 +733,42 @@ class SessionBroker:
             if not verdict.allowed:
                 return (False, f"{verdict.rule}: {verdict.reason}",
                         {"delegation": True}, True)
+        # Tool / capability / arg-hash binding — same primitives as the ladder
+        # engines, so scoreboard and SessionBroker share one floor.
+        if self.tool_patterns is not None:
+            import fnmatch
+            if not any(fnmatch.fnmatch(action.tool, p) for p in self.tool_patterns):
+                return False, f"tool {action.tool!r} not granted", {}, True
+        elif self.allowed_tools is not None and action.tool not in self.allowed_tools:
+            return False, f"tool {action.tool!r} not granted", {}, True
+        if self.capabilities:
+            if not capability_allows(
+                normalize_capabilities(self.capabilities),
+                action.resource, action.verb,
+            ):
+                return (
+                    False,
+                    f"no capability for {action.resource}:{action.verb}",
+                    {}, True,
+                )
+        if self.authorized_arg_hashes is not None:
+            bound = self.authorized_arg_hashes.get(action.tool)
+            if bound is not None:
+                h = hash_canonical_json(action.args)
+                if h not in bound:
+                    # Match ladder TaskScopeInputBindingEngine: empty-arg READ
+                    # of a bound tool is an unfiltered ask, not a redirect.
+                    _read = frozenset(
+                        {"read", "search", "list", "get", "query"}
+                    )
+                    if not action.args and action.verb in _read:
+                        pass
+                    else:
+                        return (
+                            False,
+                            f"arguments for {action.tool!r} not in authorized set",
+                            {}, True,
+                        )
         path = _action_path(action)
         allow_exceptions = set(self.scope.allowed_paths) if self.scope else set()
         # HARD denials first: positive evidence of malice takes precedence over a
@@ -361,13 +782,52 @@ class SessionBroker:
         # destination, not only effect verbs: a read of an attacker-controlled
         # URL (SSRF-style exfil) is an acquisition, so a verb gate would miss it.
         # egress.check is a no-op when the args carry no external destination.
+        # Credential-shaped VALUES in the payload. No provenance in this
+        # predicate at all, which is the point: `FlowTracker` correlates a
+        # secret READ with a later write, and BPL's `integration-invoice-cover`
+        # never reads one — the elevation tool is refused and the agent simply
+        # types `API_KEY=sk-live-...` into an invoice attachment bound for an
+        # allow-listed internal address. Allow-listed tool, allow-listed
+        # recipient, nothing to derive from, every other layer satisfied.
+        #
+        # Measured on BPL's own benign corpus before being wired here: 0 of 761
+        # benign string arguments flagged, 97.5% upper bound 0.5%. PII detection
+        # is deliberately NOT included — its one false positive is a payroll
+        # extract sent to the payroll mailbox, which is a question about the
+        # destination rather than the content, and the egress recipient check
+        # owns that half.
+        if self.refuse_credential_payloads and is_consequential(action):
+            from agentauth.capabilities.hardening.secret_content import (
+                credential_findings,
+            )
+
+            for value in (action.args or {}).values():
+                reasons = credential_findings(value, include_pii=False)
+                if reasons:
+                    return (False, f"payload carries a credential: {reasons[0]}",
+                            {"secret_content": True}, True)
         if self.egress is not None:
-            ok, reason = self.egress.check(action.resource, action.args)
-            if not ok:
-                # Hard by default; graduated mode steps up the ambiguous
-                # unknown-destination case instead (halts the attacker the same
-                # in autonomous mode, recoverable for a benign send).
-                return False, reason, {"egress": True}, not self.graduated
+            if self.provenance is not None:
+                verdict, reason = self.egress.check_with_provenance(
+                    action.resource, action.args,
+                    provenance=self.provenance,
+                    goal_named_objects=self.goal_named_objects or None,
+                )
+                if verdict == "deny":
+                    # Ungrounded / foreign-object destination. Graduated mode
+                    # still steps up the ambiguous case; otherwise hard-deny.
+                    return False, reason, {"egress": True}, not self.graduated
+                if verdict == "step_up":
+                    # Grounded but not allow-listed: supervision, never autonomy.
+                    # Soft so authorize() raises STEP_UP (attacker still halted).
+                    return False, reason, {"egress": True}, False
+            else:
+                ok, reason = self.egress.check(action.resource, action.args)
+                if not ok:
+                    # Hard by default; graduated mode steps up the ambiguous
+                    # unknown-destination case instead (halts the attacker the same
+                    # in autonomous mode, recoverable for a benign send).
+                    return False, reason, {"egress": True}, not self.graduated
         # SOFT scope miss last: a tool simply not in the goal-derived scope is
         # uncertainty, not malice, so it steps up rather than hard-denies.
         if self.scope is not None:
@@ -437,9 +897,16 @@ class SessionBroker:
         return True, "within floor", {}, True
 
     # -- public gate ---------------------------------------------------------
-    def authorize(self, action: Action) -> BrokerDecision:
+    def _authorize_locked(self, action: Action) -> BrokerDecision:
         start = time.perf_counter()
         is_write = action.verb in _WRITE_ACTIONS
+
+        # Fail closed on a declaration the sealed goal does not entail. Runs
+        # before the floor so a sabotaged plan never reaches side effects.
+        if self._declaration_denials:
+            return self._finalize(
+                action, Outcome.DENY, "declaration", self._declaration_denials,
+                None, is_write, start, blocked=True)
 
         ok, reason, prevented, hard = self._floor(action)
         if not ok:
@@ -456,6 +923,223 @@ class SessionBroker:
                 resource_ref=action.resource, operation=action.verb, violations=[reason])
             return self._finalize(action, Outcome.STEP_UP, "floor", (reason,), None,
                                   is_write, start, step_up=request, step_up_flag=True)
+
+        # Soft entailment advisory on a committed plan: step up consequential
+        # actions (halts autonomous sabotage) without fail-closed deny.
+        if self._declaration_advisories and is_consequential(action):
+            request = build_step_up_request(
+                request_id=str(uuid4()), query_id=self.goal.query_id,
+                resource_ref=action.resource, operation=action.verb,
+                violations=list(self._declaration_advisories))
+            return self._finalize(
+                action, Outcome.STEP_UP, "declaration-entailment",
+                self._declaration_advisories, None,
+                is_write, start, step_up=request, step_up_flag=True)
+
+        # Content derivation: does this write carry a value that came from a
+        # sensitive read, however it was reshaped on the way out?
+        #
+        # STEP_UP and never DENY. `flow_window.md` measures both halves: on real
+        # benign tau2 traffic the tracker now refuses 0 of 1,242 events, and the
+        # two-write split it used to miss entirely (200/200 out) is fully closed
+        # (0/200). But 22 fragments out of order still walk out in 162/200 runs,
+        # and unkeyed encodings (base85, decimal byte codes) are 100/100 at every
+        # width. Sound where it fires and incomplete in what it catches, which is
+        # exactly the profile that should ask a human rather than refuse.
+        #
+        # Placed after the floor so a hard denial still wins, and before the
+        # intent envelope so a derivation objection is raised on its own terms
+        # rather than being absorbed into an off-plan verdict.
+        if (
+            self.flow is not None
+            and self.sensitivity is not None
+            and getattr(self.sensitivity, "active", False)
+        ):
+            try:
+                verdict = self.flow.check(
+                    tool=action.tool, verb=action.verb, resource=action.resource,
+                    args=action.args, policy=self.sensitivity,
+                    path=_action_path(action),
+                )
+            except Exception:  # noqa: BLE001 - a gate may deny, not crash
+                verdict = None
+            if verdict is not None and not verdict.allowed:
+                reasons = (f"flow: {verdict.reason}",)
+                request = build_step_up_request(
+                    request_id=str(uuid4()), query_id=self.goal.query_id,
+                    resource_ref=action.resource, operation=action.verb,
+                    violations=list(reasons))
+                return self._finalize(
+                    action, Outcome.STEP_UP, "flow", reasons, None,
+                    is_write, start, step_up=request, step_up_flag=True)
+
+        # Execution vs accepted declaration (deployable corridor): argv / content
+        # digest / callee / secret-flow drift → STEP_UP. Needs a prior
+        # commit_plan; never consults a gifted clean twin.
+        if (
+            self._sealed_plan is not None
+            and not self._declaration_denials
+            and is_consequential(action)
+        ):
+            from agentauth.capabilities.monitor.sealed_plan import (
+                check_sealed_plan,
+                check_secret_flow,
+            )
+
+            sealed_reasons = [
+                f"sealed-plan: {r}" for r in check_sealed_plan(action, self._sealed_plan)
+            ]
+            probe = Trajectory(
+                goal=self.goal,
+                actions=[*self._trajectory.actions, action],
+            )
+            sealed_reasons.extend(
+                f"sealed-plan: {r}" for r in check_secret_flow(probe, self._sealed_plan)
+            )
+            if sealed_reasons:
+                self._sealed_violation_taint = True
+                request = build_step_up_request(
+                    request_id=str(uuid4()), query_id=self.goal.query_id,
+                    resource_ref=action.resource, operation=action.verb,
+                    violations=sealed_reasons)
+                return self._finalize(
+                    action, Outcome.STEP_UP, "sealed-plan",
+                    tuple(sealed_reasons), None,
+                    is_write, start, step_up=request, step_up_flag=True)
+
+            # Soft digΔ vs declaration body at the same dest (intent advisory).
+            from agentauth.capabilities.monitor.intent_advisory import (
+                assess_intent_advisory,
+            )
+
+            adv = assess_intent_advisory(
+                probe,
+                declaration=self.declared_plan,
+                goal_text=self.goal.summary or "",
+            )
+            if adv.escalate:
+                self._sealed_violation_taint = True
+                request = build_step_up_request(
+                    request_id=str(uuid4()), query_id=self.goal.query_id,
+                    resource_ref=action.resource, operation=action.verb,
+                    violations=list(adv.reasons))
+                return self._finalize(
+                    action, Outcome.STEP_UP, "intent-advisory",
+                    tuple(adv.reasons), None,
+                    is_write, start, step_up=request, step_up_flag=True)
+
+        # Corpus-derived session rules (opt-in). Extracted to
+        # `session_rules.py`: 160 lines of scenario-specific regex used to sit
+        # here, invisible in the field list and unswitchable by a caller. Same
+        # predicates, same reason strings, same order — now named, documented and
+        # off unless asked for. See that module for what each rule is and is not.
+        if self.session_rules:
+            from agentauth.capabilities import session_rules as _rules
+
+            _rules.observe(action, self.session)
+            hit = _rules.check(
+                action, self.session,
+                goal_summary=self.goal.summary or "",
+                egress_verbs=frozenset(_EGRESS_ACTIONS),
+            )
+            if hit is not None:
+                request = build_step_up_request(
+                    request_id=str(uuid4()), query_id=self.goal.query_id,
+                    resource_ref=action.resource, operation=action.verb,
+                    violations=[hit.reason])
+                return self._finalize(
+                    action, Outcome.STEP_UP, hit.layer, (hit.reason,), None,
+                    is_write, start, step_up=request, step_up_flag=True)
+
+
+        # Opt-in: undeclared *surprise* egress must commit_plan first (soft).
+        # If the sealed goal already asks to email/post/upload, a blunt gate
+        # invents soft FB on every legitimate send (measured ~18% on AgentHarm).
+        if (
+            self.require_declaration_for_egress
+            and self.declared_plan is None
+            and action.verb in _EGRESS_ACTIONS
+        ):
+            goal_l = (self.goal.summary or "").lower()
+            egress_expected = any(
+                w in goal_l
+                for w in (
+                    "email", "e-mail", "send", "post", "message", "upload",
+                    "share", "tweet", "dm ", "slack", "webhook", "http",
+                    "https", "curl", "publish",
+                )
+            )
+            if not egress_expected:
+                why = (
+                    "declaration required before surprise egress "
+                    "(goal does not request send/post/upload)"
+                )
+                request = build_step_up_request(
+                    request_id=str(uuid4()), query_id=self.goal.query_id,
+                    resource_ref=action.resource, operation=action.verb,
+                    violations=[why])
+                return self._finalize(
+                    action, Outcome.STEP_UP, "declaration-required", (why,),
+                    None, is_write, start, step_up=request, step_up_flag=True)
+
+        # Online soft content check when nothing was declared: high-precision
+        # deterministic patterns on this write body vs the sealed goal, then
+        # optional LLM entailment (fail-open). Same STEP_UP contract; never hard-deny.
+        if (
+            not self._declaration_advisories
+            and not self._declaration_denials
+            and self._sealed_plan is None
+            and is_consequential(action)
+            and (self.goal.summary or "").strip()
+        ):
+            from agentauth.capabilities.monitor.action import path_hint
+            from agentauth.capabilities.monitor.entailment import (
+                deterministic_content_reasons,
+            )
+            from agentauth.capabilities.monitor.sealed_plan import _write_body
+
+            # Full body (no head/tail cut): det patterns can live mid-file.
+            # Also read prompt/body for AgentHarm-shaped free-text payloads.
+            body = (
+                _write_body(action)
+                or str(action.args.get("content") or "")
+                or str(action.args.get("new_string") or "")
+                or str(action.args.get("command") or "")
+                or str(action.args.get("prompt") or "")
+                or str(action.args.get("body") or "")
+            )
+            if len(body.strip()) >= 40:
+                dest = path_hint(action) or str(
+                    action.args.get("file_path") or action.args.get("path") or "")
+                sample = {"tool": action.tool, "dest": dest, "snippet": body}
+                online = deterministic_content_reasons(
+                    self.goal.summary or "", [sample],
+                )
+                if not online and self.entailment_judge is not None:
+                    try:
+                        # Truncate for cost; judge is fail-open on errors.
+                        clipped = dict(sample)
+                        clipped["snippet"] = body[:4000]
+                        online = list(
+                            self.entailment_judge(
+                                self.goal.summary or "", [clipped])
+                            or ()
+                        )
+                    except Exception:  # noqa: BLE001 - judge is fail-open by design
+                        # The judge is a remote model. A timeout, a rate limit or
+                        # a malformed completion must not decide an authorization,
+                        # and this layer only ever produces STEP_UP, so failing
+                        # open here forfeits an advisory rather than a control.
+                        online = []
+                if online:
+                    request = build_step_up_request(
+                        request_id=str(uuid4()), query_id=self.goal.query_id,
+                        resource_ref=action.resource, operation=action.verb,
+                        violations=list(online))
+                    return self._finalize(
+                        action, Outcome.STEP_UP, "content-entailment",
+                        tuple(online), None,
+                        is_write, start, step_up=request, step_up_flag=True)
 
         # Reserve budgets; a downstream behavioral block releases them.
         v_res = self.value_budget.reserve(action.tool, action.args) if self.value_budget else None
@@ -475,6 +1159,23 @@ class SessionBroker:
         # Two-signal gate: an off-plan action is blocked only if it is also
         # consequential; otherwise it escalates for review.
         if self.intent_envelope is not None:
+            # Provenance-typed slots (AuthGraph-shaped). A matching template with
+            # TRUSTED_READ/GOAL constraints fails closed on consequential effects
+            # when the value is ungrounded — independent of plan membership.
+            slot = self.intent_envelope.check_slots(
+                action,
+                provenance=self.provenance,
+                goal_text=self.goal.summary or "",
+                goal_named_objects=self.goal_named_objects or None,
+            )
+            if slot is not None and is_consequential(action):
+                self._rollback(action, v_res, c_res)
+                self._record_triggers([f"intent-slot: {slot.reason}"])
+                return self._finalize(
+                    action, Outcome.DENY, "intent-envelope",
+                    (slot.reason, "off-slot and consequential"), None,
+                    is_write, start, blocked=True)
+
             dev = self.intent_envelope.last_deviation(self._trajectory)
             reason = None
             # Two distinct signals, and only one of them is a planner-recall
@@ -532,6 +1233,13 @@ class SessionBroker:
                 if self.plan_extender is not None and extendable:
                     verdict = self.plan_extender.consider(action.tool, action.verb)
                     if verdict.extended:
+                        # ATC re-clearance: grow the sealed envelope from the
+                        # trusted shape judgment so later membership checks see
+                        # the same plan. Never regenerates from tool output.
+                        if self.intent_envelope is not None:
+                            self.reclear(
+                                self.intent_envelope.with_shape(
+                                    action.tool, action.verb))
                         self._record_triggers([f"replan: {verdict.reason}"])
                         return self._commit_and_finalize(
                             action, v_res, c_res, "intent-envelope",
@@ -593,7 +1301,7 @@ class SessionBroker:
                 self.detector_advisory
                 or (self.intent_envelope is not None and not is_consequential(action))):
             decision = Outcome.STEP_UP
-            reasons = list(reasons) + ["demoted: advisory sensor flag"]
+            reasons = [*list(reasons), "demoted: advisory sensor flag"]
 
         if decision is Outcome.DENY:
             self._rollback(action, v_res, c_res)
@@ -632,6 +1340,115 @@ class SessionBroker:
         return self._finalize(action, Outcome.ALLOW, layer, reasons, score,
                               is_write, start)
 
+    def _resolve_step_up_locked(self, approval) -> tuple[bool, str]:
+        """Answer an outstanding STEP_UP and record the authority it granted.
+
+        The missing half of the protocol. `step_up.py` has shipped a complete
+        signed request/approval/verify chain since DP-30, and nothing ever called
+        it: `apply_step_up` and `StepUpApproval` appear only in tests, and the
+        broker had no entry point at all. So a STEP_UP was terminal, the request
+        was attached to the decision and dropped, and **every "supervised
+        utility" number in benchmarks/results/ is a counterfactual** that assumes
+        a human said yes and that the task then succeeded.
+
+        Order is deliberate:
+
+        1. **Commitment must be one this session issued.** Checked first, before
+           any crypto, so an approval for somebody else's request is rejected
+           without spending verification on attacker-supplied bytes.
+        2. **Signature**, via the existing `verify_step_up_approval`, which
+           already binds the approval to the request commitment and so already
+           refuses an approval replayed against a *different* request.
+        3. **Single use**, by `approval_id`, so one approval clears one action
+           rather than standing for the rest of the session.
+        4. **Expiry**, against the request's own `expires_at`.
+
+        The grant it writes is deliberately narrow: a one-shot keyed on
+        ``(tool, arguments_hash)`` waiving only the rule codes the human was
+        actually shown. An approval of a destination does not clear a budget
+        ceiling nobody saw, and the same tool called with different arguments is
+        a different question.
+
+        Returns ``(resolved, reason)``. The caller re-authorizes the same action;
+        it does not execute on the strength of this alone.
+        """
+        commitment = getattr(approval, "request_commitment", None) or (
+            getattr(getattr(approval, "approval", None), "request_commitment", None))
+        if not commitment:
+            return False, "approval carries no request commitment"
+        request = self._pending.get(commitment)
+        if request is None:
+            return False, "approval answers no request this session issued"
+
+        try:
+            ok, reason = verify_step_up_approval(approval, request_commitment=commitment)
+        except Exception as exc:  # noqa: BLE001
+            # Total by contract, like every other gate audited this session. The
+            # approval object crosses a trust boundary, so a malformed one is a
+            # denial with a reason, never an AttributeError out of the broker.
+            return False, f"approval malformed: {type(exc).__name__}"
+        if not ok:
+            return False, f"approval rejected: {reason}"
+
+        inner = getattr(approval, "approval", approval)
+        approval_id = getattr(inner, "approval_id", None)
+        if approval_id is None:
+            return False, "approval carries no id"
+        if approval_id in self._consumed:
+            return False, "approval already used"
+
+        if request.expires_at:
+            try:
+                deadline = datetime.fromisoformat(request.expires_at)
+            except ValueError:
+                return False, "request expiry unparseable"
+            if deadline <= _utcnow():
+                return False, "step-up request expired"
+
+        codes = tuple(request.codes) or ("unclassified",)
+        if "unclassified" in codes:
+            # A rule with no id cannot be waived: nobody can say what was
+            # approved. Fails closed on purpose, so adding a step-up path without
+            # classifying it does not silently become approvable.
+            return False, "request contains an unclassified rule; cannot be waived"
+
+        self._consumed.add(approval_id)
+        self._pending.pop(commitment, None)
+        self.grants.grant_one_shot(
+            tool=request.tool,
+            arguments_hash=request.arguments_hash,
+            waived_codes=codes,
+            source=GrantSource.HUMAN,
+            ttl_seconds=getattr(inner, "ttl_seconds", 600) or 600,
+            approval_id=approval_id,
+        )
+        return True, f"resolved: waived {', '.join(codes)}"
+
+    def _trusted_candidates(self) -> tuple[str, ...]:
+        """Grounded values a blocked agent may retry with (re-audited).
+
+        Allow-list recipients first: those can clear the floor autonomously.
+        Provenance structured values follow — they earn STEP_UP at egress
+        (supervision), not silent ALLOW, so an autonomous retry prefers the
+        allow-list. Cap at 8 — ARGUS-style hints, not a dump.
+        """
+        out: list[str] = []
+        seen: set[str] = set()
+        if self.egress is not None:
+            for r in sorted(getattr(self.egress, "allowed_recipients", None) or ()):
+                if r and r not in seen:
+                    seen.add(r)
+                    out.append(r)
+        if self.provenance is not None:
+            for c in self.provenance.trusted_candidates(
+                structured_only=True,
+                goal_named_objects=self.goal_named_objects or None,
+            ):
+                if c not in seen:
+                    seen.add(c)
+                    out.append(c)
+        return tuple(out[:8])
+
     def _finalize(self, action, outcome, layer, reasons, score, is_write, start, *,
                   blocked=False, step_up=None, step_up_flag=False) -> BrokerDecision:
         # Charge the audit budget here rather than at each step-up site, so every
@@ -642,14 +1459,57 @@ class SessionBroker:
             if self.audits_spent >= self.audit_budget:
                 exhausted = f"audit budget exhausted ({self.audit_budget} step-ups)"
                 if self.on_audit_exhausted == "allow":
-                    outcome, layer = Outcome.ALLOW, layer
-                    reasons = (*reasons, exhausted, "allowed: budget policy is allow-on-exhaust")
+                    # A fail-open, and labelled as one. This turns "the human ran
+                    # out of attention" into ALLOW, which is the same shape as the
+                    # planner's old allow-all: an undefended decision that pools
+                    # into the ordinary allow count and is invisible downstream.
+                    #
+                    # Kept because it is a legitimate research configuration (the
+                    # attention axis needs both ends of the policy), but it is
+                    # gated and it is stamped. `layer` becomes "audit-exhausted"
+                    # so no analysis can mistake it for a clean pass, and
+                    # `allow_on_exhaust_acknowledged` must be set explicitly by a
+                    # caller that means it.
+                    if not self.allow_on_exhaust_acknowledged:
+                        outcome, blocked = Outcome.DENY, True
+                        reasons = (*reasons, exhausted,
+                                   "denied: allow-on-exhaust not acknowledged")
+                    else:
+                        outcome, layer = Outcome.ALLOW, "audit-exhausted"
+                        reasons = (*reasons, exhausted,
+                                   "allowed: budget policy is allow-on-exhaust")
                 else:
                     outcome, blocked = Outcome.DENY, True
                     reasons = (*reasons, exhausted, "denied: no attention left to ask for")
                 step_up, step_up_flag = None, False
             else:
                 self.audits_spent += 1
+        candidates: tuple[str, ...] = ()
+        if outcome in (Outcome.DENY, Outcome.STEP_UP):
+            candidates = self._trusted_candidates()
+            if candidates and step_up is not None:
+                # Surface retry hints on the step-up card without widening authority.
+                suggested = dict(step_up.suggested_approval)
+                suggested["trusted_candidates"] = list(candidates)
+                # `replace`, not a field-by-field rebuild: the enumerated form
+                # silently drops every field added to StepUpRequest afterwards,
+                # which is how the action binding would have been lost here.
+                step_up = _dc_replace(step_up, suggested_approval=suggested)
+        if step_up is not None:
+            # Bind the concrete action into the commitment here rather than at
+            # each of the nine construction sites, so a new step-up path cannot
+            # forget to. Then register it: `resolve_step_up` refuses any approval
+            # whose commitment this session never issued, which is checked before
+            # any signature work.
+            step_up = bind_to_action(
+                step_up,
+                tool=action.tool,
+                arguments_hash=hash_canonical_json(action.args),
+                layer=layer,
+                ttl_seconds=self.step_up_ttl_seconds,
+            )
+            if step_up_flag:
+                self._pending[step_up.commitment()] = step_up
         self.metrics.record_action(blocked=blocked, step_up=step_up_flag, is_write=is_write,
                                    overhead_ms=(time.perf_counter() - start) * 1000)
         record = self.decision_log.append(
@@ -659,7 +1519,10 @@ class SessionBroker:
         ).to_dict()
         if self.receipt_sink is not None:
             self.receipt_sink(record)
-        return BrokerDecision(outcome, layer, tuple(reasons), step_up=step_up, record=record)
+        return BrokerDecision(
+            outcome, layer, tuple(reasons), step_up=step_up, record=record,
+            trusted_candidates=candidates,
+        )
 
     # -- helpers -------------------------------------------------------------
     def _behavioral(self) -> tuple[Outcome, list[str], float | None]:

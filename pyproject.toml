@@ -67,6 +67,65 @@ dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc,
 [tool.hatch.build.targets.wheel]
 only-include = ["agentauth/capabilities"]
 
+# Lint rules are PINNED rather than inherited from ruff's defaults, because
+# `ruff check agentauth` is now a CI gate and an implicit rule set makes that
+# gate change meaning whenever ruff releases. The families below are the ones
+# already firing on this tree plus the correctness core.
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+# Correctness and security rules only. Style opinions (SIM, PERF, line width,
+# comprehension preference) are deliberately NOT gated: this tree's comments and
+# docstrings carry the measurement record, and a linter that reflows them costs
+# more than it returns.
+select = [
+  "E7", "E9",        # pycodestyle: the errors, not the whitespace opinions
+  "F",               # pyflakes — undefined names, unused imports, dead locals
+  "I",               # import order
+  "UP",              # pyupgrade
+  "B",               # bugbear — mutable defaults, bare raise, zip strictness
+  "C4",              # comprehensions
+  "PLE",             # pylint errors, incl. Trojan-Source character checks
+  "PLW1510",         # subprocess.run without an explicit check=
+  "PLR0402",
+  "FURB",
+  "TRY004",
+  "BLE",             # blind except — a security gate must not silently swallow
+  "S",               # bandit
+  "RUF",
+]
+ignore = [
+  # Line length is checked by eye here: the module docstrings deliberately carry
+  # long prose and measurement tables that reflowing would make less readable.
+  "E501",
+  # `assert` is how the test suite works and how invariants are stated.
+  "S101",
+  # Subprocess use is the point of the sandbox driver, and its arguments are
+  # built from validated policy rather than from user strings.
+  "S603", "S607",
+  # Typography is deliberate throughout: em-dashes, arrows and × in prose. These
+  # rules exist to catch homoglyph attacks in identifiers, which `S` and the
+  # `PLE` Trojan-Source checks already cover in the places that matter.
+  "RUF001", "RUF002", "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# S105 is a NAME heuristic: it flags any constant whose identifier contains
+# TOKEN or SECRET. In these three files the flagged values are a schema id and a
+# set of environment-variable NAMES — the things you read a credential from, not
+# a credential. Suppressed per file rather than globally so a genuine hardcoded
+# secret elsewhere in the package still fails the build.
+"agentauth/capabilities/commit.py" = ["S105"]
+"agentauth/capabilities/used_token_store.py" = ["S105"]
+"agentauth/capabilities/hardening/object_class.py" = ["S105"]
+# This module DETECTS Trojan-Source bidi overrides, zero-width joiners and tag
+# characters, so its pattern tables necessarily contain them. Flagging the
+# detector for holding the thing it detects is the lint equivalent of an
+# antivirus quarantining its own signature file.
+"agentauth/capabilities/hardening/input_hardening.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
+
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
 pythonpath = ["."]

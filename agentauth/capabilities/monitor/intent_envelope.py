@@ -57,7 +57,7 @@ class ParameterSlot:
         return {"name": self.name, "source": self.source.value}
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "ParameterSlot":
+    def from_dict(cls, raw: dict) -> ParameterSlot:
         return cls(name=str(raw["name"]), source=SlotSource(raw.get("source", "free")))
 
 
@@ -83,7 +83,7 @@ class CallTemplate:
         }
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "CallTemplate":
+    def from_dict(cls, raw: dict) -> CallTemplate:
         slots = tuple(ParameterSlot.from_dict(s) for s in raw.get("slots", [])
                       if isinstance(s, dict))
         return cls(tool=str(raw["tool"]), verb_class=str(raw.get("verb_class", "")),
@@ -182,8 +182,33 @@ class IntentEnvelope:
     # tool/verb/resource membership only.
     call_templates: tuple[CallTemplate, ...] = ()
 
+    def with_shape(self, tool: str, verb: str) -> IntentEnvelope:
+        """Admit a tool/verb shape after trusted-input replan (ATC re-clearance).
+
+        Does not read arguments or tool output — only the shape the plan
+        extender already judged against the sealed goal + catalog. Phases and
+        modes are left intact; membership grows via ``allowed_tools`` /
+        ``allowed_verbs``.
+        """
+        from agentauth.capabilities.replan import verb_class as _vc
+
+        v = (verb or "").lower()
+        return IntentEnvelope(
+            allowed_tools=self.allowed_tools | {tool},
+            allowed_verbs=self.allowed_verbs | ({v, _vc(verb)} - {""}),
+            allowed_resource_classes=self.allowed_resource_classes,
+            phases=self.phases,
+            phase_order=self.phase_order,
+            modes=self.modes,
+            plan_tree=self.plan_tree,
+            goal_conditions=self.goal_conditions,
+            initial_facts=self.initial_facts,
+            ontology=self.ontology,
+            call_templates=self.call_templates,
+        )
+
     @classmethod
-    def from_goal(cls, goal: GoalSpec, *, ontology: ToolOntology | None = None) -> "IntentEnvelope":
+    def from_goal(cls, goal: GoalSpec, *, ontology: ToolOntology | None = None) -> IntentEnvelope:
         intent = goal.structured_intent or {}
         phases = _parse_phases(intent.get("phases"))
         templates = _parse_templates(intent.get("call_templates"))
@@ -285,7 +310,7 @@ class IntentEnvelope:
 
     # -- conformance ---------------------------------------------------------
     def _mode_paths(self) -> tuple[tuple[Phase, ...], ...]:
-        return self.modes if self.modes else (self.phases,)
+        return self.modes or (self.phases,)
 
     def _plan_tools(self) -> frozenset[str]:
         """Tools that appear in some mode's phases (a plan step in any mode)."""
@@ -462,7 +487,7 @@ class IntentEnvelope:
         }
 
     @classmethod
-    def from_dict(cls, raw: dict) -> "IntentEnvelope":
+    def from_dict(cls, raw: dict) -> IntentEnvelope:
         return cls(
             allowed_tools=frozenset(raw.get("allowed_tools", [])),
             allowed_verbs=frozenset(raw.get("allowed_verbs", [])),

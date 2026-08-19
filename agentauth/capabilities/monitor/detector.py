@@ -37,9 +37,9 @@ from agentauth.capabilities.monitor.drift import CusumDrift
 from agentauth.capabilities.monitor.envelope import TypedGoalEnvelope
 from agentauth.capabilities.monitor.provenance import TaintTracker
 from agentauth.capabilities.monitor.reachability import EnvelopeDeparture, PathEnvelope
-from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
 from agentauth.capabilities.monitor.scoring.base import SequenceScorer
 from agentauth.capabilities.monitor.scoring.ngram import NGramScorer, goal_bucket
+from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
 
 
 class Decision(str, Enum):
@@ -97,10 +97,14 @@ class TrajectoryDetector:
     # When assess(..., reference=benign_twin) is supplied, run the twin
     # corridor / intent two-signal / surface gate (SLEIGHT-style covert intent).
     use_twin_reference: bool = True
+    # Soft content/intent advisory (digΔ vs declaration; optional LLM judge).
+    # Escalates only — never sets structural_block on its own.
+    use_intent_advisory: bool = True
+    intent_judge: object | None = None  # optional Callable[[Action, str], str|None]
     _fitted: bool = False
     _aml_benign_rate: float = 1.0  # AML flag rate on held-out benign (reason-only)
 
-    def fit(self, benign: list[Trajectory]) -> "TrajectoryDetector":
+    def fit(self, benign: list[Trajectory]) -> TrajectoryDetector:
         # Split-conformal (inductive): the scorer trains on one slice and the
         # conformal layer calibrates on a DISJOINT slice. Calibrating on the
         # scorer's own training data leaks — an overfit scorer scores its train
@@ -188,7 +192,7 @@ class TrajectoryDetector:
         union bound is k*alpha. A single combined statistic could reclaim the split,
         but calibrating its threshold is data-fragile on heterogeneous corpora,
         whereas per-tier conformal control is robust — the deliberate trade here."""
-        return {t: self.alpha for t in active}
+        return dict.fromkeys(active, self.alpha)
 
     def assess(
         self,
@@ -217,7 +221,6 @@ class TrajectoryDetector:
         tier_block = {t: (p <= budget.get(t, 0.0)) for t, p in tier_p.items()}
         combined_block = self._fitted and any(tier_block.values())
         min_p = min(tier_p.values(), default=1.0)
-        surprise_stream = [scored.get(a.step, 0.0) for a in traj.actions]
         traj_p = tier_p.get("scorer", 1.0)
         drift_p = tier_p.get("drift", 1.0)
 
@@ -279,12 +282,45 @@ class TrajectoryDetector:
                 twin_block = True
                 structural_reasons.extend(twin.reasons)
 
+        # Intent advisory: digΔ vs declaration (and optional judge). Soft only —
+        # promote the last step to ESCALATE so the broker can step up without
+        # claiming a hard structural containment win on content harm.
+        if self.use_intent_advisory and reference is not None and reference.actions:
+            from agentauth.capabilities.monitor.intent_advisory import (
+                assess_intent_advisory,
+            )
+            goal_text = ""
+            if traj.goal is not None:
+                goal_text = getattr(traj.goal, "summary", None) or ""
+            advisory = assess_intent_advisory(
+                traj,
+                declaration=reference,
+                goal_text=goal_text,
+                judge=self.intent_judge,  # type: ignore[arg-type]
+            )
+            if advisory.escalate:
+                structural_reasons.extend(advisory.reasons)
+                if verdicts:
+                    last = verdicts[-1]
+                    if last.decision is Decision.ALLOW:
+                        verdicts[-1] = StepVerdict(
+                            step=last.step,
+                            decision=Decision.ESCALATE,
+                            surprise=last.surprise,
+                            p_value=last.p_value,
+                            conformal_flag=last.conformal_flag,
+                            in_envelope=last.in_envelope,
+                            tainted=last.tainted,
+                            reasons=(*last.reasons, *advisory.reasons),
+                        )
+
         return DetectionReport(
             verdicts=verdicts,
             path_departure=departure,
             aml=aml_v,
             # Twin structural is a sealed-plan check, not a conformal population
             # tier; it hard-blocks when the reference corridor says so.
+            # Intent advisory never sets structural_block.
             structural_block=combined_block or twin_block,
             structural_reasons=tuple(structural_reasons),
             anomaly_p=min(traj_p, drift_p),

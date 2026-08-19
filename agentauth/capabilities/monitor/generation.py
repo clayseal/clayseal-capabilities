@@ -17,7 +17,7 @@ disposes). Only a verified plan is signed.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from agentauth.capabilities.monitor.intent_envelope import (

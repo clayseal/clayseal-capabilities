@@ -407,11 +407,17 @@ def test_replanning_cannot_rescue_an_infeasible_goal():
             return ReplanVerdict(True, "yes")
 
     class Infeasible:
+        def check_slots(self, *a, **k):
+            return None
+
         def last_deviation(self, trajectory):
             return None
 
         def feasible(self, trajectory):
             return False, "the goal can no longer be met"
+
+        def with_shape(self, tool, verb):
+            return self
 
     broker = SessionBroker(
         goal=GoalSpec(query_id="q", summary="summarise the inbox"),
@@ -513,11 +519,17 @@ def test_a_consequential_off_plan_action_needs_a_bound_destination_to_be_replann
             return ReplanVerdict(True, "the goal implies sending")
 
     class OffPlan:
+        def check_slots(self, *a, **k):
+            return None
+
         def last_deviation(self, trajectory):
             return type("D", (), {"reason": "send_email not in the compiled plan"})()
 
         def feasible(self, trajectory):
             return True, ""
+
+        def with_shape(self, tool, verb):
+            return self
 
     def _broker(egress):
         return SessionBroker(
@@ -559,11 +571,17 @@ def test_replanning_without_any_egress_policy_cannot_pass_a_consequential_action
             return ReplanVerdict(True, "yes")
 
     class OffPlan:
+        def check_slots(self, *a, **k):
+            return None
+
         def last_deviation(self, trajectory):
             return type("D", (), {"reason": "off plan"})()
 
         def feasible(self, trajectory):
             return True, ""
+
+        def with_shape(self, tool, verb):
+            return self
 
     broker = SessionBroker(
         goal=GoalSpec(query_id="q", summary="book my trip"),

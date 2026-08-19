@@ -29,7 +29,7 @@ class EnsembleScorer:
         self._mean: list[float] = [0.0] * len(members)
         self._std: list[float] = [1.0] * len(members)
 
-    def fit(self, benign: list[Trajectory]) -> "EnsembleScorer":
+    def fit(self, benign: list[Trajectory]) -> EnsembleScorer:
         for scorer in self.members:
             member_fit = getattr(scorer, "fit", None)
             if callable(member_fit):

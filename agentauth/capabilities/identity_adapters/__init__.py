@@ -34,13 +34,13 @@ from agentauth.capabilities.identity_adapters.registry import (
 from agentauth.capabilities.identity_adapters.spiffe_workload import SpiffeWorkloadProvider
 
 __all__ = [
+    "A2AAgentCardProvider",
+    "EntraAgentIdProvider",
+    "SpiffeWorkloadProvider",
+    "VerifyingOidcProvider",
     "get_identity_provider",
+    "is_agent_token",
     "list_identity_providers",
     "register_identity_provider",
-    "VerifyingOidcProvider",
-    "EntraAgentIdProvider",
-    "is_agent_token",
-    "A2AAgentCardProvider",
     "verify_agent_card",
-    "SpiffeWorkloadProvider",
 ]

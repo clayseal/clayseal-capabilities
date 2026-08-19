@@ -40,15 +40,84 @@ import json
 import os
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 # Spend older than the window no longer counts against the ceiling. A day is the
 # usual reporting period for the controls this imitates; callers should set it
 # from policy rather than relying on the default.
 DEFAULT_WINDOW_SECONDS = 24 * 60 * 60
+
+
+class LedgerUnavailable(RuntimeError):
+    """The shared ledger could not be reached, so no ceiling could be checked.
+
+    Its own exception type because the caller has to be able to tell it from
+    every other failure. A raw `PermissionError` or `ConnectionError` escaping
+    the authorization path is fail-closed only by accident: it takes the request
+    down, it is indistinguishable from a bug, and nothing counts it. The whole
+    point of a ceiling is that somebody notices when it stops being enforced.
+    """
+
+
+def principal_key(binding: Any) -> str:
+    """Derive this ledger's key from an `AuthorityBinding`, without collisions.
+
+    Do not pass ``binding.subject_id`` directly. It is the raw ``sub`` claim, and
+    ``sub`` is unique only *within* an issuer — OIDC Core says so explicitly, and
+    `benchmarks/stress_identity.py` confirms every adapter here behaves that way:
+    ``sub="alice"`` from ``https://good.example`` and from ``https://evil.example``
+    produce the same ``subject_id`` on all five.
+
+    That is a live problem specifically *because* of this module. This ledger is
+    the fix for the session-restart escape in `stress_aggregation.py`, so its key
+    is the thing an attacker now has reason to attack, and in a deployment
+    trusting more than one issuer an unqualified ``sub`` means two distinct
+    principals share one ceiling. Either can exhaust the other's budget, and the
+    spend attribution in the log is wrong for both.
+
+    The issuer is therefore part of the key, length-prefixed rather than
+    delimiter-joined. A plain ``f"{iss}|{sub}"`` is forgeable: ``sub`` is
+    attacker-chosen at their own issuer, so ``sub="|https://good.example|alice"``
+    spells another principal's key. Length prefixes make the encoding injective,
+    so no pair of inputs can produce the same output.
+    """
+    issuer = str(getattr(binding, "issuer", "") or "")
+    subject = str(getattr(binding, "subject_id", "") or "")
+    if not subject:
+        raise ValueError(
+            "cannot key a principal ledger on a binding with no subject_id; "
+            "an unidentified principal must not share a ceiling with anyone")
+    return f"{len(issuer)}:{issuer}{len(subject)}:{subject}"
+
+
+def principal_chain(binding: Any) -> tuple[str, ...]:
+    """Every principal a delegate's spend must also count against.
+
+    Delegation splitting is the escape this closes, and it was wide open:
+    measured at **600 landed against a ceiling of 100** for a parent plus five
+    sub-agents, because each sub-agent has its own ``sub`` and therefore its own
+    `principal_key` and its own ceiling. The plan calls this axis "unclosed by
+    construction, and where MCP deployments live", and a per-delegate ceiling is
+    not a ceiling: an attacker who can spawn sub-agents mints headroom.
+
+    Returned root-first and EXCLUDING the binding's own key, which the caller
+    already has from `principal_key`. Chain entries are qualified with the same
+    issuer, because a delegation chain is issued within one trust domain and an
+    unqualified entry would collide across issuers exactly as a bare ``sub``
+    does.
+    """
+    issuer = str(getattr(binding, "issuer", "") or "")
+    out: list[str] = []
+    for entry in getattr(binding, "delegation_chain", ()) or ():
+        subject = str(entry or "")
+        if subject:
+            out.append(f"{len(issuer)}:{issuer}{len(subject)}:{subject}")
+    return tuple(out)
 
 
 @dataclass(frozen=True)
@@ -65,6 +134,15 @@ class Hold:
     budget_id: str
     amount: Decimal
     created_at: float
+    #: Stable identity for settlement bookkeeping. Object identity is not
+    #: enough: a released Hold can be collected and a new one allocated at the
+    #: same address, so an `id()`-keyed set silently conflates two holds.
+    hold_id: str = field(default_factory=lambda: uuid4().hex)
+    #: The ceiling this hold was checked against, captured at reserve time. A
+    #: late commit has to re-check, and the caller of `commit_hold` does not
+    #: pass a ceiling — the authorize/act/commit split means it may not still
+    #: have one in scope.
+    ceiling: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True)
@@ -84,7 +162,7 @@ class LedgerEntry:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "LedgerEntry":
+    def from_dict(cls, d: dict[str, Any]) -> LedgerEntry:
         return cls(
             principal=d["principal"], budget_id=d["budget_id"],
             amount=Decimal(d["amount"]), at=float(d["at"]),
@@ -121,8 +199,40 @@ class PrincipalLedger:
     # is the answer to that: the invariant is checkable on demand and is checked
     # in the tests, so the speed does not cost auditability.
     _totals: dict[tuple[str, str], Decimal] = field(default_factory=dict)
+    # Holds that have already been booked, by hold_id. An expired hold is
+    # SETTLED rather than dropped (see `_expire_holds`), and a later
+    # `commit_hold` for it must return the existing entry instead of booking a
+    # second one.
+    _settled: dict[str, LedgerEntry] = field(default_factory=dict)
+    # Holds whose TTL passed. Their headroom is released, so a late commit is
+    # booked against a ceiling that has since been re-let. It is still booked —
+    # the effect happened — but it is recorded as a breach rather than absorbed.
+    _voided: set[str] = field(default_factory=set)
+    _late_breaches: list[LedgerEntry] = field(default_factory=list)
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
     _tail_checked: bool = False
+
+    @contextmanager
+    def _transaction(self):
+        """The atomicity boundary for every read-modify-write below.
+
+        `threading.RLock` is process-local, and that is the whole limitation of
+        this class: four OS processes sharing one ledger file each loaded it,
+        each saw nothing spent, each reserved, each committed. **400 landed
+        against a ceiling of 100.** It is the same check-then-act race `reserve`
+        already fixes for threads, one layer out, and it matters because every
+        real deployment is horizontally scaled — a second gunicorn worker or k8s
+        replica reintroduces exactly the session-restart escape this module
+        exists to close.
+
+        Subclasses widen this to a lock the operating system or a database
+        enforces. `SharedPrincipalLedger` is the POSIX one; the same seam is
+        where a Redis or Postgres backend goes, and `RedisUsedTokenStore` is the
+        precedent — the replay layer has been multi-instance for a while and the
+        ledger carrying the headline claim had not caught up.
+        """
+        with self._lock:
+            yield
 
     def __post_init__(self) -> None:
         if self.path is not None and self.path.exists():
@@ -146,7 +256,7 @@ class PrincipalLedger:
         for e in entries:
             key = (e.principal, e.budget_id)
             self._index.setdefault(key, []).append(e)
-            self._totals[key] = self._totals.get(key, Decimal("0")) + e.amount
+            self._totals[key] = self._totals.get(key, Decimal(0)) + e.amount
 
     def _repair_torn_tail(self) -> None:
         """Drop a partial final record before appending after it.
@@ -206,9 +316,9 @@ class PrincipalLedger:
             return []
         if bucket and bucket[0].at < cutoff:
             kept = [e for e in bucket if e.at >= cutoff]
-            dropped = sum((e.amount for e in bucket if e.at < cutoff), Decimal("0"))
+            dropped = sum((e.amount for e in bucket if e.at < cutoff), Decimal(0))
             self._index[key] = kept
-            self._totals[key] = self._totals.get(key, Decimal("0")) - dropped
+            self._totals[key] = self._totals.get(key, Decimal(0)) - dropped
             bucket = kept
         return bucket
 
@@ -216,9 +326,9 @@ class PrincipalLedger:
         """Total booked for this principal and budget inside the window."""
         cutoff = (time.time() if now is None else now) - self.window_seconds
         key = (principal, budget_id)
-        with self._lock:
+        with self._transaction():
             self._prune(key, cutoff)
-            return self._totals.get(key, Decimal("0"))
+            return self._totals.get(key, Decimal(0))
 
     def verify_totals(self) -> bool:
         """Recompute every total from the entries and compare.
@@ -227,17 +337,17 @@ class PrincipalLedger:
         drift from its log is how a ceiling silently rises. This makes the
         invariant checkable rather than assumed.
         """
-        with self._lock:
+        with self._transaction():
             for key, bucket in self._index.items():
-                if self._totals.get(key, Decimal("0")) != sum(
-                        (e.amount for e in bucket), Decimal("0")):
+                if self._totals.get(key, Decimal(0)) != sum(
+                        (e.amount for e in bucket), Decimal(0)):
                     return False
             return True
 
     def entries_in_window(self, principal: str, budget_id: str,
                           *, now: float | None = None) -> list[LedgerEntry]:
         cutoff = (time.time() if now is None else now) - self.window_seconds
-        with self._lock:
+        with self._transaction():
             return [e for e in self._prune((principal, budget_id), cutoff) if e.at >= cutoff]
 
     # -- mutation -----------------------------------------------------------
@@ -273,7 +383,7 @@ class PrincipalLedger:
         if not amount.is_finite() or amount <= 0:
             raise ValueError(
                 f"ledger amounts must be finite and positive, got {amount!r}")
-        with self._lock:
+        with self._transaction():
             if idempotency_key:
                 cutoff = at - self.window_seconds
                 for existing in self._prune(key, cutoff):
@@ -285,7 +395,7 @@ class PrincipalLedger:
             self._append(entry)
             self._entries.append(entry)
             self._index.setdefault(key, []).append(entry)
-            self._totals[key] = self._totals.get(key, Decimal("0")) + amount
+            self._totals[key] = self._totals.get(key, Decimal(0)) + amount
         return entry
 
     # How long an unreleased hold survives. A reservation that never expires is
@@ -296,7 +406,7 @@ class PrincipalLedger:
     reservation_ttl_seconds: float = 300.0
 
     def reserve(self, principal: str, budget_id: str, amount: Decimal,
-                ceiling: Decimal, *, now: float | None = None) -> "Hold | None":
+                ceiling: Decimal, *, now: float | None = None) -> Hold | None:
         """Atomically check the ceiling and hold the amount against it.
 
         `would_allow` followed by `commit` is a check-then-act race: eight
@@ -315,30 +425,60 @@ class PrincipalLedger:
             raise ValueError(
                 f"reservation amounts must be finite and positive, got {amount!r}")
         at = time.time() if now is None else now
-        with self._lock:
+        with self._transaction():
             key = (principal, budget_id)
             self._expire_holds(key, at)
-            held = sum((h.amount for h in self._holds.get(key, ())), Decimal("0"))
+            held = sum((h.amount for h in self._holds.get(key, ())), Decimal(0))
             projected = self.spent(principal, budget_id, now=now) + held + amount
             if projected > ceiling:
                 return None
             hold = Hold(principal=principal, budget_id=budget_id,
-                        amount=amount, created_at=at)
+                        amount=amount, created_at=at, ceiling=ceiling)
             self._holds.setdefault(key, []).append(hold)
             self._reserved[key] = held + amount
             return hold
 
     def _expire_holds(self, key: tuple[str, str], at: float) -> None:
+        """Void expired holds: free the headroom, but mark them.
+
+        Dropping them silently was a measured escape. `commit_hold` books from
+        the Hold and cannot re-check the ceiling at the point it is called
+        (authorize -> act -> commit means the effect has already landed), so a
+        forgotten hold freed the headroom while staying perfectly committable:
+
+            reserve 100 of a 100 ceiling, wait out the 300s TTL, reserve 100
+            again (the first hold has evaporated, so it fits), then commit both.
+            **200 booked against a ceiling of 100.** No clock control required,
+            only patience.
+
+        Two fixes were wrong before this one. *Refusing* the late commit
+        under-counts, and this module's own premise is that "under-counting is
+        the failure that lets an attack through". *Settling* the hold as spend
+        on expiry never under-counts, but it re-opens exactly the denial of
+        service the TTL was added for, and
+        `test_an_abandoned_hold_expires_instead_of_shrinking_the_ceiling_forever`
+        pins that.
+
+        So the hold is voided — headroom returns, DoS stays fixed — and its id
+        is remembered. `commit_hold` re-checks against the ceiling captured on
+        the Hold and books either way, recording a breach when it no longer
+        fits. The escape becomes visible instead of silent, which is the same
+        standard `aggregation_residual.md` holds the mandate escapes to.
+        """
         holds = self._holds.get(key)
         if not holds:
             return
         cutoff = at - self.reservation_ttl_seconds
         live = [h for h in holds if h.created_at >= cutoff]
-        if len(live) != len(holds):
-            self._holds[key] = live
-            self._reserved[key] = sum((h.amount for h in live), Decimal("0"))
+        if len(live) == len(holds):
+            return
+        for hold in holds:
+            if hold.created_at < cutoff:
+                self._voided.add(hold.hold_id)
+        self._holds[key] = live
+        self._reserved[key] = sum((h.amount for h in live), Decimal(0))
 
-    def release(self, hold: "Hold | None") -> None:
+    def release(self, hold: Hold | None) -> None:
         """Give back a reservation whose action was refused downstream.
 
         Idempotent, and scoped to the one hold. Releasing twice, or releasing a
@@ -346,7 +486,7 @@ class PrincipalLedger:
         """
         if hold is None:
             return
-        with self._lock:
+        with self._transaction():
             key = (hold.principal, hold.budget_id)
             holds = self._holds.get(key)
             if not holds:
@@ -357,9 +497,9 @@ class PrincipalLedger:
                     break
             else:
                 return
-            self._reserved[key] = sum((h.amount for h in holds), Decimal("0"))
+            self._reserved[key] = sum((h.amount for h in holds), Decimal(0))
 
-    def commit_hold(self, hold: "Hold | None", *, session: str = "",
+    def commit_hold(self, hold: Hold | None, *, session: str = "",
                     idempotency_key: str = "", now: float | None = None):
         """Book exactly what was reserved, then drop the hold.
 
@@ -368,10 +508,88 @@ class PrincipalLedger:
         """
         if hold is None:
             return None
-        entry = self.book(hold.principal, hold.budget_id, hold.amount,
-                          session=session, idempotency_key=idempotency_key, now=now)
-        self.release(hold)
-        return entry
+        with self._transaction():
+            settled = self._settled.get(hold.hold_id)
+            if settled is not None:
+                # Already booked when it expired. Booking again would double
+                # count, which is the safe direction and still wrong.
+                self.release(hold)
+                return settled
+            breached = False
+            if hold.hold_id in self._voided:
+                # Its headroom was re-let when the TTL passed, so the ceiling
+                # this books against is not the one it was checked against.
+                # Book anyway (the effect landed; refusing to record it
+                # under-counts) and record the breach.
+                # Outstanding holds must be in the projection. They are the
+                # reservations that were granted USING the headroom this hold
+                # gave back when it was voided, so leaving them out is how the
+                # first version of this check missed its own escape: committing
+                # the voided hold looked like 100 against a ceiling of 100,
+                # while a live hold for another 100 sat beside it.
+                key = (hold.principal, hold.budget_id)
+                outstanding = sum(
+                    (h.amount for h in self._holds.get(key, ())
+                     if h.hold_id != hold.hold_id), Decimal(0))
+                projected = (self.spent(hold.principal, hold.budget_id, now=now)
+                             + outstanding + hold.amount)
+                breached = hold.ceiling > 0 and projected > hold.ceiling
+            entry = self.book(hold.principal, hold.budget_id, hold.amount,
+                              session=session or ("late-commit" if breached else ""),
+                              idempotency_key=idempotency_key, now=now)
+            self._settled[hold.hold_id] = entry
+            if breached:
+                self._late_breaches.append(entry)
+            self.release(hold)
+            return entry
+
+    def health(self) -> dict[str, Any]:
+        """One snapshot an operator can alert on.
+
+        Two fields here mean the ceiling stopped being enforced, and before this
+        they were recorded and surfaced nowhere:
+
+        ``late_breaches``    a commit landed after its hold was voided and no
+                             longer fit. The spend IS booked and the log IS
+                             correct; what happened is that the check did not
+                             hold for it. Non-zero needs reconciling the same
+                             day rather than being discovered a window later.
+        ``unavailable``      transactions that could not reach the shared
+                             backend. Whatever the configured policy, the
+                             ceiling went unchecked for that many actions.
+
+        ``totals_verified`` is the integrity invariant: the cached per-key totals
+        recomputed from the log and compared. False means the fast path has
+        drifted from the record, which silently raises a ceiling, and it is the
+        field here that should page someone.
+
+        Deliberately a plain dict of scalars rather than a metrics-library call.
+        Whatever the deployment scrapes, it can scrape this.
+        """
+        with self._transaction():
+            breaches = self.late_breaches()
+            return {
+                "entries": len(self._entries),
+                "tracked_keys": len(self._index),
+                "outstanding_holds": sum(len(v) for v in self._holds.values()),
+                "late_breaches": len(breaches),
+                "late_breach_value": str(sum((e.amount for e in breaches),
+                                             Decimal(0))),
+                "unavailable": int(getattr(self, "unavailable_count", 0)),
+                "totals_verified": self.verify_totals(),
+                "window_seconds": self.window_seconds,
+                "reservation_ttl_seconds": self.reservation_ttl_seconds,
+                "cross_process": type(self) is not PrincipalLedger,
+            }
+
+    def late_breaches(self) -> list[LedgerEntry]:
+        """Commits that landed after their hold was voided and no longer fit.
+
+        Non-empty means a ceiling was exceeded. The spend is booked and the log
+        is correct; what this reports is that the CHECK did not hold for it, so
+        an operator can reconcile rather than discover it a window later.
+        """
+        return list(self._late_breaches)
 
     def would_exceed(self, principal: str, budget_id: str, amount: Decimal,
                      ceiling: Decimal, *, now: float | None = None) -> bool:
@@ -379,7 +597,7 @@ class PrincipalLedger:
 
     def remaining(self, principal: str, budget_id: str, ceiling: Decimal,
                   *, now: float | None = None) -> Decimal:
-        return max(Decimal("0"), ceiling - self.spent(principal, budget_id, now=now))
+        return max(Decimal(0), ceiling - self.spent(principal, budget_id, now=now))
 
 
 @dataclass(frozen=True)
@@ -461,7 +679,7 @@ def structuring_signal(
     """
     entries = ledger.entries_in_window(principal, budget_id, now=now)
     amounts = [e.amount for e in entries]
-    total = sum(amounts, Decimal("0"))
+    total = sum(amounts, Decimal(0))
     if not amounts or ceiling <= 0:
         return StructuringSignal(len(amounts), total, ceiling, 0, 0.0)
 
@@ -541,6 +759,32 @@ class PrincipalBudgetView:
     ceilings: dict[str, Decimal] = field(default_factory=dict)
     tracked: dict[str, tuple[str, str]] = field(default_factory=dict)
     session: str = ""
+    #: Ancestor principal keys, from `principal_chain`. A delegate's spend is
+    #: reserved and booked against every one of them as well as its own, so the
+    #: parent's ceiling bounds the aggregate of everything it delegated to.
+    #: Empty for a non-delegated principal, which is the previous behaviour.
+    chain: tuple[str, ...] = ()
+
+    def _principals(self) -> tuple[str, ...]:
+        return (self.principal, *self.chain)
+
+    def _reserve_group(self, budget_id: str, amount: Decimal,
+                       ceiling: Decimal, now: float | None):
+        """Reserve against self and every ancestor, all-or-nothing.
+
+        A partial reservation would leave an ancestor's headroom consumed for a
+        delegate action that never happened, which is the denial of service the
+        hold TTL exists to prevent, arriving by a different route.
+        """
+        taken = []
+        for who in self._principals():
+            hold = self.ledger.reserve(who, budget_id, amount, ceiling, now=now)
+            if hold is None:
+                for done in taken:
+                    self.ledger.release(done)
+                return None
+            taken.append(hold)
+        return taken
 
     def _amount(self, tool_name: str, args: dict[str, Any]) -> tuple[str, Decimal] | None:
         spec = self.tracked.get(tool_name)
@@ -609,8 +853,9 @@ class PrincipalBudgetView:
         if parsed is None:
             return
         budget_id, _amount = parsed
-        held = self._holds.get(budget_id)
-        self.ledger.release(held.pop(0) if held else None)
+        group = self._holds.get(budget_id)
+        for hold in (group.pop(0) if group else ()):
+            self.ledger.release(hold)
 
     def commit(self, tool_name: str, args: dict[str, Any],
                *, now: float | None = None) -> None:
@@ -652,24 +897,26 @@ class PrincipalBudgetView:
                     self.principal, budget_id, amount, session=self.session,
                     idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
                 return
-            late = self.ledger.reserve(self.principal, budget_id, amount,
-                                       ceiling, now=now)
+            late = self._reserve_group(budget_id, amount, ceiling, now)
             if late is None:
                 raise ValueError(
                     f"commit for {budget_id!r} would exceed the {ceiling} ceiling "
                     f"for {self.principal}; authorize() first"
                 )
-            self.ledger.commit_hold(
-                late, session=self.session,
-                idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
+            for hold in late:
+                self.ledger.commit_hold(
+                    hold, session=self.session,
+                    idempotency_key=str(args.get("_idempotency_key") or ""),
+                    now=now)
             return
-        hold = held.pop(0)
+        group = held.pop(0)
         # The reservation is the authority, so the RESERVED amount is booked and
         # the caller's number is ignored. Re-deriving it from args was the
         # bypass: authorize 10, commit 10,000, and 10,000 was booked.
-        self.ledger.commit_hold(
-            hold, session=self.session,
-            idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
+        for hold in group:
+            self.ledger.commit_hold(
+                hold, session=self.session,
+                idempotency_key=str(args.get("_idempotency_key") or ""), now=now)
 
     def authorize(self, tool_name: str, args: dict[str, Any],
                   *, now: float | None = None) -> tuple[bool, str]:
@@ -683,7 +930,13 @@ class PrincipalBudgetView:
         ceiling = self.ceilings.get(budget_id)
         if ceiling is None:
             return True, f"no principal ceiling for {budget_id}"
-        hold = self.ledger.reserve(self.principal, budget_id, amount, ceiling, now=now)
+        try:
+            hold = self._reserve_group(budget_id, amount, ceiling, now)
+        except LedgerUnavailable as exc:
+            # Fail closed, and say why. Returning a bare False here would make
+            # "over ceiling" and "no ceiling was checked" the same event in
+            # every log and dashboard downstream.
+            return False, f"principal budget {budget_id}: {exc}"
         if hold is not None:
             # Queued per budget, NOT keyed on the amount. Keying on
             # (budget_id, str(amount)) meant `commit` re-derived the key from
@@ -738,7 +991,7 @@ def parks_below_the_gate(
     """
     at = time.time() if now is None else now
     if ceiling <= 0:
-        return StructuringSignal(0, Decimal("0"), ceiling, 0, 0.0, 0.0)
+        return StructuringSignal(0, Decimal(0), ceiling, 0, 0.0, 0.0)
 
     # Read the log directly. `entries_in_window` PRUNES as it reads, so walking
     # backwards through windows with it destroys the history being measured: the
@@ -752,7 +1005,7 @@ def parks_below_the_gate(
     for index in range(windows):
         end = at - index * ledger.window_seconds
         start = end - ledger.window_seconds
-        total = sum((e.amount for e in history if start <= e.at < end), Decimal("0"))
+        total = sum((e.amount for e in history if start <= e.at < end), Decimal(0))
         used = float(total / ceiling)
         utilisations.append(used)
         if gate - band <= used < gate:
@@ -767,9 +1020,248 @@ def parks_below_the_gate(
         )
     total_now = sum(
         (e.amount for e in history if e.at >= at - ledger.window_seconds),
-        Decimal("0"),
+        Decimal(0),
     )
     return StructuringSignal(
         len(utilisations), total_now, ceiling, hits,
         0.0, 0.0, tuple(reasons),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Cross-process
+# --------------------------------------------------------------------------- #
+@dataclass
+class SharedPrincipalLedger(PrincipalLedger):
+    """A ledger whose ceiling survives more than one process.
+
+    `PrincipalLedger` synchronises on a `threading.RLock`, which is
+    process-local. Measured, four OS processes against one ledger file and a
+    ceiling of 100: **400 landed**. Each process loaded the log, saw nothing
+    spent, reserved, and committed. That is not a corner case — a second
+    gunicorn worker or a second k8s replica is the normal shape of a
+    deployment, and each one is a fresh ceiling, which is precisely the
+    session-restart escape this module was written to close.
+
+    Three things have to be shared, not one, and missing any of them leaves the
+    hole open:
+
+    **Mutual exclusion.** An OS-level lock file, so the read-modify-write in
+    `reserve` is atomic across processes and not merely across threads.
+
+    **Committed spend.** The in-memory index is a snapshot from load time. Every
+    transaction tails the log for bytes appended by anyone else, so `spent`
+    reflects other processes' commits rather than this process's last look.
+
+    **Outstanding holds.** The subtle one. Even with a shared log and a shared
+    lock, two processes that each hold a reservation cannot see each other's,
+    so both pass the ceiling check and both commit later. Holds, voids and
+    settlements therefore live in a sidecar file rewritten under the same lock.
+    They are TTL-bounded, so it stays small.
+
+    POSIX only, single host. For multiple hosts the same `_transaction` seam
+    takes a Redis or Postgres lock instead; `RedisUsedTokenStore` is the
+    existing precedent for that shape.
+    """
+
+    #: What to do when the lock cannot be taken — a read-only mount, a full
+    #: disk, a permissions change, and for a future Redis backend an unreachable
+    #: server. "deny" refuses the action and counts it; "allow" is available
+    #: because availability is sometimes worth more than a ceiling, and it is
+    #: NOT the default and never silently chosen.
+    #:
+    #: There is no correct universal answer. What is not acceptable is an
+    #: implicit one: this repository has already shipped six fail-opens whose
+    #: whole shape was a control that stopped applying when its input was
+    #: unusual, and reported success.
+    on_unavailable: str = "deny"
+    #: Count of transactions that could not reach the backend. Non-zero means
+    #: the ceiling was not enforced for that many actions, whichever policy is
+    #: set, and it is what an operator alerts on.
+    unavailable_count: int = 0
+    _offset: int = 0
+
+    def __post_init__(self) -> None:
+        if self.path is None:
+            raise ValueError(
+                "SharedPrincipalLedger needs a path: the file IS the shared "
+                "state. Use PrincipalLedger for an in-memory ledger.")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.touch(exist_ok=True)
+        # Deliberately NOT `super().__post_init__()`, which reads the whole file
+        # and then stats it separately for the offset. Anything another process
+        # appended between those two calls would be skipped forever, and skipped
+        # entries are spend this process cannot see — it would grant headroom
+        # that is already gone. Starting at offset 0 and letting the first
+        # transaction do the read means the load happens under the lock, which
+        # is the only place it is safe.
+        self._offset = 0
+
+    # -- paths ------------------------------------------------------------- #
+    @property
+    def _lock_path(self) -> Path:
+        return self.path.with_suffix(self.path.suffix + ".lock")
+
+    @property
+    def _sidecar_path(self) -> Path:
+        return self.path.with_suffix(self.path.suffix + ".holds")
+
+    # -- the seam ---------------------------------------------------------- #
+    @contextmanager
+    def _transaction(self):
+        import fcntl
+
+        with self._lock:                      # still needed: threads in THIS process
+            if getattr(self, "_in_txn", False):
+                yield                         # re-entrant, already holding the file lock
+                return
+            try:
+                handle = open(self._lock_path, "a+b")
+            except OSError as exc:
+                self.unavailable_count += 1
+                if self.on_unavailable == "allow":
+                    # Explicitly chosen: proceed with THIS process's view, which
+                    # is a ceiling per process rather than none at all.
+                    #
+                    # `_in_txn` is set here for the same reason it is set on the
+                    # success path: `reserve` calls `spent`, which opens its own
+                    # transaction. Without it the nested call re-enters, fails
+                    # again, and counts again — one refused action reported as
+                    # two backend outages, which is exactly the kind of inflated
+                    # number an operator learns to ignore.
+                    self._in_txn = True
+                    try:
+                        yield
+                    finally:
+                        self._in_txn = False
+                    return
+                raise LedgerUnavailable(
+                    f"cannot reach the shared ledger at {self._lock_path}: "
+                    f"{exc}. No ceiling was checked, so the action is refused "
+                    f"(on_unavailable={self.on_unavailable!r})") from exc
+            with handle:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+                self._in_txn = True
+                try:
+                    self._sync_log()
+                    self._load_sidecar()
+                    yield
+                    self._save_sidecar()
+                finally:
+                    self._in_txn = False
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+    # -- shared committed spend -------------------------------------------- #
+    def _sync_log(self) -> None:
+        """Merge entries appended by other processes since the last look.
+
+        Only whole lines are consumed. A partial final line is left unread and
+        `_offset` is not advanced past it, so a torn append is picked up on the
+        next transaction rather than dropped — under-counting is the failure
+        direction that lets an attack through.
+        """
+        size = self.path.stat().st_size
+        if size <= self._offset:
+            return
+        with self.path.open("rb") as handle:
+            handle.seek(self._offset)
+            raw = handle.read(size - self._offset)
+        consumed, tail = 0, raw
+        while True:
+            idx = tail.find(b"\n")
+            if idx < 0:
+                break
+            line, tail = tail[:idx], tail[idx + 1:]
+            consumed += idx + 1
+            text = line.decode("utf-8", "replace").strip()
+            if not text:
+                continue
+            try:
+                entry = LedgerEntry.from_dict(json.loads(text))
+            except (json.JSONDecodeError, KeyError, ValueError):
+                continue
+            key = (entry.principal, entry.budget_id)
+            self._entries.append(entry)
+            self._index.setdefault(key, []).append(entry)
+            self._totals[key] = self._totals.get(key, Decimal(0)) + entry.amount
+        self._offset += consumed
+
+    def _append(self, entry: LedgerEntry) -> None:
+        super()._append(entry)
+        # Our own write is already merged in memory by `book`, so skip it on the
+        # next sync rather than double counting it.
+        try:
+            self._offset = self.path.stat().st_size
+        except OSError:
+            pass
+
+    # -- shared holds ------------------------------------------------------ #
+    def _load_sidecar(self) -> None:
+        try:
+            raw = json.loads(self._sidecar_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            return
+        holds: dict = {}
+        for item in raw.get("holds", []):
+            try:
+                hold = Hold(principal=item["principal"],
+                            budget_id=item["budget_id"],
+                            amount=Decimal(item["amount"]),
+                            created_at=float(item["created_at"]),
+                            hold_id=item["hold_id"],
+                            ceiling=Decimal(item.get("ceiling", "0")))
+            except (KeyError, ValueError, ArithmeticError):
+                continue
+            holds.setdefault((hold.principal, hold.budget_id), []).append(hold)
+        # The sidecar is the ONLY source of truth for holds. An earlier version
+        # merged `self._holds` back in on top of it, to preserve this process's
+        # own Hold objects — but after a sync `self._holds` contains *every*
+        # process's holds, so the merge resurrected holds their owners had
+        # already released. Measured: 5 phantom holds pinning 50 of a 100
+        # ceiling, and 70 landing where 100 should have.
+        #
+        # Nothing needs preserving. A hold created in this transaction is
+        # written to the sidecar before the transaction ends, and `release`
+        # matches on `hold_id` rather than object identity, so a caller's
+        # reference still resolves after a sync replaces the objects.
+        self._holds = holds
+        self._reserved = {k: sum((h.amount for h in v), Decimal(0))
+                          for k, v in holds.items()}
+        self._voided |= set(raw.get("voided", []))
+
+    def _save_sidecar(self) -> None:
+        payload = {
+            "holds": [{"principal": h.principal, "budget_id": h.budget_id,
+                       "amount": str(h.amount), "created_at": h.created_at,
+                       "hold_id": h.hold_id, "ceiling": str(h.ceiling)}
+                      for group in self._holds.values() for h in group],
+            # Bounded by the hold TTL in practice; trimmed to the ids still
+            # referenced plus recent ones so the file cannot grow without limit.
+            "voided": sorted(self._voided)[-4096:],
+        }
+        tmp = self._sidecar_path.with_suffix(self._sidecar_path.suffix + ".tmp")
+        tmp.write_text(json.dumps(payload))
+        os.replace(tmp, self._sidecar_path)
+
+    def release(self, hold: Hold | None) -> None:
+        """Match by hold_id as well as identity.
+
+        The base class pops by `is`, which is right in-process and wrong here:
+        after a sync the list holds reconstructed Hold objects for the same
+        reservation, so an identity match fails and the headroom is never
+        returned.
+        """
+        if hold is None:
+            return
+        with self._transaction():
+            key = (hold.principal, hold.budget_id)
+            holds = self._holds.get(key)
+            if not holds:
+                return
+            for i, existing in enumerate(holds):
+                if existing is hold or existing.hold_id == hold.hold_id:
+                    holds.pop(i)
+                    break
+            else:
+                return
+            self._reserved[key] = sum((h.amount for h in holds), Decimal(0))

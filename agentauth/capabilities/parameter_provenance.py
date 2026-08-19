@@ -38,7 +38,7 @@ from typing import Any
 # in every observation and would make everything trusted by everything.
 MIN_ATTRIBUTABLE = 6
 
-_TOKEN = re.compile(r"[A-Za-z0-9_.:@/+-]{%d,}" % MIN_ATTRIBUTABLE)
+_TOKEN = re.compile(r"[A-Za-z0-9_.:@/+-]{" + str(MIN_ATTRIBUTABLE) + r",}")
 
 # Punctuation that belongs to the sentence rather than to the value. The token
 # class has to contain these characters, because they appear inside real values
@@ -57,11 +57,15 @@ _EDGE = ".:,;!?/+-_@"
 class DestinationTrust(str, Enum):
     """Policy verdict for a destination under containing-object provenance.
 
-    Structured fields of a trusted observation may auto-allow. Free text — even
-    from a goal-named containing object — never auto-allows: the measured limit
-    is that the legit recipient and an injected attacker IBAN can sit side by
-    side in one trusted file. That case steps up. Ungrounded or foreign-object
-    destinations deny.
+    Structured fields of a *trusted* observation (goal-named / named object) may
+    ALLOW at this layer (slot checks). Free text — even from a goal-named
+    containing object — never auto-allows: the measured limit is that the legit
+    recipient and an injected attacker IBAN can sit side by side in one trusted
+    file. That case steps up. Ungrounded or foreign-object destinations deny.
+
+    The egress floor still demotes provenance ALLOW → STEP_UP for autonomy
+    (measured inversion: structured injection in a goal-named resource must not
+    grant an unattended send).
     """
 
     ALLOW = "allow"
@@ -128,7 +132,7 @@ class ParameterProvenance:
         that separates the slack case from an unrelated webpage fetch.
         """
         with self._lock:
-            for key, value in (structured_fields or {}).items():
+            for _key, value in (structured_fields or {}).items():
                 for token in self._tokens(value):
                     self._origins.setdefault(token, set()).add(
                         Source(tool, True, goal_named, containing_object))
@@ -269,10 +273,13 @@ class ParameterProvenance:
     ) -> tuple[DestinationTrust, str]:
         """Containing-object provenance verdict for an egress destination.
 
-        - Structured field of an authorized (or any) observation → ALLOW.
+        Product matrix (egress still demotes ALLOW → STEP_UP for autonomy):
+
+        - Structured field of a **trusted** observation (``goal_named`` or
+          containing object on the sealed goal's named set) → ALLOW.
         - Free text whose containing object the goal named → STEP_UP (never
           auto-trust: injection and legit recipient can share one source).
-        - Otherwise → DENY.
+        - Structured or free text of a foreign object, or ungrounded → DENY.
         """
         tokens = self._tokens(value)
         if not tokens:
@@ -309,12 +316,23 @@ class ParameterProvenance:
                             DestinationTrust.DENY,
                             f"{group[0]!r} came from {seen}, not an authorized source",
                         )
-                if any(s.structured for s in candidates):
+                trusted_structured = [
+                    s for s in candidates
+                    if s.structured and s.object_trusted(goal_named_objects)
+                ]
+                if trusted_structured:
                     best = next(iter(sorted(
-                        (s for s in candidates if s.structured),
+                        trusted_structured,
                         key=lambda s: (not s.goal_named, s.tool))))
                     reasons.append(f"{group[0]!r} structured via {best.describe()}")
                     continue
+                if any(s.structured for s in candidates):
+                    # Structured but foreign containing object — not slot-ALLOW.
+                    return (
+                        DestinationTrust.DENY,
+                        f"{group[0]!r} structured field of an untrusted "
+                        "containing object",
+                    )
                 if any(s.object_trusted(goal_named_objects) for s in candidates):
                     worst = DestinationTrust.STEP_UP
                     reasons.append(
@@ -327,3 +345,43 @@ class ParameterProvenance:
                     f"{group[0]!r} only in free text of an untrusted containing object",
                 )
         return worst, "; ".join(reasons) if reasons else "destination grounded"
+
+    def trusted_candidates(
+        self,
+        *,
+        structured_only: bool = True,
+        goal_named_objects: set[str] | None = None,
+        authorized_tools: set[str] | None = None,
+        limit: int = 8,
+    ) -> list[str]:
+        """Values an agent may retry with after a destination denial.
+
+        ARGUS's utility win is largely this: when a call is blocked, hand back
+        the trusted candidates from the provenance graph so the retry uses a
+        grounded recipient instead of inventing another. The retry still goes
+        through the full authorize path — nothing is bypassed.
+        """
+        out: list[str] = []
+        seen: set[str] = set()
+        with self._lock:
+            items = sorted(self._origins.items(), key=lambda kv: (-len(kv[0]), kv[0]))
+            for value, sources in items:
+                if value in seen:
+                    continue
+                candidates = sources
+                if authorized_tools is not None:
+                    candidates = {s for s in sources if s.tool in authorized_tools}
+                if not candidates:
+                    continue
+                if structured_only and not any(s.structured for s in candidates):
+                    continue
+                if goal_named_objects is not None and not any(
+                    s.object_trusted(goal_named_objects) or s.structured
+                    for s in candidates
+                ):
+                    continue
+                seen.add(value)
+                out.append(value)
+                if len(out) >= limit:
+                    break
+        return out

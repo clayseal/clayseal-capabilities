@@ -6,8 +6,11 @@ from decimal import Decimal
 
 from agentauth.capabilities.budget import BudgetType, CapabilityBudget
 from agentauth.capabilities.mandate import Mandate
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-from agentauth.capabilities.value_budget import session_value_budget_from_mandate
+from agentauth.capabilities.value_budget import (
+    SessionValueBudget,
+    ValueBudgetConfig,
+    session_value_budget_from_mandate,
+)
 
 _TRACKED = {
     "issue_payroll_bonus": ("bonus_amount", "usd_payout"),
@@ -288,3 +291,87 @@ def test_value_helper_ignores_non_usd_budgets():
     b = session_value_budget_from_mandate(mandate, tracked=_TRACKED)
     assert b.config.ceilings == {"usd_payout": "1000.00"}  # only the USD budget
     assert "calls" not in b.config.ceilings
+
+
+# --------------------------------------------------------------------------- #
+# Once-per-object: a predicate the value ceiling structurally cannot express
+# --------------------------------------------------------------------------- #
+def _identity_budget(ceiling="5000"):
+    from agentauth.capabilities.value_budget import EffectSpec
+
+    return SessionValueBudget(config=ValueBudgetConfig(
+        tracked={"pay_invoice": EffectSpec(
+            budget_id="usd", amount_arg="amount", identity_args=("invoice",))},
+        ceilings={"usd": Decimal(ceiling)}))
+
+
+def _pay(budget, invoice, amount="1200"):
+    res = budget.reserve("pay_invoice", {"invoice": invoice, "amount": amount})
+    if res.allowed:
+        res.commit()
+    return res
+
+
+def test_the_same_object_cannot_receive_the_effect_twice():
+    """`retry-storm-double-effect`: three correct answers to the wrong question.
+
+    Paying INV-1 twice at 1200 against a ceiling with room for 3600 is under the
+    ceiling on every call, and the invoice is still paid twice. The ledger was
+    asked "is the total under the limit" and answered correctly. The scenario's
+    own goal says "Pay each invoice once under ceiling", and a mandate had no
+    way to write the first half of that sentence down.
+    """
+    budget = _identity_budget()
+    assert _pay(budget, "INV-1").allowed
+    second = _pay(budget, "INV-1")
+    assert not second.allowed
+    assert second.reason == "value_budget_duplicate_effect"
+
+
+def test_a_different_object_is_unaffected():
+    budget = _identity_budget()
+    assert _pay(budget, "INV-1").allowed
+    assert _pay(budget, "INV-2").allowed
+    assert _pay(budget, "INV-3").allowed
+
+
+def test_the_ceiling_still_applies_alongside_identity():
+    """Both predicates hold at once; neither replaces the other."""
+    budget = _identity_budget(ceiling="2000")
+    assert _pay(budget, "INV-1").allowed
+    over = _pay(budget, "INV-2")
+    assert not over.allowed
+    assert over.reason == "value_budget_exceeded"
+
+
+def test_a_released_reservation_frees_its_object():
+    """The failure that would hide, because it is safe.
+
+    Without this a downstream refusal pins the identity for the whole session,
+    and the retry of a legitimate action is refused as a duplicate.
+    """
+    budget = _identity_budget()
+    res = budget.reserve("pay_invoice", {"invoice": "INV-1", "amount": "1200"})
+    assert res.allowed
+    res.release()
+    assert _pay(budget, "INV-1").allowed
+
+
+def test_an_omitted_identity_field_does_not_mint_a_fresh_object():
+    """Two calls differing only in which identity field is absent must not
+    collapse to one key, or an attacker omits the field to get a new identity."""
+    budget = _identity_budget()
+    first = budget.reserve("pay_invoice", {"amount": "1200"})
+    assert first.allowed
+    first.commit()
+    second = budget.reserve("pay_invoice", {"amount": "1200"})
+    assert not second.allowed
+
+
+def test_a_mandate_without_identity_args_behaves_exactly_as_before():
+    """Backward compatible: the legacy tuple form is unchanged."""
+    budget = SessionValueBudget(config=ValueBudgetConfig(
+        tracked={"pay_invoice": ("amount", "usd")},
+        ceilings={"usd": Decimal(5000)}))
+    assert _pay(budget, "INV-1").allowed
+    assert _pay(budget, "INV-1").allowed          # duplicates allowed, as before

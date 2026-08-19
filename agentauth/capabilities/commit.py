@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import heapq
 import os
 import threading
 from collections.abc import Iterable
@@ -8,8 +9,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Protocol, runtime_checkable
 from uuid import uuid4
 
-from agentauth.core.runtime import ExecutionContext
 from agentauth.core.hash_util import hash_canonical_json
+from agentauth.core.runtime import ExecutionContext
 from agentauth.core.signing import SigningKey, signature_key_id_matches, verify
 
 COMMIT_TOKEN_SCHEMA = "agent-receipts.commit-token.v1"
@@ -67,8 +68,12 @@ class InMemoryUsedTokenStore:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._seen: dict[str, datetime] = {}
+        #: (expires_at, token_id) min-heap so eviction touches only expired
+        #: entries instead of walking the whole ledger on every call.
+        self._expiry: list[tuple[datetime, str]] = []
 
     def mark_used(self, token_id: str, expires_at: datetime) -> bool:
+        token_id = str(token_id)
         now = _utc_now()
         with self._lock:
             self._evict(now)
@@ -76,12 +81,32 @@ class InMemoryUsedTokenStore:
             if existing is not None and existing > now:
                 return False
             self._seen[token_id] = expires_at
+            heapq.heappush(self._expiry, (expires_at, token_id))
             return True
 
     def _evict(self, now: datetime) -> None:
-        expired = [tid for tid, exp in self._seen.items() if exp <= now]
-        for tid in expired:
-            del self._seen[tid]
+        """Drop only what has actually expired, not the whole ledger.
+
+        The previous implementation rebuilt a list over EVERY entry on every
+        call, so marking N tokens cost O(N^2) and the per-call price grew with
+        the live set: measured 32.5us at token 2,000 and 402.8us at token 20,000,
+        a 12.4x rise on traffic that should be flat. A gateway under load pays
+        that quadratic, and an attacker can inflate the live set on purpose by
+        issuing tokens, which turns replay defense into the slowest thing in the
+        request path. The confidentiality accumulator has the identical defect
+        and is currently red in `test_flow_invariants.py`; this is the same bug
+        wearing a different hat.
+
+        A heap keyed on expiry touches only the entries that have genuinely
+        expired, so eviction is amortised O(log N) and idle traffic costs
+        nothing. The staleness guard matters: a token re-marked after its first
+        entry expired leaves the old heap entry behind, and popping it must not
+        delete the live record.
+        """
+        while self._expiry and self._expiry[0][0] <= now:
+            expires_at, token_id = heapq.heappop(self._expiry)
+            if self._seen.get(token_id) == expires_at:
+                del self._seen[token_id]
 
 
 def _utc_now() -> datetime:
@@ -119,6 +144,34 @@ class CommitToken:
     tool_name: str
     resource_ref: str | None
     arguments_hash: str
+
+    def __post_init__(self) -> None:
+        """Reject a token that cannot be serialized, at construction.
+
+        ``to_dict`` coerces the two integer fields with ``int()``, and it is the
+        FIRST thing ``verify_commit_token`` calls — before the signature check.
+        So a ``CommitToken`` holding ``authority_version='x'`` does not fail
+        verification, it raises ``ValueError`` from inside the verifier, ahead of
+        every check that would have rejected it.
+
+        No shipped path produces such a token: ``from_dict`` coerces with
+        ``int()`` and ``issue_commit_token`` reads integers off the context. But
+        the dataclass permitted the state, and a type that permits a state whose
+        only expression is an exception deep inside the verifier is the wrong
+        shape. Validate here and the invalid token simply cannot exist, which is
+        strictly better than every consumer remembering to guard.
+
+        Found by ``benchmarks/stress_commit.py``, which mutates every field of a
+        valid token and asserts that exactly one input verifies. It found no
+        mutation that verified — the binding is sound — and 37 that raised.
+        """
+        for name in ("authority_version", "permit_epoch"):
+            raw = getattr(self, name)
+            try:
+                int(raw)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError(
+                    f"commit token {name} must be an integer, got {raw!r}") from exc
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -161,10 +214,59 @@ class SignedCommitToken:
 
     @classmethod
     def from_dict(cls, raw: dict[str, Any]) -> SignedCommitToken:
+        """Construct from TRUSTED data. Raises on anything malformed.
+
+        For bytes off the wire use :func:`parse_signed_commit_token`, which
+        returns a verdict instead of an exception.
+        """
         return cls(
             token=CommitToken.from_dict(dict(raw["token"])),
             signature=dict(raw["signature"]),
         )
+
+
+def parse_signed_commit_token(
+    raw: Any,
+) -> tuple[SignedCommitToken | None, str | None]:
+    """Total parse of an untrusted, wire-format commit token.
+
+    ``SignedCommitToken.from_dict`` is a *constructor for trusted data*: it
+    indexes required keys and coerces with ``int()``/``str()``, so hostile JSON
+    produces a raw exception rather than a decision. Measured across six
+    single-field mutations of an otherwise well-formed token, it raises
+    ``ValueError``, ``TypeError`` and ``KeyError`` — three different types, none
+    of them a verdict:
+
+        authority_version='PWNED'  -> ValueError
+        authority_version=[1]      -> TypeError
+        permit_epoch='NaN'         -> ValueError
+        token_id absent            -> KeyError
+        token not a mapping        -> ValueError
+        signature absent           -> KeyError
+
+    That is not a fail-open — no malformed token verifies, and the mutation
+    stress in ``benchmarks/stress_commit.py`` confirms every field of the token
+    and of the context is genuinely bound. It is worse-shaped than that: an
+    unhandled exception at the exact boundary where attacker-controlled bytes
+    enter the system. Every caller must wrap it, and the first caller that wraps
+    it in a broad ``except Exception`` turns a parse failure into whatever the
+    surrounding code does next.
+
+    So the boundary gets its own total entry point. This function returns
+    ``(token, None)`` or ``(None, reason)`` and raises nothing, for any input at
+    all — including ``None``, a list, or a string. ``from_dict`` keeps its
+    existing behaviour and is documented as the trusted-data constructor.
+    """
+    if not isinstance(raw, dict):
+        return None, f"commit token payload must be an object, got {type(raw).__name__}"
+    try:
+        return SignedCommitToken.from_dict(raw), None
+    except KeyError as exc:
+        return None, f"commit token missing required field {exc.args[0]!r}"
+    except (TypeError, ValueError) as exc:
+        return None, f"commit token field is malformed: {exc}"
+    except Exception as exc:  # noqa: BLE001 - the boundary must be total
+        return None, f"commit token could not be parsed: {type(exc).__name__}"
 
 
 def issue_commit_token(
@@ -175,6 +277,30 @@ def issue_commit_token(
 ) -> SignedCommitToken:
     if ttl_seconds <= 0:
         raise ValueError("ttl_seconds must be > 0")
+    # The context is caller-supplied and unsigned, so it is untrusted input in
+    # exactly the way the signed token is not. ``ActionDescriptor`` performs no
+    # validation and lives in the sibling core package, so the guard belongs
+    # here: a non-string ``action_name`` raised ``AttributeError`` from
+    # ``.rsplit`` — nine variants, found by benchmarks/stress_commit.py.
+    #
+    # RAISES, and does not return a verdict. The verifier's matching guard
+    # returns ``(False, reason)`` because verification is total by contract: it
+    # answers a question about attacker-supplied bytes and must never throw.
+    # Minting is the opposite — there is no "no" to return, only a token or
+    # nothing — and this guard was copy-pasted from the verifier, so it returned
+    # a ``tuple`` from a function annotated ``-> SignedCommitToken``. The caller
+    # then failed with an ``AttributeError`` one frame further out, which is the
+    # exact failure shape the guard exists to prevent. ``ValueError`` matches the
+    # ``ttl_seconds`` guard directly above it.
+    if not isinstance(ctx.action.action_name, str):
+        # ValueError, not TypeError, and deliberately: this mirrors the
+        # `ttl_seconds` guard directly above, so a caller wrapping the mint call
+        # catches one exception type for "the context you handed me is not
+        # mintable" rather than two.
+        raise ValueError(  # noqa: TRY004
+            "execution context action_name must be a string, got "
+            f"{type(ctx.action.action_name).__name__}"
+        )
     tool_name = ctx.action.action_name.rsplit("/", 1)[-1]
     now = _utc_now()
     token = CommitToken(
@@ -217,7 +343,9 @@ def verify_commit_token(
     :class:`InMemoryUsedTokenStore` for a single instance, or a shared /
     distributed :class:`UsedTokenStore` for a multi-instance AWS deployment.
     The store is consulted only after every other check passes, so a rejected
-    token never burns a ``token_id`` slot.
+    token never burns a ``token_id`` slot. If the store raises — a partition, a
+    timeout — verification DENIES with a reason rather than propagating the
+    exception; see the handler for why that is not configurable.
     """
     at = at or _utc_now()
     token_dict = signed.token.to_dict()
@@ -254,6 +382,15 @@ def verify_commit_token(
     if expires_at <= at.astimezone(timezone.utc):
         return False, "commit token expired"
 
+    # The context is caller-supplied and unsigned, so it is untrusted input in
+    # exactly the way the signed token is not. ``ActionDescriptor`` performs no
+    # validation and lives in the sibling core package, so the guard belongs
+    # here: a non-string ``action_name`` raised ``AttributeError`` from
+    # ``.rsplit`` — nine variants, found by benchmarks/stress_commit.py — instead
+    # of returning a verdict. A verifier that crashes on a malformed context is a
+    # denial of service, and behind a broad ``except`` it is an allow.
+    if not isinstance(ctx.action.action_name, str):
+        return False, "execution context action_name must be a string"
     tool_name = ctx.action.action_name.rsplit("/", 1)[-1]
     if signed.token.tool_name != tool_name:
         return False, "commit token tool_name mismatch"
@@ -288,9 +425,31 @@ def verify_commit_token(
                 "commit token replay store required in production "
                 "(configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store)",
             )
-    if used_token_store is not None and not used_token_store.mark_used(
-        signed.token.token_id, expires_at
-    ):
-        return False, "commit token already used (replay)"
+    if used_token_store is not None:
+        try:
+            first_use = used_token_store.mark_used(signed.token.token_id, expires_at)
+        except Exception as exc:  # noqa: BLE001 - see below
+            # A replay store that cannot be reached must DENY, and it must deny
+            # by returning a verdict rather than by propagating the backend's
+            # exception.
+            #
+            # `RedisUsedTokenStore.mark_used` is a bare `client.set(...)` and
+            # `DynamoDBUsedTokenStore` re-raises any non-conditional
+            # `ClientError`, so before this a partition sent `ConnectionError` /
+            # `TimeoutError` straight out of the verifier. That is technically
+            # fail-closed, and it is still the wrong shape for two reasons: it
+            # forces every integrator to implement the deny themselves, and the
+            # first one who wraps this call in a broad `except` converts a
+            # partition into whatever their fallback does. Single-use is the one
+            # property with no second line of defence — nothing above the token
+            # re-checks it — so the decision belongs here, once.
+            #
+            # Deliberately NOT offered as a fail-open option. A caller who wants
+            # to trade replay exposure for availability already has a supported
+            # way to say so: pass no store, and accept the documented exposure
+            # explicitly rather than inheriting it from an outage.
+            return False, f"commit token replay store unavailable: {type(exc).__name__}"
+        if not first_use:
+            return False, "commit token already used (replay)"
 
     return True, None

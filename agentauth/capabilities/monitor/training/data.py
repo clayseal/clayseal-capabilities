@@ -9,9 +9,10 @@ the sealed goal and the actions so far.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from agentauth.capabilities.monitor.action import (
     BOS,
@@ -99,8 +100,7 @@ def load_corpus(path: str | Path) -> list[Trajectory]:
 
 def dump_corpus(trajectories: Iterable[Trajectory], path: str | Path) -> None:
     with Path(path).open("w") as handle:
-        for traj in trajectories:
-            handle.write(json.dumps(trajectory_to_dict(traj)) + "\n")
+        handle.writelines(json.dumps(trajectory_to_dict(traj)) + "\n" for traj in trajectories)
 
 
 # --------------------------------------------------------------------------- #
@@ -122,7 +122,7 @@ class Vocab:
         return self.token_to_id[PAD]
 
     @classmethod
-    def build(cls, trajectories: list[Trajectory], *, min_count: int = 1) -> "Vocab":
+    def build(cls, trajectories: list[Trajectory], *, min_count: int = 1) -> Vocab:
         from collections import Counter
 
         counts: Counter[str] = Counter()
@@ -158,5 +158,5 @@ class Vocab:
         Path(path).write_text(json.dumps(self.token_to_id, indent=0))
 
     @classmethod
-    def load(cls, path: str | Path) -> "Vocab":
+    def load(cls, path: str | Path) -> Vocab:
         return cls(token_to_id=json.loads(Path(path).read_text()))

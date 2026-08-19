@@ -643,3 +643,196 @@ def test_reading_the_windows_does_not_destroy_them():
     first reports zero. This asserts the log is read without mutation."""
     signal = _windows([0.8499] * 6)
     assert signal.just_under == 6
+
+
+# --------------------------------------------------------------------------- #
+# Reserve/commit desync: the hold TTL against the ceiling
+# --------------------------------------------------------------------------- #
+def test_a_late_commit_past_a_voided_hold_is_recorded_as_a_breach():
+    """The escape: patience, not clock control.
+
+    Reserve the whole ceiling, wait out the reservation TTL, reserve it again
+    (the first hold has been voided, so the headroom is free), then commit both.
+    `commit_hold` books from the Hold and cannot re-check at the point it is
+    called, so this booked **200 against a ceiling of 100** and reported
+    nothing. Five minutes of waiting, and a session lasting longer than the
+    tool timeout is entirely ordinary.
+
+    Both amounts are still booked, because the effects landed and a ledger that
+    declines to record them under-counts — which this module's own docstring
+    calls "the failure that lets an attack through". What must not happen is
+    that it goes unnoticed.
+    """
+    ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
+    ceiling = Decimal("100")
+    first = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=0.0)
+    second = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=120.0)
+    assert first is not None and second is not None
+
+    ledger.commit_hold(first, now=121.0)
+    ledger.commit_hold(second, now=122.0)
+
+    assert ledger.spent("p", "usd", now=123.0) == Decimal("200")
+    breaches = ledger.late_breaches()
+    assert len(breaches) == 1, "the over-ceiling commit was absorbed silently"
+    assert breaches[0].amount == Decimal("100")
+    assert ledger.verify_totals()
+
+
+def test_the_breach_check_counts_outstanding_holds():
+    """Why the projection includes `_holds` and not just `spent`.
+
+    The first version of this check compared `spent + amount` against the
+    ceiling. At the moment the voided hold commits, nothing is spent yet and the
+    replacement reservation is still a HOLD, so 100 against a ceiling of 100
+    looked fine and the breach was missed. The outstanding holds are precisely
+    the reservations granted using the headroom the voided hold gave back.
+    """
+    ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
+    ceiling = Decimal("100")
+    voided = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=0.0)
+    ledger.reserve("p", "usd", Decimal("100"), ceiling, now=120.0)  # still held
+    ledger.commit_hold(voided, now=121.0)
+    assert ledger.late_breaches(), "outstanding holds were left out of the check"
+
+
+def test_a_slow_but_legitimate_commit_is_not_a_breach():
+    """The false-positive side. An action that simply took longer than the TTL,
+    with no second reservation behind it, still fits and must not be flagged."""
+    ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
+    hold = ledger.reserve("p", "usd", Decimal("100"), Decimal("100"), now=0.0)
+    ledger.commit_hold(hold, now=500.0)
+    assert ledger.spent("p", "usd", now=501.0) == Decimal("100")
+    assert ledger.late_breaches() == []
+
+
+def test_committing_one_hold_twice_books_once():
+    ledger = PrincipalLedger()
+    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    ledger.commit_hold(hold, session="s")
+    ledger.commit_hold(hold, session="s")
+    assert ledger.spent("p", "usd") == Decimal("10")
+    assert ledger.verify_totals()
+
+
+# --------------------------------------------------------------------------- #
+# Delegation splitting: the axis the plan called unclosed by construction
+# --------------------------------------------------------------------------- #
+def _delegated(sub: str, chain: list[str] | None = None):
+    from agentauth.core.authority_binding import AuthorityBinding
+    return AuthorityBinding(subject_id=sub, authority_id="a",
+                            issuer="https://corp.example",
+                            delegation_chain=list(chain or []))
+
+
+def _chain_view(ledger, binding, ceiling=Decimal("100")):
+    from agentauth.capabilities.principal_ledger import (
+        PrincipalBudgetView, principal_chain, principal_key,
+    )
+    return PrincipalBudgetView(
+        ledger=ledger, principal=principal_key(binding),
+        chain=principal_chain(binding), ceilings={"usd": ceiling},
+        tracked={"payments.transfer": ("amount", "usd")},
+        session=binding.subject_id)
+
+
+def _chain_spend(view, amount, now):
+    allowed, _ = view.authorize("payments.transfer", {"amount": str(amount)},
+                                now=now)
+    if allowed:
+        view.commit("payments.transfer", {"amount": str(amount)}, now=now)
+    return allowed
+
+
+def test_a_parent_ceiling_bounds_everything_it_delegates_to():
+    """Measured at 600 against a ceiling of 100 before the chain was wired.
+
+    Each sub-agent has its own `sub`, so it had its own `principal_key` and its
+    own ceiling. A per-delegate ceiling is not a ceiling: anyone who can spawn
+    sub-agents mints headroom. The plan names this axis "unclosed by
+    construction, and where MCP deployments live".
+    """
+    from agentauth.capabilities.principal_ledger import principal_key
+
+    ledger = PrincipalLedger()
+    parent = _delegated("parent")
+    landed = 0
+    for i, binding in enumerate(
+            [parent] + [_delegated(f"sub-{n}", ["parent"]) for n in range(5)]):
+        if _chain_spend(_chain_view(ledger, binding), 100, float(i)):
+            landed += 100
+    assert landed == 100, f"delegation split the ceiling: {landed} landed"
+    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal("100")
+
+
+def test_a_delegate_may_spend_the_parents_remaining_headroom():
+    """The false-block direction. Binding the aggregate must not stop a delegate
+    doing legitimate work inside what the parent has left."""
+    ledger = PrincipalLedger()
+    assert _chain_spend(_chain_view(ledger, _delegated("parent")), 50, 0.0)
+    assert _chain_spend(_chain_view(ledger, _delegated("sub-0", ["parent"])), 30, 1.0)
+    assert _chain_spend(_chain_view(ledger, _delegated("sub-1", ["parent"])), 15, 2.0)
+    # 95 spent; 20 more would cross.
+    assert not _chain_spend(_chain_view(ledger, _delegated("sub-2", ["parent"])), 20, 3.0)
+
+
+def test_a_refused_delegate_action_does_not_consume_ancestor_headroom():
+    """All-or-nothing reservation.
+
+    A partial group would leave the parent's headroom held for a delegate action
+    that never happened, which is the denial of service the hold TTL exists to
+    prevent arriving by another route.
+    """
+    from agentauth.capabilities.principal_ledger import principal_key
+
+    ledger = PrincipalLedger()
+    parent = _delegated("parent")
+    assert _chain_spend(_chain_view(ledger, parent), 100, 0.0)
+    # Now every delegate is refused; none of them may hold parent headroom.
+    for n in range(3):
+        assert not _chain_spend(_chain_view(ledger, _delegated(f"sub-{n}", ["parent"])),
+                          10, float(n + 1))
+    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal("100")
+    assert ledger.verify_totals()
+
+
+def test_an_undelegated_principal_is_unchanged():
+    """The chain defaults to empty, so a plain principal behaves as before."""
+    ledger = PrincipalLedger()
+    view = _chain_view(ledger, _delegated("solo"))
+    assert view.chain == ()
+    assert _chain_spend(view, 60, 0.0)
+    assert _chain_spend(view, 40, 1.0)
+    assert not _chain_spend(view, 1, 2.0)
+
+
+def test_the_chain_is_issuer_qualified():
+    """An unqualified chain entry would collide across issuers exactly as a bare
+    `sub` does, which is the defect `principal_key` exists to avoid."""
+    from agentauth.capabilities.principal_ledger import principal_chain
+    from agentauth.core.authority_binding import AuthorityBinding
+
+    good = AuthorityBinding(subject_id="s", authority_id="a",
+                            issuer="https://good.example",
+                            delegation_chain=["parent"])
+    evil = AuthorityBinding(subject_id="s", authority_id="a",
+                            issuer="https://evil.example",
+                            delegation_chain=["parent"])
+    assert principal_chain(good) != principal_chain(evil)
+
+
+def test_claims_cannot_assert_their_own_delegation_chain():
+    """The chain must come from verified delegation, never from a claims dict.
+
+    `delegation_chain` is in `AUTHORITY_FIELDS`, so an adapter strips it. Without
+    that, a token could name any parent it liked — and since a delegate's spend
+    now books against its ancestors, an attacker could charge an unrelated
+    principal's ceiling to exhaust it.
+    """
+    from agentauth.capabilities.identity_adapters import oidc
+    from agentauth.capabilities.principal_ledger import principal_chain
+
+    forged = oidc.provider.to_binding(
+        {"subject_id": "attacker", "iss": "https://corp.example",
+         "delegation_chain": ["victim"]})
+    assert principal_chain(forged) == ()

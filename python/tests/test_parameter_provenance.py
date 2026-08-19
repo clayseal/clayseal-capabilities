@@ -109,3 +109,67 @@ def test_unauthorized_source_names_what_it_saw():
     p.record_observation("get_webpage", "", structured_fields={"to": "x@corp.example"})
     ok, reason = p.is_grounded("x@corp.example", authorized_tools={"read_record"})
     assert not ok and "get_webpage" in reason
+
+
+def test_trusted_candidates_are_structured_values_only():
+    """Retry hints must not surface free-text tokens (injection channel)."""
+    p = _prov()
+    p.record_observation("read_payees", "also mentions evil@attacker.test in prose",
+                         structured_fields={"to": "alice@corp.example"},
+                         goal_named=True)
+    cands = p.trusted_candidates(structured_only=True)
+    assert "alice@corp.example" in cands
+    assert "evil@attacker.test" not in cands
+
+
+# --------------------------------------------------------------------------- #
+# DestinationTrust product matrix
+# --------------------------------------------------------------------------- #
+def test_check_destination_trusted_structured_allows():
+    from agentauth.capabilities.parameter_provenance import DestinationTrust
+
+    p = _prov()
+    p.record_observation(
+        "read_payees", "",
+        structured_fields={"to": "alice@corp.example"},
+        goal_named=True, containing_object="payees.json")
+    trust, reason = p.check_destination(
+        "alice@corp.example", goal_named_objects={"payees.json"})
+    assert trust is DestinationTrust.ALLOW
+    assert "structured" in reason
+
+
+def test_check_destination_free_text_goal_named_steps_up():
+    from agentauth.capabilities.parameter_provenance import DestinationTrust
+
+    p = _prov()
+    p.record_observation(
+        "read_bill", "Please pay GB29NWBK60161331926819",
+        goal_named=True, containing_object="invoice.txt")
+    trust, reason = p.check_destination(
+        "GB29NWBK60161331926819", goal_named_objects={"invoice.txt"})
+    assert trust is DestinationTrust.STEP_UP
+    assert "free text" in reason
+
+
+def test_check_destination_foreign_structured_denies():
+    """Structured on a foreign page is not slot-ALLOW (correct-tool, wrong source)."""
+    from agentauth.capabilities.parameter_provenance import DestinationTrust
+
+    p = _prov()
+    p.record_observation(
+        "get_webpage", "",
+        structured_fields={"to": "collector@evil.test"},
+        containing_object="https://evil.test/page")
+    trust, reason = p.check_destination(
+        "collector@evil.test", goal_named_objects={"payees.json"})
+    assert trust is DestinationTrust.DENY
+    assert "untrusted" in reason
+
+
+def test_check_destination_ungrounded_denies():
+    from agentauth.capabilities.parameter_provenance import DestinationTrust
+
+    trust, reason = _prov().check_destination("invented@nowhere.test")
+    assert trust is DestinationTrust.DENY
+    assert "no observation" in reason

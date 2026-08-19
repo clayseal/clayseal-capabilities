@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import threading
 from datetime import datetime, timezone
-from typing import Any
 from urllib.parse import urlparse
 
 from agentauth.capabilities.commit import InMemoryUsedTokenStore, UsedTokenStore
@@ -140,7 +139,7 @@ def load_used_token_store_from_env() -> UsedTokenStore | None:
 
 # Process-wide default for gateways that do not inject a store explicitly.
 _UNSET = object()
-_DEFAULT_STORE: UsedTokenStore | None | object = _UNSET
+_DEFAULT_STORE: UsedTokenStore | object | None = _UNSET
 _DEFAULT_LOCK = threading.Lock()
 
 

@@ -61,12 +61,36 @@ def test_exhausted_budget_denies_by_default():
 
 
 def test_exhausted_budget_can_be_configured_to_allow():
-    """The other side of the trade, which must never be the default."""
-    broker = _broker(audit_budget=1, on_audit_exhausted="allow")
+    """The other side of the trade, which must never be the default.
+
+    Now requires `allow_on_exhaust_acknowledged=True` as well as the policy
+    string. Two settings rather than one because this is a fail-open on the
+    authorization path, in the same class as the planner's old allow-all, and a
+    single string is exactly the kind of thing a config template carries in by
+    accident. The decision is also stamped `layer="audit-exhausted"` so it can
+    never pool into an ordinary allow downstream.
+    """
+    broker = _broker(audit_budget=1, on_audit_exhausted="allow",
+                     allow_on_exhaust_acknowledged=True)
     assert broker.authorize(_action(0)).outcome is Outcome.STEP_UP
     decision = broker.authorize(_action(1))
     assert decision.outcome is Outcome.ALLOW
+    assert decision.layer == "audit-exhausted"
     assert any("audit budget exhausted" in r for r in decision.reasons)
+
+
+def test_the_allow_policy_alone_is_not_enough():
+    """Setting the string without acknowledging it gets the safe branch.
+
+    This is the property the acknowledgement flag exists for: an allow-on-exhaust
+    policy inherited from a config template must not silently disable the
+    control.
+    """
+    broker = _broker(audit_budget=1, on_audit_exhausted="allow")
+    assert broker.authorize(_action(0)).outcome is Outcome.STEP_UP
+    decision = broker.authorize(_action(1))
+    assert decision.outcome is Outcome.DENY
+    assert any("not acknowledged" in r for r in decision.reasons)
 
 
 def test_budget_does_not_charge_allows_or_denies():

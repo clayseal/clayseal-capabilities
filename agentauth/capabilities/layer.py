@@ -4,8 +4,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from agentauth.core.identity_protocol import CapabilityLayer
+
 from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
 from agentauth.capabilities.task_scope import compile_task_scope
+
+# `CapabilityLayer` is the L3-facing Protocol and was referenced by three
+# annotations here without ever being imported. `from __future__ import
+# annotations` made every annotation a string, so the module imported fine and
+# the name simply did not resolve — `get_type_hints`, any type checker and any
+# reader following the annotation all hit a NameError instead.
 
 
 @dataclass

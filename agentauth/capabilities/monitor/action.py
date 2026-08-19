@@ -69,7 +69,7 @@ class Trajectory:
     actions: list[Action] = field(default_factory=list)
     context: list[ContextItem] = field(default_factory=list)
 
-    def prefix(self, upto: int) -> "Trajectory":
+    def prefix(self, upto: int) -> Trajectory:
         """Trajectory truncated to the first ``upto`` actions (online scoring)."""
         return Trajectory(goal=self.goal, actions=self.actions[:upto], context=self.context)
 
@@ -151,10 +151,10 @@ def egress_hint_from_command(command: str, head: str) -> str:
 
     if head not in _CLOUD_NET_HEADS or not command:
         return ""
-    m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", command, re.I)
+    m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", command, re.IGNORECASE)
     if m and head in {"aws", "gsutil", "gcloud", "rclone", "az"}:
         return f"net:{m.group('scheme').lower()}:{m.group('bucket')}"
-    m = re.search(r"((?:s3|gs|azure|az|https?|ftp)://[^\s'\"\\]+)", command, re.I)
+    m = re.search(r"((?:s3|gs|azure|az|https?|ftp)://[^\s'\"\\]+)", command, re.IGNORECASE)
     if not m:
         return ""
     uri = m.group(1)

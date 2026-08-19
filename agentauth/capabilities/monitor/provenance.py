@@ -74,7 +74,7 @@ class TaintTracker:
             self._items[item.item_id] = item
 
     @classmethod
-    def from_trajectory(cls, traj: Trajectory) -> "TaintTracker":
+    def from_trajectory(cls, traj: Trajectory) -> TaintTracker:
         return cls(context=traj.context)
 
     def observe(self, item: ContextItem) -> None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from agentauth.core.hash_util import sha256_hex
+
 from agentauth.capabilities.scoping.chunkers import chunk_file
 from agentauth.capabilities.scoping.imports_graph import extract_import_edges, is_build_manifest
 from agentauth.capabilities.scoping.models import RepoChunkIndex
@@ -40,7 +41,7 @@ def _repo_content_sha(repo_root: Path, files: list[str]) -> str:
     digest = sha256_hex(b"")
     for rel in sorted(files):
         data = (repo_root / rel).read_bytes()
-        digest = sha256_hex(f"{rel}:{sha256_hex(data)}:{digest}".encode("utf-8"))
+        digest = sha256_hex(f"{rel}:{sha256_hex(data)}:{digest}".encode())
     return digest
 
 

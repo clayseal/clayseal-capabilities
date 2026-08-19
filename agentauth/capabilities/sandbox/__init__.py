@@ -74,21 +74,44 @@ from agentauth.capabilities.sandbox.verdicts import (
 )
 
 __all__ = [
-    # composition
-    "SandboxRunSpec", "SandboxOutcome", "run_sandboxed",
-    "SandboxBackend", "IVisorBackend", "default_sandbox_backend",
-    # policy lowering
-    "lower_to_ivisor", "LoweredPolicy", "LoweringReport", "LoweringError",
-    "IVisorConfig", "validate_allow_entry", "AllowEntryError",
-    # workspace staging
-    "build_staging_plan", "stage_workspace", "workspace_delta",
-    "collect_writeback", "StagingPlan", "StagedWorkspace", "StagingError",
-    # execution and evidence
-    "run_ivisor", "IVisorResult", "ExitKind", "SandboxUnsupported",
-    "PolicyEvent", "Verdict", "parse_policy_line",
-    "actions_from_events", "extend_trajectory",
-    "sandboxing_context", "attach_sandboxing", "log_sandbox_run",
-    "ivisor_binary_identity",
+    "AllowEntryError",
+    "ExitKind",
+    "IVisorBackend",
+    "IVisorConfig",
     # legacy launch-time seam
-    "IVisorLaunch", "launch_from_envelope",
+    "IVisorLaunch",
+    "IVisorResult",
+    "LoweredPolicy",
+    "LoweringError",
+    "LoweringReport",
+    "PolicyEvent",
+    "SandboxBackend",
+    "SandboxOutcome",
+    # composition
+    "SandboxRunSpec",
+    "SandboxUnsupported",
+    "StagedWorkspace",
+    "StagingError",
+    "StagingPlan",
+    "Verdict",
+    "actions_from_events",
+    "attach_sandboxing",
+    # workspace staging
+    "build_staging_plan",
+    "collect_writeback",
+    "default_sandbox_backend",
+    "extend_trajectory",
+    "ivisor_binary_identity",
+    "launch_from_envelope",
+    "log_sandbox_run",
+    # policy lowering
+    "lower_to_ivisor",
+    "parse_policy_line",
+    # execution and evidence
+    "run_ivisor",
+    "run_sandboxed",
+    "sandboxing_context",
+    "stage_workspace",
+    "validate_allow_entry",
+    "workspace_delta",
 ]

@@ -293,7 +293,11 @@ def velocity_from_mandate(mandate: Mapping[str, Any],
         except (TypeError, ValueError):
             rejected[name] = "max or window_seconds is not a number"
             if strict:
-                raise ValueError(f"velocity: {name!r} {rejected[name]}")
+                # `from None`: the int()/float() failure is an implementation
+                # detail of parsing, and the message above already names the
+                # field and the problem. Chaining it buries that behind a
+                # traceback about a builtin.
+                raise ValueError(f"velocity: {name!r} {rejected[name]}") from None
             continue
         if max_actions < 1:
             rejected[name] = f"max must be at least 1, got {max_actions}"

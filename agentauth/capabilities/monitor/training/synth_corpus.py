@@ -18,8 +18,8 @@ be prompt-injected.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from agentauth.capabilities.monitor.action import Action, Trajectory
 from agentauth.capabilities.scoping.goal import GoalSpec
@@ -111,7 +111,10 @@ _BY_KIND = {w.kind: w for w in WORKFLOWS}
 
 def generate(n: int, *, seed: int = 0) -> list[Trajectory]:
     """Sample ``n`` benign trajectories spread across the workflow templates."""
-    rng = random.Random(seed)
+    # Draws synthetic TRAINING TRAJECTORIES, not key material, and is seeded on
+    # purpose so a corpus is reproducible — the opposite of what a cryptographic
+    # generator is for.
+    rng = random.Random(seed)  # noqa: S311
     out: list[Trajectory] = []
     for i in range(n):
         wf = WORKFLOWS[i % len(WORKFLOWS)]
@@ -163,7 +166,7 @@ def inject_escalation(traj: Trajectory, rng: random.Random) -> Trajectory:
     """Escalation: a destructive verb appended on an already-authorized tool."""
     tool = traj.actions[-1].tool if traj.actions else "tool"
     extra = Action(len(traj.actions), tool, f"mcp:tool:{tool}", "delete", args={"scope": "all"})
-    return Trajectory(goal=traj.goal, actions=traj.actions + [extra], context=traj.context)
+    return Trajectory(goal=traj.goal, actions=[*traj.actions, extra], context=traj.context)
 
 
 def inject_delegated_trust(traj: Trajectory, rng: random.Random) -> Trajectory:
@@ -176,8 +179,8 @@ def inject_delegated_trust(traj: Trajectory, rng: random.Random) -> Trajectory:
                           introduced_at_step=step, summary="delegated result")
     action = Action(step, "update_auth_policy", "mcp:tool:update_auth_policy", "write",
                     args={"role": "admin", "grant": "all"}, derived_from=("sidekick-summary",))
-    return Trajectory(goal=traj.goal, actions=traj.actions + [action],
-                      context=traj.context + [summary])
+    return Trajectory(goal=traj.goal, actions=[*traj.actions, action],
+                      context=[*traj.context, summary])
 
 
 def inject_slow_drift(traj: Trajectory, rng: random.Random) -> Trajectory:

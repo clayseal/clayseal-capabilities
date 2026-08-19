@@ -83,11 +83,22 @@ pip install "agentauth-capabilities[redis]"            # replay defense store
 ## Quickstart
 
 ```python
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+from agentauth.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    issue_commit_token,
+    verify_commit_token,
+)
 from agentauth.capabilities.identity_adapters import get_identity_provider
 from agentauth.capabilities.integration import execution_context_from_session
 from agentauth.core.signing import generate_keypair
 
+# Claims YOUR IdP path has already verified (signature, audience, expiry).
+verified_claims = {
+    "sub": "svc-payroll-agent",
+    "iss": "https://issuer.example.com",
+    "aud": "payroll-api",
+    "scope": "payroll:write",
+}
 session = get_identity_provider("oidc").build_session(
     verified_claims,
     evidence_verified=True,
@@ -101,9 +112,24 @@ ctx = execution_context_from_session(
 )
 
 key = generate_keypair()
-token = issue_commit_token(ctx, key=key, ttl_seconds=300)
-assert verify_commit_token(token, key=key.public_key()).valid
+signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
+
+# Verification is total: it returns (ok, reason) and never raises, because the
+# token crosses a trust boundary. It re-derives the binding from `ctx`, so a
+# mutated tool argument invalidates the token rather than passing.
+ok, reason = verify_commit_token(
+    signed,
+    ctx=ctx,
+    trusted_minting_keys={key.public_key_hex},  # pin the minter; REQUIRED in production
+    used_token_store=InMemoryUsedTokenStore(),  # single-use; use a shared store on >1 instance
+)
+assert ok, reason
 ```
+
+In production (`AGENTAUTH_ENV=production`) both of those arguments are mandatory:
+verification fails closed with a reason if the minting key is unpinned or no
+replay store is configured. See
+[Security practices](docs/DEV_GUIDE.md#security-practices).
 
 ## Privacy and Data Handling
 

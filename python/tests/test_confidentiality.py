@@ -269,12 +269,22 @@ def test_chunks_to_a_declassified_sink_are_allowed():
 
 
 def test_the_accumulated_history_is_bounded():
-    """A long session must not grow without limit inside the authorization path."""
-    tracker = FlowTracker(max_emitted_chars=256)
+    """A long session must not grow without limit inside the authorization path.
+
+    Bounded in WRITES, not only in characters. Trimming a concatenation by
+    characters kept the buffer finite and let the search space grow with the
+    session anyway, because 65,536 characters of ordinary text contain any short
+    value as a subsequence. The window is what the scan is handed.
+    """
+    tracker = FlowTracker(max_blocks=8)
     for i in range(200):
         tracker.check(tool="send_mail", verb="send", resource="mail:x",
                       args={"body": f"ordinary message number {i}"}, policy=POLICY)
-    assert all(len(v) <= 256 for v in tracker._emitted.values())
+    assert all(len(v) <= 8 for v in tracker._emitted.values())
+    assert len(tracker._emitted_pooled) <= 8
+    assert all(len(v) <= 8 for v in tracker._blocks.values())
+    stream = tracker._stream(tracker._emitted["mail:x"], "")
+    assert len(stream) < 8 * 64
 
 
 def test_a_large_payload_leaks_a_bounded_number_of_characters():

@@ -24,8 +24,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from agentauth.capabilities.identity_adapters.oidc_discovery import VerifyingOidcProvider
 from agentauth.core.authority_binding import AuthorityBinding
+
+from agentauth.capabilities.identity_adapters.oidc_discovery import VerifyingOidcProvider
 
 AGENT_FACET_VALUES = {"11", "13"}  # 11 = AgentIdentity, 13 = agent user account
 

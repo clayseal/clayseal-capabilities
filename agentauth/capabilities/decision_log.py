@@ -76,11 +76,36 @@ class DecisionRecord:
         return {**self.body(), "receipt_hash": self.receipt_hash}
 
 
+#: How many records one session keeps in memory before the oldest are dropped.
+#:
+#: A live session is unbounded — a coding agent runs for hours — and every
+#: decision appended a record that was never released, so the log grew with the
+#: session and was lost whole on exit. Two failures in one: a memory leak in a
+#: long run, and no evidence at all unless the integrator wired a sink.
+#:
+#: The bound only affects what is held in MEMORY. `retained` records are still
+#: enough to verify the recent chain, and `head_hash` still covers everything
+#: ever appended, so an evicted record is not erased from the chain's history —
+#: only from this process's copy of it. Durable retention is the sink's job.
+DEFAULT_MAX_RECORDS = 10_000
+
+
 @dataclass
 class DecisionLog:
-    """Append-only, hash-chained log of broker decisions for one session."""
+    """Append-only, hash-chained log of broker decisions for one session.
+
+    Bounded in memory and unbounded in the chain: eviction drops old records but
+    never rewrites `prev_hash`, so a verifier handed the retained window plus the
+    evicted prefix (from the sink) reconstructs the whole chain.
+    """
 
     session_id: str = field(default_factory=lambda: str(uuid4()))
+    #: ``None`` disables eviction entirely, for a caller that keeps the whole
+    #: session in memory on purpose (the benchmark harnesses do).
+    max_records: int | None = DEFAULT_MAX_RECORDS
+    #: Count of records evicted from memory. Non-zero means this log alone is no
+    #: longer a complete chain, which a verifier has to know rather than infer.
+    evicted: int = 0
     _records: list[DecisionRecord] = field(default_factory=list)
 
     @property
@@ -105,7 +130,10 @@ class DecisionLog:
         anomaly_score: float | None = None,
     ) -> DecisionRecord:
         record = DecisionRecord(
-            seq=len(self._records),
+            # Total appended, not the in-memory length: once eviction starts,
+            # `len(_records)` stops being the sequence number and every later
+            # record would reuse the same one.
+            seq=self.evicted + len(self._records),
             receipt_id=str(uuid4()),
             created_at=_utc_now_iso(),
             query_id=query_id,
@@ -117,17 +145,34 @@ class DecisionLog:
         )
         record = DecisionRecord(**{**record.__dict__, "receipt_hash": record.compute_hash()})
         self._records.append(record)
+        if self.max_records is not None and len(self._records) > self.max_records:
+            # Drop from the front. `seq` and `prev_hash` are untouched, so the
+            # retained window still chains internally and still chains to the
+            # evicted prefix wherever that prefix was durably kept.
+            overflow = len(self._records) - self.max_records
+            del self._records[:overflow]
+            self.evicted += overflow
         return record
 
     def records(self) -> list[dict[str, Any]]:
         return [r.to_dict() for r in self._records]
 
     def verify(self) -> tuple[bool, str | None]:
-        """Recompute the chain; detect any tamper, drop, or reorder."""
-        prev = self.genesis
+        """Recompute the retained chain; detect any tamper, drop, or reorder.
+
+        When records have been evicted this verifies the retained WINDOW: the
+        first retained record's `prev_hash` points at an evicted record this log
+        no longer holds, so the check starts from that record rather than from
+        genesis. Eviction is bookkeeping and tampering is not, and conflating
+        them would make a long session look compromised.
+        """
+        prev = self.genesis if self.evicted == 0 else None
         for i, record in enumerate(self._records):
-            if record.seq != i:
+            expected_seq = i + self.evicted
+            if record.seq != expected_seq:
                 return False, f"record {i} has seq {record.seq}"
+            if prev is None:
+                prev = record.prev_hash  # first retained record after eviction
             if record.prev_hash != prev:
                 return False, f"record {i} prev_hash breaks the chain"
             if record.receipt_hash != record.compute_hash():

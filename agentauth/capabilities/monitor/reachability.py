@@ -16,9 +16,8 @@ agent but cannot argue its trajectory back inside the corridor.
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
-
 from collections.abc import Callable
+from dataclasses import dataclass, field
 
 from agentauth.capabilities.monitor.action import Trajectory, action_token
 from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
@@ -51,7 +50,7 @@ class PathEnvelope:
     _counts: dict[str, int] = field(default_factory=dict)
     _fitted: bool = False
 
-    def fit(self, benign: list[Trajectory]) -> "PathEnvelope":
+    def fit(self, benign: list[Trajectory]) -> PathEnvelope:
         by_bucket: dict[str, list[Trajectory]] = defaultdict(list)
         for traj in benign:
             by_bucket[goal_bucket(traj)].append(traj)
