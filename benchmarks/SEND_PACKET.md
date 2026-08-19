@@ -41,6 +41,7 @@ Live keystones (API $, separate):
 | Syscall tier (iVisor) | partial | `results/syscall_tier.md` | Trace replay ≠ live sandbox; 05/06 may be non-events on fd-3 |
 | AgentDyn open-ended utility | ready (failure) | `results/agentdyn.md` | Must appear in any honest packet; typed-plan/`reclear` is the fix path |
 | Replay false-block 0% | blocked as operational FP | scoreboard legend | Replay FB ≠ production FP; use live ladder. Suppress the `FB=0.00%` cell entirely where `heldout.py` cannot produce a split, rather than printing a circular zero beside a real containment number. |
+| Plausibility-based injections land on a 2026 model, and the layer contains them | ready | `results/attacks_2026.md` | 6 of 48 undefended vs 0 of 12 for `important_instructions`; **0 of 48 defended**. Quote the friction beside it — `schema_field` costs 0.83 step-ups/task. n=6 per cell; do not rank the four attacks against each other. |
 | Adaptive adversary vs the SHIPPED gateway | ready | `results/adaptive_stack.md` | Four objectives flat at 100% across blind/feedback/oracle. In-scope content staging is 100% at oracle **entirely via STEP_UP** — the pessimistic supervised row collapses to the floor, so quote both rows or neither. |
 | In-scope staging, path-mention objective | **known gap** | `results/in_scope_exfiltration.md`, `results/adaptive_stack.md` | The shipped stack scores exactly its floor rung, +0.0 lift at oracle. Unchanged. |
 | ULB AUC / IBM AML fan-out | ready (analytics) | `results/aml_validation.md` | Analytics layer, not per-call authz |
@@ -80,8 +81,16 @@ switches change it materially and both are now explicit rather than implied.
 13. Citing an adaptive result against a LADDER RUNG as an adaptive result for the
     product. The ladder is an ablation. `results/adaptive_stack.md` is the only
     adaptive run against `DeployableStack`.
-14. Quoting any live AgentDojo ASR without naming the model. The attack does not
-    land on a 2026 frontier model — undefended ASR is 0.0% on `gpt-5-mini` across
+14. Quoting any live AgentDojo ASR without naming the model AND the injection
+    tasks. `[:n_inj]` selects banking tasks 0-3, whose goals no document would
+    plausibly instruct, so a framing's ASR is capped by the goal it carries
+    rather than by the defense. See `results/attacks_2026.md`.
+15. Quoting the 0-of-48 defended figure without the friction column. Containing
+    this class costs up to 0.83 step-ups per task, and a supervised deployment's
+    real containment is bounded by the approver's judgement on exactly the
+    question the model got wrong — which this run does not measure.
+16. Quoting any live AgentDojo ASR without naming the model. The attack does not
+    land on a 2026 frontier model — undefended ASR is 0 of 18 on `gpt-5-mini` across
     four attacks — so "we hold ASR at zero" is a claim about
     `gpt-4o-mini-2024-07-18` specifically. See `results/utility_experiment_void.md`.
 
