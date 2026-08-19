@@ -36,8 +36,39 @@ from benchmarks.core.events import BenchmarkTask, EventLabel
 
 def _goal_for(task: BenchmarkTask) -> GoalSpec:
     mandate = task.mandate or {}
-    resources = list(mandate.get("allowed_resources", [])) or sorted(
-        {c.get("resource", "") for c in task.capabilities if c.get("resource")}
+    # Prefer an explicit resource list; else materialize from scope.allowed_paths
+    # (SLEIGHT stores the benign twin's surface there, including net: egress).
+    resources = list(mandate.get("allowed_resources", []))
+    if not resources:
+        scope = mandate.get("scope") or {}
+        paths = scope.get("allowed_paths") or []
+        if paths:
+            resources = [str(p) for p in paths]
+    if not resources:
+        resources = sorted(
+            {c.get("resource", "") for c in task.capabilities if c.get("resource")}
+        )
+    # Corpus-agnostic backfill: destinations mentioned in benign event bodies
+    # belong on the sealed goal even when the loader only recorded file paths.
+    from agentauth.capabilities.monitor.sealed_plan import extract_destinations
+    for event in task.events:
+        if event.label is not EventLabel.BENIGN:
+            continue
+        if event.path and str(event.path).startswith("net:"):
+            resources.append(str(event.path))
+        for key in ("command", "content", "new_string", "body", "file_text"):
+            val = (event.args or {}).get(key)
+            if isinstance(val, str) and val:
+                resources.extend(extract_destinations(val))
+    # Dedup, preserve order.
+    seen: set[str] = set()
+    resources = [r for r in resources if r and not (r in seen or seen.add(r))]
+    # Task summary from the mandate when the loader put one there.
+    task_block = mandate.get("task") if isinstance(mandate.get("task"), dict) else {}
+    summary = (
+        (task_block or {}).get("summary")
+        or task.summary
+        or ""
     )
     # The goal is SEALED from the legitimate task: its expected verbs come from the
     # user's own (benign) steps or an explicit mandate, never from injected events.
@@ -58,7 +89,7 @@ def _goal_for(task: BenchmarkTask) -> GoalSpec:
     kind = kind or task.meta.get("suite") or "task"
     return GoalSpec(
         query_id=task.task_id,
-        summary=task.summary,
+        summary=str(summary),
         allow_resources=resources,
         structured_intent={
             "kind": kind,

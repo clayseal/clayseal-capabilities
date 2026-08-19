@@ -1,0 +1,70 @@
+[
+  {
+    "axis": "structuring (many small)",
+    "landed": 100,
+    "ceiling": 100,
+    "escaped": false
+  },
+  {
+    "axis": "session restart",
+    "landed": 500,
+    "ceiling": 100,
+    "escaped": true
+  },
+  {
+    "axis": "key splitting (2 budget ids)",
+    "landed": 200,
+    "ceiling": 100,
+    "escaped": true
+  },
+  {
+    "axis": "untracked sibling tool",
+    "landed": 20000,
+    "ceiling": 100,
+    "escaped": true
+  },
+  {
+    "axis": "batch amortization",
+    "landed": 4500,
+    "ceiling": 100,
+    "escaped": true,
+    "note": "ledger booked 90; the call moved 4500"
+  },
+  {
+    "axis": "unit confusion (cents/dollars)",
+    "landed": 9900,
+    "ceiling": 100,
+    "escaped": true,
+    "note": "ledger has no unit; it debits the number"
+  },
+  {
+    "axis": "reserve/release churn",
+    "landed": 100,
+    "ceiling": 100,
+    "escaped": false
+  },
+  {
+    "axis": "negative offset",
+    "landed": 0,
+    "ceiling": 100,
+    "escaped": false
+  },
+  {
+    "axis": "call budget, repeated idem key",
+    "landed": 3,
+    "ceiling": 3,
+    "escaped": false
+  },
+  {
+    "axis": "batch, multiplicity declared",
+    "landed": 0,
+    "ceiling": 100,
+    "escaped": false
+  },
+  {
+    "axis": "unit, scale declared",
+    "landed": 99,
+    "ceiling": 100,
+    "escaped": false
+  }
+]

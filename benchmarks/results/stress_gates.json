@@ -1,0 +1,70 @@
+[
+  {
+    "gate": "call-budget",
+    "inputs": 24,
+    "clean": 24,
+    "NEVER_RAISES": [],
+    "NEVER_FAILS_OPEN": []
+  },
+  {
+    "gate": "compute-budget",
+    "inputs": 24,
+    "clean": 24,
+    "NEVER_RAISES": [],
+    "NEVER_FAILS_OPEN": []
+  },
+  {
+    "gate": "egress-policy",
+    "inputs": 18,
+    "clean": 18,
+    "NEVER_RAISES": [],
+    "NEVER_FAILS_OPEN": []
+  },
+  {
+    "gate": "protected-zones",
+    "inputs": 20,
+    "clean": 20,
+    "NEVER_RAISES": [],
+    "NEVER_FAILS_OPEN": []
+  },
+  {
+    "gate": "task-scope",
+    "inputs": 20,
+    "clean": 15,
+    "NEVER_RAISES": [
+      {
+        "value": "None",
+        "error": "TypeError: expected string or bytes-like object, got 'NoneType'",
+        "trace": ""
+      },
+      {
+        "value": "0",
+        "error": "TypeError: expected string or bytes-like object, got 'int'",
+        "trace": ""
+      },
+      {
+        "value": "[1]",
+        "error": "TypeError: unhashable type: 'list'",
+        "trace": ""
+      },
+      {
+        "value": "{'a': 1}",
+        "error": "TypeError: unhashable type: 'dict'",
+        "trace": ""
+      },
+      {
+        "value": "True",
+        "error": "AttributeError: 'bool' object has no attribute 'split'",
+        "trace": ""
+      }
+    ],
+    "NEVER_FAILS_OPEN": []
+  },
+  {
+    "gate": "value-budget",
+    "inputs": 24,
+    "clean": 24,
+    "NEVER_RAISES": [],
+    "NEVER_FAILS_OPEN": []
+  }
+]

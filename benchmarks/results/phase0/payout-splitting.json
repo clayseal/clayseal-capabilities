@@ -1,0 +1,28 @@
+{
+  "payout-splitting": {
+    "none": {
+      "violation_rate": 1.0,
+      "progress": 1.0,
+      "friction": 0.0,
+      "n": 100
+    },
+    "progent": {
+      "violation_rate": 1.0,
+      "progress": 1.0,
+      "friction": 0.0,
+      "n": 100
+    },
+    "camel": {
+      "violation_rate": 1.0,
+      "progress": 1.0,
+      "friction": 0.0,
+      "n": 100
+    },
+    "clayseal": {
+      "violation_rate": 0.0,
+      "progress": 0.6,
+      "friction": 2.06,
+      "n": 100
+    }
+  }
+}

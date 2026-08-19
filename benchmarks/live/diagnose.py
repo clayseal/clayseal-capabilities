@@ -88,8 +88,12 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
     print(f"attack payloads={sorted(attack_payloads)}\n")
 
     logdir = tempfile.mkdtemp(prefix="adojo-diag-")
+    from benchmarks.live.broker_defense import snapshot_trusted_files
+    clean_files = snapshot_trusted_files(
+        suite.load_and_inject_default_environment({}))
     for ab in ablations:
-        pipe, harness = build_pipeline(model, ab, planners.get(ab))
+        pipe, harness = build_pipeline(
+            model, ab, planners.get(ab), clean_files=clean_files)
         if harness is None:
             print(f"[{ab}] no broker (baseline/builtin) — skipping attribution\n")
             continue

@@ -79,15 +79,17 @@ CAVEATS = {
                 "raw toolkit mapping still has no attack events (underspecification)"),
     "ipi_coding": "injected instructions with out-of-scope targets",
     "agent_threat_bench": "data_exfil only; memory_poison and autonomy_hijack are content-defined and declared",
-    "sleight": ("mechanism-cited sabotage only; ladder ~5% on binding+budget — "
-                "velocity false-alarms coding agents; not an intent win"),
+    "sleight": ("CONTENT ceiling: ladder hard ~5%; product row is sleight[stack] "
+                "(session observe + soft content). Velocity is not scored."),
     "sleight[detector]": ("sealed digest+IFC+argv/callee/sed-rm/ssh-body + twin; "
                           "~98% mean / ~98% twin-structural / 0% FB; "
                           "residual miss is env symlink (identical actions)"),
     "advbench_agent": ("normalized fixture: target/arg binding; binding rung "
                        "100% / 0% FB; content-only twins are not the score path"),
-    "agentharm": ("6.3% is a LOADER limit: we read only the JSON (tool names), while "
-                  "the corpus grading functions assert targets for 63% of behaviours"),
+    "agentharm": ("CONTENT ceiling: hard ~27% from destination pins; soft cues lift "
+                  "union — see agentharm[stack] / cross_stack (never quote soft as hard)"),
+    "agentharm[stack]": ("DeployableStack product row: hard/soft/union split; "
+                         "sealed goal = benign twin prompt"),
     "atif": "benign only; a false-block measurement",
     "tau2": "benign only; the friction denominator that matters",
     "bfcl": "benign only; the friction denominator that matters",
@@ -228,6 +230,15 @@ def _burst(board: Scoreboard) -> None:
 
 
 def _flow(board: Scoreboard) -> None:
+    """The flow tier, whose contained column is the SINGLE-WRITE arm only.
+
+    This row read `r.chunked` and `r.fanout`, which `benchmarks/flow.py` no
+    longer defines, inside a bare `except Exception: continue`. The row
+    therefore vanished from the board silently while the containment figure it
+    used to print stayed quoted elsewhere. Both halves are fixed here: the arm
+    counts are read from `r.splits`, and a failure prints a row saying so
+    instead of disappearing.
+    """
     from benchmarks.flow import evaluate
 
     for corpus in ("tau2", "bfcl"):
@@ -235,19 +246,28 @@ def _flow(board: Scoreboard) -> None:
             r = evaluate(corpus, count=200, seed=0)
         except SystemExit:
             continue
-        except Exception:
+        except Exception as exc:  # a missing row is worse than a loud one
+            board.add(tier=f"flow[{corpus}]", measures="sequence-defined harm",
+                      caveat=f"NOT MEASURED: {type(exc).__name__}: {exc}")
             continue
-        chunk_leaks = sum(v[0] for v in r.chunked.values())
-        fan_leaks = sum(v[0] for v in r.fanout.values())
+
+        def _by_width(arm: str) -> str:
+            by_w = r.splits.get(arm, {})
+            return "/".join(f"{by_w[w].whole_out}" for w in sorted(by_w)) or "-"
+
         board.add(
             tier=f"flow[{corpus}]",
             measures="sequence-defined harm",
             contained=f"{100 * r.containment:.1f}%",
             false_block=f"{100 * r.real_traffic_false_block:.2f}%",
             n=f"{r.sessions} sessions",
-            caveat=(f"chunked leaks {chunk_leaks}, fan-out leaks {fan_leaks}; "
-                    f"blast radius is a constant (~12 chars), so a short "
-                    f"credential is detected, not prevented"),
+            caveat=("contained is the SINGLE-WRITE arm only. Whole value out at "
+                    f"2/4/11/22 fragments: chunked {_by_width('chunked')}, "
+                    f"fan-out {_by_width('fan-out')}, concurrent chunked "
+                    f"{_by_width('concurrent chunked')}. Two writes carrying "
+                    "300 characters of prose each escape 200/200 on tau2 and "
+                    "171/171 on BFCL, and a value of 11 characters or fewer "
+                    "has no cross-write check at all. See results/flow.md"),
         )
 
 
@@ -299,6 +319,59 @@ def _sleight_detector(board: Scoreboard) -> None:
         caveat=CAVEATS["sleight[detector]"],
     )
 
+
+def _deployable_stack(board: Scoreboard, quick: bool) -> None:
+    """PRODUCT gateway first — same SessionBroker as CTR / live AgentDojo."""
+    from benchmarks.core.broker_eval import run_broker_benchmark
+
+    corpora = ["redcode", "agentharm", "sleight", "ipi_coding", "mcp_attack"]
+    if not quick:
+        corpora.extend([
+            "asb", "advbench_agent", "agent_threat_bench",
+            "mind2web_sc", "b3",
+        ])
+    board.add(
+        tier="── PRODUCT ──",
+        measures="DeployableStack (one system)",
+        caveat="rows below are the shippable gateway; ladder section is ablation",
+    )
+    for name in corpora:
+        try:
+            tasks = list(get_loader(name).load())
+        except Exception:
+            board.add(tier=f"{name}[stack]", measures="DeployableStack gateway",
+                      caveat="corpus not fetched")
+            continue
+        # Det soft content only here (credentials optional; fail-open).
+        result = run_broker_benchmark(tasks, entailment_judge=None)
+        unscoreable = any(t.meta.get("false_block_unscoreable") for t in tasks)
+        if result.n_attack:
+            contained = (
+                f"{100 * result.attack_prevention_rate:.1f}% "
+                f"(H{100 * result.hard_attack_prevention_rate:.0f}/"
+                f"S{100 * result.soft_attack_prevention_rate:.0f})"
+            )
+        else:
+            contained = "-"
+        board.add(
+            tier=f"{name}[stack]",
+            measures="DeployableStack / SessionBroker",
+            contained=contained,
+            false_block=("n/a" if unscoreable
+                         else f"{100 * result.false_block_rate:.2f}%"),
+            n=f"{result.n_attack}a / {result.n_benign}b",
+            caveat=CAVEATS.get(f"{name}[stack]", CAVEATS.get(name, (
+                "shared product profile; hard=DENY soft=STEP_UP; "
+                "ladder rows are floor ablations"
+            ))),
+        )
+    board.add(
+        tier="── LADDER ABLATION ──",
+        measures="build_engines() monotone floor",
+        caveat="not the product claim — construction check only",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Every tier, one table")
     p.add_argument("--quick", action="store_true",
@@ -307,6 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     board = Scoreboard()
+    # Product gateway FIRST so the table reads as one system, then ladder ablation.
+    _deployable_stack(board, args.quick)
     _deterministic(board, args.quick)
     _sleight_detector(board)
     if not args.quick:
@@ -314,6 +389,26 @@ def main(argv: list[str] | None = None) -> int:
         _flow(board)
         _trajectory(board)
     print(board.render())
+
+    # Containment at an unconstrained false-block rate is reward-hackable, and
+    # this repo has the proof: a detector shipped 100% containment that was 13 of
+    # 18 benign trajectories being refused. The headline therefore carries the
+    # operating-point view beside it, where a control that blocks everything
+    # scores zero by construction. See benchmarks/core/opmetrics.py.
+    print("\nOPERATING POINT — detection at a false-alarm rate the operator "
+          "chose.")
+    print("  Containment above is measured at whatever threshold each engine "
+          "picked for itself.")
+    print("  It is not comparable across engines and it is not a deployment "
+          "number. For that:")
+    print("      python -m benchmarks.opeval --corpora <corpus>")
+    print("  which reports detection@0.1%/1%/5% FPR, lift over base rate, "
+          "steps-to-detect and")
+    print("  alert volume, with permanent deny-all / position / length control "
+          "rows.")
+    print("  A headline that cites containment without an operating point is "
+          "forbidden by")
+    print("  SEND_PACKET.md rule 10.")
     # Explicit pooled-headline discipline: never fold SATURATED tiers into one
     # number. Callers (SEND_PACKET) read this block.
     pooled_rows = [r for r in board.rows

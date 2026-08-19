@@ -1,0 +1,342 @@
+[
+  {
+    "scorer": "deny-all",
+    "corpus": "redcode",
+    "n_benign": 781,
+    "n_attack": 297,
+    "pauc@1%": 0.5,
+    "median_steps_to_detect": null,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      }
+    ]
+  },
+  {
+    "scorer": "ngram",
+    "corpus": "redcode",
+    "n_benign": 781,
+    "n_attack": 297,
+    "pauc@1%": 0.4975,
+    "median_steps_to_detect": null,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      }
+    ]
+  },
+  {
+    "scorer": "target",
+    "corpus": "redcode",
+    "n_benign": 781,
+    "n_attack": 297,
+    "pauc@1%": 1.0,
+    "median_steps_to_detect": 1.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 1.0,
+        "precision": 1.0,
+        "lift": 100.0,
+        "alerts_per_1k": 10.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0064,
+        "detection": 1.0,
+        "precision": 0.6121,
+        "lift": 61.21,
+        "alerts_per_1k": 16.3
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.03841,
+        "detection": 1.0,
+        "precision": 0.2082,
+        "lift": 20.82,
+        "alerts_per_1k": 48.0
+      }
+    ]
+  },
+  {
+    "scorer": "ngram+target",
+    "corpus": "redcode",
+    "n_benign": 781,
+    "n_attack": 297,
+    "pauc@1%": 0.7107,
+    "median_steps_to_detect": 1.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.4242,
+        "precision": 1.0,
+        "lift": 100.0,
+        "alerts_per_1k": 4.2
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.00256,
+        "detection": 0.4242,
+        "precision": 0.6259,
+        "lift": 62.59,
+        "alerts_per_1k": 6.8
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.03841,
+        "detection": 1.0,
+        "precision": 0.2082,
+        "lift": 20.82,
+        "alerts_per_1k": 48.0
+      }
+    ]
+  },
+  {
+    "scorer": "conformal-combo",
+    "corpus": "redcode",
+    "n_benign": 781,
+    "n_attack": 297,
+    "pauc@1%": 0.7731,
+    "median_steps_to_detect": 1.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.00512,
+        "detection": 0.7374,
+        "precision": 0.5925,
+        "lift": 59.25,
+        "alerts_per_1k": 12.4
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.04609,
+        "detection": 1.0,
+        "precision": 0.1797,
+        "lift": 17.97,
+        "alerts_per_1k": 55.6
+      }
+    ]
+  },
+  {
+    "scorer": "deny-all",
+    "corpus": "ipi_coding",
+    "n_benign": 789,
+    "n_attack": 16,
+    "pauc@1%": 0.5,
+    "median_steps_to_detect": null,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      }
+    ]
+  },
+  {
+    "scorer": "ngram",
+    "corpus": "ipi_coding",
+    "n_benign": 789,
+    "n_attack": 16,
+    "pauc@1%": 0.4975,
+    "median_steps_to_detect": null,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      }
+    ]
+  },
+  {
+    "scorer": "target",
+    "corpus": "ipi_coding",
+    "n_benign": 789,
+    "n_attack": 16,
+    "pauc@1%": 1.0,
+    "median_steps_to_detect": 2.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 1.0,
+        "precision": 1.0,
+        "lift": 100.0,
+        "alerts_per_1k": 10.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.00887,
+        "detection": 1.0,
+        "precision": 0.5324,
+        "lift": 53.24,
+        "alerts_per_1k": 18.8
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.04816,
+        "detection": 1.0,
+        "precision": 0.1734,
+        "lift": 17.34,
+        "alerts_per_1k": 57.7
+      }
+    ]
+  },
+  {
+    "scorer": "ngram+target",
+    "corpus": "ipi_coding",
+    "n_benign": 789,
+    "n_attack": 16,
+    "pauc@1%": 1.0,
+    "median_steps_to_detect": 2.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 1.0,
+        "precision": 1.0,
+        "lift": 100.0,
+        "alerts_per_1k": 10.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0,
+        "detection": 1.0,
+        "precision": 1.0,
+        "lift": 100.0,
+        "alerts_per_1k": 10.0
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.04943,
+        "detection": 1.0,
+        "precision": 0.1697,
+        "lift": 16.97,
+        "alerts_per_1k": 58.9
+      }
+    ]
+  },
+  {
+    "scorer": "conformal-combo",
+    "corpus": "ipi_coding",
+    "n_benign": 789,
+    "n_attack": 16,
+    "pauc@1%": 0.7452,
+    "median_steps_to_detect": 2.0,
+    "operating_points": [
+      {
+        "fpr_target": 0.001,
+        "achieved_fpr": 0.0,
+        "detection": 0.0,
+        "precision": 0.0,
+        "lift": 0.0,
+        "alerts_per_1k": 0.0
+      },
+      {
+        "fpr_target": 0.01,
+        "achieved_fpr": 0.0076,
+        "detection": 1.0,
+        "precision": 0.5705,
+        "lift": 57.05,
+        "alerts_per_1k": 17.5
+      },
+      {
+        "fpr_target": 0.05,
+        "achieved_fpr": 0.04943,
+        "detection": 1.0,
+        "precision": 0.1697,
+        "lift": 16.97,
+        "alerts_per_1k": 58.9
+      }
+    ]
+  }
+]

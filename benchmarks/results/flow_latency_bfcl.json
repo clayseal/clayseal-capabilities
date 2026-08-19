@@ -1,0 +1,61 @@
+{
+  "corpus": "bfcl",
+  "microseconds": {
+    "session of 4 (real mean) | all": {
+      "n": 3232,
+      "p50": 25.7,
+      "p95": 115.8,
+      "p99": 261.5,
+      "max": 4780.8
+    },
+    "session of 4 (real mean) | inspected": {
+      "n": 1694,
+      "p50": 50.9,
+      "p95": 158.1,
+      "p99": 487.5,
+      "max": 4780.8
+    },
+    "session of 25 | all": {
+      "n": 3232,
+      "p50": 33.2,
+      "p95": 2478.7,
+      "p99": 4020.8,
+      "max": 8808.8
+    },
+    "session of 25 | inspected": {
+      "n": 1694,
+      "p50": 154.6,
+      "p95": 3311.1,
+      "p99": 4400.7,
+      "max": 8808.8
+    },
+    "session of 64 (full window) | all": {
+      "n": 3232,
+      "p50": 41.8,
+      "p95": 4790.7,
+      "p99": 8728.6,
+      "max": 32867.6
+    },
+    "session of 64 (full window) | inspected": {
+      "n": 1694,
+      "p50": 2063.7,
+      "p95": 6928.2,
+      "p99": 10673.7,
+      "max": 32867.6
+    },
+    "session of 150 (past window) | all": {
+      "n": 3232,
+      "p50": 53.9,
+      "p95": 8541.6,
+      "p99": 14353.7,
+      "max": 82799.3
+    },
+    "session of 150 (past window) | inspected": {
+      "n": 1694,
+      "p50": 4133.4,
+      "p95": 10995.7,
+      "p99": 15808.9,
+      "max": 82799.3
+    }
+  }
+}

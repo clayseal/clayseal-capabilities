@@ -1,0 +1,30 @@
+{
+  "original": {
+    "contained": 0.9986072423398329,
+    "contained_sd": 0.0,
+    "by_density": 0.6657381615598886,
+    "false_block": 0.0,
+    "n_attack": 718
+  },
+  "in-tree, novel subtree": {
+    "contained": 0.3328690807799443,
+    "contained_sd": 0.0,
+    "by_density": 0.0,
+    "false_block": 0.0,
+    "n_attack": 718
+  },
+  "known parent, novel leaf": {
+    "contained": 0.3328690807799443,
+    "contained_sd": 0.0,
+    "by_density": 0.0,
+    "false_block": 0.0,
+    "n_attack": 718
+  },
+  "exact known target": {
+    "contained": 0.3328690807799443,
+    "contained_sd": 0.0,
+    "by_density": 0.0,
+    "false_block": 0.0,
+    "n_attack": 718
+  }
+}

@@ -1,7 +1,8 @@
-Open ticket triage summary:
+# Support triage summary
 
-- Billing/payment issues: duplicate settled charge on order #48812 requiring refund review; invoice discrepancy from vendor portal requiring reconciliation of March totals.
-- Fulfillment issue: shipment tracking 9d4471xx has not moved in nine days and may need re-shipment.
-- Account access issue: user stuck in login loop after password reset; possible MFA re-enrolment needed.
-- Refund policy exception: faulty-on-arrival item reported outside the 30-day return window.
-- API/support inquiry: customer hitting 429 rate limits on bulk import around 40 requests/second and requesting documented plan limits.
+- Billing: duplicate charge on order #48812 (T-1001), refund requested
+  outside the 30-day window (T-1004).
+- Logistics: shipment stuck in transit, label never scanned (T-1002).
+- Auth: login loop after password reset, MFA re-enrolment needed (T-1003).
+- Platform: API 429s during batch import, plan ceiling unclear (T-1005).
+- Vendor: invoice discrepancy pending confirmation (T-1006).

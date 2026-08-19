@@ -1,0 +1,18 @@
+{
+  "system": "clayseal",
+  "deterministic": true,
+  "control_aliases": {
+    "none": "allow-all"
+  },
+  "sampling_frame": "132 scenarios authored by the defense's own team, drawn from AML/institutional/literature sources. NOT an external population: see benchmark_program.md, externally-authored policies remain the unmet requirement.",
+  "calibration_split": "no thresholds are fitted in this sweep; it replays scripted sequences through a statically-configured mandate. The learned layers are excluded by construction.",
+  "operating_point": "mandate ceilings and envelope verbs are fixed per scenario by the scenario author, not tuned on outcomes. The one swept parameter (envelope vocabulary) is reported at BOTH settings rather than at its best.",
+  "deployment_shape": "single process. Cross-process measured separately in production_readiness.md, where 4 workers against a ceiling of 100 landed 400 before SharedPrincipalLedger.",
+  "attacker_knowledge": [
+    "scripted",
+    "blind",
+    "feedback",
+    "oracle"
+  ],
+  "labels_provenance": "MIXED, and the mix matters. 51 `contain` labels and 22 `open` labels predate this measurement. 16 further labels were re-derived (a further 8 were rewritten and then reverted: they are paradox-tier, quarantined by design, and a bulk edit overwrote that with a measurement until the tier's own invariant test caught it) on 2026-08-18 from `open` to `contain` after two harness defects were fixed (a benchmark-local verb classifier that disagreed with the shipped one, and two real containment gaps). Those 24 are a REGRESSION GUARD, not an independent prediction, and agreement on them is not evidence the mechanism works. One label moved the other way on the same day: `contractor-scope-creep` went back to `open` after the adaptive attacker showed its fix was fitted to the scripted sequence."
+}

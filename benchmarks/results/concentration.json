@@ -1,0 +1,79 @@
+[
+  {
+    "corpus": "tau2",
+    "provenance": "real task suite",
+    "observations": 14842,
+    "distinct": 52,
+    "repeat_rate": 0.9964964290526883,
+    "top10_share": 0.8019808651125185,
+    "median_depth": 2.0,
+    "root_escape": 0.0014462341197822141,
+    "depth1_escape": 0.01032411493576542
+  },
+  {
+    "corpus": "agentharm",
+    "provenance": "curated cases",
+    "observations": 729,
+    "distinct": 145,
+    "repeat_rate": 0.8010973936899863,
+    "top10_share": 0.2194787379972565,
+    "median_depth": 2,
+    "root_escape": 0.012987012987012988,
+    "depth1_escape": 0.0945945945945946
+  },
+  {
+    "corpus": "toolemu",
+    "provenance": "curated cases",
+    "observations": 559,
+    "distinct": 117,
+    "repeat_rate": 0.7906976744186046,
+    "top10_share": 0.26118067978533094,
+    "median_depth": 2,
+    "root_escape": 0.0017857142857142857,
+    "depth1_escape": 0.10465116279069768
+  },
+  {
+    "corpus": "bfcl",
+    "provenance": "real task suite",
+    "observations": 3232,
+    "distinct": 693,
+    "repeat_rate": 0.7855816831683169,
+    "top10_share": 0.1766707920792079,
+    "median_depth": 2.0,
+    "root_escape": 0.0018484288354898336,
+    "depth1_escape": 0.10720915841584158
+  },
+  {
+    "corpus": "redcode",
+    "provenance": "synthetic per-case",
+    "observations": 344,
+    "distinct": 100,
+    "repeat_rate": 0.7093023255813953,
+    "top10_share": 0.3023255813953488,
+    "median_depth": 2.0,
+    "root_escape": 0.0029069767441860465,
+    "depth1_escape": 0.09495068830901993
+  },
+  {
+    "corpus": "sleight",
+    "provenance": "synthetic per-case",
+    "observations": 311,
+    "distinct": 156,
+    "repeat_rate": 0.4983922829581994,
+    "top10_share": 0.3022508038585209,
+    "median_depth": 3,
+    "root_escape": 0.10944976076555024,
+    "depth1_escape": 0.1111111111111111
+  },
+  {
+    "corpus": "atif",
+    "provenance": "real agent sessions",
+    "observations": 282,
+    "distinct": 157,
+    "repeat_rate": 0.44326241134751776,
+    "top10_share": 0.29432624113475175,
+    "median_depth": 2.0,
+    "root_escape": 0.14285714285714285,
+    "depth1_escape": 0.4166666666666667
+  }
+]

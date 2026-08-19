@@ -17,13 +17,48 @@ enforcement ladder and the behavioral detector are meant to separate:
   connector-substitution swap the target to a look-alike resource
   fragmented-overspend   split a value across sub-threshold calls over a ceiling
   goal-drift             append off-goal actions driven by untrusted context
+
+## The append shortcut, and `length_matched`
+
+Every transform below produces ``benign + attack_events``, so a variant is
+**strictly longer** than the benign trajectory it is scored against. On short
+sessions that difference IS the label. Measured, length alone as a classifier:
+
+    bfcl      AUC 1.000     (benign median 1 event, attack median 2)
+    toolemu   AUC 0.745
+    tau2      AUC 0.626
+
+An AUC of 1.000 means a detector that does nothing but count events scores
+perfectly, and every other row on such a table is unreadable. `adequacy.py`
+flags this on `asb` and `injecagent` today.
+
+So `synthesize(..., length_matched=True)` **substitutes** attack events for
+benign ones at drawn positions instead of appending them. Measured on the same
+corpora:
+
+    channel                append          substitute (tail)   substitute (drawn)
+    length AUC             0.626-1.000     0.500               0.500
+    position AUC           -               0.742-0.901         0.520-0.605
+    taint gap (b - a)      up to -83.7pp   ~0.0pp              ~0.0pp
+
+Tail substitution trades the length tell for a position tell, which is why the
+position is drawn rather than fixed at the end. The taint gap closes because the
+attack action inherits its place in the data flow rather than beginning cold —
+that gap was **anti-correlated** on RedCode (83.7% of benign actions taint-derived
+against 0.0% of attack actions), a corpus that rewards an inverted detector.
+
+Neither mode is "correct" in general. Appending models an agent that does its job
+and then does something extra; substituting models one that was turned mid-session
+and did the wrong thing instead. The second is the one a trajectory layer can be
+scored on, and the first is the one that has been scored on.
 """
 from __future__ import annotations
 
 import copy
+import dataclasses
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 
@@ -48,6 +83,34 @@ def _clone(task: BenchmarkTask, attack_events: list[BenchmarkEvent], attack_clas
     new.task_id = f"{task.task_id}::{attack_class}"
     new.events = benign + attack_events
     new.meta = {**task.meta, "attack_class": attack_class, "synthetic": True}
+    return AttackVariant(task=new, attack_class=attack_class)
+
+
+def _substitute(task: BenchmarkTask, attack_events: list[BenchmarkEvent],
+                attack_class: str, rng: random.Random) -> AttackVariant | None:
+    """Replace benign events with the attack ones, preserving trajectory length.
+
+    Returns None when the benign trajectory is too short to host the attack
+    without changing its length, which is the honest outcome: a one-event
+    session cannot contain a two-event attack length-matched, and pretending
+    otherwise is how `bfcl` got a length AUC of 1.000.
+    """
+    benign_idx = [i for i, e in enumerate(task.events)
+                  if e.label is EventLabel.BENIGN]
+    if not attack_events or len(benign_idx) < len(attack_events):
+        return None
+    # Drawn, not appended to the tail. Fixing the attack at the end swaps a
+    # length tell for a position one: measured AUC 0.742 on tau2 and 0.901 on
+    # toolemu, against 0.605 and 0.520 when the start is drawn.
+    start = rng.randrange(0, len(benign_idx) - len(attack_events) + 1)
+    chosen = benign_idx[start:start + len(attack_events)]
+    new = copy.deepcopy(task)
+    new.task_id = f"{task.task_id}::{attack_class}"
+    for j, pos in enumerate(chosen):
+        new.events[pos] = dataclasses.replace(
+            attack_events[j], event_id=f"{new.task_id}-a{j}")
+    new.meta = {**task.meta, "attack_class": attack_class, "synthetic": True,
+                "length_matched": True, "attack_positions": chosen}
     return AttackVariant(task=new, attack_class=attack_class)
 
 
@@ -228,8 +291,22 @@ def synthesize(
     *,
     classes: list[str] | None = None,
     seed: int = 0,
+    length_matched: bool = False,
 ) -> list[AttackVariant]:
-    """Expand benign tasks into labeled attack variants across attack classes."""
+    """Expand benign tasks into labeled attack variants across attack classes.
+
+    ``length_matched`` substitutes the attack events for benign ones at a drawn
+    position instead of appending them, so the variant has the same trajectory
+    length as its source. Default False, because every published number in this
+    repository was produced by appending and silently changing that would make
+    old and new results incomparable — see the module docstring for what
+    appending costs and what it is measured at.
+
+    Variants whose source session is too short to host the attack
+    length-matched are DROPPED rather than appended as a fallback. Falling back
+    would reintroduce the shortcut on exactly the short sessions where it is
+    strongest, which is the failure it exists to prevent.
+    """
     rng = random.Random(seed)
     selected = classes or list(ATTACK_CLASSES)
     unknown = [c for c in selected if c not in ATTACKS]
@@ -238,5 +315,14 @@ def synthesize(
     out: list[AttackVariant] = []
     for task in tasks:
         for name in selected:
-            out.extend(ATTACKS[name](task, rng))
+            variants = ATTACKS[name](task, rng)
+            if not length_matched:
+                out.extend(variants)
+                continue
+            for v in variants:
+                attack_events = [e for e in v.task.events
+                                 if e.label is EventLabel.ATTACK]
+                matched = _substitute(task, attack_events, v.attack_class, rng)
+                if matched is not None:
+                    out.append(matched)
     return out

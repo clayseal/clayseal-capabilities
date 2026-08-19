@@ -22,6 +22,7 @@ authz engine should we integrate?" rather than "which scoping strategy wins?".
 from __future__ import annotations
 
 import math
+import random
 from typing import Protocol, runtime_checkable
 
 from agentauth.core.hash_util import hash_canonical_json
@@ -567,6 +568,12 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
         "task-scope+binding+budget": BudgetLadderEngine,
         "task-scope+binding+budget+velocity": VelocityLadderEngine,
         "task-scope+binding+budget+velocity+delegation": DelegationLadderEngine,
+        # Deliberately NOT in LADDER: this rung is under evaluation, and adding
+        # it to the shipped ladder before benchmarks/density_sweep.py says it
+        # earns a place would be the claim rather than the measurement.
+        "task-scope+binding+budget+velocity+density": DensityLadderEngine,
+        # Also out of LADDER pending the friction measurement below.
+        "task-scope+binding+budget+velocity+density+staging": StagingLadderEngine,
         "opa": opa_engine,
         "cedar": cedar_engine,
         "openfga": openfga_engine,
@@ -576,3 +583,283 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
     if unknown:
         raise ValueError(f"unknown engine(s): {unknown}; known: {sorted(factory)}")
     return [factory[n]() for n in selected]
+
+
+class DensityLadderEngine(VelocityLadderEngine):
+    """Full stack plus a goal-conditioned density over *which* resource is touched.
+
+    ## Why this rung exists
+
+    Every rung below discriminates by membership: is this tool/resource/path in
+    the grant. `benchmarks/generalize.py` measures what that costs. Holding every
+    other dimension fixed and wildcarding the path grant by ONE segment:
+
+        redcode              99.86% -> 33.29% contained
+        ipi_coding          100.00% -> 30.00%
+        agent_threat_bench  100.00% ->  0.00%
+
+    while the tool dimension is free (no loss at all). So the flagship containment
+    is one mechanism: the attack path is outside a literally enumerated set. An
+    operator does not write mandates that way — they write `~/repo/**` — and at
+    that grant the measured containment is 0-33%.
+
+    A density does not have the membership property. `repo/app/summary.txt` and
+    `repo/.git/config` sit inside the identical wildcard, but under a given goal
+    the cohort has touched one many times and the other never, so they score
+    decades apart. The grant stays wide enough for a human to write; the density
+    discriminates inside it. This is the move human UEBA makes and this ladder
+    did not: access is the ACL, and *having never opened these files* is the
+    baseline.
+
+    ## How the threshold is set, and why the obvious way is wrong
+
+    The same trap the velocity rung documents applies here and is avoided the
+    same way. The threshold is NOT set from the task under evaluation and never
+    consults an attack event. It is a per-corpus constant derived from clean
+    traffic through `observe_corpus`, which the runner feeds the calibration half
+    of the CLEAN tasks only.
+
+    That calibration half is then split AGAIN: the trie is fit on one slice and
+    the threshold is the `1-alpha` quantile of surprises on a disjoint slice.
+    Fitting and thresholding on the same events makes every calibration point
+    in-corridor by construction, which sets the threshold at the ceiling and
+    reports a false-block rate that is arithmetic rather than measurement. That
+    is precisely the defect `detector.py` documents for its own conformal layer,
+    and the fix is the same: split.
+
+    So `alpha` is a declared false-alarm budget and the scored false-block rate
+    should land near it. A rung that returns containment while its false-block
+    rate sits far above `alpha` is not working, and the number will say so.
+    """
+
+    name = "task-scope+binding+budget+velocity+density"
+
+    def __init__(self, *, alpha: float = 0.01, fit_frac: float = 0.6,
+                 min_calibration_actions: int = 60) -> None:
+        super().__init__()
+        self.alpha = alpha
+        self.fit_frac = fit_frac
+        # Counted in benign ACTIONS, not tasks. A density over resource targets
+        # is estimated from targets, and the two units differ by an order of
+        # magnitude in exactly the place it matters: RedCode ships 50 clean
+        # tasks carrying 344 benign events, so a task-counted floor of 30 made
+        # the rung abstain on a corpus that had 172 calibration actions
+        # available. Getting this unit wrong reads as "the mechanism does not
+        # work" when it means "the mechanism was never switched on".
+        self.min_calibration_actions = min_calibration_actions
+        self._scorer = None
+        self._threshold: float | None = None
+
+    # -- calibration ------------------------------------------------------- #
+    @staticmethod
+    def _bucket(task: BenchmarkTask) -> str:
+        """Goal bucket, matching ``detector_eval``'s convention."""
+        kind = task.meta.get("goal_kind")
+        if not kind and task.meta.get("category"):
+            kind = f"sleight:{task.meta['category']}"
+        return str(kind or task.meta.get("suite") or "task")
+
+    @staticmethod
+    def _actions(task: BenchmarkTask, *, benign_only: bool = True):
+        from agentauth.capabilities.monitor.action import Action
+
+        out = []
+        for i, event in enumerate(task.events):
+            if benign_only and event.label is EventLabel.ATTACK:
+                continue
+            out.append(Action(step=i, tool=event.tool_name,
+                              resource=event.resource, verb=event.action,
+                              args=dict(event.args),
+                              meta={"path": event.path} if event.path else {}))
+        return out
+
+    def _trajectory(self, task: BenchmarkTask, actions):
+        from agentauth.capabilities.monitor.action import Trajectory
+        from agentauth.capabilities.scoping.goal import GoalSpec
+
+        return Trajectory(
+            goal=GoalSpec(query_id=task.task_id, summary="",
+                          allow_resources=[],
+                          structured_intent={"kind": self._bucket(task)}),
+            actions=actions,
+        )
+
+    def observe_corpus(self, tasks: list[BenchmarkTask]) -> None:
+        from agentauth.capabilities.monitor.scoring.target import TargetDensityScorer
+
+        # The rung below calibrates through the SAME hook. Overriding it without
+        # delegating leaves the velocity cap unset, and an uncalibrated cap
+        # refuses clean traffic: the first run of this engine reported 16.28%
+        # false-block and +0.0 containment, all of it from the rung below, while
+        # the density itself had abstained. A composed rung must calibrate what
+        # it composes.
+        super().observe_corpus(tasks)
+
+        # Never calibrate on a task that carries an attack, even when the runner
+        # offers one. ``_calibration_split`` falls back to (tasks, tasks) for a
+        # corpus with fewer than two clean tasks — ASB, InjecAgent and SLEIGHT
+        # all hit that path — which would hand this rung the very sessions it is
+        # about to judge. Filtering benign EVENTS out of an attack task is not
+        # enough: the task is still in the scored set, so the baseline would be
+        # fit in-sample and its false-block rate would be arithmetic.
+        clean = [t for t in tasks
+                 if not any(e.label is EventLabel.ATTACK for e in t.events)]
+        usable = [t for t in clean if self._actions(t)]
+        if sum(len(self._actions(t)) for t in usable) < self.min_calibration_actions:
+            # Too little clean traffic to estimate a density from. Abstain
+            # entirely rather than ship an uncalibrated threshold: this rung must
+            # degrade to the rung below, never to blocking on no evidence.
+            self._scorer = None
+            self._threshold = None
+            return
+
+        ordered = list(usable)
+        random.Random(f"density:{len(usable)}").shuffle(ordered)
+        cut = max(1, int(len(ordered) * self.fit_frac))
+        fit_tasks, cal_tasks = ordered[:cut], ordered[cut:]
+        if not cal_tasks:
+            self._scorer = None
+            self._threshold = None
+            return
+
+        scorer = TargetDensityScorer()
+        scorer.fit([self._trajectory(t, self._actions(t)) for t in fit_tasks])
+
+        held: list[float] = []
+        for task in cal_tasks:
+            traj = self._trajectory(task, self._actions(task))
+            held.extend(s.surprise for s in scorer.surprise(traj))
+        if not held:
+            self._scorer = None
+            self._threshold = None
+            return
+
+        held.sort()
+        # Block above the (1-alpha) quantile of held-out clean surprise. The
+        # +1 is the conformal correction: with n calibration points the finest
+        # achievable rate is 1/(n+1), and rounding down instead would promise a
+        # budget the sample cannot support.
+        idx = min(len(held) - 1,
+                  int(math.ceil((len(held) + 1) * (1 - self.alpha))) - 1)
+        self._threshold = held[idx]
+        self._scorer = scorer
+
+    # -- decision ---------------------------------------------------------- #
+    def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        below = super().decide(task, event)
+        if not below.allowed:
+            return below
+        if self._scorer is None or self._threshold is None:
+            return below
+        actions = self._actions(task, benign_only=False)
+        idx = next((i for i, e in enumerate(task.events)
+                    if e.event_id == event.event_id), None)
+        if idx is None or idx >= len(actions):
+            return below
+        traj = self._trajectory(task, actions)
+        # The bucket MUST come from the same function the scorer keyed its tries
+        # with. ``TargetDensityScorer.fit`` buckets via ``goal_bucket(traj)``,
+        # which prefixes the kind to ``goal:coding-agent``; passing the raw
+        # ``coding-agent`` here missed every lookup and the rung silently
+        # abstained on all 479 attacks it was handed while still reporting a
+        # fitted scorer and a plausible threshold. A key derived two ways is a
+        # key derived wrongly.
+        from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
+
+        bucket = goal_bucket(traj)
+        # Readiness is enforced inside ``segment_surprises`` as a DEPTH, not as a
+        # per-bucket boolean. A boolean gate here was tried and is wrong in both
+        # directions: RedCode's root is estimated from 123 observations over 2
+        # children (escape 0.003, a sharp boundary worth enforcing) while its
+        # depth-1 namespace has 68 targets over the same traffic, 1.8 apiece,
+        # which cannot separate anything. One flag either discards the root or
+        # claims the leaves. The scorer now stops contributing surprise at the
+        # depth it stops having evidence, so the limit is structural.
+        bits = self._scorer.segment_surprises(bucket, actions[idx])
+        if not bits:
+            return below  # no baseline for this bucket: abstain
+        surprise = max(bits)
+        if surprise > self._threshold:
+            return Decision(
+                False,
+                f"target density: {surprise:.1f} bits > {self._threshold:.1f} "
+                f"clean ceiling ({self._scorer.explain(traj, actions[idx])})",
+                self.name,
+            )
+        return below
+
+
+class StagingLadderEngine(DensityLadderEngine):
+    """Full stack plus the secret-to-publication flow the scope rungs cannot see.
+
+    ``benchmarks/results/in_scope_exfiltration.md``: against an oracle attacker
+    the ladder below this rung contains in-scope data staging at exactly the rate
+    ``allow-all`` does — identical escaped-task sets, not merely similar. The
+    attack is ``read:/app/.env -> write:/app/README.md`` and every rung
+    discriminates on a dimension it does not move.
+
+    The predicate here is the one the mandate could not express: **once a session
+    has read a SECRET-classed object, a write to a PUBLICATION-classed object is
+    refused.** It is deliberately about object CLASS rather than path, because
+    path is precisely what the attack keeps legal.
+
+    ## Session state, and why that is the point
+
+    Every rung below is a pure function of one action. This one is not, and it
+    cannot be: neither half of the attack is suspicious alone. Reading ``.env``
+    is what a build agent does; writing a README is what a documentation agent
+    does. Only the pair, in one session, is evidence — which is the same
+    structure as the budget rungs, and the reason this composes with them rather
+    than duplicating them.
+
+    ## What it deliberately does NOT do
+
+    It does not read file contents to check whether the write actually carries
+    the secret. In replay there are no contents, and in deployment a content
+    check is the confidentiality flow tracker's job — this rung is the coarse
+    metadata gate that runs when the tracker has nothing to look at. The cost is
+    a real false-block on a session that legitimately reads a credential and
+    later edits documentation, which is why the honest deployment posture is
+    STEP_UP rather than DENY. The benchmark ladder has no step-up outcome, so it
+    is scored at its strictest here and the friction column is the true cost.
+    """
+
+    name = "task-scope+binding+budget+velocity+density+staging"
+
+    def __init__(self, **kw) -> None:
+        super().__init__(**kw)
+        self._read_secret: set[str] = set()
+
+    @staticmethod
+    def _target(event: BenchmarkEvent) -> str:
+        return event.path or event.resource or ""
+
+    def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        below = super().decide(task, event)
+        if not below.allowed:
+            return below
+
+        from agentauth.capabilities.hardening.object_class import (
+            ObjectClass, classify)
+
+        target = self._target(event)
+        kind = classify(target)
+        verb = (event.action or "").lower()
+
+        # Reads are recorded per TASK, not globally: a benchmark replays many
+        # independent sessions through one engine instance, and leaking state
+        # between them would refuse writes on the strength of a secret read in
+        # somebody else's session.
+        if kind is ObjectClass.SECRET and verb in _READ_ACTIONS:
+            self._read_secret.add(task.task_id)
+            return below
+
+        if kind is ObjectClass.PUBLICATION and verb not in _READ_ACTIONS:
+            if task.task_id in self._read_secret:
+                return Decision(
+                    False,
+                    f"in-scope staging: publication-classed target {target!r} "
+                    f"written after a secret-classed read in this session",
+                    self.name,
+                )
+        return below

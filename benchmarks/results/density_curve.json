@@ -1,0 +1,101 @@
+[
+  {
+    "corpus": "tau2",
+    "actions": 100,
+    "distinct": 12,
+    "obs_per_target": 8.333333333333334,
+    "root_escape": 0.00995049504950495,
+    "depth1_escape": 0.057777777777777775,
+    "novel_bits": 4.113341473075945
+  },
+  {
+    "corpus": "tau2",
+    "actions": 305,
+    "distinct": 21,
+    "obs_per_target": 14.523809523809524,
+    "root_escape": 0.01978021978021978,
+    "depth1_escape": 0.06350941105039465,
+    "novel_bits": 3.976885798366776
+  },
+  {
+    "corpus": "tau2",
+    "actions": 1008,
+    "distinct": 33,
+    "obs_per_target": 30.545454545454547,
+    "root_escape": 0.034482758620689655,
+    "depth1_escape": 0.08928571428571429,
+    "novel_bits": 3.4854268271702415
+  },
+  {
+    "corpus": "tau2",
+    "actions": 3007,
+    "distinct": 40,
+    "obs_per_target": 75.175,
+    "root_escape": 0.006896551724137931,
+    "depth1_escape": 0.02857142857142857,
+    "novel_bits": 5.129283016944966
+  },
+  {
+    "corpus": "tau2",
+    "actions": 10001,
+    "distinct": 51,
+    "obs_per_target": 196.09803921568627,
+    "root_escape": 0.002164309077779194,
+    "depth1_escape": 0.014101377180108536,
+    "novel_bits": 6.148020122619513
+  },
+  {
+    "corpus": "bfcl",
+    "actions": 100,
+    "distinct": 59,
+    "obs_per_target": 1.694915254237288,
+    "root_escape": 0.0625,
+    "depth1_escape": 0.295,
+    "novel_bits": 1.7612131404128835
+  },
+  {
+    "corpus": "bfcl",
+    "actions": 300,
+    "distinct": 156,
+    "obs_per_target": 1.9230769230769231,
+    "root_escape": 0.01818181818181818,
+    "depth1_escape": 0.2641509433962264,
+    "novel_bits": 1.920565532505595
+  },
+  {
+    "corpus": "bfcl",
+    "actions": 1000,
+    "distinct": 336,
+    "obs_per_target": 2.9761904761904763,
+    "root_escape": 0.005780346820809248,
+    "depth1_escape": 0.16569767441860464,
+    "novel_bits": 2.593374740537356
+  },
+  {
+    "corpus": "bfcl",
+    "actions": 3000,
+    "distinct": 666,
+    "obs_per_target": 4.504504504504505,
+    "root_escape": 0.00199203187250996,
+    "depth1_escape": 0.111,
+    "novel_bits": 3.1713684183119812
+  },
+  {
+    "corpus": "redcode",
+    "actions": 109,
+    "distinct": 67,
+    "obs_per_target": 1.626865671641791,
+    "root_escape": 0.009174311926605505,
+    "depth1_escape": 0.21500000000000002,
+    "novel_bits": 2.2175914350726265
+  },
+  {
+    "corpus": "redcode",
+    "actions": 304,
+    "distinct": 99,
+    "obs_per_target": 3.0707070707070705,
+    "root_escape": 0.003289473684210526,
+    "depth1_escape": 0.10630479628674575,
+    "novel_bits": 3.2337214046693252
+  }
+]

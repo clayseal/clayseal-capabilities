@@ -85,8 +85,24 @@ Three ways to obtain a reference that a deployment actually has:
 3. **Commit-then-reveal.** The agent declares its intended commands before
    running them, and the seal is taken from the declaration rather than from a
    past run. This makes the reference something the agent **produces** rather
-   than something the operator must already possess, and it is the one
-   architectural change an independent workflow separately marked ship-worthy.
+   than something the operator must already possess.
 
-The third is a design change rather than a tuning change, and it is the one worth
-pursuing.
+**Shipped.** `SessionBroker.declared_plan` is the reference; declaration is
+checked against the sealed goal (`check_declaration_against_goal`) and fails
+closed before any side effect. Sealed-goal egress includes destinations inside
+benign Write/Bash bodies (not only `event.path`). Measured on SLEIGHT
+(`python -m benchmarks.commit_then_reveal`):
+
+| Arm | Contained |
+| --- | --: |
+| honest declare, then sabotage (corridor) | 97.7% |
+| declare sabotage up front (goal check) | 27.9% |
+| no declaration (corridor off) | population only |
+| combined when agent must declare | 97.7% |
+
+The goal-check arm fell from an inflated ~47% after body-surface enrichment
+removed false ``goal names none`` hits on same-destination content sabotage.
+27.9% is the true novel-egress / suspect-callee rate. Content-only sabotage that
+reuses in-goal destinations still passes the goal check and is caught only when
+the agent declared honestly (corridor). See
+`benchmarks/results/commit_then_reveal.md`.

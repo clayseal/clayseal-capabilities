@@ -1,0 +1,79 @@
+[
+  {
+    "axis": "delegation splitting (1 + 5)",
+    "landed": 100,
+    "escaped": false,
+    "note": "each delegate books against every ancestor's ceiling too"
+  },
+  {
+    "axis": "forged delegation chain",
+    "landed": 0,
+    "escaped": false,
+    "note": "a claims dict must not name its own ancestors"
+  },
+  {
+    "axis": "reserve/commit desync (TTL)",
+    "landed": 200,
+    "escaped": false,
+    "note": "200 booked; 1 breach(es) reported"
+  },
+  {
+    "axis": "double commit of one hold",
+    "landed": 100,
+    "escaped": false
+  },
+  {
+    "axis": "window boundary (early expiry)",
+    "landed": 0,
+    "escaped": false,
+    "note": "100 of 100 still counted at t+999 of 1000"
+  },
+  {
+    "axis": "idempotency key across sessions",
+    "landed": 500,
+    "escaped": false,
+    "note": "reuse across sessions must book normally"
+  },
+  {
+    "axis": "idempotency, amount swapped",
+    "landed": 10001,
+    "escaped": false,
+    "note": "a mismatched amount must not dedupe (both must book)"
+  },
+  {
+    "axis": "32 concurrent reservations",
+    "landed": 100,
+    "escaped": false,
+    "note": "10 of 32 granted"
+  },
+  {
+    "axis": "torn tail on reload",
+    "landed": 90,
+    "escaped": false,
+    "note": "90 of 100 survived a truncated last record"
+  },
+  {
+    "axis": "re-book across a reload",
+    "landed": 100,
+    "escaped": false,
+    "note": "idempotency must survive a restart"
+  },
+  {
+    "axis": "sub-quantum amounts",
+    "landed": 0.2,
+    "escaped": false,
+    "note": "2,000 x 0.0001 booked as 0.2000 (expected 0.2000)"
+  },
+  {
+    "axis": "absurd reservation amounts",
+    "landed": 0,
+    "escaped": false,
+    "note": "1e999 / Infinity / NaN / negative / zero"
+  },
+  {
+    "axis": "clock rewind",
+    "landed": 0,
+    "escaped": false,
+    "note": "100 of 100 visible from an earlier now"
+  }
+]

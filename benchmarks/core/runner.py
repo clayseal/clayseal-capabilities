@@ -29,6 +29,12 @@ class EngineResult:
     benign_blocked: int = 0
     attack_allowed: int = 0  # containment failures
     attack_blocked: int = 0  # prevented violations
+    # Soft STEP_UP vs hard DENY split (DeployableStack). Union = attack_blocked.
+    # Soft must never be folded into a hard-ASR headline.
+    hard_attack_blocked: int = 0
+    soft_attack_blocked: int = 0
+    hard_benign_blocked: int = 0
+    soft_benign_blocked: int = 0
     overhead_ms: list[float] = field(default_factory=list)
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     # Per-task (blocked, total) pairs, kept so rates can carry a cluster
@@ -42,8 +48,24 @@ class EngineResult:
         return self.attack_blocked / self.n_attack if self.n_attack else 0.0
 
     @property
+    def hard_attack_prevention_rate(self) -> float:
+        return self.hard_attack_blocked / self.n_attack if self.n_attack else 0.0
+
+    @property
+    def soft_attack_prevention_rate(self) -> float:
+        return self.soft_attack_blocked / self.n_attack if self.n_attack else 0.0
+
+    @property
     def false_block_rate(self) -> float:
         return self.benign_blocked / self.n_benign if self.n_benign else 0.0
+
+    @property
+    def hard_false_block_rate(self) -> float:
+        return self.hard_benign_blocked / self.n_benign if self.n_benign else 0.0
+
+    @property
+    def soft_false_block_rate(self) -> float:
+        return self.soft_benign_blocked / self.n_benign if self.n_benign else 0.0
 
     @property
     def benign_utility_rate(self) -> float:
@@ -77,7 +99,11 @@ class EngineResult:
             "n_benign": self.n_benign,
             "n_attack": self.n_attack,
             "attack_prevention_rate": round(self.attack_prevention_rate, 4),
+            "hard_attack_prevention_rate": round(self.hard_attack_prevention_rate, 4),
+            "soft_attack_prevention_rate": round(self.soft_attack_prevention_rate, 4),
             "false_block_rate": round(self.false_block_rate, 4),
+            "hard_false_block_rate": round(self.hard_false_block_rate, 4),
+            "soft_false_block_rate": round(self.soft_false_block_rate, 4),
             "benign_utility_rate": round(self.benign_utility_rate, 4),
             "attack_allowed": self.attack_allowed,
             "benign_blocked": self.benign_blocked,

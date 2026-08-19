@@ -122,7 +122,7 @@ and RedCode's 0.00% into 2.47%.
 
 ---
 
-## Sequence-defined harm: contained
+## Sequence-defined harm: contained in one write, open across several
 
 Read a resource you are granted, then write to a sink you are granted, and the
 written value contains what you read. Every field of every action is correct.
@@ -137,22 +137,33 @@ Bell-LaPadula per session is correct and unusable, because one sensitive read
 blocks every later write. Declassification is bound to the sealed goal, so an
 injected instruction cannot nominate a sink.
 
+The single-write arms, re-measured on 2026-08-09 by `python -m benchmarks.flow`:
+
 | Corpus | sessions | leak contained | legitimate false-blocked | label creep | real traffic |
 | --- | --: | --: | --: | --: | --: |
-| tau2 | 300 | **100%** | 0.0% | 0.0% | **0/1100** |
-| BFCL | 91 | **100%** | 0.0% | 0.0% | **0/223** |
+| tau2 | 200 | **100%** | 0.0% | 0.0% | **0/1,230 sink writes, 0/1,242 all benign** |
+| BFCL | 171 | **100%** | 0.0% | 0.0% | **0/691 sink writes, 0/1,044 all benign** |
 
 Four arms, because the leak arm alone would be meaningless: a mechanism that
 refused everything would score 100% there and 100% on the legitimate arm too.
 
-The evasion sweep is what did the work. **Every transform below carried the value
-out at 100% before it was handled**: embedded in prose, split in two, split into
-fours, base64, hex, reversed, dotted. All are now contained. The prose case was a
-defect in the attribution index and the one that would have mattered most in
-production.
+The earlier version of this section listed seven transforms and said all of them
+were contained. That was a closed set drawn from the cases the mechanism won.
+The current sweep runs 22 single-write transforms and 19 are contained at 100%
+on both corpora; caesar+1 and digit-arithmetic+1 are keyed and open by design,
+and base85 is contained at 73.5% on tau2 and 77.2% on BFCL.
+
+**The row above is a single-write number, and the multi-write picture is worse.**
+Split the same value across two writes with 300 characters of ordinary prose in
+each and it walks out in 200 of 200 tau2 sessions and 171 of 171 BFCL sessions.
+Split it into 22 fragments and it walks out in 84 of 200 and 122 of 171. A value
+of 11 characters or fewer has no cross-write check at all. Every number in this
+paragraph is measured, with the rung below allowing every write, and the whole
+matrix is in `flow.md`.
 
 **Asserted rather than hidden:** a value the agent describes instead of quoting is
-gone. Flow control raises the cost of exfiltration; it does not end it.
+gone, and so is a value it enciphers with a key. Flow control raises the cost of
+exfiltration; it does not end it.
 
 ---
 
