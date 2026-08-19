@@ -5,8 +5,10 @@ from benchmarks.core.broker_eval import run_broker_benchmark
 from benchmarks.core.engines import build_engines
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets import get_loader
+from conftest import requires_corpus
 
 
+@requires_corpus("RedCode", "InjecAgent")
 def test_stack_matches_ladder_on_redcode_and_ipi():
     for name in ("redcode", "ipi_coding", "mcp_attack"):
         tasks = list(get_loader(name).load())

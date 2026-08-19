@@ -197,6 +197,12 @@ jobs:
       - name: Run benchmark invariants
         run: pytest benchmarks/tests -q
 
+      # Also re-run the library suite WITH the corpora present. Tests marked
+      # `requires_corpus` skip in the fast gate — that is a deferral to here, not
+      # a hole, and this is the step that makes it one.
+      - name: Run the library suite against the fetched corpora
+        run: pytest python/tests -q
+
       # The runnable half of SEND_PACKET.md. Blocks on a forbidden claim, and
       # ratchets the bare-zero debt so it can shrink but not grow.
       - name: Check published claims
