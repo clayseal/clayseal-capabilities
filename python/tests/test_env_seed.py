@@ -1,6 +1,23 @@
 """Trusted environment seed: goal-named files from a CLEAN snapshot only."""
 from __future__ import annotations
 
+import pytest
+
+# `benchmarks.live.broker_defense` imports `agentdojo.agent_pipeline` at module
+# scope, and agentdojo is the OPTIONAL `[benchmarks]` extra. Without this the
+# module raises at COLLECTION and aborts the whole run before any other test
+# executes — the same defect `test_biscuit_scope.py` had.
+#
+# It passed locally and failed in CI because agentdojo happens to be installed
+# in the dev venv here and is not in the test job. A suite that is green only on
+# the machine that wrote it is the thing CI exists to catch, and this is the
+# second instance of it in two runs.
+pytest.importorskip(
+    "agentdojo",
+    reason="needs the optional benchmarks extra: pip install "
+           "'agentauth-capabilities[benchmarks]' (Python 3.10-3.12)",
+)
+
 from benchmarks.live.broker_defense import (
     goal_named_env_destinations,
     snapshot_trusted_files,
