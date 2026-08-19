@@ -16,6 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Same missing credential as ci.yml. Say so, rather than letting the
+      # checkout report a private repo as "not found".
+      - name: Check the sibling-repo token
+        env:
+          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::pip-audit needs agentauth-core installed to resolve the dependency tree. Add a fine-grained PAT with Contents:read on pberlizov/clay-seal-core as the CLAY_SEAL_CI_TOKEN repository secret."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-core
