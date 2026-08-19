@@ -61,17 +61,26 @@ jobs:
       - name: Install (core, then optional identity, then this layer)
         run: |
           pip install "./deps/agentauth-core[dev]"
+          # The identity layer is an optional extra AND declares
+          # requires-python >=3.11, so on the 3.10 leg of the matrix it cannot
+          # install at all. A failed install of an OPTIONAL dependency must not
+          # fail the build — the tests that need it skip via importorskip. This
+          # was the second thing CI found on its first real run.
           if [ -d deps/agentauth-identity ]; then
-            pip install "./deps/agentauth-identity"
+            pip install "./deps/agentauth-identity" \
+              || echo "::notice::identity layer not installable on this Python; [biscuit-service] tests will skip"
           else
             echo "::notice::identity layer unavailable; [biscuit-service] tests will skip"
           fi
           pip install -e ".[oidc,a2a,redis]" pytest ruff fakeredis
-      - name: Layering contract (identity only via lazy/optional imports)
-        run: |
-          python -m agentauth.core.layering agentauth \
-            --forbid agentauth.receipts --forbid agentauth.backend \
-            --forbid-toplevel agentauth.identity
+      # The layering contract is now `python/tests/test_shipped_package_layering.py`
+      # rather than a CLI step. The step this replaces invoked
+      # `python -m agentauth.core.layering`, a module that does not exist in
+      # agentauth-core at all — a dead reference from the repo split that only
+      # surfaced when CI ran for the first time. The test is also stronger: it
+      # reads the AST, so a LAZY import inside a function is distinguished from a
+      # module-scope one, which is exactly the distinction an optional extra
+      # turns on.
       - name: Run tests
         run: pytest python/tests -q
 
