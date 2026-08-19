@@ -32,7 +32,7 @@ Live keystones (API $, separate):
 | Behavioural-layer numbers | **corpus-limited** | `results/adequacy.md` | Of 11 corpora, 4 carry zero attack events and 1 can evaluate provenance. Quote no behavioural number without the adequacy verdict for that corpus. |
 | Volume / burst containment 100% | ready | `results/burst.md` | Do not calibrate velocity on attack labels |
 | Sequence / BPL ≈0% violation vs Progent/CaMeL ≈100% | ready | `results/bpl_head_to_head.md` | Sample size modest (n≈20) |
-| Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready | `results/head_to_head_injection.md`, `pooled_asr.md` | Utility cost is the tradeoff; report it |
+| Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready (**model-bound**) | `results/head_to_head_injection.md`, `pooled_asr.md`, `results/utility_experiment_void.md` | Utility cost is the tradeoff; report it. **And name the model.** On `gpt-5-mini` the UNDEFENDED ASR is 0.0% across four attacks, so the result does not transfer to a 2026 frontier model and cannot be re-run there. |
 | Detector closes aggregate bursts (BFCL / τ²) | ready | `results/detector.md` | Per-call ladder scores 0% on this class |
 | Content-defined harm (AgentHarm / SLEIGHT / AdvBench-agent) | ready (ceiling) | `results/agentharm_ceiling.md`, `why_we_fail.md` | **Not** an authorization win; do not optimize via hard-deny of untargeted tools |
 | ASB / InjecAgent 100% containment | ready (saturated) | scoreboard `SATURATED` | **Never** in a pooled headline |
@@ -80,6 +80,10 @@ switches change it materially and both are now explicit rather than implied.
 13. Citing an adaptive result against a LADDER RUNG as an adaptive result for the
     product. The ladder is an ablation. `results/adaptive_stack.md` is the only
     adaptive run against `DeployableStack`.
+14. Quoting any live AgentDojo ASR without naming the model. The attack does not
+    land on a 2026 frontier model — undefended ASR is 0.0% on `gpt-5-mini` across
+    four attacks — so "we hold ASR at zero" is a claim about
+    `gpt-4o-mini-2024-07-18` specifically. See `results/utility_experiment_void.md`.
 
 ## Packet contents (zip / folder)
 
