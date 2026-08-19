@@ -25,10 +25,15 @@ import pytest
 PACKAGE = Path(__file__).resolve().parents[2] / "agentauth" / "capabilities"
 
 #: Top-level module names the shipped package may never depend on, at any depth.
-#: `agentauth.identity` is deliberately absent: it is a real optional extra
-#: (`[biscuit-service]`) and is already covered by the CI `--forbid-toplevel`
-#: check, which allows it inside a function and forbids it at module scope.
+#: `agentauth.identity` is handled separately below: it is a real optional extra
+#: (`[biscuit-service]`), so it is allowed inside a function and forbidden at
+#: module scope.
 FORBIDDEN_ROOTS = {"benchmarks", "demo", "examples", "scratchpad", "scripts"}
+
+#: Optional sibling layers. Importing one at MODULE SCOPE makes an optional
+#: extra mandatory: the package stops importing for anyone who did not install
+#: it, which is the whole point of it being an extra.
+OPTIONAL_SIBLINGS = ("agentauth.identity", "agentauth.receipts", "agentauth.backend")
 
 SOURCES = sorted(PACKAGE.rglob("*.py"))
 
@@ -60,3 +65,61 @@ def test_module_does_not_import_anything_outside_the_wheel(path: Path):
         f"not shipped in the wheel (only-include = ['agentauth/capabilities']). "
         f"Move the dependency to the caller, or invert it."
     )
+
+
+def _module_level_imports(tree: ast.AST) -> set[str]:
+    """Modules imported at module scope — not inside a function or method.
+
+    The distinction is the contract for an optional extra: a lazy import inside
+    `default_biscuit_backend()` is correct and an import at the top of the file
+    is not, because the second one runs for every user whether they installed the
+    extra or not.
+    """
+    names: set[str] = set()
+    for node in tree.body:                     # top level only, by construction
+        if isinstance(node, ast.Import):
+            names |= {a.name for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            names.add(node.module)
+        elif isinstance(node, ast.If):         # `if TYPE_CHECKING:` blocks
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Import):
+                    names |= {a.name for a in inner.names}
+                elif isinstance(inner, ast.ImportFrom) and inner.module:
+                    names.add(inner.module)
+    return names
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.name))
+def test_optional_layers_are_imported_lazily(path: Path):
+    """An optional extra imported at module scope is not optional.
+
+    This replaces the CI step `python -m agentauth.core.layering ...`, which
+    referenced a module that does not exist in `agentauth-core` at all — a dead
+    reference left by the repo split, and one that could only be discovered by
+    CI actually running, which it had never done.
+    """
+    tree = ast.parse(path.read_text(), filename=str(path))
+    top = _module_level_imports(tree)
+    leaked = sorted(
+        name for name in top
+        if any(name == sib or name.startswith(sib + ".") for sib in OPTIONAL_SIBLINGS)
+    )
+    assert not leaked, (
+        f"{path.name} imports {leaked} at module scope. These are optional "
+        f"extras; import them inside the function that needs them so the "
+        f"package still imports without them."
+    )
+
+
+def test_the_optional_layer_is_actually_used_somewhere_lazily():
+    """Guard the guard: if nothing imports identity at all, the test above is
+    vacuous and would keep passing after the seam was deleted."""
+    lazy = [
+        p for p in SOURCES
+        if "agentauth.identity" in p.read_text()
+        and "agentauth.identity" not in _module_level_imports(
+            ast.parse(p.read_text(), filename=str(p))
+        )
+    ]
+    assert lazy, "no module imports the identity layer lazily; has the seam gone?"
