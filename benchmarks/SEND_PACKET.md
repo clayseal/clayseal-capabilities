@@ -41,6 +41,8 @@ Live keystones (API $, separate):
 | Syscall tier (iVisor) | partial | `results/syscall_tier.md` | Trace replay ≠ live sandbox; 05/06 may be non-events on fd-3 |
 | AgentDyn open-ended utility | ready (failure) | `results/agentdyn.md` | Must appear in any honest packet; typed-plan/`reclear` is the fix path |
 | Replay false-block 0% | blocked as operational FP | scoreboard legend | Replay FB ≠ production FP; use live ladder. Suppress the `FB=0.00%` cell entirely where `heldout.py` cannot produce a split, rather than printing a circular zero beside a real containment number. |
+| Adaptive adversary vs the SHIPPED gateway | ready | `results/adaptive_stack.md` | Four objectives flat at 100% across blind/feedback/oracle. In-scope content staging is 100% at oracle **entirely via STEP_UP** — the pessimistic supervised row collapses to the floor, so quote both rows or neither. |
+| In-scope staging, path-mention objective | **known gap** | `results/in_scope_exfiltration.md`, `results/adaptive_stack.md` | The shipped stack scores exactly its floor rung, +0.0 lift at oracle. Unchanged. |
 | ULB AUC / IBM AML fan-out | ready (analytics) | `results/aml_validation.md` | Analytics layer, not per-call authz |
 
 ## Configuration the published numbers were measured under
@@ -72,6 +74,12 @@ switches change it materially and both are now explicit rather than implied.
 11. Any containment number quoted without stating that `session_rules` was on.
     The pack is corpus-derived; quoting a number it contributed to as a general
     property of the system is the overfitting this packet exists to surface.
+12. Quoting the in-scope content-staging containment without the `step-up=allow`
+    row beside it. All of that containment is supervision; under a human who
+    approves everything it is the floor's number.
+13. Citing an adaptive result against a LADDER RUNG as an adaptive result for the
+    product. The ladder is an ablation. `results/adaptive_stack.md` is the only
+    adaptive run against `DeployableStack`.
 
 ## Packet contents (zip / folder)
 
