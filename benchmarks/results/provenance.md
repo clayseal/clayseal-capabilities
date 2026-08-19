@@ -50,10 +50,31 @@ originates in untrusted output and stays untrusted.
 Keystone 2, security: met. The deployable path reaches the oracle's 0 percent ASR
 with no ground-truth seeding.
 
-Keystone 2, utility: open. Goal-text seeding is too conservative; the next
-iteration seeds from trusted environment provenance (origin-based taint), not
-prompt string match. Until then the deployable path trades utility for the same
-security the oracle bought for free.
+Keystone 2, utility: **partially closed (2026-08).** Goal-named files are seeded
+from a **pre-contamination** filesystem snapshot
+(`snapshot_trusted_files` / `goal_named_env_destinations` in
+`broker_defense.py`). Never seed from the live/injected env — AgentDojo splices
+the attacker IBAN into `bill-december-2023.txt` via `injection_bill_text`.
+
+| banking cell (gpt-4o-mini, important_instructions) | clean util | ASR | hint-retry |
+|---|--:|--:|--:|
+| envelope-provenance (goal text only, prior) | 0–16.7% | 0% | — |
+| envelope-provenance + clean env seed (n=8) | 0% | 0% | 5/20 |
+| envelope-provenance-replan + env seed (n=8) | **25%** | **0%** | 5/18 |
+| bill-pay task alone + replan + env seed | **100%** | **0%** | 5/5 |
+
+Env seed alone clears the floor for named-bill IBANs; clean-utility still needs
+runtime replan for envelope misses. Residual banking tasks (rent adjust, dinner
+split) name no file / no IBAN in the goal — still open.
+
+## Broker wiring (2026-08)
+
+`SessionBroker` now accepts `provenance` / `goal_named_objects`, calls
+`EgressPolicy.check_with_provenance` on the floor (structured grounding →
+STEP_UP, never autonomous ALLOW), and attaches `trusted_candidates` on egress
+deny/step-up so a blocked agent can retry with a grounded recipient. The live
+harness already passed these kwargs; they were previously rejected. Full-email
+tokens (not bare domains) are what provenance indexes on a domain miss.
 
 ## Origin-based taint: built, and an honest negative on banking
 

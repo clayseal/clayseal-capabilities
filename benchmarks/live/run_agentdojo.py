@@ -212,7 +212,8 @@ from benchmarks.live.planner import LLMPlanner
 _BENCH_VERSION = "v1.2.2"
 
 
-def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
+def build_pipeline(model: str, ablation: str, planner, recipient_map=None,
+                   clean_files=None):
     # Head-to-head: AgentDojo's own built-in defenses on the identical subset.
     if ablation.startswith("builtin:"):
         dname = ablation.split(":", 1)[1]
@@ -243,7 +244,8 @@ def build_pipeline(model: str, ablation: str, planner, recipient_map=None):
                                     graduated=graduated, defer=defer,
                                     defer_allow=defer_allow,
                                     audit_budget=audit_budget,
-                                    replan=replan)
+                                    replan=replan,
+                                    clean_files=clean_files)
         for e in pipe.elements:
             if isinstance(e, ToolsExecutionLoop):
                 e.elements = [BrokerToolsExecutor(harness) if isinstance(x, ToolsExecutor) else x
@@ -334,6 +336,11 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
     if unresolved:
         raise SystemExit(f"no planner for {unresolved}; they would run undefended")
     recipient_map = _recipient_map(suite, user_ids)
+    # Pre-contamination filesystem (empty injections). Banking attacks overwrite
+    # goal-named bills; provenance seeding must use this snapshot, not live env.
+    from benchmarks.live.broker_defense import snapshot_trusted_files
+    clean_files = snapshot_trusted_files(
+        suite.load_and_inject_default_environment({}))
     print(f"suite={suite_name} model={model} attack={attack_name} | "
           f"{len(user_ids)} user x {len(inj_ids)} injection tasks = {len(user_ids)*len(inj_ids)} runs/ablation\n")
 
@@ -344,7 +351,8 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
         # One bad ablation (e.g. an unknown builtin defense name) must not lose the
         # whole cell's other ablations; record its error and continue.
         try:
-            pipe, harness = build_pipeline(model, ab, planners.get(ab), recipient_map)
+            pipe, harness = build_pipeline(
+                model, ab, planners.get(ab), recipient_map, clean_files=clean_files)
             attack = load_attack(attack_name, suite, pipe)
         except Exception as exc:
             print(f"  {ab:9} SKIPPED: {type(exc).__name__}: {exc}")
@@ -365,10 +373,16 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
         # triple is (security=ASR, utility, friction), not security alone.
         step_ups = sum(1 for d in harness.decisions if d.get("outcome") == "STEP_UP") if harness else 0
         n_tasks = max(1, len(user_ids))
-        gated = f" | allow/block {harness.allows}/{harness.blocks} step-ups {step_ups}" if harness else ""
+        hint_r = getattr(harness, "hint_retries", 0) if harness else 0
+        hint_h = getattr(harness, "hint_retry_hits", 0) if harness else 0
+        gated = (
+            f" | allow/block {harness.allows}/{harness.blocks} step-ups {step_ups}"
+            f" hint-retry {hint_h}/{hint_r}"
+        ) if harness else ""
         out[ab] = dict(clean_utility=statistics.fmean(clean), utility_under_attack=statistics.fmean(util),
                        asr=statistics.fmean(sec), n=len(sec),
-                       friction=step_ups / n_tasks, step_ups=step_ups)
+                       friction=step_ups / n_tasks, step_ups=step_ups,
+                       hint_retries=hint_r, hint_retry_hits=hint_h)
         print(f"  {ab:9} clean-utility {out[ab]['clean_utility']*100:5.1f}%  "
               f"ASR {out[ab]['asr']*100:5.1f}%  utility-under-attack {out[ab]['utility_under_attack']*100:5.1f}%"
               f"  friction {out[ab]['friction']:.2f}/task  (n={len(sec)}){gated}")

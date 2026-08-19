@@ -1,0 +1,35 @@
+[
+  {
+    "attack": "RACE",
+    "threads": 64,
+    "winners": 1,
+    "violation": null
+  },
+  {
+    "attack": "OUTAGE",
+    "detail": [
+      {
+        "backend_error": "ConnectionError",
+        "verifier": "denied (commit token replay store unavailable: ConnectionError)"
+      },
+      {
+        "backend_error": "TimeoutError",
+        "verifier": "denied (commit token replay store unavailable: TimeoutError)"
+      }
+    ],
+    "violation": null
+  },
+  {
+    "attack": "HOSTILE_INPUT",
+    "problems": [],
+    "violation": null
+  },
+  {
+    "attack": "SCALING",
+    "tokens": 20000,
+    "per_call_us_early": 0.92,
+    "per_call_us_late": 0.79,
+    "ratio": 0.9,
+    "violation": null
+  }
+]

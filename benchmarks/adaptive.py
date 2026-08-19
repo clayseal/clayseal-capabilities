@@ -22,7 +22,30 @@ from benchmarks.adversarial.adaptive import (
     run_adaptive,
 )
 from benchmarks.core.engines import LADDER, build_engines
+from benchmarks.core.runner import _calibration_split
 from benchmarks.datasets.base import get_loader
+
+
+def calibrate(engines, tasks, seed: int = 0):
+    """Give calibrated engines their one look at clean traffic before the attack.
+
+    ``run_benchmark`` does this through ``observe_corpus``; this path did not, and
+    the omission is not cosmetic. Uncalibrated, ``VelocityLadderEngine`` falls
+    back to ``default_cap = 5`` while calibration on RedCode yields **32**, so
+    every adaptive result for that rung was produced with a cap 6.4x tighter than
+    the one an operator would set — which inflates containment. The density rung
+    is worse off: with no baseline it abstains entirely, so its row was a copy of
+    its parent's.
+
+    The split is the runner's own: half the CLEAN tasks calibrate, attack-bearing
+    tasks never do, so no engine sees the task it is about to be attacked on.
+    """
+    calibration, _ = _calibration_split(list(tasks), seed)
+    for engine in engines:
+        observe = getattr(engine, "observe_corpus", None)
+        if observe is not None:
+            observe(calibration)
+    return engines
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
 
     objective = OBJECTIVES[args.objective]()
     engines = build_engines([n.strip() for n in args.engines.split(",") if n.strip()])
+    calibrate(engines, tasks, seed=args.seed)
     levels = [Knowledge(k.strip()) for k in args.knowledge.split(",") if k.strip()]
 
     results = []

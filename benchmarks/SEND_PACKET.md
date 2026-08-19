@@ -26,7 +26,10 @@ Live keystones (API $, separate):
 
 | Claim | Status | Cite | Forbidden without caveat |
 | --- | --- | --- | --- |
-| Target-shaped containment (RedCode / IPI / path egress) ≈100% | ready | `results/new-suites/redcode.md`, scoreboard | Do not pool with ASB/InjecAgent |
+| Target-shaped containment (RedCode / IPI / path egress) ≈100% | ready | `results/new-suites/redcode.md`, scoreboard | Do not pool with ASB/InjecAgent. **Must carry the in-scope caveat below.** |
+| Adaptive red-team 100% vs oracle attacker | ready (**attribute to `task-scope`**) | `results/adaptive_ladder_audit.md` | Every rung above `task-scope` scores identically. All three objectives are defined through `_outside_workspace()`, so the objective is the negation of the defence. Do **not** credit binding/budget/velocity. |
+| No containment against in-scope data staging | **known gap** | `results/in_scope_exfiltration.md` | Against an oracle attacker the full ladder's escaped set is byte-identical to `allow-all`. Must accompany any containment claim for coding agents. |
+| Behavioural-layer numbers | **corpus-limited** | `results/adequacy.md` | Of 11 corpora, 4 carry zero attack events and 1 can evaluate provenance. Quote no behavioural number without the adequacy verdict for that corpus. |
 | Volume / burst containment 100% | ready | `results/burst.md` | Do not calibrate velocity on attack labels |
 | Sequence / BPL ≈0% violation vs Progent/CaMeL ≈100% | ready | `results/bpl_head_to_head.md` | Sample size modest (n≈20) |
 | Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready | `results/head_to_head_injection.md`, `pooled_asr.md` | Utility cost is the tradeoff; report it |
@@ -37,8 +40,18 @@ Live keystones (API $, separate):
 | MCP-attack (poisoned tool / deputy / arg mutation) | ready (fixture) | `fixtures/mcp_attack/`, `new-suites/mcp_attack.md` | Fixture, not a public leaderboard |
 | Syscall tier (iVisor) | partial | `results/syscall_tier.md` | Trace replay ≠ live sandbox; 05/06 may be non-events on fd-3 |
 | AgentDyn open-ended utility | ready (failure) | `results/agentdyn.md` | Must appear in any honest packet; typed-plan/`reclear` is the fix path |
-| Replay false-block 0% | blocked as operational FP | scoreboard legend | Replay FB ≠ production FP; use live ladder |
+| Replay false-block 0% | blocked as operational FP | scoreboard legend | Replay FB ≠ production FP; use live ladder. Suppress the `FB=0.00%` cell entirely where `heldout.py` cannot produce a split, rather than printing a circular zero beside a real containment number. |
 | ULB AUC / IBM AML fan-out | ready (analytics) | `results/aml_validation.md` | Analytics layer, not per-call authz |
+
+## Configuration the published numbers were measured under
+
+A containment number is a property of a configuration, not of a name. Two
+switches change it materially and both are now explicit rather than implied.
+
+| switch | measured setting | what it means |
+| --- | --- | --- |
+| `session_rules` | **on** | Five corpus-derived pattern rules (`agentauth/capabilities/session_rules.py`) matching shell command text — `ln -s` then `zip`, `awk $N` vs an observed CSV header, absolute-line `sed` after an expanding edit — one of which carries a corpus's own project name as a literal. They were inlined in the broker and unswitchable; they are now named and default OFF on the raw `SessionBroker` and ON in `DeployableStack.from_goal`, which is the profile every published number came from. STEP_UP only, never DENY. **Any containment claim for a workload unlike these corpora should be re-measured with `session_rules=False`.** |
+| `detector` | **off** | The trajectory detector does not ship enabled. On SLEIGHT it reaches 100% containment by refusing 13 of 18 benign trajectories. |
 
 ## Forbidden claims (auto-fail review)
 
@@ -48,6 +61,17 @@ Live keystones (API $, separate):
 4. Omitting AgentDyn 0% utility when discussing open-ended tasks.
 5. Claiming Tier-4 live iVisor numbers from sample-trace replay alone.
 6. Mixing L3 receipts plumbing pass rates with L2 ASR claims.
+7. Crediting the adaptive red-team's 100% to the full stack. It is a `task-scope`
+   result; the rungs above it are indistinguishable from it on that test.
+8. Any containment claim for a coding agent that omits the in-scope staging gap.
+9. Any behavioural number from a corpus `benchmarks/adequacy.py` marks unusable
+   for that layer.
+10. Containment at an unconstrained false-block rate as a headline. Use
+    detection @ fixed FPR (`benchmarks/opeval.py`); a control that blocks
+    everything must score zero.
+11. Any containment number quoted without stating that `session_rules` was on.
+    The pack is corpus-derived; quoting a number it contributed to as a general
+    property of the system is the overfitting this packet exists to surface.
 
 ## Packet contents (zip / folder)
 

@@ -93,8 +93,12 @@ def run(suite_name, model, n_user, ablations, out_path):
     # per_task[query][ablation] = {"success": bool, "deny": [...], "stepup": [...]}
     per_task: dict = defaultdict(dict)
     logdir = tempfile.mkdtemp(prefix="adojo-diag-")
+    from benchmarks.live.broker_defense import snapshot_trusted_files
+    clean_files = snapshot_trusted_files(
+        suite.load_and_inject_default_environment({}))
     for ab in ["none"] + ablations:
-        pipe, harness = build_pipeline(model, ab, planners.get(ab), recipient_map)
+        pipe, harness = build_pipeline(
+            model, ab, planners.get(ab), recipient_map, clean_files=clean_files)
         for uid in user_ids:
             task = suite.user_tasks[uid]
             query = str(getattr(task, "PROMPT", uid))

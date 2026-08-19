@@ -1,0 +1,354 @@
+[
+  {
+    "corpus": "redcode",
+    "tasks": 768,
+    "sessions": 50,
+    "session_frac": 0.06510416666666667,
+    "median_len": 1.0,
+    "ctx_tasks": 0,
+    "attack_events": 718,
+    "benign_events": 344,
+    "obs_per_target": 3.44,
+    "benign_taint": 0.8372093023255814,
+    "attack_taint": 0.0,
+    "taint_gap": -0.8372093023255814,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "unusable",
+        "median task is 1 event(s); there is no sequence to model"
+      ],
+      "density": [
+        "weak",
+        "3.4 observations per distinct target; needs 5"
+      ],
+      "provenance": [
+        "unusable",
+        "no task holds both benign and attack events; attacks begin cold and are never taint-derived"
+      ]
+    }
+  },
+  {
+    "corpus": "sleight",
+    "tasks": 43,
+    "sessions": 43,
+    "session_frac": 1.0,
+    "median_len": 12,
+    "ctx_tasks": 43,
+    "attack_events": 129,
+    "benign_events": 311,
+    "obs_per_target": 1.9935897435897436,
+    "benign_taint": 0.7459807073954984,
+    "attack_taint": 0.7542087542087542,
+    "taint_gap": 0.00822804681325584,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "ok",
+        ""
+      ],
+      "density": [
+        "unusable",
+        "2.0 observations per distinct target; needs 5"
+      ],
+      "provenance": [
+        "unusable",
+        "taint gap +1%: no signal"
+      ]
+    }
+  },
+  {
+    "corpus": "ipi_coding",
+    "tasks": 45,
+    "sessions": 35,
+    "session_frac": 0.7777777777777778,
+    "median_len": 2,
+    "ctx_tasks": 35,
+    "attack_events": 50,
+    "benign_events": 45,
+    "obs_per_target": 45.0,
+    "benign_taint": 0.0,
+    "attack_taint": 0.3,
+    "taint_gap": 0.3,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "ok",
+        ""
+      ],
+      "density": [
+        "ok",
+        ""
+      ],
+      "provenance": [
+        "ok",
+        ""
+      ]
+    }
+  },
+  {
+    "corpus": "agent_threat_bench",
+    "tasks": 24,
+    "sessions": 6,
+    "session_frac": 0.25,
+    "median_len": 1.0,
+    "ctx_tasks": 6,
+    "attack_events": 6,
+    "benign_events": 24,
+    "obs_per_target": 2.4,
+    "benign_taint": 0.0,
+    "attack_taint": 0.0,
+    "taint_gap": 0.0,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "unusable",
+        "median task is 1 event(s); there is no sequence to model"
+      ],
+      "density": [
+        "unusable",
+        "2.4 observations per distinct target; needs 5"
+      ],
+      "provenance": [
+        "unusable",
+        "taint gap +0%: no signal"
+      ]
+    }
+  },
+  {
+    "corpus": "agentharm",
+    "tasks": 352,
+    "sessions": 352,
+    "session_frac": 1.0,
+    "median_len": 4.0,
+    "ctx_tasks": 0,
+    "attack_events": 696,
+    "benign_events": 729,
+    "obs_per_target": 5.027586206896552,
+    "benign_taint": 0.578875171467764,
+    "attack_taint": 0.5804597701149425,
+    "taint_gap": 0.0015845986471785256,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "ok",
+        ""
+      ],
+      "density": [
+        "ok",
+        ""
+      ],
+      "provenance": [
+        "unusable",
+        "no task holds both benign and attack events; attacks begin cold and are never taint-derived"
+      ]
+    }
+  },
+  {
+    "corpus": "toolemu",
+    "tasks": 116,
+    "sessions": 112,
+    "session_frac": 0.9655172413793104,
+    "median_len": 5.0,
+    "ctx_tasks": 0,
+    "attack_events": 0,
+    "benign_events": 559,
+    "obs_per_target": 4.777777777777778,
+    "benign_taint": 0.7924865831842576,
+    "attack_taint": null,
+    "taint_gap": null,
+    "verdicts": {
+      "per-action": [
+        "unusable",
+        "no attack events"
+      ],
+      "trajectory": [
+        "unusable",
+        "no attack events"
+      ],
+      "density": [
+        "unusable",
+        "no attack events"
+      ],
+      "provenance": [
+        "unusable",
+        "no attack events"
+      ]
+    }
+  },
+  {
+    "corpus": "tau2",
+    "tasks": 2545,
+    "sessions": 2443,
+    "session_frac": 0.9599214145383104,
+    "median_len": 6,
+    "ctx_tasks": 0,
+    "attack_events": 0,
+    "benign_events": 14842,
+    "obs_per_target": 285.4230769230769,
+    "benign_taint": 0.034968333108745454,
+    "attack_taint": null,
+    "taint_gap": null,
+    "verdicts": {
+      "per-action": [
+        "unusable",
+        "no attack events"
+      ],
+      "trajectory": [
+        "unusable",
+        "no attack events"
+      ],
+      "density": [
+        "unusable",
+        "no attack events"
+      ],
+      "provenance": [
+        "unusable",
+        "no attack events"
+      ]
+    }
+  },
+  {
+    "corpus": "bfcl",
+    "tasks": 1927,
+    "sessions": 416,
+    "session_frac": 0.21587960560456668,
+    "median_len": 1,
+    "ctx_tasks": 0,
+    "attack_events": 0,
+    "benign_events": 3232,
+    "obs_per_target": 4.663780663780663,
+    "benign_taint": 0.27103960396039606,
+    "attack_taint": null,
+    "taint_gap": null,
+    "verdicts": {
+      "per-action": [
+        "unusable",
+        "no attack events"
+      ],
+      "trajectory": [
+        "unusable",
+        "no attack events"
+      ],
+      "density": [
+        "unusable",
+        "no attack events"
+      ],
+      "provenance": [
+        "unusable",
+        "no attack events"
+      ]
+    }
+  },
+  {
+    "corpus": "atif",
+    "tasks": 38,
+    "sessions": 38,
+    "session_frac": 1.0,
+    "median_len": 6.0,
+    "ctx_tasks": 0,
+    "attack_events": 0,
+    "benign_events": 282,
+    "obs_per_target": 1.7961783439490446,
+    "benign_taint": 0.8404255319148937,
+    "attack_taint": null,
+    "taint_gap": null,
+    "verdicts": {
+      "per-action": [
+        "unusable",
+        "no attack events"
+      ],
+      "trajectory": [
+        "unusable",
+        "no attack events"
+      ],
+      "density": [
+        "unusable",
+        "no attack events"
+      ],
+      "provenance": [
+        "unusable",
+        "no attack events"
+      ]
+    }
+  },
+  {
+    "corpus": "asb",
+    "tasks": 51,
+    "sessions": 51,
+    "session_frac": 1.0,
+    "median_len": 42,
+    "ctx_tasks": 51,
+    "attack_events": 2040,
+    "benign_events": 102,
+    "obs_per_target": 5.1,
+    "benign_taint": 0.0,
+    "attack_taint": 0.09803921568627451,
+    "taint_gap": 0.09803921568627451,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "ok",
+        ""
+      ],
+      "density": [
+        "ok",
+        ""
+      ],
+      "provenance": [
+        "unusable",
+        "taint gap +10%: no signal"
+      ]
+    }
+  },
+  {
+    "corpus": "injecagent",
+    "tasks": 1054,
+    "sessions": 1054,
+    "session_frac": 1.0,
+    "median_len": 3.0,
+    "ctx_tasks": 1054,
+    "attack_events": 1598,
+    "benign_events": 1054,
+    "obs_per_target": 62.0,
+    "benign_taint": 0.0,
+    "attack_taint": 0.9599499374217773,
+    "taint_gap": 0.9599499374217773,
+    "verdicts": {
+      "per-action": [
+        "ok",
+        ""
+      ],
+      "trajectory": [
+        "ok",
+        ""
+      ],
+      "density": [
+        "ok",
+        ""
+      ],
+      "provenance": [
+        "ok",
+        ""
+      ]
+    }
+  }
+]

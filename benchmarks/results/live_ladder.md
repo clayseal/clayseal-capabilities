@@ -1,5 +1,15 @@
 # Live tier: the model ladder, and a correction to our utility story
 
+STATUS: superseded
+> **STATUS: superseded on one axis.** Every "supervised utility" figure below is a
+> **counterfactual**, not a measurement. It is `autonomous + step-up losses`, which
+> assumes both that a human approved and that the task then succeeded. Nothing
+> resolved a step-up when these ran: `SessionBroker.resolve_step_up` and
+> `LiveBrokerHarness.gate_with_supervision` did not exist. Re-run with a resolving
+> approver (`benchmarks/live/approver.py`) before quoting any of it; the delta is
+> expected to be negative, because a resumed run can still fail downstream.
+
+
 The deterministic tiers say what the enforcement layer decides. This one says
 what it costs a real agent doing real work. It is the tier
 [docs/methodology_audit.md](../../docs/methodology_audit.md) has been asking for

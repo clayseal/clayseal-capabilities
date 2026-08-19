@@ -1,11 +1,11 @@
 {
   "binary": {
-    "path": "/tmp/ivisor-signed",
-    "sha256": "b65da77a99b8257c2529dabb5a9f374b58c52c682da70a98ee2652e23b2bacad",
-    "size": 1517168
+    "path": "/Users/pberlizov/Projects/agentauth-capabilities/python/tests/fakes/fake_ivisor.py",
+    "sha256": "009d3252d5ec3e7441950bffed3db10ed65a825a69f505202ca10b121cb512a0",
+    "size": 5032
   },
   "config_path": ".demo-runs/epoch-0/ivisor.conf",
-  "cpu_seconds": 0.084345,
+  "cpu_seconds": 0.037279,
   "denied": [],
   "evidence_ok": true,
   "exit": {
@@ -27,18 +27,18 @@
       "argument binding"
     ]
   },
-  "policy_digest": "e8d505c4698ab4582950afc5c1d3d7655237b551e7486c4d40c6f82a04e5d4b5",
+  "policy_digest": "2b1e72d997f8a72738c38a020f3cf96888b94790788245735ecda8f66be48af9",
   "run_id": "epoch-0",
   "sandbox": "ivisor",
   "schema": "agentauth.capabilities.sandbox.attestation.v1",
   "trace_degraded": false,
   "verdicts": {
-    "allow": 147,
+    "allow": 1,
     "deny": 0,
-    "miss": 65,
+    "miss": 0,
     "unverified_claims": 0
   },
-  "wall_seconds": 0.132706,
+  "wall_seconds": 0.07722,
   "workspace_delta": {
     "created": [
       "out/summary.md",

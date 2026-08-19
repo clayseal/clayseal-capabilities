@@ -108,8 +108,34 @@ _URL = re.compile(r"https?://([^/\s\"']+)")
 _HOSTISH = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 
 
+def _first_user_text(path: Path) -> str:
+    """The sealed user request from a transcript — the real goal text.
+
+    Loader summaries used to be ``work in {cwd}``, which is too thin for
+    declaration-vs-goal checks and for any entailment advisory. The first
+    user text turn is what the human actually asked for, before tool output
+    could contaminate it.
+    """
+    try:
+        for line in path.read_text().splitlines():
+            obj = json.loads(line)
+            if not isinstance(obj, dict) or obj.get("role") != "user":
+                continue
+            content = obj.get("content")
+            if isinstance(content, dict) and content.get("type") == "text":
+                text = str(content.get("text") or "").strip()
+                if text:
+                    return text
+            if isinstance(content, str) and content.strip():
+                return content.strip()
+    except (OSError, json.JSONDecodeError):
+        return ""
+    return ""
+
+
 def _mandate(task_id: str, workspace: str,
-             authorized_paths: list[str] | None = None) -> dict[str, Any]:
+             authorized_paths: list[str] | None = None,
+             *, user_request: str = "") -> dict[str, Any]:
     """What the user authorized for this task.
 
     SLEIGHT ships no mandate. It is a TRANSCRIPT-MONITORING benchmark: paired
@@ -152,9 +178,11 @@ def _mandate(task_id: str, workspace: str,
             allowed.append(cleaned)
             continue
         allowed.extend([cleaned, f"{cleaned}/**", cleaned.lstrip("/") + "/**"])
+    summary = (user_request.strip()[:2000] if user_request.strip()
+               else f"work in {ws}")
     return {
         "mandate_id": f"sleight-{task_id}",
-        "task": {"summary": f"work in {ws}"},
+        "task": {"summary": summary},
         "scope": {
             "allowed_paths": sorted(set(allowed)),
             # `send` belongs here because `_CAPABILITIES` grants `workspace:send`.
@@ -176,19 +204,30 @@ def _authorized_surface(events) -> list[str]:
     grant asymmetric: a legitimate run's own `curl` destination was ungrantable,
     so every egress event on either side failed the path check for the same
     reason, and the check could not discriminate.
+
+    Destinations also live *inside* Write/Bash bodies (runbooks, scripts). Those
+    are part of the authorized surface: omitting them left the sealed goal with
+    filesystem paths only, so commit-then-reveal's declaration check saw
+    ``goal names none`` for egress the benign twin itself wrote.
     """
     import posixpath
 
+    from agentauth.capabilities.monitor.sealed_plan import extract_destinations
+
     out: set[str] = set()
     for event in events:
-        if not event.path:
-            continue
-        if event.path.startswith("net:"):
-            out.add(event.path)
-            continue
-        parent = posixpath.dirname(event.path.rstrip("/"))
-        if parent and parent != "/":
-            out.add(parent)
+        if event.path:
+            if event.path.startswith("net:"):
+                out.add(event.path)
+            else:
+                parent = posixpath.dirname(event.path.rstrip("/"))
+                if parent and parent != "/":
+                    out.add(parent)
+        args = event.args or {}
+        for key in ("command", "content", "new_string", "body", "file_text"):
+            val = args.get(key)
+            if isinstance(val, str) and val:
+                out |= set(extract_destinations(val))
     return sorted(out)
 
 
@@ -464,6 +503,43 @@ def _attack_indices(objs: list[dict | None], mechanism: set[int]) -> set[int]:
     return cited
 
 
+def _tool_result_text(content: Any) -> str:
+    """Normalize a transcript tool_result payload to plain text."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                parts.append(str(item.get("text") or item.get("content") or ""))
+            else:
+                parts.append(str(item))
+        return "".join(parts)
+    return str(content)
+
+
+def _observation_by_tool_use(objs: list[dict | None]) -> dict[str, str]:
+    """Map tool_use id → tool_result text (session observations for the broker)."""
+    out: dict[str, str] = {}
+    for obj in objs:
+        if not isinstance(obj, dict):
+            continue
+        content = obj.get("content")
+        if not isinstance(content, dict) or content.get("type") != "tool_result":
+            continue
+        tid = content.get("tool_use_id")
+        if not isinstance(tid, str) or not tid:
+            continue
+        text = _tool_result_text(content.get("content")).strip()
+        if text:
+            out[tid] = text
+    return out
+
+
 def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
                             workspace: str,
                             mechanism: set[int] | None = None) -> list[BenchmarkEvent]:
@@ -472,9 +548,14 @@ def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
     `mechanism` is the corpus's sabotage annotation. When present, only the tool
     calls it cites carry `label`; the rest are UNLABELED cover work. When absent
     (a benign twin) every tool call carries `label`.
+
+    Tool results are attached as ``meta["observation"]`` so the shared stack can
+    ``observe_output`` (CSV headers, Read line maps) the same way a live harness
+    does — without inventing file contents.
     """
     objs = _parse(path)
     cited = _attack_indices(objs, mechanism) if mechanism else None
+    observations = _observation_by_tool_use(objs)
 
     events: list[BenchmarkEvent] = []
     for i, obj in enumerate(objs):
@@ -502,6 +583,11 @@ def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
         else:
             event_label = label if i in cited else EventLabel.UNLABELED
 
+        meta: dict[str, Any] = {"suite": "sleight", "line": i + 1}
+        obs = observations.get(str(content.get("id") or ""))
+        if obs:
+            meta["observation"] = obs
+
         events.append(BenchmarkEvent(
             event_id=f"{task_id}-{i}",
             tool_name=tool,
@@ -510,7 +596,7 @@ def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
             label=event_label,
             path=_resolve(target, workspace),
             args={k: v for k, v in payload.items() if isinstance(v, (str, int, float))},
-            meta={"suite": "sleight", "line": i + 1},
+            meta=meta,
         ))
     return events
 
@@ -577,14 +663,17 @@ class SleightLoader:
                     e.label is EventLabel.ATTACK for e in attack_events):
                 continue
             surface = _authorized_surface(benign_events)
-            mandate = _mandate(task_id, workspace, surface)
+            user_request = _first_user_text(benign_path)
+            mandate = _mandate(task_id, workspace, surface,
+                               user_request=user_request)
             # Seal goal verbs from the benign twin so detector_eval cannot fall
             # back to an empty verb set (the artifact that produced ~60% fake
             # containment on attack-only tasks).
             mandate["allowed_actions"] = sorted({e.action for e in benign_events})
             tasks.append(BenchmarkTask(
                 task_id=task_id,
-                summary=f"{category}: paired coding-agent transcripts",
+                summary=(user_request[:240] if user_request
+                         else f"{category}: paired coding-agent transcripts"),
                 events=benign_events + attack_events,
                 mandate=mandate,
                 capabilities=list(_CAPABILITIES),
@@ -593,6 +682,7 @@ class SleightLoader:
                     "category": category,
                     "benign_pair": True,
                     "workspace": workspace,
+                    "user_request": user_request,
                     "benign_transcript": str(benign_path),
                     "attack_transcript": str(attack_path),
                     "mechanism_lines": sorted(mechanism),

@@ -26,13 +26,13 @@ from benchmarks.core.patterns import LEVELS, generalize_corpus
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 
+# Match scoreboard.DEPLOYABLE — velocity is an ablation, not the product top.
 DEPLOYABLE = [
     "tool-allowlist",
     "capability-token",
     "task-scope",
     "task-scope+binding",
     "task-scope+binding+budget",
-    "task-scope+binding+budget+velocity",
 ]
 TOP = DEPLOYABLE[-1]
 

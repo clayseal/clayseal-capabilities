@@ -120,9 +120,33 @@ def test_the_two_headline_columns_come_from_the_same_engine_call(corpus, split):
     """
     _available(corpus)
     r = evaluate(corpus, split=split, count=60, seed=0)
-    assert r.engine_overreach_total == r.sessions
-    assert r.engine_overreach_blocked == r.engine_overreach_total
-    assert r.rightful_blocked == 0
+    assert r.engine_overreach_total == r.sessions, r
+    assert r.engine_overreach_blocked == r.engine_overreach_total, r
+    assert r.rightful_blocked == 0, r
+
+
+# --------------------------------------------------------------------------- #
+# KNOWN INTERMITTENT: `[tool-tau2]` failed once in four consecutive full-suite
+# runs and has not reproduced since. Recorded rather than dismissed, with what
+# has been ruled out, because a parity test that flakes is worse than one that
+# fails — it makes every future green run slightly less informative.
+#
+#   isolation        passes standalone; 3 consecutive module runs, 44 tests each
+#   full suite       2302 passed on the very next run, same code
+#   RNG              `build_sessions` uses `random.Random(seed)`, not the global,
+#                    so pytest-randomly's per-test reseeding cannot reach it
+#   hash order       identical results across PYTHONHASHSEED 0-7
+#                    (60/60/60/0 every time)
+#
+# What remains is cross-test contamination under a specific `pytest-randomly`
+# ordering. The failing run's seed was not captured — `pytest -q | tail` drops
+# the "Using --randomly-seed=NNNN" banner, which is the actual lesson here.
+# **If this fails again, record that seed first**; `-p randomly --randomly-seed=N`
+# replays the exact order and turns this from a flake into a bug.
+#
+# The asserts above now carry the result object so a failure reports which of
+# the three columns moved, rather than just `assert 59 == 60`.
+# --------------------------------------------------------------------------- #
 
 
 @pytest.mark.parametrize("corpus", ["tau2", "bfcl"])

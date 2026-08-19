@@ -1,0 +1,224 @@
+{
+  "redcode": {
+    "exact": {
+      "base": {
+        "contained": 0.9986072423398329,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      },
+      "density": {
+        "contained": 0.9986072423398329,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      }
+    },
+    "up1": {
+      "base": {
+        "contained": 0.3328690807799443,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      },
+      "density": {
+        "contained": 0.9986072423398329,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      }
+    },
+    "up2": {
+      "base": {
+        "contained": 0.3328690807799443,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      },
+      "density": {
+        "contained": 0.9986072423398329,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      }
+    },
+    "namespace": {
+      "base": {
+        "contained": 0.3328690807799443,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      },
+      "density": {
+        "contained": 0.9986072423398329,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 718,
+        "n_benign": 172
+      }
+    }
+  },
+  "ipi_coding": {
+    "exact": {
+      "base": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      },
+      "density": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      }
+    },
+    "up1": {
+      "base": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      },
+      "density": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      }
+    },
+    "up2": {
+      "base": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      },
+      "density": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      }
+    },
+    "namespace": {
+      "base": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      },
+      "density": {
+        "contained": 0.7,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 50,
+        "n_benign": 40
+      }
+    }
+  },
+  "agent_threat_bench": {
+    "exact": {
+      "base": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      },
+      "density": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      }
+    },
+    "up1": {
+      "base": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      },
+      "density": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      }
+    },
+    "up2": {
+      "base": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      },
+      "density": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      }
+    },
+    "namespace": {
+      "base": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      },
+      "density": {
+        "contained": 1.0,
+        "contained_sd": 0.0,
+        "false_block": 0.0,
+        "false_block_sd": 0.0,
+        "n_attack": 6,
+        "n_benign": 15
+      }
+    }
+  }
+}

@@ -1,5 +1,15 @@
 # Graduated response: recovering the irreducible false-positive
 
+STATUS: superseded
+> **STATUS: superseded on one axis.** Every "supervised utility" figure below is a
+> **counterfactual**, not a measurement. It is `autonomous + step-up losses`, which
+> assumes both that a human approved and that the task then succeeded. Nothing
+> resolved a step-up when these ran: `SessionBroker.resolve_step_up` and
+> `LiveBrokerHarness.gate_with_supervision` did not exist. Re-run with a resolving
+> approver (`benchmarks/live/approver.py`) before quoting any of it; the delta is
+> expected to be negative, because a resumed run can still fail downstream.
+
+
 The provenance work established that some benign destinations cannot be
 auto-trusted: a free-text recipient read from a document shares its source with a
 possible injection, so no origin rule can separate them (see provenance.md). The
