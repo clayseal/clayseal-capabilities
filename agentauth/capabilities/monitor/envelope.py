@@ -34,7 +34,7 @@ class TypedGoalEnvelope:
     read_only: bool
 
     @classmethod
-    def from_goal(cls, goal: GoalSpec) -> "TypedGoalEnvelope":
+    def from_goal(cls, goal: GoalSpec) -> TypedGoalEnvelope:
         intent = goal.structured_intent or {}
         resource_classes = {resource_class(r) for r in goal.allow_resources}
         # Explicit files imply a repo/file surface even if not listed as resources.
@@ -67,7 +67,7 @@ class TypedGoalEnvelope:
             read_only=not write_allowed,
         )
 
-    def assess(self, action: Action) -> "EnvelopeVerdict":
+    def assess(self, action: Action) -> EnvelopeVerdict:
         reasons: list[str] = []
         rc = resource_class(action.resource)
         if self.allowed_resource_classes and rc not in self.allowed_resource_classes:

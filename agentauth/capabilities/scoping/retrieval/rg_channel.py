@@ -16,7 +16,6 @@ from pathlib import Path
 
 from agentauth.capabilities.scoping.models import RepoChunk
 
-
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
 
 # Max lines rg can return per token (budget)
@@ -52,7 +51,7 @@ def rg_search_files(
 
     for token in tokens[:20]:  # cap tokens to avoid runaway
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: PLW1510 - exit 1 means "no matches"
                 [
                     "rg",
                     "--files-with-matches",

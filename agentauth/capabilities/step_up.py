@@ -15,7 +15,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from agentauth.core.hash_util import hash_canonical_json
-
 from agentauth.core.runtime import AuthorityContext
 from agentauth.core.signing import SigningKey, signature_key_id_matches, verify
 
@@ -52,6 +51,20 @@ class StepUpRequest:
     reason: str
     violations: list[str] = field(default_factory=list)
     suggested_approval: dict[str, Any] = field(default_factory=dict)
+    # --- action binding -----------------------------------------------------
+    # `resource_ref` and `operation` are `mcp:tool:<name>` and a verb in the live
+    # path, so two different `send_money` calls to two different recipients
+    # differ only by the uuid in `request_id`. An approval therefore committed to
+    # "a send_money happened", not to the send the human was shown. These fields
+    # put the concrete action inside the commitment.
+    tool: str = ""
+    arguments_hash: str = ""
+    layer: str = ""
+    expires_at: str = ""
+    #: Machine-readable rule ids, one per entry in `violations`. The prose in
+    #: `violations` is for humans and partly attacker-authored (see
+    #: `render_card`); the codes are what a grant may waive.
+    codes: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -63,7 +76,42 @@ class StepUpRequest:
             "reason": self.reason,
             "violations": list(self.violations),
             "suggested_approval": dict(self.suggested_approval),
+            "tool": self.tool,
+            "arguments_hash": self.arguments_hash,
+            "layer": self.layer,
+            "expires_at": self.expires_at,
+            "codes": list(self.codes),
         }
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, Any]) -> StepUpRequest:
+        """Rebuild a request from `to_dict`, commitment-preserving.
+
+        Needed to persist outstanding step-ups across a process boundary: the
+        worker that receives a human's approval is usually not the worker that
+        asked for it, and `SessionBroker.resolve_step_up` refuses any approval
+        whose commitment this session never issued. Without a round trip the
+        step-up protocol simply does not complete on a multi-worker deployment.
+
+        Every field `to_dict` writes is read back, and `test_session_state.py`
+        asserts `from_dict(to_dict(r)).commitment() == r.commitment()` — a field
+        added to one and forgotten in the other would silently change the
+        commitment and invalidate every approval in flight.
+        """
+        return cls(
+            request_id=str(raw["request_id"]),
+            query_id=raw.get("query_id"),
+            resource_ref=str(raw["resource_ref"]),
+            operation=str(raw["operation"]),
+            reason=str(raw.get("reason", "")),
+            violations=list(raw.get("violations") or []),
+            suggested_approval=dict(raw.get("suggested_approval") or {}),
+            tool=str(raw.get("tool", "")),
+            arguments_hash=str(raw.get("arguments_hash", "")),
+            layer=str(raw.get("layer", "")),
+            expires_at=str(raw.get("expires_at", "")),
+            codes=tuple(raw.get("codes") or ()),
+        )
 
     def commitment(self) -> str:
         return f"sha256:{hash_canonical_json(self.to_dict())}"
@@ -179,6 +227,103 @@ def _authenticate_approval(
             f"(or set {ALLOW_UNSIGNED_ENV}=1) ONLY in tests/trusted-local contexts."
         )
     return approval
+
+
+
+
+#: Violation prose the broker emits, mapped to a stable rule id. A grant waives
+#: CODES, never prose: the prose contains attacker-controlled substrings and
+#: changes whenever a message is reworded.
+_CODE_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("egress", "egress.destination"),
+    ("recipient", "egress.destination"),
+    ("resource out of scope", "scope.resource"),
+    ("path outside", "scope.path"),
+    ("protected", "scope.protected"),
+    ("verb class", "scope.verb"),
+    ("off-plan", "envelope.off_plan"),
+    ("off slot", "envelope.off_slot"),
+    ("sealed-plan", "sealed_plan.drift"),
+    ("declaration", "declaration"),
+    ("session-taint", "session.taint"),
+    ("session-bind", "session.bind"),
+    ("entailment", "content.entailment"),
+    ("budget", "budget"),
+    ("target density", "density.target"),
+    ("in-scope staging", "staging"),
+    ("flow:", "flow.derivation"),
+)
+
+
+def violation_code(violation: str) -> str:
+    """Stable rule id for a violation string.
+
+    Deliberately a prefix table rather than parsing: the prose is written for a
+    human and is not a protocol surface. An unrecognised violation maps to
+    `unclassified`, which no grant can waive, so a new rule fails closed until
+    somebody classifies it.
+    """
+    low = (violation or "").strip().lower()
+    for needle, code in _CODE_PREFIXES:
+        if needle in low:
+            return code
+    return "unclassified"
+
+
+def bind_to_action(
+    request: StepUpRequest,
+    *,
+    tool: str,
+    arguments_hash: str,
+    layer: str,
+    ttl_seconds: int = 600,
+    now: datetime | None = None,
+) -> StepUpRequest:
+    """Attach the concrete action to a request, and stamp its expiry.
+
+    Called once at the broker's single step-up convergence point rather than at
+    each of the nine construction sites, so a new step-up path cannot forget it.
+    """
+    from dataclasses import replace as _replace
+
+    current = now or datetime.now(timezone.utc)
+    return _replace(
+        request,
+        tool=tool,
+        arguments_hash=arguments_hash,
+        layer=layer,
+        expires_at=(current + timedelta(seconds=ttl_seconds)).isoformat(),
+        codes=tuple(violation_code(v) for v in request.violations),
+    )
+
+
+def render_card(request: StepUpRequest) -> dict[str, Any]:
+    """What a human may safely be shown.
+
+    `build_step_up_request` sets `reason = "; ".join(violations[:3])`, and the
+    violations routinely embed attacker-controlled strings: the egress reason
+    interpolates the destination, provenance reasons carry the token, and
+    content-entailment reasons are drawn from the write body. So the text on the
+    approval card is partly authored by the attacker, and the approval card is
+    the one surface whose entire purpose is to persuade a human.
+
+    This returns typed trusted fields only. Anything attacker-influenced goes in
+    `untrusted_values`, which a UI must render inert (no links, no markup, no
+    autofill) and which is deliberately NOT part of `summary`.
+    """
+    return {
+        "summary": {
+            "tool": request.tool,
+            "operation": request.operation,
+            "resource": request.resource_ref,
+            "layer": request.layer,
+            "arguments_hash": request.arguments_hash,
+            "expires_at": request.expires_at,
+            "rules": list(request.codes),
+        },
+        "untrusted_values": list(request.violations),
+        "commitment": request.commitment(),
+    }
 
 
 def build_step_up_request(

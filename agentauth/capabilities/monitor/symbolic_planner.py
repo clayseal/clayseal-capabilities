@@ -71,7 +71,7 @@ def landmark_order(specs, initial: set[str], landmarks: set[str]) -> set[tuple[s
 
 
 def _toposort(nodes: list[str], edges: set[tuple[str, str]]) -> list[str]:
-    incoming = {n: 0 for n in nodes}
+    incoming = dict.fromkeys(nodes, 0)
     for a, b in edges:
         if a in incoming and b in incoming:
             incoming[b] += 1
@@ -109,8 +109,8 @@ class SymbolicPlanner:
             ToolOntology.from_dict(intent["ontology"])
             if isinstance(intent.get("ontology"), list) else None
         )
-        goal_conditions = set(str(g) for g in intent.get("goal_conditions", []))
-        initial = set(str(f) for f in intent.get("initial_facts", []))
+        goal_conditions = {str(g) for g in intent.get("goal_conditions", [])}
+        initial = {str(f) for f in intent.get("initial_facts", [])}
 
         if ontology is None or not goal_conditions:
             # No domain model to plan over: membership-only envelope.

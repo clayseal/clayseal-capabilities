@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from agentauth.core.runtime import SideEffectLevel
+
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.scoping.tools.entity_index import ToolEntityIndex
 from agentauth.capabilities.scoping.tools.entity_match import (

@@ -142,7 +142,11 @@ The common case when you control both identity and capabilities:
 ```python
 from agentauth.identity import AgentAuth
 from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+from agentauth.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    issue_commit_token,
+    verify_commit_token,
+)
 from agentauth.core.signing import generate_keypair
 
 auth = AgentAuth(trust_domain="example.org")
@@ -165,8 +169,23 @@ ctx = execution_context_from_session(
 
 signing_key = generate_keypair()
 signed = issue_commit_token(ctx, key=signing_key, ttl_seconds=300)
-assert verify_commit_token(signed, key=signing_key.public_key()).valid
+
+ok, reason = verify_commit_token(
+    signed,
+    ctx=ctx,
+    trusted_minting_keys={signing_key.public_key_hex},
+    used_token_store=InMemoryUsedTokenStore(),
+)
+assert ok, reason
 ```
+
+`verify_commit_token` returns `(ok, reason)` and never raises: the token is
+attacker-reachable input, so the boundary is total by contract. It re-derives
+`tool_name`, `resource_ref` and `arguments_hash` from the `ctx` you pass, which
+is what makes a mutated argument invalidate the authorization.
+
+`issue_commit_token` is the opposite contract — there is no "no" to return, so a
+malformed context raises `ValueError`.
 
 Run the full script: `python examples/03_commit_token.py`.
 
@@ -191,7 +210,11 @@ Example with SPIFFE:
 ```python
 from agentauth.capabilities.identity_adapters import get_identity_provider
 from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+from agentauth.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    issue_commit_token,
+    verify_commit_token,
+)
 from agentauth.core.signing import generate_keypair
 
 claims = {

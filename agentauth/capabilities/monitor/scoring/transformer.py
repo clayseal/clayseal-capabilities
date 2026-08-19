@@ -25,7 +25,7 @@ from agentauth.capabilities.monitor.training.data import Vocab
 
 def _require_torch():
     try:
-        import torch  # noqa: F401
+        import torch
     except ImportError as exc:  # pragma: no cover - exercised only without torch
         raise ImportError(
             "The transformer scorer needs torch. Install the extra: "
@@ -51,7 +51,7 @@ class TransformerConfig:
 def build_model(config: TransformerConfig):
     """Construct the decoder-only LM (returns an ``nn.Module``)."""
     torch = _require_torch()
-    import torch.nn as nn
+    from torch import nn
 
     class GoalConditionedLM(nn.Module):
         def __init__(self, cfg: TransformerConfig) -> None:
@@ -101,7 +101,7 @@ class TransformerScorer:
             logits = self.model(torch.tensor([ids], device=self.device))  # (1, T, V)
             log_probs = torch.log_softmax(logits[0], dim=-1)  # (T, V)
         out: list[ScoredStep] = []
-        for pos, action in zip(action_positions, traj.actions):
+        for pos, action in zip(action_positions, traj.actions, strict=False):
             if pos >= len(ids) or pos == 0:
                 out.append(ScoredStep(action.step, 0.0))
                 continue
@@ -120,7 +120,7 @@ class TransformerScorer:
         (out / "config.json").write_text(json.dumps(asdict(self.config)))
 
     @classmethod
-    def load(cls, out_dir: str | Path, *, device: str = "cpu") -> "TransformerScorer":
+    def load(cls, out_dir: str | Path, *, device: str = "cpu") -> TransformerScorer:
         torch = _require_torch()
         out = Path(out_dir)
         config = TransformerConfig(**json.loads((out / "config.json").read_text()))

@@ -164,7 +164,7 @@ class SensitivityPolicy:
     argument_sinks: tuple[str, ...] = ()
 
     @classmethod
-    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> "SensitivityPolicy":
+    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> SensitivityPolicy:
         raw = (mandate or {}).get("confidentiality") or {}
         return cls(
             sensitive=tuple(str(p) for p in (raw.get("sensitive") or ())),
@@ -179,14 +179,16 @@ class SensitivityPolicy:
         return bool(self.sensitive)
 
     def is_sensitive(self, resource: str | None, path: str | None = None) -> bool:
-        return any(_matches(c, pat)
+        return any(_matches_sensitive(c, pat)
                    for c in (resource, path) if c
                    for pat in self.sensitive)
 
     def sends_its_arguments(self, tool: str, resource: str | None,
                             path: str | None = None) -> bool:
         """Does calling this hand its arguments to someone outside the boundary?"""
-        return any(_matches(c, pat)
+        # Conservative polarity: matching here means "this destination leaks its
+        # arguments", so a traversal must not be able to shed the label.
+        return any(_matches_sensitive(c, pat)
                    for c in (tool, resource, path) if c
                    for pat in self.argument_sinks)
 
@@ -212,29 +214,83 @@ class SensitivityPolicy:
         matched: str | None = None
         for candidate in candidates:
             hit = next((p for p in self.declassified_sinks
-                        if _matches(candidate, p)), None)
+                        if _matches_sink(candidate, p)), None)
             if hit is None:
                 return None
             matched = matched or hit
         return matched
 
 
-def _matches(candidate: str, pattern: str) -> bool:
-    """Exact unless the operator wrote a glob, and never across a traversal.
+def _match_literal(candidate: str, pattern: str) -> bool:
+    """Exact unless the operator wrote a glob.
 
     `fnmatch` was applied unconditionally, so an operator writing the literal
     filename `report[1].txt` also declassified `report1.txt`, a different file.
-    A pattern with no metacharacter is now compared exactly, which is what
-    someone who typed a filename meant.
-
-    A candidate containing a `..` segment never matches, because `s3://bucket/*`
-    should not declassify `s3://bucket/../../etc/passwd`.
+    A pattern with no metacharacter is compared exactly, which is what someone
+    who typed a filename meant.
     """
-    if any(seg == ".." for seg in candidate.replace("\\", "/").split("/")):
-        return False
     if any(ch in pattern for ch in "*?["):
         return fnmatch.fnmatch(candidate, pattern)
     return candidate == pattern
+
+
+def _lexical_normalize(candidate: str) -> str:
+    """Resolve `.` and `..` without touching the disk, clamping at the root.
+
+    Clamps rather than failing, because a candidate that walks above its root is
+    still a real target and we want to compare what it resolves TO, not refuse
+    to look. Lexical resolution is unsound across a symlinked component, which is
+    why `protected_zones` matches both the raw and resolved forms; the same
+    reasoning applies here and is why callers below try both.
+    """
+    text = candidate.replace("\\", "/")
+    lead = "/" if text.startswith("/") else ""
+    out: list[str] = []
+    for seg in text.split("/"):
+        if seg in ("", "."):
+            continue
+        if seg == "..":
+            if out:
+                out.pop()
+            continue
+        out.append(seg)
+    return lead + "/".join(out)
+
+
+def _matches_sink(candidate: str, pattern: str) -> bool:
+    """Sink membership. A traversal never matches.
+
+    This is the DECLASSIFICATION direction, where matching GRANTS permission, so
+    a candidate containing `..` must not match: `s3://bucket/*` should not
+    declassify `s3://bucket/../../etc/passwd`.
+    """
+    if any(seg == ".." for seg in candidate.replace("\\", "/").split("/")):
+        return False
+    return _match_literal(candidate, pattern)
+
+
+def _matches_sensitive(candidate: str, pattern: str) -> bool:
+    """Sensitivity membership. A traversal must NOT be able to escape the label.
+
+    Both polarities used to share one helper, and the traversal veto that is
+    correct for a sink is exactly backwards here. Matching a SENSITIVE pattern
+    withholds permission, so refusing to match on a `..` segment turned the
+    traversal into a way to strip the label:
+
+        read /app/data/../secrets.env   ->  is_sensitive() == False
+
+    which switches flow control off for that read entirely. The value is never
+    observed, so nothing downstream can refuse to send it.
+
+    The fix is to compare the resolved form as well as the raw one. Both, not
+    just the resolved: lexical resolution is unsound wherever a component is a
+    symlink, and a pattern written against the literal path should still match
+    the literal path.
+    """
+    if _match_literal(candidate, pattern):
+        return True
+    resolved = _lexical_normalize(candidate)
+    return resolved != candidate and _match_literal(resolved, pattern)
 
 
 # A reconstruction has to clear a higher bar than an exact match, because
@@ -446,6 +502,49 @@ _DECIMAL_RUN = __import__("re").compile(r"(?:\b\d{1,3}\b[ ,]+){11,}\b\d{1,3}\b")
 _MAX_DECODE_TOKENS = 8
 
 
+_ESCAPE = __import__("re").compile(
+    r"\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|[0-7]{1,3}|[abfnrtv\\\'\"])"
+)
+_SIMPLE_ESCAPES = {
+    "a": "\a", "b": "\b", "f": "\f", "n": "\n", "r": "\r", "t": "\t",
+    "v": "\v", "\\": "\\", "'": "'", '"': '"',
+}
+
+
+def _unescape(blob: str) -> str:
+    """Resolve backslash escapes, leaving anything that is not one untouched.
+
+    This replaced ``blob.encode("utf-8", "ignore").decode("unicode_escape")``,
+    which was wrong in two ways that both matter for a confidentiality check.
+
+    It **mangled non-ASCII**: ``unicode_escape`` is a latin-1 codec, so every
+    byte of a UTF-8 character came back as a separate character. A secret sitting
+    next to any non-ASCII text was reshaped before the comparison that was
+    supposed to find it.
+
+    And it **warned on ordinary text**: any backslash that is not the start of a
+    real escape — ``\\|`` in a regex, ``\\D`` in a pattern, a Windows path —
+    raised ``DeprecationWarning: invalid escape sequence``, 1,266 of them in one
+    benchmark run, on a path that Python has announced will become an error.
+
+    Resolving only genuine escapes is also strictly more precise: an attacker
+    hiding a value as ``\\x41\\x42`` is still caught, and a regex containing
+    ``\\S`` no longer decodes into something that was never there.
+    """
+    def _sub(match) -> str:
+        body = match.group(0)[1:]
+        if body in _SIMPLE_ESCAPES:
+            return _SIMPLE_ESCAPES[body]
+        try:
+            if body[0] in "xuU":
+                return chr(int(body[1:], 16))
+            return chr(int(body, 8))
+        except (ValueError, OverflowError):
+            return match.group(0)
+
+    return _ESCAPE.sub(_sub, blob)
+
+
 def _decode_layer(blob: str) -> list[str]:
     """One round of every mechanical decoding, tried and discarded on failure.
 
@@ -459,12 +558,9 @@ def _decode_layer(blob: str) -> list[str]:
 
     out: list[str] = []
     if "\\" in blob:
-        try:
-            unescaped = blob.encode("utf-8", "ignore").decode("unicode_escape")
-            if unescaped != blob:
-                out.append(unescaped)
-        except (UnicodeDecodeError, ValueError):
-            pass
+        unescaped = _unescape(blob)
+        if unescaped != blob:
+            out.append(unescaped)
     if "%" in blob:
         from urllib.parse import unquote
         try:
@@ -575,7 +671,116 @@ def _flatten(value: Any) -> str:
     return str(value)
 
 
+#: How many WRITES the cross-write accumulators retain, per sink and pooled.
+#:
+#: The bound used to be in characters (65,536), and a character bound over an
+#: append-only buffer is not a bound on the question being asked. Subsequence
+#: matching slides from "did these fragments arrive together" to "is there enough
+#: text here to spell this", and for a 22-character value the second is
+#: eventually yes for any buffer of ordinary prose. Measured on real tau2 and
+#: BFCL benign writes under one tracker, with nothing sensitive in the traffic at
+#: all, the false-block rate went 3.0% at 4 writes -> 48.5% at 25 -> 85.4% at 100
+#: -> 94.6% at 400. That is not a threshold wanting a tune; 65,536 characters of
+#: English contains every short string as a subsequence.
+#:
+#: A window in WRITES restores the question. It must be at least twice the
+#: longest value it claims to catch, because the sharpest split is one character
+#: per write and the window has to hold the whole of it with room for the
+#: interleaved benign traffic that a real session puts between the fragments.
+#: The residual is then nameable rather than implied: a value longer than half
+#: the window, dripped one character per write, falls outside it. That is a
+#: stated limit, which is what the character bound never was.
+_ACCUMULATOR_WRITES = 64
+
+#: How far back either cross-write mechanism may look, as a multiple of the
+#: value length, in characters.
+#:
+#: `_MAX_SPREAD` bounds how far apart the fragments of a match may be. It does
+#: not bound how much text is searched for such a match, and that is the gap the
+#: false blocks came through: over a long enough buffer a qualifying match exists
+#: somewhere, and a COMPLETE in-order match is exempt from the span bound
+#: entirely, so eventually every write is refused. Measured on real benign tau2
+#: and BFCL traffic containing nothing sensitive, the refusal rate reached 56%
+#: and 92% at 400 writes.
+#:
+#: Both mechanisms therefore get the same explicit budget of material, and they
+#: must share it or the looser one simply outvotes the tighter — bounding only
+#: the order-free cover left the in-order scan producing the identical 56%.
+#:
+#: Set from the sweep recorded in benchmarks/results/flow_window.md, which varies
+#: this against both directions at once: the detection arms (2, 4, 11 and 22
+#: fragments, in order, fanned out across sinks, and shuffled) hold at every
+#: value tried, so the constant is chosen on the false-block side. 12 leaves the
+#: largest drift across four corpus/value pairs under a point, against a limit of
+#: three. The sharpest split it must hold is 22 fragments of a 22-character value
+#: with filler, about 250 characters, inside a 264-character window.
+_LOOKBACK_SPREAD = 6
+#: The order-free cover's own budget, deliberately larger than the in-order one.
+#:
+#: The two mechanisms answer different questions and need different amounts of
+#: material. The in-order scan asks "did these fragments arrive in the value's
+#: own order", which is strong evidence over a short run and turns into noise
+#: over a long one. The cover asks the weaker "were the characters present in any
+#: order", but it needs to SEE every fragment at once, so it cannot be starved:
+#: 22 shuffled fragments with filler occupy ~250 characters, and below a 24x
+#: budget the out-of-order arm reopens.
+#:
+#: The sweep in benchmarks/results/flow_window.md varies both against both
+#: directions. Every detection arm passes at every combination tried; the binding
+#: constraint is entirely false blocks, and lookback is what moves them. At
+#: (6, 24) the largest drift across four corpus/value pairs is 1.53 points
+#: against a limit of 3, with the arms intact.
+_COVER_SPREAD = 24
+
+#: Whole writes the cover always retains, whatever their size. Guards the
+#: cheapest split — two verbose writes carrying half the value each.
+_MIN_COVER_BLOCKS = 4
+
+
+def _recent(blocks: list[str], target: str) -> list[str]:
+    """The most recent blocks a legitimate split could occupy, and no more.
+
+    The order-free cover is the dominant false-positive source and by a long
+    way: instrumenting 400 real BFCL benign writes under one tracker, 232 of 239
+    refusals came from here and only 7 from the in-order subsequence scan. The
+    reason is the same one that broke that scan — given enough material, a
+    22-character value is assemblable from ordinary prose, because the cover is
+    allowed to cherry-pick a character here and a character there from sixty-four
+    unrelated paragraphs.
+
+    So the cover gets the same budget the span bound already imposes on the
+    in-order scan: `_MAX_SPREAD` times the value length, counted in characters
+    from the most recent write backwards. The two mechanisms then answer the same
+    question over the same material, which is what makes them comparable
+    evidence rather than one quietly outvoting the other.
+
+    This does not weaken the arms the cover exists for. The sharpest split it
+    claims to catch is 22 fragments of a 22-character value with filler between
+    them, which occupies about 250 characters against a budget of 704 — every
+    fragment stays inside the window. What falls outside is a run of unrelated
+    work long enough that assembly stops being evidence of anything.
+    """
+    budget = _COVER_SPREAD * max(len(target), _MIN_RECONSTRUCTED)
+    kept: list[str] = []
+    used = 0
+    for block in reversed(blocks):
+        # A character budget alone drops the CHEAPEST split there is. Two writes
+        # of 621 characters each carry half the value apiece, and a 528-character
+        # budget holds only one of them, so a two-way split walked out while
+        # twenty-two-way splits were caught. Retaining a floor of whole writes
+        # regardless of their size closes that: the cover must always be able to
+        # see at least a handful of pieces, however verbose each one is.
+        if len(kept) >= _MIN_COVER_BLOCKS and used >= budget:
+            break
+        kept.append(block)
+        used += len(block)
+    kept.reverse()
+    return kept
+
+
 @dataclass
+
+
 class FlowTracker:
     """Per-value confidentiality flow over one session.
 
@@ -598,7 +803,7 @@ class FlowTracker:
     # did not see it because no write carried the value. Accumulating per sink
     # closes the seam, and only ALLOWED content accumulates, because a refused
     # write never happened.
-    _emitted: dict[str, str] = field(default_factory=dict)
+    _emitted: dict[str, list[str]] = field(default_factory=dict)
     # The same content kept as the individual write payloads rather than one
     # concatenation, because ORDER was doing the work and an attacker chooses it.
     #
@@ -608,7 +813,7 @@ class FlowTracker:
     # value, so the value is assemblable from the pieces in SOME order, and that
     # is the question to ask.
     _blocks: dict[str, list[str]] = field(default_factory=dict)
-    max_blocks: int = 512
+    max_blocks: int = _ACCUMULATOR_WRITES
     # The same content again, pooled across EVERY non-declassified sink.
     #
     # A per-sink buffer is defeated by fanning out: one fragment to each of
@@ -616,9 +821,10 @@ class FlowTracker:
     # single character. Measured, and it walked the whole secret out at every
     # fan-out width. An attacker controls every sink they send to, so the pool of
     # sinks the goal did not name is one adversary and is accumulated as one.
-    _emitted_pooled: str = ""
-    # Bound on retained content per sink. A session that writes for hours must
-    # not grow without limit inside the authorization path.
+    _emitted_pooled: list[str] = field(default_factory=list)
+    # Secondary guard on a single pathological write. The PRIMARY bound is
+    # `_ACCUMULATOR_WRITES`; this only stops one enormous payload from filling
+    # the window's worth of characters on its own.
     max_emitted_chars: int = 65536
     # How much of a sensitive value has to reach a sink before the flow counts as
     # having happened. At 1.0 the alarm fires on the write that COMPLETES the
@@ -695,8 +901,8 @@ class FlowTracker:
         candidate = variants[0] if variants else ""
         sink_key = path or resource
         declassified = policy.is_declassified(resource, path)
-        history = self._emitted.get(sink_key, "")
-        pooled = self._emitted_pooled
+        history = self._stream(self._emitted.get(sink_key, ()))
+        pooled = self._stream(self._emitted_pooled)
 
         carried = self._carried(args)
         if not carried and candidate:
@@ -716,17 +922,24 @@ class FlowTracker:
         if not carried and variants:
             blocks = list(self._blocks.get(_POOL if declassified is None
                                            else sink_key, ()))
-            carried = self._carried_from_blocks(blocks + [_join(variants)])
+            carried = self._carried_from_blocks([*blocks, _join(variants)])
 
         if not carried:
-            self._emitted[sink_key] = (
-                history + candidate)[-self.max_emitted_chars:]
+            if candidate:
+                # Append-and-trim by WRITE, not by character. An empty payload
+                # is not recorded at all: it carries nothing and would otherwise
+                # spend a window slot that a real fragment needs.
+                bucket = self._emitted.setdefault(sink_key, [])
+                bucket.append(candidate[-self.max_emitted_chars:])
+                del bucket[:-self.max_blocks]
             if variants:
                 self._blocks.setdefault(sink_key, []).append(_join(variants))
                 del self._blocks[sink_key][:-self.max_blocks]
             if declassified is None:
-                self._emitted_pooled = (
-                    pooled + candidate)[-self.max_emitted_chars:]
+                if candidate:
+                    self._emitted_pooled.append(
+                        candidate[-self.max_emitted_chars:])
+                    del self._emitted_pooled[:-self.max_blocks]
                 if variants:
                     self._blocks.setdefault(_POOL, []).append(_join(variants))
                     del self._blocks[_POOL][:-self.max_blocks]
@@ -782,9 +995,23 @@ class FlowTracker:
             target = _compact_fold(token)
             if len(target) < _MIN_RECONSTRUCTED:
                 continue
-            if _assemblable(target, blocks):
+            if _assemblable(target, _recent(blocks, target)):
                 found |= origins
         return found
+
+    @staticmethod
+    def _stream(window: list[str] | tuple[str, ...], extra: str = "") -> str:
+        """The windowed writes as one string, which is what a scan is handed.
+
+        The accumulators are stored per WRITE and joined here rather than kept as
+        a running concatenation. That is the whole point of the window: trimming
+        a concatenation by characters keeps the buffer finite while letting the
+        SEARCH SPACE grow with the session, and 65,536 characters of ordinary
+        text contain any short value as a subsequence. Keeping writes lets the
+        bound be stated in the unit an attacker actually spends.
+        """
+        joined = "".join(window)
+        return joined + extra if extra else joined
 
     def _carried_across_writes(self, stream: str) -> set[str]:
         """Has this sink received the whole value, spread over several writes?
@@ -815,7 +1042,27 @@ class FlowTracker:
             if len(compact_token) < _MIN_RECONSTRUCTED:
                 continue
             target = min(len(compact_token), _MAX_NEEDLE)
-            covered, span = _subsequence_coverage(compact_token, stream)
+            # Look back only as far as a legitimate dense split could reach.
+            #
+            # The span bound below already says the fragments must be dense —
+            # at most `_MAX_SPREAD` times the value length apart. Scanning a
+            # haystack far longer than that budget cannot find a denser match,
+            # it can only find MORE chances at a qualifying one, and it does:
+            # `complete` exempts a full in-order match from the span bound
+            # entirely, so over enough text a complete subsequence always exists
+            # somewhere and every write is refused. Measured on real benign tau2
+            # and BFCL traffic with nothing sensitive in it, a windowed-by-writes
+            # buffer of ~7,000 characters still refused ~59% of writes.
+            #
+            # The budget is the span bound expressed as a length. For a
+            # 22-character value that is 704 characters, which comfortably holds
+            # the sharpest split this mechanism claims to catch — 22 fragments
+            # with filler between them occupies about 250 — while denying the
+            # scan the run of unrelated prose it was spelling values out of.
+            lookback = _LOOKBACK_SPREAD * max(
+                len(compact_token), _MIN_RECONSTRUCTED)
+            covered, span = _subsequence_coverage(
+                compact_token, stream[-lookback:])
             if covered < _MIN_RECONSTRUCTED:
                 continue
             if covered / target < self.leak_fraction:

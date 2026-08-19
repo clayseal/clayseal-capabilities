@@ -42,7 +42,7 @@ class CusumDrift:
     _calibrator: MondrianConformal = field(default_factory=MondrianConformal)
     _fitted: bool = False
 
-    def fit(self, per_traj: list[tuple[str, list[float]]]) -> "CusumDrift":
+    def fit(self, per_traj: list[tuple[str, list[float]]]) -> CusumDrift:
         by_bucket: dict[str, list[float]] = defaultdict(list)
         for bucket, surprises in per_traj:
             by_bucket[bucket].extend(surprises)

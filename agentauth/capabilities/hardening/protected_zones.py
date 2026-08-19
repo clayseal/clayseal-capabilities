@@ -86,7 +86,24 @@ def is_protected_path(
     patterns: tuple[str, ...] = DEFAULT_PROTECTED_PATTERNS,
     allow_exceptions: set[str] | None = None,
 ) -> bool:
-    """True when ``path`` falls in a protected zone and is not explicitly allowed."""
+    """True when ``path`` falls in a protected zone and is not explicitly allowed.
+
+    Total by contract: for any input this returns a decision and never raises.
+    That is not a nicety for a deny-list — a deny-list is allow-by-default, which
+    makes an unreadable path the *dangerous* direction. "I cannot parse this,
+    therefore it is not protected" is precisely the fail-open that
+    ``benchmarks/stress_gates.py`` exists to find, and before this guard a
+    ``list``, ``dict`` or ``bool`` raised ``AttributeError`` out of the check.
+    Upstream, ``broker._action_path`` filters to ``isinstance(v, str)`` so the
+    shipped gateway never reached it; this is public API and the supported
+    integration path is a caller's own gateway, which has no such filter.
+
+    A non-string path is malformed rather than merely unusual, so it is treated
+    as protected instead of coerced. Guessing what ``[1]`` meant as a path is how
+    a zone check ends up admitting something nobody wrote.
+    """
+    if not isinstance(path, str):
+        return True
     if not path:
         return False
     norm = _normalize(path)

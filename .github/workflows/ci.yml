@@ -4,13 +4,29 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  # Lets the slow invariant job be triggered by hand without waiting for the cron.
+  workflow_dispatch:
+  schedule:
+    # The invariant suite is ~14 minutes and does not belong on every push. It
+    # runs nightly instead (see the `invariants` job), so a regression is caught
+    # within a day rather than blocking the inner loop.
+    - cron: "0 5 * * *"
 
+# The fast gate: everything that must be green before a change lands.
 jobs:
   test:
     runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.11", "3.13"]
+        # The floor and the ceiling of `requires-python` in pyproject.toml. Both
+        # ends are tested on purpose: a backslash inside an f-string expression
+        # is a SyntaxError before 3.12 and shipped undetected in
+        # `value_budget.py`, which `agentauth/capabilities/__init__.py` imports —
+        # so the package was unimportable on 3.10 and 3.11 while every local
+        # interpreter was 3.13.
+        python-version: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -42,3 +58,105 @@ jobs:
             --forbid-toplevel agentauth.identity
       - name: Run tests
         run: pytest python/tests -q
+
+  # The wheel has to work as a wheel. `deployable_stack.py` imported
+  # `benchmarks.core.detector_eval` from inside a method — fine in the checkout,
+  # ModuleNotFoundError in every real install, and invisible to the layering step
+  # above, which only knows about sibling agentauth packages. Build the artifact,
+  # install it into a clean environment with NO source tree on the path, and
+  # import every shipped module.
+  wheel:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: pberlizov/clay-seal-core
+          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
+          path: deps/agentauth-core
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Build the wheel
+        run: |
+          pip install build
+          python -m build --wheel --outdir dist/ .
+      - name: Install it somewhere the source tree is not
+        run: |
+          mkdir -p /tmp/clean && cd /tmp/clean
+          pip install "$GITHUB_WORKSPACE/deps/agentauth-core"
+          pip install "$GITHUB_WORKSPACE"/dist/*.whl
+      - name: Import every shipped module from the installed wheel
+        working-directory: /tmp/clean
+        run: |
+          python - <<'PY'
+          import importlib, pkgutil, sys
+          import agentauth.capabilities as pkg
+          failed = []
+          for mod in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+              try:
+                  importlib.import_module(mod.name)
+              except ImportError as exc:
+                  # Optional extras are legitimately absent in this environment.
+                  if any(x in str(exc) for x in ("torch", "jwt", "spiffe", "redis",
+                                                 "boto3", "rfc8785", "httpx",
+                                                 "agentauth.identity")):
+                      continue
+                  failed.append((mod.name, exc))
+              except Exception as exc:
+                  failed.append((mod.name, exc))
+          for name, exc in failed:
+              print(f"FAIL {name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+          sys.exit(1 if failed else 0)
+          PY
+
+  lint:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install ruff
+      # Scoped to the shipped package. The benchmark tree carries a larger,
+      # separately-tracked backlog and is not on the deployment path; gating the
+      # library on a clean lint is what keeps that backlog from growing into it.
+      - name: Lint the shipped package
+        run: ruff check agentauth
+
+  # The slow gate: ladder monotonicity, confidentiality flow windows, gate
+  # totality, commit-token mutation stress, replay defense, corpus adequacy.
+  # These guard against a number being reported that the system did not earn.
+  # ~14 minutes, so nightly and on demand rather than per push.
+  invariants:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: pberlizov/clay-seal-core
+          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
+          path: deps/agentauth-core
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: |
+          pip install "./deps/agentauth-core[dev]"
+          pip install -e ".[oidc,a2a,redis]" pytest
+      # Needs the fetched corpora, so it skips cleanly when they are absent
+      # rather than failing the build.
+      - name: Fetch benchmark corpora
+        run: benchmarks/fetch_corpora.sh || echo "corpora unavailable; suites will skip"
+      - name: Run benchmark invariants
+        run: pytest benchmarks/tests -q
+
+      # The runnable half of SEND_PACKET.md. Blocks on a forbidden claim, and
+      # ratchets the bare-zero debt so it can shrink but not grow.
+      - name: Check published claims
+        run: python -m benchmarks.check_claims

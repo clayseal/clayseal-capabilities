@@ -96,3 +96,8 @@ SECURITY_AUDIT.md
 docs/*.aux
 docs/*.log
 docs/*.out
+
+# Throwaway probe scripts written while chasing a specific finding. They are
+# working notes, not results; the finding they produced belongs in
+# benchmarks/results/ and the mechanism in the library.
+scratchpad/

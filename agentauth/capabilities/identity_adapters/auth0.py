@@ -7,6 +7,8 @@ from typing import Any
 from agentauth.core.authority_binding import AuthorityBinding
 from agentauth.core.identity_protocol import CapabilityAuthorizer, IdentitySession
 
+from ._claims import strip_authority_fields
+
 
 def claims_from_auth0(claims: dict[str, Any]) -> dict[str, Any]:
     scopes = claims.get("scope", "")
@@ -30,7 +32,10 @@ class Auth0IdentityProvider:
     name: str = "auth0"
 
     def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
-        normalized = claims_from_auth0(raw) if "iss" in raw and "auth0.com" in str(raw.get("iss", "")) else raw
+        normalized = (
+            claims_from_auth0(raw)
+            if "iss" in raw and "auth0.com" in str(raw.get("iss", ""))
+            else strip_authority_fields(raw))
         return AuthorityBinding.from_verified_credential(
             normalized,
             attestation_type="auth0_m2m",

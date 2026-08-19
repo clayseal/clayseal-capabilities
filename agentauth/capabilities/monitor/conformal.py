@@ -30,7 +30,7 @@ class ConformalCalibrator:
 
     _sorted: list[float] = field(default_factory=list)
 
-    def fit(self, benign_scores: list[float]) -> "ConformalCalibrator":
+    def fit(self, benign_scores: list[float]) -> ConformalCalibrator:
         self._sorted = sorted(benign_scores)
         return self
 
@@ -64,7 +64,7 @@ class MondrianConformal:
     _buckets: dict[str, ConformalCalibrator] = field(default_factory=dict)
     _pooled: ConformalCalibrator = field(default_factory=ConformalCalibrator)
 
-    def fit(self, scored: list[tuple[str, float]]) -> "MondrianConformal":
+    def fit(self, scored: list[tuple[str, float]]) -> MondrianConformal:
         by_bucket: dict[str, list[float]] = {}
         for bucket, score in scored:
             by_bucket.setdefault(bucket, []).append(score)

@@ -40,7 +40,7 @@ class NodeKind(str, Enum):
 class PlanNode:
     kind: NodeKind
     phase: Phase | None = None
-    children: tuple["PlanNode", ...] = ()
+    children: tuple[PlanNode, ...] = ()
     loop_min: int = 0
 
 

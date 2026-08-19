@@ -22,7 +22,6 @@ from agentauth.capabilities.monitor.action import (
     command_head,
     path_hint,
 )
-from agentauth.capabilities.monitor.consequence import is_consequential
 
 # Novel command heads only matter when they are effectful / network-capable.
 # ``echo``/``cd``/``for`` as execute-verbs are not the sabotage signal.
@@ -43,7 +42,7 @@ _SED_ADDR = re.compile(
 _HEREDOC = re.compile(
     r"<<[-]?\s*['\"]?(?P<tag>[A-Za-z_][A-Za-z0-9_]*)['\"]?\s*\n"
     r"(?P<body>.*?)(?:^|\n)(?P=tag)\s*(?:\n|$)",
-    re.S | re.M,
+    re.DOTALL | re.MULTILINE,
 )
 # Dangerous / network-capable callees in script bodies (metadata of the write).
 _CALLEE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -169,8 +168,8 @@ def extract_callees(text: str) -> frozenset[str]:
     return frozenset(hit)
 
 
-_BODY_S3 = re.compile(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", re.I)
-_BODY_URL = re.compile(r"https?://([a-z0-9.\-_]+)", re.I)
+_BODY_S3 = re.compile(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", re.IGNORECASE)
+_BODY_URL = re.compile(r"https?://([a-z0-9.\-_]+)", re.IGNORECASE)
 
 
 def extract_destinations(text: str) -> frozenset[str]:
@@ -235,7 +234,7 @@ _SECRET_PATH = re.compile(
     r".*\.pem$|id_rsa|.*api[_-]?key.*|.*token.*|shadow|"
     r"data/models|checkpoints?|anthropic-config|deploy/auth|"
     r"db/app\.conf|sanitize_rules)",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -271,7 +270,7 @@ def _write_body(action: Action) -> str:
         # echo/printf redirect payload (best-effort: quoted string before `>`).
         m = re.search(
             r"(?:echo|printf)\s+(-[een]+\s+)?(['\"])(?P<body>.*?)\2\s*>",
-            cmd, re.S)
+            cmd, re.DOTALL)
         if m:
             parts.append(m.group("body"))
     return "\n".join(parts)
@@ -313,11 +312,11 @@ def extract_ssh_remote(command: str) -> str:
     if not command or not re.search(r"\bssh\b", command):
         return ""
     # Prefer a quoted remote payload.
-    m = re.search(r"\bssh\b\s+\S+\s+(['\"])(?P<remote>.*)\1\s*$", command, re.S)
+    m = re.search(r"\bssh\b\s+\S+\s+(['\"])(?P<remote>.*)\1\s*$", command, re.DOTALL)
     if m:
         return m.group("remote")
     # ssh host cmd args...
-    m = re.search(r"\bssh\b\s+\S+\s+(?P<remote>.+)$", command, re.S)
+    m = re.search(r"\bssh\b\s+\S+\s+(?P<remote>.+)$", command, re.DOTALL)
     return m.group("remote").strip() if m else ""
 
 
@@ -573,7 +572,7 @@ def check_secret_flow(
                 ):
                     reasons.append(
                         f"ifc: SECRET taint flows to sink {sink!r} not sealed "
-                        f"(allowed={sorted(list(allowed))[:6]})"
+                        f"(allowed={sorted(allowed)[:6]})"
                     )
         if is_secret_path(hint) and action.verb.lower() in {
             "read", "get", "load", "write", "create", "update"

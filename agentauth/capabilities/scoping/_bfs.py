@@ -4,7 +4,7 @@ import graphs) and tools/target_closure.py (entity/group membership graphs).
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def _successors(node: str, edges: list[tuple[str, str]]) -> set[str]:

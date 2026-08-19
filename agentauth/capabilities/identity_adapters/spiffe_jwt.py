@@ -7,6 +7,8 @@ from typing import Any
 from agentauth.core.authority_binding import AuthorityBinding
 from agentauth.core.identity_protocol import CapabilityAuthorizer, IdentitySession
 
+from ._claims import strip_authority_fields
+
 
 def claims_from_spiffe_jwt(claims: dict[str, Any]) -> dict[str, Any]:
     sub = claims.get("sub")
@@ -31,7 +33,8 @@ class SpiffeJwtIdentityProvider:
     name: str = "spiffe_jwt"
 
     def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
-        normalized = claims_from_spiffe_jwt(raw) if "sub" in raw else raw
+        normalized = (claims_from_spiffe_jwt(raw) if "sub" in raw
+                      else strip_authority_fields(raw))
         return AuthorityBinding.from_verified_credential(
             normalized,
             attestation_type="spiffe_jwt",

@@ -102,7 +102,7 @@ class AmlAnalytics:
     _counts: dict[str, int] = field(default_factory=dict)
     _fitted: bool = False
 
-    def fit(self, benign: list[Trajectory]) -> "AmlAnalytics":
+    def fit(self, benign: list[Trajectory]) -> AmlAnalytics:
         by_bucket: dict[str, list[dict[str, float]]] = defaultdict(list)
         for traj in benign:
             by_bucket[goal_bucket(traj)].append(_features(traj))

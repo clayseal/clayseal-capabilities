@@ -1,3 +1,16 @@
+from agentauth.capabilities.authorizers import (
+    cedar_authorizer,
+    external_authorizer,
+    opa_authorizer,
+    openfga_authorizer,
+)
+from agentauth.capabilities.call_budget import (
+    CallBudgetConfig,
+    CallReservation,
+    SessionCallBudget,
+    call_budget_config_from_mandate,
+    session_call_budget_from_mandate,
+)
 from agentauth.capabilities.commit import (
     CommitToken,
     InMemoryUsedTokenStore,
@@ -7,19 +20,13 @@ from agentauth.capabilities.commit import (
     trusted_minting_keys_from_env,
     verify_commit_token,
 )
-from agentauth.capabilities.used_token_store import (
-    DynamoDBUsedTokenStore,
-    RedisUsedTokenStore,
-    default_used_token_store,
-    load_used_token_store_from_env,
-    set_default_used_token_store,
-)
 from agentauth.capabilities.delegation import (
     DelegationToken,
     issue_delegation,
     sign_delegation,
     verify_delegation_chain,
 )
+from agentauth.capabilities.deployable_stack import DeployableStack, StackDecision
 from agentauth.capabilities.layer import (
     AgentAuthCapabilityLayer,
     default_capability_layer,
@@ -27,13 +34,12 @@ from agentauth.capabilities.layer import (
     list_capability_layers,
     register_capability_layer,
 )
-from agentauth.capabilities.authorizers import (
-    cedar_authorizer,
-    external_authorizer,
-    opa_authorizer,
-    openfga_authorizer,
-)
 from agentauth.capabilities.mandate import Mandate, issue_mandate, verify_mandate_signature
+from agentauth.capabilities.mandate_budgets import (
+    MandateBudgets,
+    UnsupportedBudgetType,
+    session_budgets_from_mandate,
+)
 from agentauth.capabilities.operations import (
     capability_allows,
     operation_for_action,
@@ -45,19 +51,15 @@ from agentauth.capabilities.scoping import (
     build_capability_lease,
     build_repo_chunk_index,
 )
-from agentauth.capabilities.call_budget import (
-    CallBudgetConfig,
-    CallReservation,
-    SessionCallBudget,
-    call_budget_config_from_mandate,
-    session_call_budget_from_mandate,
-)
-from agentauth.capabilities.mandate_budgets import (
-    MandateBudgets,
-    UnsupportedBudgetType,
-    session_budgets_from_mandate,
-)
+from agentauth.capabilities.session_memory import SessionMemory
 from agentauth.capabilities.task_scope import TaskScope, compile_task_scope
+from agentauth.capabilities.used_token_store import (
+    DynamoDBUsedTokenStore,
+    RedisUsedTokenStore,
+    default_used_token_store,
+    load_used_token_store_from_env,
+    set_default_used_token_store,
+)
 from agentauth.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
@@ -73,6 +75,7 @@ __all__ = [
     "CapabilityLease",
     "CommitToken",
     "DelegationToken",
+    "DeployableStack",
     "DynamoDBUsedTokenStore",
     "GoalSpec",
     "InMemoryUsedTokenStore",
@@ -80,16 +83,18 @@ __all__ = [
     "MandateBudgets",
     "RedisUsedTokenStore",
     "SessionCallBudget",
+    "SessionMemory",
     "SessionValueBudget",
     "SignedCommitToken",
+    "StackDecision",
     "TaskScope",
     "UnsupportedBudgetType",
     "UsedTokenStore",
     "ValueBudgetConfig",
     "ValueReservation",
     "build_capability_lease",
-    "call_budget_config_from_mandate",
     "build_repo_chunk_index",
+    "call_budget_config_from_mandate",
     "capability_allows",
     "cedar_authorizer",
     "compile_task_scope",
@@ -98,7 +103,6 @@ __all__ = [
     "external_authorizer",
     "get_capability_layer",
     "issue_commit_token",
-    "trusted_minting_keys_from_env",
     "issue_delegation",
     "issue_mandate",
     "list_capability_layers",
@@ -110,9 +114,10 @@ __all__ = [
     "register_capability_layer",
     "session_budgets_from_mandate",
     "session_call_budget_from_mandate",
-    "set_default_used_token_store",
     "session_value_budget_from_mandate",
+    "set_default_used_token_store",
     "sign_delegation",
+    "trusted_minting_keys_from_env",
     "value_budget_config_from_mandate",
     "verify_commit_token",
     "verify_delegation_chain",

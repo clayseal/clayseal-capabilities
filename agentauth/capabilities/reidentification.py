@@ -305,7 +305,7 @@ class ReidentificationPolicy:
     enabled: bool = False
 
     @classmethod
-    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> "ReidentificationPolicy":
+    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> ReidentificationPolicy:
         raw = (mandate or {}).get("reidentification") or {}
         if not raw:
             return cls()

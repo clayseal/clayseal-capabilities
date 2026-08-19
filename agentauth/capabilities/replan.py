@@ -78,8 +78,9 @@ from __future__ import annotations
 import json
 import re
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 # Verb classes. The replanner judges these rather than tool names alone, so that
 # "the goal needs to send things" generalises across send_email, post_message
@@ -111,7 +112,7 @@ class ActionShape:
     verb_class: str
 
     @classmethod
-    def of(cls, tool: str, verb: str) -> "ActionShape":
+    def of(cls, tool: str, verb: str) -> ActionShape:
         return cls(tool=tool, verb_class=verb_class(verb))
 
     def describe(self) -> str:
@@ -130,6 +131,42 @@ class ShapeJudge(Protocol):
 
     def __call__(self, goal: str, catalog: list[str], shape: ActionShape) -> tuple[bool, str]:
         ...
+
+
+def catalog_shape_judge(
+    *,
+    allowed_classes: set[str] | None = None,
+) -> ShapeJudge:
+    """Trusted-input shape judge with no model (catalog + sealed goal only).
+
+    Admits a shape when the tool is in the static catalog and either its verb
+    class is in ``allowed_classes``, a significant tool-name token appears in
+    the sealed goal, or the verb class is observational. Never sees argument
+    values or tool results — same trust boundary as :func:`llm_shape_judge`.
+    """
+
+    allowed = set(allowed_classes or ())
+
+    def judge(goal: str, catalog: list[str], shape: ActionShape) -> tuple[bool, str]:
+        cat_l = {c.lower() for c in catalog}
+        if shape.tool not in catalog and shape.tool.lower() not in cat_l:
+            return False, f"tool {shape.tool!r} not in session catalog"
+        if shape.verb_class in {"observe", "invoke"}:
+            return True, f"{shape.verb_class} is observational / in-catalog"
+        if allowed and shape.verb_class in allowed:
+            return True, f"verb class {shape.verb_class!r} permitted by mandate"
+        g = (goal or "").lower()
+        tokens = [
+            t for t in re.split(r"[^a-z0-9]+", shape.tool.lower()) if len(t) >= 4
+        ]
+        if tokens and any(t in g for t in tokens):
+            return True, f"tool token implied by sealed goal ({tokens[0]!r})"
+        return False, (
+            f"shape {shape.describe()} not implied by sealed goal "
+            f"and not in allowed classes {sorted(allowed) or '∅'}"
+        )
+
+    return judge
 
 
 def deterministic_judge(allowed_classes: set[str]) -> ShapeJudge:
@@ -183,7 +220,7 @@ def llm_shape_judge(client: Any, model: str) -> ShapeJudge:
             why = str(data.get("why", ""))[:160]
             return required, why or ("shape consistent with the goal" if required
                                      else "shape not implied by the goal")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - total by contract, fails closed
             # Fail CLOSED. A planner outage must not silently widen authority,
             # and the caller's existing deny path is the safe default.
             return False, f"shape judge unavailable ({type(exc).__name__})"

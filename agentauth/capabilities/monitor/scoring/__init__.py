@@ -5,4 +5,4 @@ from agentauth.capabilities.monitor.scoring.base import ScoredStep, SequenceScor
 from agentauth.capabilities.monitor.scoring.ensemble import EnsembleScorer
 from agentauth.capabilities.monitor.scoring.ngram import NGramScorer
 
-__all__ = ["ScoredStep", "SequenceScorer", "NGramScorer", "EnsembleScorer"]
+__all__ = ["EnsembleScorer", "NGramScorer", "ScoredStep", "SequenceScorer"]

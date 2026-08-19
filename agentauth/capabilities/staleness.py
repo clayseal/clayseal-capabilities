@@ -133,7 +133,7 @@ class StalenessPolicy:
     normalise: bool = True
 
     @classmethod
-    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> "StalenessPolicy":
+    def from_mandate(cls, mandate: Mapping[str, Any] | None) -> StalenessPolicy:
         raw = (mandate or {}).get("freshness") or {}
         return cls(
             volatile=tuple(str(p) for p in (raw.get("volatile") or ())),
@@ -417,7 +417,7 @@ class ObservationLedger:
             return None
         if any(self._current[k].version == v for k, v in tracked):
             return None
-        return sorted(k for k, _ in tracked)[0]
+        return min(k for k, _ in tracked)
 
     # ----------------------------------------------------------------- #
     # Deciding
@@ -439,10 +439,10 @@ class ObservationLedger:
         with self._lock:
             justified: set[str] = set()
             for token in tokens:
-                for key, _version in self._suppliers.get(token, ()):  # noqa: B007
+                for key, _version in self._suppliers.get(token, ()):
                     justified.add(key)
             for slot in slots:
-                for key, _version in self._field_suppliers.get(slot, ()):  # noqa: B007
+                for key, _version in self._field_suppliers.get(slot, ()):
                     justified.add(key)
             # The object the action targets, when the session has a view of it.
             # This is the `approve(invoice_id=41)` shape, where the arguments name
@@ -549,12 +549,12 @@ class ObservationLedger:
         with self._lock:
             justified: set[str] = set()
             for token in ParameterProvenance._tokens(args):
-                for key, _version in self._suppliers.get(token, ()):  # noqa: B007
+                for key, _version in self._suppliers.get(token, ()):
                     justified.add(key)
             if isinstance(args, Mapping):
                 for name, value in args.items():
                     for slot in _field_slots(name, value):
-                        for key, _v in self._field_suppliers.get(slot, ()):  # noqa: B007
+                        for key, _v in self._field_suppliers.get(slot, ()):
                             justified.add(key)
             target = path or resource
             if target in self._current:

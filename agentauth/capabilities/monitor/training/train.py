@@ -35,7 +35,7 @@ def _pad_batch(seqs: list[list[int]], pad_id: int):
 
 def train(args: argparse.Namespace) -> None:
     import torch
-    import torch.nn as nn
+    from torch import nn
 
     torch.manual_seed(args.seed)
     random.seed(args.seed)

@@ -27,6 +27,7 @@ then :meth:`ComputeReservation.commit` (actual seconds) or
 
 from __future__ import annotations
 
+import math
 import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -85,6 +86,43 @@ class ComputeBudgetConfig:
     ceilings: dict[str, float] = field(default_factory=dict)
     tightened: bool = False
 
+    def __post_init__(self) -> None:
+        """Reject a ceiling that would silently disable this control.
+
+        A malformed ceiling is a control-plane bug, and every way of absorbing
+        one quietly is worse than refusing it. Measured before this check
+        existed:
+
+            compute  ceiling='Infinity' / 'NaN' -> float('inf') / float('nan'),
+                     so a 1,000,000-second request returned allowed=True with
+                     reason 'ok' and the budget was disabled outright. A NaN
+                     ceiling is the worst case: every ``projected > ceiling``
+                     comparison is False, so nothing is ever refused.
+            value    ceiling='Infinity' / 'abc' -> InvalidOperation raised out
+                     of ``reserve()``, taking the authorization call with it.
+            call     ceiling='abc' -> ValueError, same shape.
+
+        Returning ``None`` (meaning "no ceiling") would also be fail-open, so
+        the only honest option is to refuse the configuration at the boundary
+        where it is built. A budget that cannot be enforced must not be
+        constructible.
+        """
+        import math
+
+        for budget_id, raw in list(self.ceilings.items()):
+            if raw is None:
+                continue
+            try:
+                value = float(raw)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"compute ceiling for {budget_id!r} is not a number: "
+                    f"{raw!r}") from exc
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(
+                    f"compute ceiling for {budget_id!r} must be finite and "
+                    f"non-negative, got {raw!r}")
+
     def budget_for(self, tool_name: str) -> str | None:
         return self.tracked.get(tool_name)
 
@@ -138,7 +176,24 @@ class SessionComputeBudget:
     def reserve(self, tool_name: str, estimate_seconds: float) -> ComputeReservation:
         """Atomic gate: check the projection against the ceiling AND record the
         reservation under one lock. When ``allowed`` is True the caller MUST
-        later ``commit`` or ``release``."""
+        later ``commit`` or ``release``.
+
+        Total by contract: any input yields a decision, never an exception. A
+        string estimate used to raise ``TypeError`` from the ``< 0`` comparison
+        before any budget logic ran, and a non-finite one sailed through to be
+        "clamped" — ``float('nan')`` was granted as ``ok_clamped``, which then
+        poisons every later comparison on the ledger because NaN compares False
+        against everything. Both are refused here.
+
+        ``bool`` is excluded deliberately: ``True`` is an ``int`` in Python, so
+        an estimate of ``True`` would otherwise book one second and report ``ok``.
+        """
+        if isinstance(estimate_seconds, bool) or not isinstance(
+            estimate_seconds, (int, float)
+        ):
+            return ComputeReservation(False, "compute_budget_unusable_estimate")
+        if not math.isfinite(estimate_seconds):
+            return ComputeReservation(False, "compute_budget_unusable_estimate")
         if estimate_seconds < 0:
             raise ValueError("estimate_seconds must not be negative")
         budget_id = self.config.budget_for(tool_name)

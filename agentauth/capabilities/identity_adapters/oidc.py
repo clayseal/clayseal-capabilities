@@ -7,6 +7,8 @@ from typing import Any
 from agentauth.core.authority_binding import AuthorityBinding
 from agentauth.core.identity_protocol import CapabilityAuthorizer, IdentitySession
 
+from ._claims import strip_authority_fields
+
 
 def claims_from_oidc(claims: dict[str, Any]) -> dict[str, Any]:
     scope = claims.get("scope", "")
@@ -27,7 +29,8 @@ class OidcIdentityProvider:
     name: str = "oidc"
 
     def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = False) -> AuthorityBinding:
-        normalized = claims_from_oidc(raw) if "sub" in raw and "iss" in raw else raw
+        normalized = (claims_from_oidc(raw) if "sub" in raw and "iss" in raw
+                      else strip_authority_fields(raw))
         return AuthorityBinding.from_verified_credential(
             normalized,
             attestation_type="oidc",

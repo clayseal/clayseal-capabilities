@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import math
+from dataclasses import dataclass
 from typing import Protocol
 
 
@@ -114,7 +114,7 @@ class HnswAnnIndex:
         try:
             import hnswlib  # type: ignore[import-not-found]
             import numpy as np  # type: ignore[import-not-found]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise RuntimeError("hnswlib not available") from exc
 
         vecs = embedder.embed(texts)
@@ -137,7 +137,7 @@ class HnswAnnIndex:
             return []
         try:
             import numpy as np  # type: ignore[import-not-found]
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             raise RuntimeError("numpy not available") from exc
 
         q = embedder.embed([query_text])

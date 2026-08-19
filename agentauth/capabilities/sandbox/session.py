@@ -169,9 +169,8 @@ class ComputeBudgetExhausted(RuntimeError):
 def _write_artifacts(run_dir: Path, result: IVisorResult,
                      payload: dict) -> None:
     with open(run_dir / "trace.jsonl", "w") as handle:
-        for event in result.events:      # verified only, by construction
-            handle.write(json.dumps({
+        handle.writelines(json.dumps({
                 "event": event.event, "verdict": event.verdict.value,
-                "fields": dict(event.fields), "at_ms": event.at_ms}) + "\n")
+                "fields": dict(event.fields), "at_ms": event.at_ms}) + "\n" for event in result.events)
     (run_dir / "result.json").write_text(json.dumps(payload, indent=2,
                                                     sort_keys=True))

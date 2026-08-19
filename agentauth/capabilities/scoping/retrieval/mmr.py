@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from agentauth.capabilities.scoping.models import RepoChunk
 
 

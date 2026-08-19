@@ -4,6 +4,7 @@ import os
 from typing import Any
 
 from agentauth.core.runtime import SideEffectLevel
+
 from agentauth.capabilities.scoping.enforcement import check_repo_path_allowed
 from agentauth.capabilities.scoping.models import CapabilityLease
 from agentauth.capabilities.task_scope import action_path_candidates

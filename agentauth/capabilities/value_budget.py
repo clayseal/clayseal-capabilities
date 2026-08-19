@@ -40,8 +40,10 @@ from typing import Any
 
 from agentauth.capabilities.budget import (
     BudgetType,
-    budget_attr as _budget_attr,
     select_budgets,
+)
+from agentauth.capabilities.budget import (
+    budget_attr as _budget_attr,
 )
 
 # Currency scale: money is accumulated and compared at cent precision.
@@ -108,6 +110,90 @@ def session_value_budget_from_mandate(
     )
 
 
+#: Sentinels for `effect_identity`. Hoisted out of the f-string because an
+#: escape sequence inside an f-string EXPRESSION is a syntax error before
+#: Python 3.12, and this package declares support from 3.10 — the module is
+#: imported by `agentauth.capabilities.__init__`, so the error made the whole
+#: package unimportable on 3.10/3.11. Values are unchanged.
+_IDENTITY_SEP = "\u0000"
+_IDENTITY_MISSING = "\u0001missing"
+
+
+def effect_identity(identity_args, args: Mapping[str, Any]) -> str | None:
+    """The object key an effect lands on, or None when it is repeatable.
+
+    Shared by `EffectSpec` and `CallEffectSpec` so the two budgets cannot drift.
+    Missing arguments are represented explicitly rather than skipped: two calls
+    differing only in which identity field is absent must not collapse to the
+    same key, or an attacker omits the field to mint a fresh identity.
+    """
+    if not identity_args:
+        return None
+    return _IDENTITY_SEP.join(
+        f"{name}={args.get(name, _IDENTITY_MISSING)!r}" for name in identity_args)
+
+
+@dataclass(frozen=True)
+class EffectSpec:
+    """What a tool call actually moves, as opposed to what its argument says.
+
+    The tuple form (`arg_name`, `budget_id`) binds a ledger entry to a **tool
+    name** and takes the argument at face value. `benchmarks/stress_aggregation.py`
+    measures what that costs: against a ceiling of 100, batch amortization lands
+    4,500 and unit confusion lands 9,900, both while every individual reservation
+    is legal.
+
+    Neither is a bug in the ledger. The ledger debits the number in the field,
+    correctly, and cannot see that the field means cents while the ceiling means
+    dollars, or that the call carries a list of fifty. Those are properties of
+    the *tool*, so the mandate has to declare them.
+
+    ``count_arg``  the argument carrying multiplicity. `total = amount * count`.
+                   Closes batch amortization: a batch of 50 debits 50x.
+    ``scale``      conversion into the budget's unit. Closes unit confusion: a
+                   tool quoting cents against a dollar ceiling declares 0.01.
+    ``unit``       documentation, and a mismatch check when two tools share a
+                   budget.
+    ``identity_args``
+                   the arguments naming the OBJECT the effect lands on. When set,
+                   the effect is once-per-object: a second commit against the same
+                   identity is refused.
+
+    `identity_args` closes a violation class the value ceiling structurally
+    cannot see. `retry-storm-double-effect` in BPL pays INV-1 twice at 1200 each
+    against a ceiling that has room for it; the ledger is asked "is the total
+    under the limit", answers correctly, and the invoice is still paid twice. The
+    scenario's own goal says "Pay each invoice once under ceiling", and until now
+    a mandate had no way to write the first half of that sentence down.
+
+    This is the same cumulative framing, with a different predicate over the same
+    multiset of committed effects: not `sum <= ceiling` but `no object appears
+    twice`. A per-call defense cannot express either.
+
+    Backward compatible by construction: `tracked` still accepts the tuple, which
+    is read as `EffectSpec(budget_id, amount_arg)` with count 1 and scale 1, so
+    every existing mandate behaves exactly as before.
+    """
+
+    budget_id: str
+    amount_arg: str
+    count_arg: str = ""
+    scale: Any = 1
+    unit: str = ""
+    identity_args: tuple[str, ...] = ()
+
+    @classmethod
+    def coerce(cls, raw: Any) -> EffectSpec:
+        if isinstance(raw, EffectSpec):
+            return raw
+        # legacy: (arg_name, budget_id)
+        arg_name, budget_id = raw
+        return cls(budget_id=str(budget_id), amount_arg=str(arg_name))
+
+    def identity_of(self, args: Mapping[str, Any]) -> str | None:
+        return effect_identity(self.identity_args, args)
+
+
 @dataclass
 class ValueBudgetConfig:
     # tool_name -> (arg_name carrying the quantity, budget_id it debits)
@@ -121,8 +207,51 @@ class ValueBudgetConfig:
     supersession_eligible: frozenset[str] = field(default_factory=frozenset)
     tightened: bool = False
 
+    def __post_init__(self) -> None:
+        """Reject a ceiling that would silently disable this control.
+
+        A malformed ceiling is a control-plane bug, and every way of absorbing
+        one quietly is worse than refusing it. Measured before this check
+        existed:
+
+            compute  ceiling='Infinity' / 'NaN' -> float('inf') / float('nan'),
+                     so a 1,000,000-second request returned allowed=True with
+                     reason 'ok' and the budget was disabled outright. A NaN
+                     ceiling is the worst case: every ``projected > ceiling``
+                     comparison is False, so nothing is ever refused.
+            value    ceiling='Infinity' / 'abc' -> InvalidOperation raised out
+                     of ``reserve()``, taking the authorization call with it.
+            call     ceiling='abc' -> ValueError, same shape.
+
+        Returning ``None`` (meaning "no ceiling") would also be fail-open, so
+        the only honest option is to refuse the configuration at the boundary
+        where it is built. A budget that cannot be enforced must not be
+        constructible.
+        """
+        for budget_id, raw in list(self.ceilings.items()):
+            if raw is None:
+                continue
+            try:
+                value = _money(raw)
+            except (TypeError, ValueError, ArithmeticError) as exc:
+                raise ValueError(
+                    f"value ceiling for {budget_id!r} is not a usable amount: "
+                    f"{raw!r}") from exc
+            if not value.is_finite() or value < 0:
+                raise ValueError(
+                    f"value ceiling for {budget_id!r} must be finite and "
+                    f"non-negative, got {raw!r}")
+
     def tracked_for(self, tool_name: str) -> tuple[str, str] | None:
-        return self.tracked.get(tool_name)
+        raw = self.tracked.get(tool_name)
+        if raw is None:
+            return None
+        spec = EffectSpec.coerce(raw)
+        return (spec.amount_arg, spec.budget_id)
+
+    def spec_for(self, tool_name: str) -> EffectSpec | None:
+        raw = self.tracked.get(tool_name)
+        return None if raw is None else EffectSpec.coerce(raw)
 
     def ceiling_for(self, budget_id: str) -> Decimal | None:
         raw = self.ceilings.get(budget_id)
@@ -145,6 +274,8 @@ class ValueReservation:
     _net: Decimal = Decimal(0)
     _amount: Decimal = Decimal(0)
     _idempotency_key: str | None = None
+    #: Object identity held by this reservation, when the mandate declares one.
+    _identity: str | None = None
     _settled: bool = False
 
     def commit(self) -> None:
@@ -167,20 +298,88 @@ class SessionValueBudget:
     _effects: dict[tuple[str, str], Decimal] = field(default_factory=dict)
     # budget_id -> net value reserved but not yet committed/released.
     _reserved: dict[str, Decimal] = field(default_factory=dict)
+    # Object identities already committed / currently held, per budget. Only
+    # populated for tools whose EffectSpec declares `identity_args`.
+    _committed_identities: dict[str, set] = field(default_factory=dict)
+    _reserved_identities: dict[str, set] = field(default_factory=dict)
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
 
-    def _amount(self, tool_name: str, args: dict[str, Any]) -> tuple[str, Decimal] | None:
-        spec = self.config.tracked_for(tool_name)
-        if spec is None:
+    def _amount(
+        self, tool_name: str, args: dict[str, Any]
+    ) -> tuple[str, Decimal | None] | None:
+        """Tri-state, because two of the states used to be conflated.
+
+        ``None``                  the call is genuinely untracked: this tool has
+                                  no money spec, or carries no amount argument.
+        ``(budget_id, None)``     the call IS tracked and the amount is present
+                                  but unusable — non-numeric, unparseable, or
+                                  non-finite.
+        ``(budget_id, Decimal)``  a usable amount.
+
+        The middle state is the one that did not exist, and its absence was a
+        fail-open. Every unparseable amount returned ``None``, callers read that
+        as "untracked", and the reservation came back ``allowed=True`` with
+        reason ``ok_untracked`` — no ceiling check at all. Measured against a
+        ceiling of 10, all of these were allowed and booked nothing:
+
+            '1e999'  'Infinity'  '-Infinity'  'sNaN'  '0x10'  ''  10**30
+
+        ``1e999`` is not an exotic input. It is what an injected agent writes
+        for "transfer everything", and ``10**30`` is an ordinary Python int that
+        merely overflows cent-quantization. A spend ceiling that stops applying
+        precisely when the amount is absurd is worse than no ceiling, because
+        the rest of the stack reports that the budget rung passed.
+
+        Non-finite values are rejected explicitly rather than left to raise.
+        ``Decimal('NaN')`` quantizes without complaint and then raises
+        ``InvalidOperation`` on the very next comparison — ``amount < 0`` — which
+        escaped ``reserve`` unhandled and took the whole authorization call with
+        it. Fail-closed on a bad amount; never fail by exception.
+        """
+        effect = self.config.spec_for(tool_name)
+        if effect is None:
             return None
-        arg_name, budget_id = spec
-        raw = args.get(arg_name)
+        arg_name, budget_id = effect.amount_arg, effect.budget_id
+        if arg_name not in args:
+            return None  # tracked tool, but this call carries no amount
+        raw = args[arg_name]
         if not isinstance(raw, (int, float, str, Decimal)) or isinstance(raw, bool):
-            return None
+            return budget_id, None
         try:
-            return budget_id, _money(raw)
-        except (ValueError, ArithmeticError):
-            return None
+            amount = _money(raw)
+        except (ValueError, ArithmeticError, TypeError):
+            return budget_id, None
+        if not amount.is_finite():
+            return budget_id, None
+
+        # Multiplicity, then unit. Both are declared by the mandate because both
+        # are properties of the TOOL that the argument does not carry.
+        #
+        # Without them the ledger debits the number in the field and a per-call
+        # ceiling is defeated by arity or by denomination:
+        # `benchmarks/stress_aggregation.py` lands 4,500 and 9,900 against a
+        # ceiling of 100 that way, with every reservation individually legal.
+        if effect.count_arg:
+            raw_count = args.get(effect.count_arg, 1)
+            if isinstance(raw_count, (list, tuple, set)):
+                raw_count = len(raw_count)      # a batch argument IS its length
+            try:
+                count = _money(raw_count)
+            except (TypeError, ValueError, ArithmeticError):
+                return budget_id, None          # declared multiplicity, unusable
+            if not count.is_finite() or count < 0:
+                return budget_id, None
+            amount = amount * count
+        if effect.scale not in (1, "1", None):
+            try:
+                amount = amount * _money(effect.scale)
+            except (TypeError, ValueError, ArithmeticError):
+                return budget_id, None
+        try:
+            amount = amount.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
+        except (ArithmeticError, ValueError):
+            return budget_id, None
+        return budget_id, amount
 
     def _prior_effect(
         self, tool_name: str, budget_id: str, args: dict[str, Any]
@@ -206,6 +405,8 @@ class SessionValueBudget:
         if self.config.tightened:
             return False, "value_budget_disabled_tightened"
         budget_id, amount = parsed
+        if amount is None:
+            return False, "value_budget_unparseable_amount"
         # A negative tracked value must never book: a debit of -X would drop the running
         # total and open headroom to later exceed the ceiling by X. (A supersession
         # *reduction* is a negative NET of two positive amounts, handled below, not a
@@ -239,12 +440,28 @@ class SessionValueBudget:
         if self.config.tightened:
             return ValueReservation(False, "value_budget_disabled_tightened")
         budget_id, amount = parsed
+        if amount is None:  # tracked but unusable: fail closed, never untracked
+            return ValueReservation(False, "value_budget_unparseable_amount")
         if amount < 0:  # negative debits open ceiling headroom — reject (see would_allow)
             return ValueReservation(False, "value_budget_negative_amount")
         ceiling = self.config.ceiling_for(budget_id)
         raw_key = args.get("_idempotency_key")
         idem = raw_key.strip() if isinstance(raw_key, str) and raw_key.strip() else None
+        spec = self.config.spec_for(tool_name)
+        identity = spec.identity_of(args) if spec is not None else None
         with self._lock:
+            if identity is not None:
+                # Once-per-object. The value ceiling cannot see this: paying the
+                # same invoice twice at 1200 against a ceiling with room for 3600
+                # is three correct answers to the wrong question.
+                #
+                # An idempotency key is deliberately NOT an escape hatch here. It
+                # suppresses a duplicate DEBIT, which is the opposite need: this
+                # refuses a duplicate EFFECT.
+                if identity in self._committed_identities.get(budget_id, ()):
+                    return ValueReservation(False, "value_budget_duplicate_effect")
+                if identity in self._reserved_identities.get(budget_id, ()):
+                    return ValueReservation(False, "value_budget_duplicate_effect")
             prior = self._prior_effect(tool_name, budget_id, args)
             prior_amount = prior[1] if prior is not None else Decimal(0)
             net = amount - prior_amount
@@ -257,6 +474,8 @@ class SessionValueBudget:
                 if projected > ceiling:
                     return ValueReservation(False, "value_budget_exceeded")
             self._reserved[budget_id] = self._reserved.get(budget_id, Decimal(0)) + net
+            if identity is not None:
+                self._reserved_identities.setdefault(budget_id, set()).add(identity)
             return ValueReservation(
                 True,
                 "ok",
@@ -265,6 +484,7 @@ class SessionValueBudget:
                 _net=net,
                 _amount=amount,
                 _idempotency_key=idem,
+                _identity=identity,
             )
 
     def _commit_reservation(self, res: ValueReservation) -> None:
@@ -277,6 +497,9 @@ class SessionValueBudget:
             self.spent[budget_id] = self.spent.get(budget_id, Decimal(0)) + res._net
             if res._idempotency_key is not None:
                 self._effects[(budget_id, res._idempotency_key)] = res._amount
+            if res._identity is not None:
+                self._reserved_identities.get(budget_id, set()).discard(res._identity)
+                self._committed_identities.setdefault(budget_id, set()).add(res._identity)
             res._settled = True
 
     def _release_reservation(self, res: ValueReservation) -> None:
@@ -286,6 +509,12 @@ class SessionValueBudget:
                 return
             budget_id = res._budget_id
             self._reserved[budget_id] = self._reserved.get(budget_id, Decimal(0)) - res._net
+            if res._identity is not None:
+                # A released reservation frees its object again. Without this a
+                # downstream refusal would pin the identity for the session and
+                # the retry of a legitimate action would be refused as a
+                # duplicate — the failure that hides, because it is safe.
+                self._reserved_identities.get(budget_id, set()).discard(res._identity)
             res._settled = True
 
     def commit(self, tool_name: str, args: dict[str, Any]) -> None:
@@ -296,6 +525,8 @@ class SessionValueBudget:
         if parsed is None:
             return
         budget_id, amount = parsed
+        if amount is None:  # unusable amount: book nothing rather than guess
+            return
         if amount < 0:  # never book a negative debit (would open ceiling headroom)
             return
         with self._lock:

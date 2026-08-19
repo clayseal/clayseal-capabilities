@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from agentauth.core.hash_util import sha256_hex
+
 from agentauth.capabilities.scoping.labels import sensitivity_for_path, subsystem_tags_for_path
 from agentauth.capabilities.scoping.models import ChunkKind, RepoChunk, make_chunk_id
 

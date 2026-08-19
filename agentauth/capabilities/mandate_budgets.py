@@ -22,8 +22,10 @@ from typing import Any
 
 from agentauth.capabilities.budget import (
     BudgetType,
-    budget_attr as _budget_attr,
     budget_type_of,
+)
+from agentauth.capabilities.budget import (
+    budget_attr as _budget_attr,
 )
 from agentauth.capabilities.call_budget import (
     SessionCallBudget,

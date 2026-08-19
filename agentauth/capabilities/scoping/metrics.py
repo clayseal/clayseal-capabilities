@@ -53,6 +53,7 @@ class ScopingMetrics:
     prevented_protected_reads: int = 0
     prevented_protected_writes: int = 0
     prevented_egress: int = 0
+    prevented_secret_content: int = 0
     scan_triggers: int = 0
     drift_triggers: int = 0
     novelty_triggers: int = 0
@@ -94,6 +95,7 @@ class ScopingMetrics:
         egress: bool = False,
         expired: bool = False,
         delegation: bool = False,
+        secret_content: bool = False,
     ) -> None:
         if expired:
             self.prevented_expired_grants += 1
@@ -105,6 +107,12 @@ class ScopingMetrics:
             self.prevented_protected_writes += 1
         if egress:
             self.prevented_egress += 1
+        if secret_content:
+            # Counted separately from egress on purpose. The destination was
+            # allowed; what was refused is the payload. Folding it into the
+            # egress counter would make an operator read a content refusal as a
+            # destination refusal and look in the wrong place.
+            self.prevented_secret_content += 1
 
     def record_monitor_trigger(
         self,
