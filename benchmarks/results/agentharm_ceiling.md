@@ -1,5 +1,7 @@
 # AgentHarm: the ceiling claim was wrong, and the corpus does carry targets
 
+STATUS: current
+
 > **WITHDRAWN.** This document argued that 6.3% is an information-theoretic
 > ceiling because no AgentHarm event carries a target. That is true of the JSON
 > our loader reads and false of the benchmark. AgentHarm's grading functions,

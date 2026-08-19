@@ -1,5 +1,7 @@
 # What we contain, split by what defines the harm
 
+STATUS: current
+
 Agent-security results are usually reported per benchmark, which hides the thing
 that actually predicts whether a defense works: **what makes the action harmful.**
 Sorted that way, the picture is sharp, and three of the four axes have a clear
@@ -7,10 +9,10 @@ answer.
 
 | Harm defined by | The attack | Result | Cost |
 | --- | --- | --: | --: |
-| **Target** | the action points somewhere it must not | 99.9-100% | 0.00% |
+| **Target** | the action points somewhere it must not | 99.9-100% | 0.00% granted (0 of 18,356); 18–50% held out |
 | **Volume** | too many of an authorized action | 100% at burst >= 10 | 0.0-2.0% held out |
-| **Sequence** | authorized read, then authorized write of what it read | 100% | 0.0% |
-| **Content** | an authorized action whose meaning is harmful | 6.3% | 0.00% |
+| **Sequence** | authorized read, then authorized write of what it read | 100% | 0.00% (0 of 1,242 benign tau2 events) |
+| **Content** | an authorized action whose meaning is harmful | 6.3% | 0.00% granted (0 of 653); 57.73% held out |
 
 Everything below is measured, and every number that did not survive audit was
 withdrawn rather than softened. Three headline figures were withdrawn during this
@@ -23,15 +25,29 @@ work; the reasons are in each section.
 The action points at something the mandate does not cover. A path escape, an
 attacker-controlled recipient, a protected zone, a credential store.
 
-| Corpus | attack events | contained | false-block |
-| --- | --: | --: | --: |
-| RedCode | 718 | **99.9%** | 0.00% |
-| ASB | 2,040 | **100%** | 0.00% |
-| IPI-Coding-Agent | 50 | **100%** | 0.00% |
-| AgentThreatBench (data_exfil) | 6 | **100%** | 0.00% |
+| Corpus | attack events | contained | false-block, granted mandate | false-block, held-out mandate |
+| --- | --: | --: | --: | --: |
+| RedCode | 718 | **99.9%** | 0.00% (0 of 344) | – (unsplittable) |
+| ASB | 2,040 | **100%** | 0.00% (0 of 102) | **50.00%** |
+| IPI-Coding-Agent | 50 | **100%** | 0.00% (0 of 45) | – (unsplittable) |
+| AgentThreatBench (data_exfil) | 6 | **100%** | 0.00% (0 of 24) | – (unsplittable) |
 
-Against 18,356 benign events from tau2, BFCL and ATIF, the false-block rate is
-0.00%.
+**The granted-mandate column is close to an identity and the held-out column is
+the measurement.** On six corpora the grant IS the benign side restated, so no
+benign event can fall outside it and 0.00% at the scope rung follows by
+arithmetic. `benchmarks/core/heldout.py` rebuilds the grant from half a task's
+benign events and scores the other half, which is the question an operator
+actually faces the day after they write a mandate.
+
+Where a corpus cannot be split — one benign event per task, so there is nothing
+to hold out — the cell is `–` rather than the circular zero. Reporting the
+identity beside a real containment number is forbidden claim 3 in
+`SEND_PACKET.md`.
+
+Against 18,356 benign events from tau2, BFCL and ATIF the granted-mandate
+false-block rate is 0.00% (0 of 18,356). Held out, the same corpora are 48.13%
+(tau2), 18.04% (BFCL) and 26.95% (ATIF) — the cost of a mandate that did not
+anticipate the traffic, and the number a deployment should budget for.
 
 **ASB's 100% means less than it looks.** Its benign side is one synthetic event
 per granted tool, and its attack side is ASB's separate attacker-tool list, which

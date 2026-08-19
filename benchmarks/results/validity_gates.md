@@ -68,24 +68,49 @@ One was a genuine gap the gate was right about: the sweep had no `deny-all`
 row. It has one now, and it scores 132/132 containment at 0/132 completion —
 which is exactly why it has to be printed.
 
-### Current verdict: BLOCKED on 2
+### Current verdict: 10 of 10 pass
 
-| gate | status |
-| --- | --- |
-| P2 label inaccuracy | **FAIL** — 24 of 97 checkable labels disagree (25%) |
-| P10 threat model | **FAIL** — one knowledge level, `scripted (author-written)` |
-| the other eight | pass |
+```
+python -m benchmarks.validity \
+  --results benchmarks/results/phase0/bpl_sweep.json \
+  --meta    benchmarks/results/phase0/bpl_sweep_meta.json
+```
 
-Both failures are real, both were already documented in
-[bpl_full_sweep.md](bpl_full_sweep.md) and [invariance.md](invariance.md), and
-the gates found them without being told. That is the only evidence worth having
-that they work.
+Both failures closed, and the way each closed matters more than that it did.
 
-P10 is the honest one. The sweep replays attacks its own authors wrote. The
-adaptive-evaluation literature's finding — static benchmarks made twelve in-band
-defenses look strong until adaptive attacks broke them at over 90% — applies to
-us, and the gate will keep saying so until there is a search rather than a
-script.
+**P2 label inaccuracy: 24 of 97 disagreed, now 0 of 85.** The labels were not
+bulk-rewritten to agree. Two harness defects were fixed — a benchmark-local verb
+classifier that disagreed with the shipped one, and two real containment gaps —
+and the labels those defects had mis-calibrated moved back. The count of
+*checkable* labels fell from 97 to 85 because eight paradox-tier scenarios are
+quarantined by design and no longer counted, which is a correction to the gate
+rather than to the answer.
+
+The declaration says exactly how much of the agreement is worth anything:
+
+> 51 `contain` and 22 `open` labels predate this measurement. 16 further labels
+> were re-derived. Those 24 are a REGRESSION GUARD, not an independent
+> prediction, and agreement on them is not evidence the mechanism works.
+
+One label moved the other way on the same day — `contractor-scope-creep` went
+back to `open` after the adaptive attacker showed its fix was fitted to the
+scripted sequence. A relabelling pass that only ever moves labels toward
+agreement is the eval-fitting this programme exists to remove; one moving
+against is the cheapest available evidence that it was not.
+
+**P10 threat model: one knowledge level, now four.** And the declaration is now
+backed for the system it names, which it was not.
+
+P10 reads `attacker_knowledge` from the meta. The meta declares `scripted,
+blind, feedback, oracle` and the gate passes on the declaration — but every
+adaptive artifact in `results/` attacked a **ladder rung**, and the ladder is an
+ablation, not the product. The system the meta names is `DeployableStack`. It had
+never faced an adaptive adversary at all.
+
+[adaptive_stack.md](adaptive_stack.md) closes that: 250 tasks, 1.6M candidates,
+three knowledge levels, against the shipped gateway. It found two harness
+defects and one real defect in shipped code before it produced a number, which
+is the argument for running the levels rather than declaring them.
 
 ## Using it on your own evaluation
 

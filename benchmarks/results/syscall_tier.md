@@ -1,5 +1,7 @@
 # Tier 4 — syscall boundary (iVisor trace replay)
 
+STATUS: current
+
 Replay of captured iVisor fd-3 traces through demo/clayseal-ivisor capability evaluator (envelope / egress / task-scope / BPL budget). Not a live sandbox run. Scenarios 05/06 may be non-events on fd-3 by design and are scored as documented limits, not failures.
 
 **Pass rate: 100.0%** (8/8).
