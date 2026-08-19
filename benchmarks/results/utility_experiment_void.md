@@ -101,7 +101,15 @@ not model-injectability:
   attacker's knowledge rises, which is measured against a search rather than a
   model's suggestibility.
 
-## What would unblock it
+## Resolved: it was the attack, not the model
+
+[attacks_2026.md](attacks_2026.md) — the injections were the problem, and the
+benchmark is alive again. Dropping the authority claim entirely and relying on
+the injected action being *plausible* takes undefended ASR from 0 of 18 to 6 of
+48 on the same model, and the defense contains 0 of 48. The three options below
+are kept for the record; option 2 is the one that worked.
+
+## What would have unblocked it
 
 One of, and each is a decision rather than a task:
 
