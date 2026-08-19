@@ -536,6 +536,28 @@ def verify_intent_envelope(signed: dict, *, trusted_keys=None) -> tuple[bool, st
         pins = set(trusted_keys)
         if signature.get("public_key") not in pins and signature.get("key_id") not in pins:
             return False, "envelope signer is not a trusted control-plane key"
+    else:
+        # PRODUCTION FAILS CLOSED, mirroring `verify_commit_token`.
+        #
+        # Without this the two signed objects in this layer had opposite
+        # postures. A commit token minted by an unpinned key is refused in
+        # production; a sealed ENVELOPE was accepted from any keyholder at all.
+        #
+        # That asymmetry mattered more than it looks, because the envelope is
+        # the object `SessionBroker.reclear` swaps mid-session — it is how a
+        # running session's plan is legitimately WIDENED. An attacker who could
+        # reach that entry point with a self-signed envelope replaced the sealed
+        # plan wholesale, and every later conformance check then measured the
+        # action against the attacker's plan. A signature proves integrity, not
+        # authority, and the envelope path was reading it as both.
+        from agentauth.core.production import is_production
+
+        if is_production():
+            return (
+                False,
+                "intent envelope trusted control-plane keys required in "
+                "production (pass trusted_keys=...)",
+            )
     return True, None
 
 

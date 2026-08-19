@@ -226,6 +226,25 @@ def _authenticate_approval(
             "request_commitment=StepUpRequest.commitment(). Pass allow_unsigned=True "
             f"(or set {ALLOW_UNSIGNED_ENV}=1) ONLY in tests/trusted-local contexts."
         )
+    # The escape above turns off approval AUTHENTICATION, and an approval widens
+    # authority — it is the one object in this protocol whose whole job is to
+    # grant something the floor refused. A deployment that reaches this branch is
+    # applying a grant nobody signed.
+    #
+    # Its siblings were already blocked in production (`AGENT_RECEIPTS_ALLOW_STUB`,
+    # `AGENTAUTH_DEV_ATTESTOR` and the rest are in `production._RECEIPTS_PRODUCTION_DENY`);
+    # this one was not, so setting one environment variable disabled the check
+    # and the system reported success. That is the shape this repository has
+    # already shipped six times and names in `principal_ledger`: "a control that
+    # stopped applying when its input was unusual, and reported success."
+    from agentauth.core.production import is_production
+
+    if is_production():
+        raise ValueError(
+            "unsigned step-up approvals are refused in production: an approval "
+            "grants authority the floor refused, so it must be signed. Unset "
+            f"{ALLOW_UNSIGNED_ENV} and pass a SignedStepUpApproval."
+        )
     return approval
 
 
