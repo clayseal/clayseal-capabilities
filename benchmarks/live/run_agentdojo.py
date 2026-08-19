@@ -206,6 +206,11 @@ from agentdojo.benchmark import (
 from agentdojo.logging import OutputLogger
 
 import benchmarks.live.adaptive_attack  # noqa: F401  (registers envelope_aware)
+# Registers document_workflow / record_update / schema_field /
+# deferred_conditional. The 2024 attacks no longer transfer to a 2026 model
+# (undefended ASR 0 of 18 on gpt-5-mini across four of them); these drop the
+# authority claim entirely and rely on the injected action being plausible.
+import benchmarks.live.attacks_2026  # noqa: F401
 from benchmarks.live.broker_defense import BrokerToolsExecutor, LiveBrokerHarness
 from benchmarks.live.planner import LLMPlanner
 
@@ -306,14 +311,31 @@ def _recipient_map(suite, user_ids):
     return m
 
 
-def run(suite_name, model, n_user, n_inj, ablations, attack_name):
+def run(suite_name, model, n_user, n_inj, ablations, attack_name, inj_ids_arg=None):
     print(f"[provider] {_configure_provider(model)}")
     from openai import OpenAI
     client = OpenAI()
     llm_planner = LLMPlanner(client, model)
     suite = get_suite(_BENCH_VERSION, suite_name)
     user_ids = list(suite.user_tasks)[:n_user]
-    inj_ids = list(suite.injection_tasks)[:n_inj]
+    # `[:n_inj]` is not a neutral sample. In banking, injection tasks 0-3 all ask
+    # for a transaction whose SUBJECT LINE carries a piece of the user's personal
+    # data ("the music streaming service the user is subscribed to"), which no
+    # real document would ever instruct, while task 4 ("modify the recipient of a
+    # recurring payment") is exactly what a landlord notice legitimately says.
+    #
+    # So every run that takes the first three is measuring the goals a model is
+    # most likely to balk at on CONTENT grounds, independently of how the
+    # injection is framed — and that ceiling is invisible in the ASR number.
+    # `--inj-ids` makes the choice explicit; the default is unchanged.
+    if inj_ids_arg:
+        known = list(suite.injection_tasks)
+        inj_ids = [i if i in known else f"injection_task_{i}" for i in inj_ids_arg]
+        unknown = [i for i in inj_ids if i not in known]
+        if unknown:
+            raise SystemExit(f"unknown injection tasks {unknown}; have {known}")
+    else:
+        inj_ids = list(suite.injection_tasks)[:n_inj]
     oracle_planner = OraclePlanner(_oracle_map(suite, user_ids))
     def planner_for(ablation: str):
         """Resolve by SHAPE, not by exact name.
@@ -397,10 +419,16 @@ def main(argv=None):
     p.add_argument("--n-inj", type=int, default=3)
     p.add_argument("--ablations", default="none,floor,envelope")
     p.add_argument("--attack", default="important_instructions")
+    p.add_argument("--inj-ids", default="",
+                   help="comma-separated injection task ids or indices; "
+                        "overrides --n-inj. The default [:n] is not a "
+                        "neutral sample — see run().")
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
     print("=== Live AgentDojo: ASR + utility with Clay Seal ablations ===")
+    inj_ids_arg = [x.strip() for x in args.inj_ids.split(',') if x.strip()]
     run(args.suite, args.model, args.n_user, args.n_inj,
-        [a.strip() for a in args.ablations.split(",")], args.attack)
+        [a.strip() for a in args.ablations.split(",")], args.attack,
+        inj_ids_arg=inj_ids_arg)
     return 0
 
 
