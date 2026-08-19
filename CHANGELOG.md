@@ -4,6 +4,52 @@ All notable changes to **agentauth-capabilities** are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Cross-host principal ledger** (`ledger_backends.RedisPrincipalLedger`). The
+  file backend's own docstring named the limit: `fcntl` is invisible to a second
+  machine. Overrides five storage primitives, inherits all reservation logic, and
+  uses a fenced lock (token + compare-and-delete) so an expired TTL cannot delete
+  a lock another node has since taken. Single-instance Redis, not Redlock, and
+  says so.
+- **Named profiles** (`profiles.py`): `AUTONOMOUS`, `SUPERVISED`, `BENCHMARK`.
+  Fourteen posture switches, one of which is a measured negative result kept so
+  the finding reproduces. Every switch carries the measurement justifying it,
+  a profile switch cannot be overridden at the call site, and enabling a HAZARD
+  requires naming it.
+- **Decision sinks** (`decision_sinks.py`): JSONL (fsync-optional), rotating
+  JSONL, Redis stream, composite. No default destination — that is a deployment
+  decision — but the default is a `NullSink` that COUNTS what it drops, so
+  "nothing configured" and "configured and working" no longer look alike.
+  `DecisionLog.durability()` reports evicted-vs-dropped.
+- **`docs/THREAT_MODEL.md`**: trust boundaries, the four signed objects and what
+  each binds, key rotation, and the two classes of attack that are not stopped.
+- **Adaptive red-team against the shipped gateway**
+  (`benchmarks/adaptive_stack.py`, `benchmarks/core/stack_engine.py`) and a
+  content-linked staging objective (`benchmarks/adversarial/content_staging.py`).
+
+### Fixed
+
+- **Two signed objects did not fail closed in production.** The intent envelope
+  accepted any keyholder when `trusted_keys` was unset — and it is the object
+  `reclear` swaps mid-session, so a self-signed envelope replaced the sealed plan
+  wholesale. The step-up approval honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1`
+  in production, so one environment variable turned a refusal into a grant. Found
+  by writing the threat model; both now match the commit-token posture.
+- **Five encoding evasions in the confidentiality flow tracker.**
+  `_decode_layer` stopped at the first decoder that did not RAISE, and
+  `urlsafe_b64decode` does not validate, so it shadowed base85. base32, base85,
+  base64-of-hex, double-base64 and decimal byte codes go from leaking to 100%
+  contained (200/200) at 0 of 1,242 false blocks, unchanged.
+- **`test_biscuit_scope.py` aborted collection** rather than skipping when the
+  optional identity layer was absent — which is why the suite could only be
+  called green by passing `--ignore`.
+- CI: a legible guard for the missing `CLAY_SEAL_CI_TOKEN` instead of a private
+  repo reporting as "not found"; the optional identity layer is now actually
+  optional.
+
 ## [0.5.0] - 2026-08-18
 
 The layer stopped being a set of primitives and became a gateway. `pyproject`
