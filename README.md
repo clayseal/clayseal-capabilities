@@ -144,6 +144,8 @@ business transaction data through capability checks.
 ## Documentation
 
 - [Developer guide](docs/DEV_GUIDE.md)
+- [Threat model and key management](docs/THREAT_MODEL.md) — what this layer
+  defends, who signs what, and the two gaps writing it found
 - [Cross-layer integration](docs/cross_layer_integration.md)
 - [Privacy and data handling](docs/PRIVACY.md)
 
