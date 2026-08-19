@@ -29,15 +29,27 @@ jobs:
         python-version: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v4
+      - name: Check the sibling-repo token before anything depends on it
+        env:
+          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-core
           token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
           path: deps/agentauth-core
           ref: main
-      # identity is an OPTIONAL extra ([biscuit-service]); checked out here so the
-      # dev suite can exercise the default Biscuit backend.
+      # identity is an OPTIONAL extra ([biscuit-service]), so its absence must not
+      # fail the build — that is what "optional" means, and the tests that need it
+      # skip cleanly via importorskip. It is checked out when available so the dev
+      # suite can exercise the default Biscuit backend.
       - uses: actions/checkout@v4
+        id: identity
+        continue-on-error: true
         with:
           repository: pberlizov/clayseal-identity
           token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
@@ -49,7 +61,11 @@ jobs:
       - name: Install (core, then optional identity, then this layer)
         run: |
           pip install "./deps/agentauth-core[dev]"
-          pip install "./deps/agentauth-identity"
+          if [ -d deps/agentauth-identity ]; then
+            pip install "./deps/agentauth-identity"
+          else
+            echo "::notice::identity layer unavailable; [biscuit-service] tests will skip"
+          fi
           pip install -e ".[oidc,a2a,redis]" pytest ruff
       - name: Layering contract (identity only via lazy/optional imports)
         run: |
@@ -70,6 +86,14 @@ jobs:
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
+      - name: Check the sibling-repo token before anything depends on it
+        env:
+          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-core
@@ -136,6 +160,14 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
+      - name: Check the sibling-repo token before anything depends on it
+        env:
+          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           repository: pberlizov/clay-seal-core
