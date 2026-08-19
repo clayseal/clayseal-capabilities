@@ -70,3 +70,8 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
+          # One path-scoped allow-rule for the AWS-shaped benchmark fixture.
+          # Scoped to the file rather than to the rule, so a real key committed
+          # anywhere else still fails. See trivy-secret.yaml for why the fixture
+          # has to keep that shape.
+          trivy-config: trivy-secret.yaml
