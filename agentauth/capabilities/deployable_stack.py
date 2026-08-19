@@ -181,9 +181,18 @@ class DeployableStack:
         enable_flow: bool = True,
         strict_mandate: bool = False,
         session_rules: bool = True,
+        receipt_sink: Any = ...,
     ) -> DeployableStack:
         if entailment_judge is ...:
             entailment_judge = default_entailment_judge()
+        if receipt_sink is ...:
+            # Never `None`. "No durable evidence" and "evidence configured and
+            # working" must not look the same at runtime, so an unconfigured
+            # deployment gets a sink that COUNTS what it drops rather than a
+            # silent no-op. See `decision_sinks`.
+            from agentauth.capabilities.decision_sinks import sink_from_env
+
+            receipt_sink = sink_from_env()
         if clock is None and replay_pin_clock:
             clock = _replay_clock(scope)
         if provenance is _PROVENANCE_DEFAULT:
@@ -283,6 +292,7 @@ class DeployableStack:
             "plan_extender": plan_extender,
             "require_declaration_for_egress": require_declaration_for_egress,
             "session_rules": session_rules,
+            "receipt_sink": receipt_sink,
         }
         if clock is not None:
             kwargs["clock"] = clock

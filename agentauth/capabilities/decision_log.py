@@ -154,6 +154,21 @@ class DecisionLog:
             self.evicted += overflow
         return record
 
+    def durability(self, sink: Any = None) -> dict[str, Any]:
+        """What this log is holding, and what escaped it.
+
+        `evicted > 0` with `dropped > 0` is the state that matters: records left
+        memory and did not reach durable storage, so decisions were made that the
+        evidence plane cannot account for. Both numbers exist to be alerted on.
+        """
+        return {
+            "retained": len(self._records),
+            "evicted": self.evicted,
+            "max_records": self.max_records,
+            "dropped_by_sink": int(getattr(sink, "dropped", 0)) if sink else None,
+            "head_hash": self.head_hash,
+        }
+
     def records(self) -> list[dict[str, Any]]:
         return [r.to_dict() for r in self._records]
 

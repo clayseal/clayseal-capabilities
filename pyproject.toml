@@ -47,6 +47,8 @@ oidc = ["PyJWT>=2.8,<3.0", "httpx>=0.27"]
 spiffe = ["spiffe>=0.3"]
 # A2A signed AgentCard verification (A2AAgentCardProvider): JWS over RFC 8785 JCS.
 a2a = ["rfc8785>=0.1.4", "PyJWT>=2.8,<3.0"]
+# Replay-defense store AND the cross-host principal ledger
+# (`ledger_backends.RedisPrincipalLedger`).
 redis = ["redis>=5.0"]
 dynamodb = ["boto3>=1.34"]
 # External agent-security corpora for the enforcement benchmark (benchmarks/).
@@ -60,7 +62,10 @@ benchmarks = ["agentdojo>=0.1.35,<0.2"]
 # Optional: the n-gram scorer + conformal layer run with no extra deps; torch is
 # only needed to train/serve the transformer scorer (do it on a GPU VM).
 monitor = ["torch>=2.2"]
-dev = ["pytest>=8.0", "ruff>=0.4", "agentauth-capabilities[biscuit-service,oidc,a2a]"]
+# `fakeredis` backs the cross-host ledger tests. It is a double, not a Redis:
+# set AGENTAUTH_TEST_REDIS_URL to run the same suite against a live server.
+dev = ["pytest>=8.0", "ruff>=0.4", "fakeredis>=2.21", "redis>=5.0",
+       "agentauth-capabilities[biscuit-service,oidc,a2a]"]
 
 # Ship ONLY the capabilities subpackage in the shared `agentauth` namespace.
 # `agentauth.core` comes from the agentauth-core wheel.
