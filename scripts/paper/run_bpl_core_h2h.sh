@@ -9,7 +9,7 @@ source .venv/bin/activate 2>/dev/null || true
 
 MODEL="${MODEL:-gpt-4o-mini-2024-07-18}"
 RUNS="${RUNS:-8}"
-CONDITIONS="${CONDITIONS:-none,progent,camel,drift,authgraph,clayseal}"
+CONDITIONS="${CONDITIONS:-none,per-call,dataflow-taint,drift,authgraph,clayseal}"
 OUT="${OUT:-benchmarks/results/bpl_core_h2h_${MODEL//\//_}_r${RUNS}.json}"
 
 echo "BPL Core-12 H2H model=$MODEL runs=$RUNS conditions=$CONDITIONS -> $OUT"
