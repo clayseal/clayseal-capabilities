@@ -35,8 +35,16 @@ declarative, so "not yet migrated" cannot read as "has no rule".
 
 ### Open before submission
 
-- [ ] Re-run the Core-12 live H2H under the shared policy (tables currently
-      carry a provenance caveat).
+- [x] Re-run the Core-12 live H2H under the shared policy —
+      [`../results/bpl_shared_policy.md`](../results/bpl_shared_policy.md),
+      n=20 per cell, 12/12 scenarios. `per-call` given the rule scores 55.0%
+      violation against 56.2% undefended.
+- [ ] Raise the leaderboard to n>=100 (protocol in `REPRODUCE.md`); n=20 leaves
+      a zero with a 16.1% upper bound.
+- [ ] Replace or retire the 3 scenarios that discriminate nothing
+      (`allowed-channel-drip`, `po-split-threshold`, `sod-prepare-and-approve` —
+      no condition violates them at n=20, so they cost runtime and measure
+      nothing). Requires a version bump: they are frozen Core members.
 - [ ] Declarative policy for Hard-24.
 - [ ] A second model on the live leaderboard.
 - [ ] Scenarios contributed by someone who did not write the reference defense —

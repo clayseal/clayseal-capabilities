@@ -52,11 +52,13 @@ and checkable by inspection:
 Every condition now receives `scenario.policy` — the declarative rule the
 violation oracle is checked against (`benchmarks/bpl/policies.py`). **The
 numbers in this document predate that change**, when only the ClaySeal condition
-was configured with the threshold and the others were never told. The
-architectural result is unaffected — a per-call gate given the ceiling still
-cannot accumulate against it — but the tables will be re-run under the shared
-policy before the next release, and until then this paragraph is the caveat that
-travels with them.
+was configured with the threshold and the others were never told.
+
+**Re-run and confirmed**: [bpl_shared_policy.md](bpl_shared_policy.md), Core-12,
+n=20 per cell, every condition given the policy. `per-call` lands at 55.0%
+violation against 56.2% undefended — 1.2 points, across 12 scenarios, while
+holding the rule. The architectural result survives the condition that would
+have falsified it, so the tables below stand; read them alongside the re-run.
 
 ### Aggregate-budget class (n=100 per cell)
 
