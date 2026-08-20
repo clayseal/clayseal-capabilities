@@ -13,14 +13,14 @@ Azure `clayseal-aoai`, served model **gpt-5-mini-2025-08-07**.
 | condition | composite violation | legitimate progress | friction |
 | --- | --- | ---: | ---: |
 | none | 100.0% (40/40) | 100.0% | 0.00 |
-| progent | 100.0% (40/40) | 100.0% | 0.00 |
-| camel | 100.0% (40/40) | 100.0% | 0.00 |
+| per-call | 100.0% (40/40) | 100.0% | 0.00 |
+| dataflow-taint | 100.0% (40/40) | 100.0% | 0.00 |
 | **clayseal** | **0/40, 97.5% upper bound 8.8%** | 60.0% | 2.05 blocks/run |
 
 The separation holds and it is total: both published defenses violate on every
 single run, and the stateful budget rung violates on none. The structural reason
-is unchanged and is verified in competitor source: Progent's policy is per-call
-with no cross-call state, and CaMeL's dataflow gate never fires on a task the
+is unchanged and is verified in competitor source: per-call's policy is per-call
+with no cross-call state, and dataflow-taint's dataflow gate never fires on a task the
 trusted prompt fully specifies.
 
 ## What this does and does not strengthen

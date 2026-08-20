@@ -228,7 +228,7 @@ def test_frontier_min_steps_and_difficulty(name: str):
 
 
 @pytest.mark.parametrize("name", SIMULATED)
-def test_scripts_exist_and_progent_blind(name: str):
+def test_scripts_exist_and_per_call_blind(name: str):
     scen = get_scenario(name)
     assert scen.violating_script, f"{name}: missing violating_script"
     assert scen.compliant_script, f"{name}: missing compliant_script"

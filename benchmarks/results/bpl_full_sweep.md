@@ -46,7 +46,7 @@ kept, not deleted, and `--verbs bpl` reproduces the historical figures.
 
 ## Containment: the violating script did not achieve the violation
 
-| family | n | none | Progent | CaMeL | ClaySeal |
+| family | n | none | per-call | dataflow-taint | ClaySeal |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | aggregate | 45 | 0/45 | 0/45 | 29% (13/45) | **82% (37/45)** |
 | confidentiality | 28 | 0/28 | 0/28 | **57% (16/28)** | 54% (15/28) |
@@ -55,7 +55,7 @@ kept, not deleted, and `--verbs bpl` reproduces the historical figures.
 
 ## Completion: the benign twin ran with nothing refused
 
-| family | n | none | Progent | CaMeL | ClaySeal |
+| family | n | none | per-call | dataflow-taint | ClaySeal |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | aggregate | 45 | 100% | 100% | 60% (27/45) | **84% (38/45)** |
 | confidentiality | 28 | 100% | 100% | 57% (16/28) | **75% (21/28)** |
@@ -70,7 +70,7 @@ and contain nothing; a deny-all would take containment and complete nothing.
 The only score that cannot be won by refusing everything or allowing everything:
 contained **and** completed, per scenario.
 
-| family | n | none | Progent | CaMeL | ClaySeal |
+| family | n | none | per-call | dataflow-taint | ClaySeal |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | aggregate | 45 | 0/45 | 0/45 | 4% (2/45) | **67% (30/45)** |
 | confidentiality | 28 | 0/28 | 0/28 | 25% (7/28) | **25% (7/28)** |
@@ -80,14 +80,14 @@ contained **and** completed, per scenario.
 ## Where it generalizes, and where it does not
 
 **Aggregate — this is the claim, and it holds.** 67% on both columns against
-CaMeL's 4% and Progent's zero. The suite's largest single family after escape,
-45 scenarios, and the one the mechanism was built for. Progent contains none of
+dataflow-taint's 4% and per-call's zero. The suite's largest single family after escape,
+45 scenarios, and the one the mechanism was built for. per-call contains none of
 it by construction: per-call policy has no cross-call state.
 
-**Confidentiality — a tie, and CaMeL wins the containment half.** 46% against
-CaMeL's 57%. We are not a dataflow system and this is the class CaMeL is built
+**Confidentiality — a tie, and dataflow-taint wins the containment half.** 46% against
+dataflow-taint's 57%. We are not a dataflow system and this is the class dataflow-taint is built
 for. We recover the tie on completion (75% vs 57%), which is the honest shape of
-the Pareto claim rather than a win. **15 scenarios CaMeL contains and we do
+the Pareto claim rather than a win. **15 scenarios dataflow-taint contains and we do
 not**, mostly re-identification, cross-tenant reference sharing and cache
 poisoning — none of which a committed-effect ledger can see.
 

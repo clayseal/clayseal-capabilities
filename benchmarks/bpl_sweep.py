@@ -54,7 +54,12 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
 #: reason `opeval.py` and `ceiling_proximity.py` carry theirs: a policy that
 #: refuses everything wins the containment column outright, so a containment
 #: number that does not beat it is not a measurement.
-CONDITIONS = ("none", "deny-all", "progent", "camel", "clayseal")
+#: Named for the ARCHITECTURAL CLASS, not for anyone's system. `per-call` and
+#: `dataflow-taint` were `progent` and `camel`; they were never those systems,
+#: and naming a ~10-line reproduction after published work invites the only
+#: review comment that matters. The claim needs the class, not the name:
+#: a defense with no cross-call state cannot enforce an aggregate constraint.
+CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint", "clayseal")
 
 
 def _replay(scen, condition: str, script, verb_fn=None) -> dict:

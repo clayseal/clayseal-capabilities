@@ -40,7 +40,7 @@ def test_ivisor_condition_lowers_to_the_internal_domain_only(scenario):
 def test_other_conditions_get_a_permissive_substrate(scenario):
     # Otherwise the sandbox would be doing their work for them and the
     # head-to-head would measure nothing.
-    for condition in ("none", "progent", "camel", "clayseal"):
+    for condition in ("none", "per-call", "dataflow-taint", "clayseal"):
         env = scenario.make_env()
         scenario.configure(env, condition)
         assert EXTERNAL in env.state["allow"], condition
