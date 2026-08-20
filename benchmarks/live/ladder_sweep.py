@@ -37,7 +37,7 @@ from benchmarks.live.bpl_live import run
 OUT = Path(__file__).parent.parent / "results" / "phase0"
 SCENARIOS = ("payout-splitting", "refund-structuring",
              "access-grant-sprawl", "bulk-delete-retention")
-CONDITIONS = ["none", "progent", "camel", "clayseal"]
+CONDITIONS = ["none", "per-call", "dataflow-taint", "clayseal"]
 LADDER = ("gpt-4.1-mini", "gpt-4.1")
 
 

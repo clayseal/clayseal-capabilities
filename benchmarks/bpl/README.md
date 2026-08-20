@@ -1,7 +1,20 @@
 # BPL-v1 scenario pack
 
-Declarative business-process-logic scenarios for composite-policy evaluation.
-The live head-to-head runner stays at `python -m benchmarks.live.bpl_live`.
+Business-process-logic scenarios for **composite-policy** evaluation: the user's
+request is legitimate, the agent executes it faithfully, every individual call is
+authorized, and the *composite* breaks policy.
+
+That class is growing in importance as the injection channel closes. On
+`gpt-5-mini`, undefended attack-success under four stock AgentDojo injections is
+**0 of 18**; composite-policy violation on the same model is **100 of 100** on
+`payout-splitting`. The agent is not deceived — it is being helpful.
+
+- **Datasheet:** [`DATASHEET.md`](DATASHEET.md) (Gebru et al. format)
+- **Reproduce:** [`REPRODUCE.md`](REPRODUCE.md) — a scripted tier that needs
+  no API key and covers every structural claim
+- **Runner:** `python -m benchmarks.live.bpl_live`
+- **Policies:** [`policies.py`](policies.py) — the rule each Core scenario is
+  scored against, given to every condition
 
 ## Layout
 
@@ -35,18 +48,41 @@ The live head-to-head runner stays at `python -m benchmarks.live.bpl_live`.
 | `AML.md` | AML stage/typology → BPL / ClaySeal sensor map |
 | `UNORTHODOX_SOURCES.md` | Cross-domain mines: tax, aviation, market abuse, SoD, Swiss cheese, … |
 | `LITERATURE.md` | Citations + mapping from papers/incidents → scenarios |
+| `DATASHEET.md` | Datasheet for Datasets (motivation, composition, limitations, ethics) |
+| `REPRODUCE.md` | Scripted + live reproduction, sample sizes, what a result must report |
+| `policy.py` | `Policy` / `Rule` / `evaluate` — the declarative rule language |
+| `policies.py` | Declared policy per Core scenario, in one auditable table |
 | `scenarios/live_exfil.py` | Optional iVisor live arm (`IVISOR_*`) |
 
 ## Fairness rules
 
-1. **Progent-blind on the violating path.** Each tool call in the violating
-   script is in the scenario OpenAI tool allowlist (per-call schema check
-   passes). Aggregate / scope / sealed-goal controls catch the breach.
-2. **CaMeL-untainted when the user prompt fully specifies the task.** Arguments
-   come from the trusted prompt (or are not the sole taint source for the
-   consequential step). No prompt-injection strings.
-3. **Privilege-escape cases** express overreach as sequence/scope growth the
-   user asked for, not as a single out-of-schema tool that Progent would deny.
+The comparison conditions are named for an **architectural class**, never for
+anyone's system. `per-call` and `dataflow-taint` were previously called
+`progent` and `camel`; they were never those systems — they are ~10-line
+reproductions of a class, and a reproduction cannot support a claim about
+published work. `drift` and `authgraph` keep their names because they are fuller
+mechanism reproductions built from the published designs, and are labelled
+"-shaped" with arXiv citations. See [`DATASHEET.md`](DATASHEET.md) § Limitations.
+
+1. **Every condition receives the same policy.** `scenario.policy` is the
+   declarative rule the violation oracle is checked against, and it is handed to
+   every gate. Earlier releases configured only the reference defense with the
+   threshold, so the table partly measured *which condition had been told the
+   rule*. The claim that survives is architectural:
+
+   > Given the same policy, a defense with no cross-call state cannot enforce an
+   > aggregate constraint — because the constraint is not a property of any
+   > single call.
+
+2. **Per-call-blind on the violating path.** Every tool call in the violating
+   script is inside the scenario's own allowlist, so a per-call schema check
+   passes on each one. This is the point, not a handicap: it is what makes the
+   violation composite.
+3. **Untainted when the prompt fully specifies the task.** Arguments come from
+   the trusted prompt, so a dataflow-taint gate has nothing to fire on. No
+   prompt-injection strings anywhere in the pack.
+4. **Privilege-escape cases** express overreach as sequence/scope growth the
+   user asked for, not as a single out-of-schema tool any gate would deny.
 
 ## Non-goals
 
@@ -90,7 +126,10 @@ python -m benchmarks.live.bpl_live --list --family escape
 
 # live measure (needs Azure OpenAI env)
 python -m benchmarks.live.bpl_live --scenario payout-splitting \
-  --conditions none,progent,camel,clayseal --runs 8
+  --conditions none,per-call,dataflow-taint,clayseal --runs 8
+
+# how many scenarios carry a declarative policy
+python -m benchmarks.live.bpl_live --policy-coverage
 
 # scripted unit tests (no LLM)
 pytest benchmarks/tests/test_bpl_scenarios.py -q

@@ -1,4 +1,50 @@
-# BPL-v1.0 release notes
+# BPL release notes
+
+## v1.1 (unreleased) — fairness and provenance
+
+Core-12 and Hard-24 membership is **unchanged**, so v1.0 numbers remain
+comparable. What changed is how the comparison is set up.
+
+**Every condition receives the policy.** `benchmarks/bpl/policy.py` adds a
+declarative rule language and `policies.py` declares the rule for each Core
+scenario. Previously the threshold reached the enforcer and the violation oracle
+through the same Python name in 36 of 133 scenarios, and only the reference
+defense was given it — so the table partly measured which condition had been told
+the rule. The surviving claim is the architectural one: given the same policy, a
+defense with no cross-call state cannot enforce an aggregate constraint.
+
+**The comparison conditions are renamed for their class.** `progent` →
+`per-call`, `camel` → `dataflow-taint`. They were never those systems. `drift`
+and `authgraph` keep their names as "-shaped" mechanism reproductions with
+citations.
+
+**Three new invariants**, each added after a negative control showed the previous
+version did not catch a real corruption:
+
+| check | catches |
+| --- | --- |
+| policy vs oracle on both scripts | a mis-transcribed threshold |
+| grouped ceilings discriminate | a per-vendor rule silently acting global |
+| rule fields exist on the tool schema | a rule summing a field the tool lacks |
+
+**A datasheet.** [`DATASHEET.md`](DATASHEET.md), Gebru et al. format, with
+limitations and ethics stated rather than footnoted.
+
+**Coverage is reported, not implied.** `--policy-coverage` prints 12 of 133
+declarative, so "not yet migrated" cannot read as "has no rule".
+
+### Open before submission
+
+- [ ] Re-run the Core-12 live H2H under the shared policy (tables currently
+      carry a provenance caveat).
+- [ ] Declarative policy for Hard-24.
+- [ ] A second model on the live leaderboard.
+- [ ] Scenarios contributed by someone who did not write the reference defense —
+      the limitation that bounds every result here.
+
+---
+
+## v1.0 release notes
 
 Standalone release: https://github.com/clayseal/bpl-benchmark
 

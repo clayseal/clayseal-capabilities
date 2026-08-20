@@ -71,8 +71,12 @@ def test_clayseal_beats_both_published_baselines_on_the_joint_score(rows):
                    if r["cells"][cond]["contained"] is True
                    and r["cells"][cond]["completed"])
 
-    assert joint("clayseal") > joint("camel") > joint("progent")
-    assert joint("progent") == 0        # per-call policy, no cross-call state
+    assert joint("clayseal") > joint("dataflow-taint") > joint("per-call")
+    # Zero, and structurally so: a per-call gate holds no state between calls,
+    # so an aggregate constraint has nothing to accumulate against. It is given
+    # the same policy as every other condition and still cannot use it, which is
+    # the finding rather than a handicap.
+    assert joint("per-call") == 0
 
 
 def test_the_canonical_envelope_reproduces_the_discrimination_finding():

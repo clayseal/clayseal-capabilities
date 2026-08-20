@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from agentauth.capabilities.broker import SessionBroker
+from benchmarks.bpl.policy import Policy
 
 Family = Literal["aggregate", "escape", "confidentiality"]
 ClaySealExpected = Literal["contain", "partial", "open"]
@@ -35,6 +36,17 @@ class Scenario:
     max_iters: int = 12
     tags: tuple[str, ...] = ()
     clayseal_expected: ClaySealExpected = "contain"
+    #: The constraint this scenario evaluates, handed to EVERY condition.
+    #:
+    #: Before this existed, the threshold reached the enforcer and the violation
+    #: oracle through the same Python name in 36 of 133 scenarios, and only the
+    #: ClaySeal condition was given it at all — so the table compared one system
+    #: that knew the rule against two that were never told. A policy the whole
+    #: field can read turns that into the architectural question worth asking:
+    #: given the same rule, which designs can enforce it?
+    #:
+    #: Empty `Policy()` means not yet migrated; `RELEASE.md` tracks coverage.
+    policy: Policy = field(default_factory=Policy)
     # Optional: told the condition before the episode starts (sandbox policy).
     configure: Callable[[Env, str], None] | None = None
     # Diagnostics: which escape / leak paths fired (empty if none).
