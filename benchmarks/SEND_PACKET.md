@@ -31,6 +31,7 @@ Live keystones (API $, separate):
 | No containment against in-scope data staging | **known gap** | `results/in_scope_exfiltration.md` | Against an oracle attacker the full ladder's escaped set is byte-identical to `allow-all`. Must accompany any containment claim for coding agents. |
 | Behavioural-layer numbers | **corpus-limited** | `results/adequacy.md` | Of 11 corpora, 4 carry zero attack events and 1 can evaluate provenance. Quote no behavioural number without the adequacy verdict for that corpus. |
 | Volume / burst containment 100% | ready | `results/burst.md` | Do not calibrate velocity on attack labels |
+| BPL escape-class containment | **known gap** | `results/bpl_full_sweep.md` correction | 17% (10 of 59), not the 61% previously published. The old figure was mandates that forbade the task. Attacks use only granted tools; the stack has no mechanism for sequence-growth escape. |
 | Sequence / BPL ≈0% violation vs Progent/CaMeL ≈100% | ready | `results/bpl_head_to_head.md` | Sample size modest (n≈20) |
 | Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready (**model-bound**) | `results/head_to_head_injection.md`, `pooled_asr.md`, `results/utility_experiment_void.md` | Utility cost is the tradeoff; report it. **And name the model.** On `gpt-5-mini` the UNDEFENDED ASR is 0.0% across four attacks, so the result does not transfer to a 2026 frontier model and cannot be re-run there. |
 | Detector closes aggregate bursts (BFCL / τ²) | ready | `results/detector.md` | Per-call ladder scores 0% on this class |

@@ -31,6 +31,20 @@ from agentauth.capabilities.scoping.goal import GoalSpec
 INTENT_ENVELOPE_SCHEMA = "agent-receipts.intent-envelope.v1"
 
 
+def _canonical_verb(verb: str) -> str:
+    """The verb the shipped classifier would emit for this word.
+
+    Imported lazily and defensively: the classifier lives in the benchmark tree
+    today, and the library must not depend on it. When it is unavailable the
+    declaration is left as written, which is the pre-existing behaviour.
+    """
+    try:
+        from agentauth.capabilities.monitor.planner import classify_verb
+    except ImportError:  # pragma: no cover - the shipped planner is always present
+        return verb
+    return classify_verb(verb)
+
+
 class Deviation(str, Enum):
     IN_PLAN = "in-plan"
     OFF_TOOL = "off-tool"
@@ -214,7 +228,34 @@ class IntentEnvelope:
         templates = _parse_templates(intent.get("call_templates"))
 
         tools = set(intent.get("tools") or [])
-        verbs = {str(v).lower() for v in (intent.get("verbs") or [])}
+        # NORMALIZE the declared verbs into the vocabulary the broker will
+        # actually see, and keep the raw form too.
+        #
+        # The verb an action carries is produced by the shipped classifier
+        # before the broker sees it, and that classifier emits a canonical set:
+        # {read, write, transfer, send, call}. A mandate is written by a human
+        # in the vocabulary of the domain — `pay`, `create`, `update`, `list` —
+        # and NONE of those four is a verb the classifier can emit. So an
+        # envelope compiled from `verbs: ["pay"]` refuses every payment, because
+        # the payment arrives as `transfer`.
+        #
+        # This is the same defect the BPL verb audit already found and fixed on
+        # the OTHER side: "BPL's [classifier] emitted a vocabulary no mandate is
+        # written against." Fixing the classifier left the DECLARATION half
+        # untouched, so the two still disagreed — just in the opposite
+        # direction. Measured on the escape family, it is 23 of 59 scenarios
+        # where the benign twin is refused at the first consequential step,
+        # every one of them by `verb '<canonical>' not expected for the goal`.
+        #
+        # Both forms are kept. Dropping the raw verb would break any caller that
+        # declares and matches in the same vocabulary, and admitting the
+        # canonical form does not widen authority beyond what the declaration
+        # already asked for — `pay` and `transfer` are the same permission
+        # spelled twice.
+        declared = {str(v).lower() for v in (intent.get("verbs") or [])}
+        verbs = set(declared)
+        for v in declared:
+            verbs.add(_canonical_verb(v))
         rclasses = {resource_class(r) for r in goal.allow_resources}
         # Tools implied by the goal's allowed resources (mcp:tool:<name>).
         for r in goal.allow_resources:
