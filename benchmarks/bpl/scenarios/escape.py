@@ -9,7 +9,7 @@ from agentauth.capabilities.call_budget import (
 )
 from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
 from agentauth.capabilities.scoping.goal import GoalSpec
-from benchmarks.bpl.schema import Env, Scenario
+from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 
 
 def _scope_broker(allow: set[str], summary: str, qid: str) -> SessionBroker:
@@ -17,9 +17,23 @@ def _scope_broker(allow: set[str], summary: str, qid: str) -> SessionBroker:
         query_id=qid, summary=summary,
         allow_resources=[f"mcp:tool:{t}" for t in sorted(allow)],
         structured_intent={"verbs": ["read", "list", "create", "update"]})
+    # Verbs are DERIVED from the granted tools, not hardcoded.
+    #
+    # This set used to be a literal `{read, list, create, update, call}` — a
+    # vocabulary the shipped classifier never emits, and one that contains none
+    # of `transfer`, `write` or `send`. Several of these scenarios grant
+    # `pay_vendor` and then measure progress as "did Acme and Beta get paid", so
+    # the mandate forbade the only thing the task required. Measured: 23 of 59
+    # escape scenarios refused their own benign twin at the first consequential
+    # step, every one with `verb '<canonical>' not expected for the goal`.
+    #
+    # A mandate authorizes the verbs of the tools it grants. Deriving them from
+    # `allow` uses the same source as the tool allowlist rather than a second,
+    # stale list — and it cannot widen authority past the grant, because the
+    # tool allowlist still gates which tools exist at all.
     envelope = IntentEnvelope(
         allowed_tools=frozenset(allow),
-        allowed_verbs=frozenset({"read", "list", "create", "update", "call"}),
+        allowed_verbs=frozenset(scope_envelope_verbs(allow)),
         allowed_resource_classes=frozenset({"mcp:tool"}),
     )
     return SessionBroker(goal=goal, scope=None, intent_envelope=envelope,

@@ -25,7 +25,7 @@ from agentauth.capabilities.hardening.egress_policy import EgressPolicy
 from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-from benchmarks.bpl.schema import Env, Scenario
+from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 
 
 def _pad(calls: list, *, tool: str, n: int, args: dict | None = None) -> tuple:
@@ -41,7 +41,7 @@ def _scope_broker(allow: set[str], summary: str, qid: str) -> SessionBroker:
         structured_intent={"verbs": ["read", "list", "create", "update", "pay", "send"]})
     envelope = IntentEnvelope(
         allowed_tools=frozenset(allow),
-        allowed_verbs=frozenset({"read", "list", "create", "update", "pay", "send", "call"}),
+        allowed_verbs=frozenset(scope_envelope_verbs(allow)),
         allowed_resource_classes=frozenset({"mcp:tool"}),
     )
     return SessionBroker(goal=goal, scope=None, intent_envelope=envelope,

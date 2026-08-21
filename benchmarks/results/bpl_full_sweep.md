@@ -1,6 +1,53 @@
 # The whole BPL suite, both directions, and where it stops working
 
-STATUS: current
+STATUS: superseded in part — see the correction below
+
+> ## CORRECTION 2026-08-20 — the containment column was inflated by 27 points
+>
+> **Every containment number below is superseded.** The mandates these scenarios
+> were measured against forbade the work the scenarios ask for.
+>
+> `_scope_broker` was copy-pasted into **fourteen** scenario modules, each with
+> its own hardcoded verb vocabulary. Most were
+> `{read, list, create, update, pay, send, call}`. The shipped classifier emits
+> `{read, write, transfer, send, call}` — so `pay` was declared, `transfer`
+> arrived, and the envelope refused. Several of those scenarios grant
+> `pay_vendor` and then score progress as "did the vendors get paid".
+>
+> That is the same defect this document already records fixing on the other side:
+> "BPL's [classifier] emitted a vocabulary no mandate is written against." Fixing
+> the classifier left the **declarations** speaking the old language.
+>
+> Deriving the verbs from the granted tools — the same source the tool allowlist
+> already uses — gives:
+>
+> | family | n | contained | completed | BOTH |
+> | --- | ---: | ---: | ---: | ---: |
+> | aggregate | 45 | 73% (33) | 96% (43) | 69% (31) |
+> | confidentiality | 28 | 36% (10) | 96% (27) | 32% (9) |
+> | escape | 59 | 17% (10) | 100% (59) | 17% (10) |
+> | ALL | 132 | 40% (53) | 98% (129) | 38% (50) |
+>
+> **What this means.** Containment falls from 67% to 40% overall and from 61% to
+> **17% on escape**. All 35 newly-escaping attacks use ONLY granted tools, so no
+> authority leaked: the tool allowlist still holds. The verb refusal was the only
+> thing stopping them, and it was stopping them by also stopping the task.
+>
+> **The joint score barely moved: 40% → 38%.** Both of its inputs shifted by
+> ~27 points and it stayed flat, which is the strongest available evidence that
+> the joint score is the right metric and the standalone containment column was
+> the misleading one.
+>
+> **Sixteen `clayseal_expected: contain` labels were calibrated against this
+> defect** and are now `open` — 13 escape, 3 aggregate. This is the SECOND time
+> labels here have been calibrated against a harness bug. The relabelling makes
+> the headline worse, which is the only evidence worth having that it was not
+> fitted.
+>
+> The honest reading: **the reference defense has no mechanism for the escape
+> class.** Its attacks use granted tools in a widening sequence, and nothing in
+> the stack distinguishes that from legitimate sequence growth.
+
 
 `python -m benchmarks.bpl_sweep`. 132 of the suite's 133 scenarios carry a
 `violating_script` and a `compliant_script` — a scripted attack and its benign

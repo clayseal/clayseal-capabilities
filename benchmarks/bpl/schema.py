@@ -109,3 +109,45 @@ def run_script(scen: Scenario, script: tuple[ToolCall, ...]) -> Env:
     for name, args in script:
         scen.handler(env, name, dict(args))
     return env
+
+
+def scope_envelope_verbs(allow: set[str], extra: set[str] | None = None) -> set[str]:
+    """Verbs a mandate granting `allow` must admit.
+
+    THE DEFECT THIS REPLACES
+    ------------------------
+    `_scope_broker` was copy-pasted into fourteen scenario modules, each with its
+    own hardcoded verb vocabulary — `{read, list, create, update, pay, send,
+    call}` in most of them. Not one of those sets contains `transfer` or
+    `write`, and the shipped classifier emits exactly `{read, write, transfer,
+    send, call}`. So `pay` was declared, `transfer` arrived, and the envelope
+    refused.
+
+    Measured on the escape family: **23 of 59 scenarios refused their own benign
+    twin** at the first consequential step, every one with `verb '<canonical>'
+    not expected for the goal`. Several of them grant `pay_vendor` and then score
+    progress as "did the vendors get paid", so the mandate forbade the only thing
+    the task required. That is not a policy, it is a bug — and it inflated
+    containment, because a scenario whose benign path is blocked also blocks the
+    attack that shares a verb with it.
+
+    It is the same defect the earlier verb audit found and fixed on the other
+    side. Fixing the CLASSIFIER left the DECLARATIONS speaking the old language,
+    so the two still disagreed, just in the opposite direction.
+
+    WHY DERIVING IS NOT FITTING
+    ---------------------------
+    The verbs come from the granted TOOLS — the same source as the tool
+    allowlist, which is already derived rather than hardcoded. A mandate that
+    grants `pay_vendor` authorizes paying; that is what granting it means. It
+    cannot widen authority past the grant, because `allowed_tools` still gates
+    which tools exist at all, and the violating scripts escape by using tools or
+    sequences OUTSIDE `allow`, which this does not touch.
+    """
+    from agentauth.capabilities.monitor.planner import classify_verb
+
+    # `call` and `read` are always admitted: every scenario has an orientation
+    # step (`load_policy`, `status`, a lookup) that is not the thing under test,
+    # and refusing those measures the harness rather than the defense.
+    verbs = {classify_verb(t) for t in allow} | {"call", "read"}
+    return verbs | (extra or set())
