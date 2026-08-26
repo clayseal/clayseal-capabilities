@@ -111,6 +111,7 @@ def lint_mandate(
     call_tracked: Mapping[str, Any] | None = None,
     ceilings: Mapping[str, Any] | None = None,
     principal_scoped: bool = False,
+    stateless: bool = False,
 ) -> list[Finding]:
     """Report every effect the mandate leaves uncounted.
 
@@ -174,7 +175,11 @@ def lint_mandate(
                 code="split-aggregation-key", severity="error", subject=family,
                 detail=(f"one effect family across {len(buckets)} budget ids "
                         f"({rendered}); the aggregate ceiling is the sum, not "
-                        f"the smallest"),
+                        f"the smallest. If the document says one total with a "
+                        f"sub-limit inside it, this engine holds one ceiling "
+                        f"per tool and cannot hold both: put every tool on the "
+                        f"OUTER limit so the total is right, and know that the "
+                        f"inner one is then unenforced"),
                 escape="key splitting"))
 
     # 3. A tracked tool whose budget has no ceiling is tracked in name only.
@@ -224,12 +229,36 @@ def lint_mandate(
     #    rather than an error because a genuinely per-session ceiling is a
     #    coherent thing to want.
     if ceilings and not principal_scoped:
+        # A warning where a session exists, an ERROR where one cannot.
+        #
+        # MCP 2026-07-28 removes the `initialize` handshake and the
+        # `Mcp-Session-Id` header, and states the reason plainly: any server
+        # instance must be able to serve any request so deployments can scale
+        # horizontally without sticky routing. A Streamable HTTP deployment
+        # behind a load balancer therefore has NO session for a ceiling to be
+        # counted over, and a session-scoped ceiling there is not a weak control
+        # that an attacker has to work to reset. It resets on its own, per
+        # request, and the aggregate rung this library exists for is inert.
+        #
+        # So a document that declares `deployment: {stateless: true}` and still
+        # asks for a session-scoped ceiling is asking for something that cannot
+        # be built, and refusing is the same discipline the rest of this
+        # compiler follows: a gateway that enforces the wrong thing is worse
+        # than one that will not start.
         findings.append(Finding(
-            code="session-scoped-ceiling", severity="warning",
+            code="session-scoped-ceiling",
+            severity="error" if stateless else "warning",
             subject=", ".join(sorted(ceilings)) or "(all)",
-            detail=("counted per session, so a second session gets a second "
-                    "ceiling; bind to a principal ledger if the limit is meant "
-                    "to be an authority limit"),
+            detail=(
+                ("this deployment declares itself stateless, where no session "
+                 "survives a request, so a per-session ceiling is counted over "
+                 "nothing and resets on every call. Bind it to a principal "
+                 "ledger, which is the only anchor that outlives a request "
+                 "once sessions are gone")
+                if stateless else
+                ("counted per session, so a second session gets a second "
+                 "ceiling; bind to a principal ledger if the limit is meant "
+                 "to be an authority limit")),
             escape="session restart"))
 
     return findings

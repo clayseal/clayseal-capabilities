@@ -109,13 +109,21 @@ class StackDecision:
         )
 
 
-def _lint_stack_mandate(*, value_budget, call_budget, allowed_tools):
+def _lint_stack_mandate(*, value_budget, call_budget, allowed_tools,
+                        declared_harmless=()):
     """Coverage findings for the budgets this stack was built with.
 
     Reads the configs off whatever budget objects were passed rather than
     requiring the caller to restate them, so the check cannot drift from what is
     actually enforced. Total: a stack must not fail to construct because its
     coverage check tripped over an unfamiliar budget object.
+
+    `declared_harmless` is the operator's assertion that a tool has no effect
+    worth counting. It used to be missing here while `lint_mandate` accepted it,
+    so a policy document could declare a tool harmless, pass `clayseal policy
+    lint` clean, and then have the gateway refuse to build on the finding the
+    declaration was meant to answer. The linter and the gate now read the same
+    input.
     """
     def _cfg(budget, attr):
         cfg = getattr(budget, "config", None)
@@ -124,6 +132,7 @@ def _lint_stack_mandate(*, value_budget, call_budget, allowed_tools):
     try:
         return lint_mandate(
             catalog=sorted(allowed_tools or ()),
+            declared_harmless=sorted(declared_harmless or ()),
             value_tracked=_cfg(value_budget, "tracked"),
             call_tracked=_cfg(call_budget, "tracked"),
             ceilings={**_cfg(value_budget, "ceilings"),
@@ -155,6 +164,10 @@ class DeployableStack:
         *,
         scope=None,
         allowed_tools: set[str] | None = None,
+        conditional_tools: Any = None,
+        # Tools the operator asserts have no countable effect. Read only by the
+        # mandate coverage check; it never widens what the floor allows.
+        declared_harmless: set[str] | None = None,
         tool_patterns: list[str] | None = None,
         capabilities: list[dict[str, str]] | None = None,
         authorized_arg_hashes: dict[str, set[str]] | None = None,
@@ -269,6 +282,7 @@ class DeployableStack:
             "goal": goal,
             "scope": scope,
             "allowed_tools": allowed_tools,
+            "conditional_tools": conditional_tools,
             "tool_patterns": tool_patterns,
             "capabilities": capabilities,
             "authorized_arg_hashes": authorized_arg_hashes,
@@ -311,7 +325,7 @@ class DeployableStack:
         stack = cls(broker=SessionBroker(**kwargs))
         stack.mandate_findings = _lint_stack_mandate(
             value_budget=value_budget, call_budget=call_budget,
-            allowed_tools=allowed_tools)
+            allowed_tools=allowed_tools, declared_harmless=declared_harmless)
         if strict_mandate:
             require_clean(stack.mandate_findings)
         return stack
@@ -324,9 +338,35 @@ class DeployableStack:
     def authorize_all(self, actions: Iterable[Action]) -> list[StackDecision]:
         return [self.authorize(a) for a in actions]
 
+    def observe_context(self, item) -> None:
+        """Tell the gateway about content the agent read.
+
+        This is how the taint layer learns that an action's destination came
+        from a document rather than from the sealed goal, so it is not optional
+        detail: without it every destination looks equally well-sourced. It was
+        missing from this class while `observe_output` was present, which meant
+        the documented entry point could not report the one input the
+        content-provenance tier is built on.
+        """
+        self.broker.observe_context(item)
+
     def observe_output(self, *args, **kwargs) -> None:
         """Forward tool results into session memory + parameter provenance."""
         self.broker.observe_output(*args, **kwargs)
+
+    def resolve_step_up(self, approval) -> tuple[bool, str]:
+        """Apply a signed human approval to a held action."""
+        return self.broker.resolve_step_up(approval)
+
+    @property
+    def decision_log(self):
+        """The hash-chained record of every decision this session made."""
+        return self.broker.decision_log
+
+    @property
+    def metrics(self):
+        """Prevented violations, monitor triggers, gateway overhead."""
+        return self.broker.metrics
 
     def note_edit(self, path: str, old: str, new: str) -> None:
         self.broker.note_edit(path, old, new)

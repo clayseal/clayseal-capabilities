@@ -45,10 +45,14 @@ class DecisionRecord:
     anomaly_score: float | None
     prev_hash: str
     receipt_hash: str = ""
+    #: W3C Trace Context, when the caller supplied one. The join key between
+    #: this durable receipt and the short-lived trace that produced it, which is
+    #: what replaces the session id now that MCP 2026-07-28 has removed it.
+    trace: dict[str, str] | None = None
 
     def body(self) -> dict[str, Any]:
         """Canonical content the receipt_hash commits to (everything but itself)."""
-        return {
+        body: dict[str, Any] = {
             "schema": DECISION_SCHEMA,
             "seq": self.seq,
             "receipt_id": self.receipt_id,
@@ -68,6 +72,14 @@ class DecisionRecord:
             },
             "prev_hash": self.prev_hash,
         }
+        if self.trace:
+            # Included only when present, so a record without a trace hashes
+            # EXACTLY as it did before this field existed. A log written by an
+            # earlier version still verifies, which matters because the chain is
+            # the evidence and re-hashing every historical record to add an
+            # optional field would invalidate the thing it exists to protect.
+            body["trace"] = dict(self.trace)
+        return body
 
     def compute_hash(self) -> str:
         return f"sha256:{hash_canonical_json(self.body())}"
@@ -128,6 +140,7 @@ class DecisionLog:
         layer: str,
         reasons: tuple[str, ...],
         anomaly_score: float | None = None,
+        trace: dict[str, str] | None = None,
     ) -> DecisionRecord:
         record = DecisionRecord(
             # Total appended, not the in-memory length: once eviction starts,
@@ -142,6 +155,7 @@ class DecisionLog:
             outcome=outcome, layer=layer, reasons=tuple(reasons),
             anomaly_score=anomaly_score,
             prev_hash=self.head_hash,
+            trace=dict(trace) if trace else None,
         )
         record = DecisionRecord(**{**record.__dict__, "receipt_hash": record.compute_hash()})
         self._records.append(record)

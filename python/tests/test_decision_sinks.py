@@ -66,7 +66,18 @@ def test_the_written_chain_verifies_on_its_own():
 
 
 def test_a_failing_sink_cannot_fail_an_authorization():
-    """A full disk is an evidence problem. It must not become an availability one."""
+    """A full disk is an evidence problem. It must not become an availability one.
+
+    This test used to assert the OPPOSITE of its own docstring: the broker
+    called the sink directly, an exploding sink raised straight through an
+    authorization that had already been decided, and the contract was that every
+    sink author remembers to catch. The shipped sinks do. A sink written by an
+    integrator, which is the entire point of the seam being pluggable, does not
+    have to, and fault injection found the gateway going down when it did not.
+
+    The broker guards it now, so the property holds for every sink rather than
+    for the ones written here, and the failure is counted rather than swallowed.
+    """
 
     class Exploding:
         dropped = 0
@@ -75,10 +86,10 @@ def test_a_failing_sink_cannot_fail_an_authorization():
             raise OSError("no space left on device")
 
     broker = SessionBroker(goal=GOAL, scope=SCOPE, receipt_sink=Exploding())
-    # The broker calls the sink directly, so this documents the contract the
-    # shipped sinks honour: they catch their own failures.
-    with pytest.raises(OSError):
-        broker.authorize(Action(0, "tool", "in-scope", "read", args={"n": 0}))
+    decision = broker.authorize(
+        Action(0, "tool", "in-scope", "read", args={"n": 0}))
+    assert decision.outcome is not None            # the decision survives
+    assert broker.unrecorded_decisions == 1        # and the gap is countable
 
 
 def test_the_shipped_file_sink_honours_that_contract():
@@ -206,3 +217,87 @@ def test_the_deployable_profile_always_has_a_sink(monkeypatch):
     stack = DeployableStack.from_goal(GOAL, scope=SCOPE, entailment_judge=None)
     assert stack.broker.receipt_sink is not None
     assert isinstance(stack.broker.receipt_sink, NullSink)
+
+
+# ------------------------------------ where a security team already looks ---
+def _record(outcome="deny", reasons=("value_budget_exceeded",)):
+    from agentauth.capabilities.decision_log import DecisionLog
+    from agentauth.capabilities.trace import TraceContext
+
+    log = DecisionLog()
+    return log.append(
+        query_id="q-1", tool="pay_vendor", resource="mcp:tool:pay_vendor",
+        action_verb="transfer", arguments_hash="sha256:abc", outcome=outcome,
+        layer="floor", reasons=reasons,
+        trace=TraceContext.parse(
+            "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01").to_dict(),
+    ).to_dict()
+
+
+def test_a_decision_maps_to_an_ocsf_api_activity_event():
+    """The release audit closed with "decisions do not reach the systems that
+    watch for incidents", and shipping JSONL did not fix it: a security team
+    does not write a bespoke parser for one vendor's log."""
+    from agentauth.capabilities.decision_sinks import OCSF_API_ACTIVITY, to_ocsf
+
+    event = to_ocsf(_record())
+    assert event["class_uid"] == OCSF_API_ACTIVITY
+    assert event["api"]["operation"] == "transfer"
+    assert event["api"]["service"]["name"] == "pay_vendor"
+
+
+def test_severity_and_status_separate_the_control_from_the_attempt():
+    """A refusal is a SUCCESS of the control and a FAILURE of the attempt, and
+    the status field describes the attempt."""
+    from agentauth.capabilities.decision_sinks import to_ocsf
+
+    assert to_ocsf(_record("allow", ()))["status_id"] == 1
+    assert to_ocsf(_record("deny"))["status_id"] == 2
+    assert to_ocsf(_record("deny"))["severity_id"] > \
+        to_ocsf(_record("allow", ()))["severity_id"]
+
+
+def test_the_event_carries_the_chain_and_the_trace():
+    """A SIEM event that cannot be tied back to the receipt it came from is a
+    rumour."""
+    from agentauth.capabilities.decision_sinks import to_ocsf
+
+    event = to_ocsf(_record())
+    assert event["unmapped"]["receipt_hash"].startswith("sha256:")
+    assert event["unmapped"]["prev_hash"] is not None
+    assert event["metadata"]["trace_uid"].startswith("4bf92f")
+
+
+def test_the_mapping_adds_nothing_the_record_did_not_carry():
+    """Arguments stay hashed. A SIEM is not a place to start leaking them."""
+    import json
+
+    from agentauth.capabilities.decision_sinks import to_ocsf
+
+    rendered = json.dumps(to_ocsf(_record()))
+    assert "sha256:abc" in rendered
+    assert "amount" not in rendered
+
+
+def test_the_ocsf_sink_composes_and_counts_its_own_failures():
+    from agentauth.capabilities.decision_sinks import OcsfSink
+
+    seen: list = []
+    OcsfSink(inner=seen.append)(_record())
+    assert seen and seen[0]["class_name"] == "API Activity"
+
+    exploding = OcsfSink(inner=lambda _e: (_ for _ in ()).throw(OSError("x")))
+    with pytest.raises(OSError):
+        exploding(_record())
+
+
+def test_the_otel_sink_counts_absence_instead_of_crashing():
+    """Optional by construction: two runtime dependencies is a large part of why
+    this library installs at all, so the SDK is imported lazily and its absence
+    is a number rather than an error at the first decision."""
+    from agentauth.capabilities.decision_sinks import OtelSpanSink
+
+    sink = OtelSpanSink()
+    sink(_record())
+    sink(_record())
+    assert sink.unavailable + sink.dropped == 2
