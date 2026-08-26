@@ -1,7 +1,11 @@
 """Standalone commit-token mint and verify (layer 2)."""
 from agentauth.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
 from agentauth.core.signing import generate_keypair
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+from agentauth.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    issue_commit_token,
+    verify_commit_token,
+)
 
 key = generate_keypair()
 args = {"employee_id": "emp_001", "bonus_amount": 100}
@@ -15,6 +19,14 @@ ctx = ExecutionContext(
     query_id="q-demo",
 )
 signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
-ok, reason = verify_commit_token(signed, ctx=ctx)
+# Both arguments are required unless AGENTAUTH_ENV names a development
+# environment. Pinning the minter is what makes a signature mean authority
+# rather than only integrity; the store is what makes the token single-use.
+ok, reason = verify_commit_token(
+    signed,
+    ctx=ctx,
+    trusted_minting_keys={key.public_key_hex},
+    used_token_store=InMemoryUsedTokenStore(),   # share it across instances
+)
 print("verified:", ok, reason)
 assert ok
