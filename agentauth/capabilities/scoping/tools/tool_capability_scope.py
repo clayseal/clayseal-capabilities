@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import re
 
-from agentauth.core.runtime import SideEffectLevel
-
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.scoping.tools.entity_index import ToolEntityIndex
 from agentauth.capabilities.scoping.tools.entity_match import (
@@ -15,6 +13,7 @@ from agentauth.capabilities.scoping.tools.target_closure import (
     TargetClosurePolicy,
     compute_target_closure,
 )
+from agentauth.core.runtime import SideEffectLevel
 
 _TOKEN_RE = re.compile(r"[A-Za-z]{3,}")
 

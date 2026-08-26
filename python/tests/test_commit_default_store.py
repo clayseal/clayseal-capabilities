@@ -23,8 +23,9 @@ def test_verify_commit_token_uses_default_store_when_configured():
     key = generate_keypair()
     ctx = _ctx()
     signed = issue_commit_token(ctx, key=key, ttl_seconds=60)
-    ok, reason = verify_commit_token(signed, ctx=ctx)
+    pin = {key.public_key_hex}
+    ok, reason = verify_commit_token(signed, ctx=ctx, trusted_minting_keys=pin)
     assert ok, reason
-    ok2, reason2 = verify_commit_token(signed, ctx=ctx)
+    ok2, reason2 = verify_commit_token(signed, ctx=ctx, trusted_minting_keys=pin)
     assert not ok2
     assert reason2 and "replay" in reason2

@@ -1,9 +1,18 @@
-"""Every signed object in this layer must fail closed in production, the same way.
+"""Every signed object in this layer must fail closed by default, the same way.
 
-`verify_commit_token` has refused an unpinned minter in production for a while.
-Writing the threat model surfaced that the other two signed objects did not, and
-both gaps are the shape this repository already names in `principal_ledger`: "a
-control that stopped applying when its input was unusual, and reported success."
+Two rounds of this. The threat model found that two of the three signed objects
+did not fail closed at all, and both gaps were the shape this repository already
+names in `principal_ledger`: "a control that stopped applying when its input was
+unusual, and reported success."
+
+The release audit found the third and larger one, which is that all three guards
+asked `is_production()`, and `is_production()` is false until someone sets an
+environment variable. So the fail-closed posture the tests below assert was the
+posture of a deployment that had read the README carefully, and every other
+deployment accepted an unpinned minting key, a missing replay store, and an
+envelope signed by anyone. The guards now ask `fail_closed()`, which is true
+unless the environment names itself development, and these tests run with the
+variable UNSET so they measure the default rather than a configured deployment.
 
 **The intent envelope** accepted any keyholder when `trusted_keys` was unset. It
 is the object `SessionBroker.reclear` swaps mid-session — the supported way a
@@ -47,6 +56,18 @@ from agentauth.core.signing import generate_keypair
 
 @pytest.fixture
 def production(monkeypatch):
+    """The DEFAULT posture: no deployment variable set at all.
+
+    Named `production` because that is the posture it produces. The point of the
+    fixture is that it sets nothing.
+    """
+    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
+
+
+@pytest.fixture
+def named_production(monkeypatch):
+    """An explicitly named production environment behaves identically."""
     monkeypatch.setenv("AGENTAUTH_ENV", "production")
 
 
@@ -86,7 +107,7 @@ def test_an_unpinned_envelope_is_refused_in_production(production):
     signed = sign_intent_envelope(_envelope(), key=generate_keypair())
     ok, reason = verify_intent_envelope(signed)
     assert not ok
-    assert "trusted control-plane keys required in production" in reason
+    assert "trusted control-plane keys required" in reason
 
 
 def test_a_pinned_envelope_is_accepted_in_production(production):
@@ -131,11 +152,23 @@ def test_reclear_refuses_an_unpinned_envelope_in_production(production):
 
 
 def test_development_still_accepts_an_unpinned_envelope(monkeypatch):
-    """The guard is about production, not about making local work impossible."""
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
-    monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
+    """The guard is not about making local work impossible.
+
+    It is about which way the default points. An unset variable is now the strict
+    posture; the relaxed one has to be asked for by name, and `fail_closed()`
+    warns once per process when it is.
+    """
+    monkeypatch.setenv("AGENTAUTH_ENV", "development")
     signed = sign_intent_envelope(_envelope(), key=generate_keypair())
     assert verify_intent_envelope(signed) == (True, None)
+
+
+def test_a_named_production_environment_is_identical_to_the_default(named_production):
+    """Setting the variable to production changes nothing, which is the point."""
+    signed = sign_intent_envelope(_envelope(), key=generate_keypair())
+    ok, reason = verify_intent_envelope(signed)
+    assert not ok
+    assert "trusted control-plane keys required" in reason
 
 
 # --------------------------------------------------------------------------- #
@@ -150,7 +183,7 @@ def test_the_unsigned_escape_is_refused_in_production(production, monkeypatch):
     )
     authority = AuthorityContext(authority_id="t", authority_version=1)
 
-    with pytest.raises(ValueError, match="refused in production"):
+    with pytest.raises(ValueError, match="unsigned step-up approvals are refused"):
         apply_step_up(authority, unsigned, request_commitment=request.commitment())
 
     # Nothing was widened on the way to the refusal.
@@ -165,7 +198,7 @@ def test_the_explicit_unsigned_argument_is_also_refused_in_production(production
         approval_id="a", request_commitment=request.commitment(),
         allow_resources=["mcp:tool:pay"], allow_write=True,
     )
-    with pytest.raises(ValueError, match="refused in production"):
+    with pytest.raises(ValueError, match="unsigned step-up approvals are refused"):
         apply_step_up(
             AuthorityContext(authority_id="t"), unsigned,
             request_commitment=request.commitment(), allow_unsigned=True,
@@ -192,12 +225,12 @@ def test_a_signed_approval_still_applies_in_production(production):
 # The contract the three share.
 # --------------------------------------------------------------------------- #
 def test_the_commit_token_posture_is_unchanged(production):
-    """The control the other two were measured against."""
+    """The control the other two were measured against, now on the new default."""
     ctx = _ctx()
     token = issue_commit_token(ctx, key=generate_keypair(), ttl_seconds=300)
     ok, reason = verify_commit_token(token, ctx=ctx)
     assert not ok
-    assert "trusted minting keys required in production" in reason
+    assert "trusted minting keys required" in reason
 
 
 def test_every_signed_object_fails_closed_on_an_unpinned_signer(production):

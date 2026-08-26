@@ -1,3 +1,9 @@
+# Burst containment
+
+```bash
+python -m benchmarks.burst
+```
+
 corpus=tau2 sessions=200 seed=0
 
   burst   cap   contained   blast radius   clean false alarms

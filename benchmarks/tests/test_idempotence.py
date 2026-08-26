@@ -90,17 +90,40 @@ def test_the_in_memory_store_does_not_survive_a_second_instance():
     assert r.multi_instance_refused == 0
 
 
-def test_production_refuses_to_run_without_a_replay_store():
+def test_verification_refuses_by_default_without_a_replay_store(monkeypatch):
     """The half the second-instance arm does not measure.
 
-    A missing store is a configuration error in production, not a silent loss of
-    replay defence, and that is what makes the 0 of 400 above a dev-default
-    number rather than a vulnerability.
+    A missing store is a configuration error, not a silent loss of replay
+    defence, and that is what makes the 0 of 400 above a dev-default number
+    rather than a vulnerability.
+
+    This used to read the SOURCE of `verify_commit_token` for the string
+    "is_production()", which passed while the guard itself was inert: it only
+    applied in a deployment that had set AGENTAUTH_ENV. Asserting on behaviour
+    with the variable unset is the check that would have failed then.
     """
-    import inspect
+    from agentauth.core.runtime import (
+        ActionDescriptor,
+        AuthorityContext,
+        ExecutionContext,
+    )
+    from agentauth.core.signing import generate_keypair
 
-    from agentauth.capabilities import commit
+    from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
 
-    source = inspect.getsource(commit.verify_commit_token)
-    assert "is_production()" in source
-    assert "replay store required in production" in source
+    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
+
+    key = generate_keypair()
+    ctx = ExecutionContext(
+        action=ActionDescriptor(action_name="t/call/pay", resource_ref="acct:1"),
+        input={"amount": 1},
+        authority=AuthorityContext(authority_id="a"),
+        query_id="q",
+    )
+    token = issue_commit_token(ctx, key=key, ttl_seconds=60)
+    ok, reason = verify_commit_token(
+        token, ctx=ctx, trusted_minting_keys={key.public_key_hex}
+    )
+    assert not ok
+    assert "replay store required" in reason

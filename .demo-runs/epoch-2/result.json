@@ -5,7 +5,7 @@
     "size": 5032
   },
   "config_path": ".demo-runs/epoch-2/ivisor.conf",
-  "cpu_seconds": 0.039701,
+  "cpu_seconds": 0.031045,
   "denied": [
     "dns.query deny acme-internal.com (not-allowlisted)"
   ],
@@ -36,7 +36,7 @@
     "miss": 0,
     "unverified_claims": 0
   },
-  "wall_seconds": 0.077985,
+  "wall_seconds": 0.040255,
   "workspace_delta": {
     "created": [],
     "deleted": [],

@@ -73,7 +73,7 @@ the ones we are proudest of. A single n=18 run showing 0.0% is consistent with a
 true rate meaningfully above zero. The Wilson upper bound on 0 of 18 is about
 18%, which is not a rounding error.
 
-The fix is the one already prioritised in [../../docs/above_sota.md](../../docs/above_sota.md):
+The fix is the one already prioritised in [../../notes/above_sota.md](../../notes/above_sota.md):
 repeat every sweep and report the spread. `frontier.py --repeats N` now does
 this. No security claim should be published from a single sweep, ours included.
 

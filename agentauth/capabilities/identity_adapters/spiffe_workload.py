@@ -23,10 +23,9 @@ from __future__ import annotations
 import threading
 from typing import Any
 
+from agentauth.capabilities.identity_adapters.spiffe_jwt import claims_from_spiffe_jwt
 from agentauth.core.authority_binding import AuthorityBinding
 from agentauth.core.identity_protocol import CapabilityAuthorizer, IdentitySession
-
-from agentauth.capabilities.identity_adapters.spiffe_jwt import claims_from_spiffe_jwt
 
 SOCKET_ENV = "SPIFFE_ENDPOINT_SOCKET"
 DEFAULT_AUDIENCE = "agentauth"

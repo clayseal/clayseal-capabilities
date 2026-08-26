@@ -58,10 +58,23 @@ def test_unsigned_approval_refused_by_default():
     assert authority.authority_version == 1
 
 
-def test_unsigned_allowed_via_explicit_escape_hatch():
+def test_unsigned_allowed_via_explicit_escape_hatch(monkeypatch):
+    # The escape hatch is now development-only. Unset, or set to production, the
+    # same call raises: an approval grants authority the floor already refused,
+    # so an unsigned one is a grant nobody made.
+    monkeypatch.setenv("AGENTAUTH_ENV", "development")
     authority = AuthorityContext(authority_id="t", authority_version=1)
     apply_step_up(authority, _approval("sha256:abc"), allow_unsigned=True)
     assert "repo://deploy/prod.yaml" in authority.resource_scope
+
+
+def test_unsigned_escape_hatch_is_refused_by_default(monkeypatch):
+    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
+    authority = AuthorityContext(authority_id="t", authority_version=1)
+    with pytest.raises(ValueError, match="unsigned step-up approvals are refused"):
+        apply_step_up(authority, _approval("sha256:abc"), allow_unsigned=True)
+    assert authority.resource_scope == []
 
 
 def test_signed_approval_bound_to_wrong_request_rejected():

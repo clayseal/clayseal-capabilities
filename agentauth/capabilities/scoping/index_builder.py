@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agentauth.core.hash_util import sha256_hex
-
 from agentauth.capabilities.scoping.chunkers import chunk_file
 from agentauth.capabilities.scoping.imports_graph import extract_import_edges, is_build_manifest
 from agentauth.capabilities.scoping.models import RepoChunkIndex
 from agentauth.capabilities.scoping.pagerank import pagerank_file_graph
 from agentauth.capabilities.scoping.reference_edges import load_reference_edges
+from agentauth.core.hash_util import sha256_hex
 
 _SKIP_DIR_NAMES = {
     ".git",

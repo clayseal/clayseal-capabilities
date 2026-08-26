@@ -196,7 +196,7 @@ approximately 98%. `benchmarks/results/scoreboard.json` at the same commit print
 - **Evidence:** `python -m benchmarks.drift --actions 2000 --target {12,13,14}`
   gives anchored 15.0%, 47.3% and 82.1%, so 82% is a knob setting; and no anchored
   monitor exists in `agentauth/` (`agentauth/capabilities/monitor/drift.py` is
-  CusumDrift with no anchored-versus-rolling distinction, and `docs/moonshots.md`
+  CusumDrift with no anchored-versus-rolling distinction, and `notes/moonshots.md`
   line 34 lists anchored baselines as Moonshot 1, unbuilt).
 
 ### 2.11 Mandate quality
@@ -373,7 +373,7 @@ figures are our own code, our own ablations, or unsourced.**
 
 | figure | source |
 | --- | --- |
-| ARGUS ~5 pts utility | `docs/a business memo` line 49, arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
+| ARGUS ~5 pts utility | `notes/a business memo` line 49, arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
 | CaMeL ~7 pts utility | line 52, arXiv:2503.18813, 84 -> 77 on AgentDojo |
 | Progent ~19 pts utility | line 50, arXiv:2606.26479. Sourced but contradicted by our own head-to-head, which measures Progent's released code at 12.5 points on gpt-4o-mini |
 
@@ -405,7 +405,7 @@ figures are our own code, our own ablations, or unsourced.**
 Two structural problems with the column as a whole. First, a header reading "Best
 alternative" beside cells naming Progent and CaMeL makes every ablation in the
 column read as a measured competitor. Second, in four rows the figure is not even
-the best alternative by our own files: `docs/above_sota.md` line 12 puts the
+the best alternative by our own files: `notes/above_sota.md` line 12 puts the
 injection field at ARGUS 3.8%, Progent 4.2% under independent reproduction, and
 CaMeL near zero, and `benchmarks/results/head_to_head_injection.md` states that we
 do not claim to out-secure CaMeL on injection.

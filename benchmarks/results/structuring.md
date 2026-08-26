@@ -1,5 +1,11 @@
 # Cross-session structuring: moving 40000 against a 10000 ceiling
 
+STATUS: current
+
+```bash
+python -m benchmarks.structuring
+```
+
 The attacker splits one over-ceiling payout across N sessions. Each fragment is individually under the limit and individually authorized. Containment means the attacker could not move more than the ceiling in total.
 
 | Fragments | per fragment | session-scoped allowed | contained | principal-scoped allowed | contained |

@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+from agentauth.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    issue_commit_token,
+    verify_commit_token,
+)
 from agentauth.capabilities.identity_adapters import get_identity_provider, list_identity_providers
 from agentauth.capabilities.integration import execution_context_from_session
 from agentauth.core.signing import generate_keypair
@@ -124,5 +128,10 @@ def test_commit_token_across_identity_providers(provider):
         query_id=f"q-{provider}",
     )
     signed = issue_commit_token(ctx, key=key, ttl_seconds=120)
-    ok, reason = verify_commit_token(signed, ctx=ctx)
+    ok, reason = verify_commit_token(
+        signed,
+        ctx=ctx,
+        trusted_minting_keys={key.public_key_hex},
+        used_token_store=InMemoryUsedTokenStore(),
+    )
     assert ok, reason

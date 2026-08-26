@@ -1,1 +1,1 @@
-{"event": "dns.query", "verdict": "deny", "fields": {"verdict": "deny", "name": "acme-internal.com", "qtype": "1", "reason": "not-allowlisted", "rcode": "NXDOMAIN"}, "at_ms": 1787119576796}
+{"event": "dns.query", "verdict": "deny", "fields": {"verdict": "deny", "name": "acme-internal.com", "qtype": "1", "reason": "not-allowlisted", "rcode": "NXDOMAIN"}, "at_ms": 1787546589813}

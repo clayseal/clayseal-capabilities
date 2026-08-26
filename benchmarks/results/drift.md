@@ -1,5 +1,11 @@
 # Slow drift over 2000 actions
 
+STATUS: current
+
+```bash
+python -m benchmarks.drift --actions 2000
+```
+
 The adversary raises the mean by 0.00400 sigma per action, from 10.0 to 14.0. A single action at 14.0 would be 4 sigma out at t=0 and refused outright. No single step is ever more than a fraction of a sigma above the last. The objective is reached at 50% of the run, after which the agent simply operates there.
 
 | Monitor | baseline moved | displacement | alarms at objective |

@@ -237,13 +237,14 @@ def _authenticate_approval(
     # and the system reported success. That is the shape this repository has
     # already shipped six times and names in `principal_ledger`: "a control that
     # stopped applying when its input was unusual, and reported success."
-    from agentauth.core.production import is_production
+    from agentauth.core.production import fail_closed
 
-    if is_production():
+    if fail_closed():
         raise ValueError(
-            "unsigned step-up approvals are refused in production: an approval "
-            "grants authority the floor refused, so it must be signed. Unset "
-            f"{ALLOW_UNSIGNED_ENV} and pass a SignedStepUpApproval."
+            "unsigned step-up approvals are refused: an approval grants "
+            "authority the floor refused, so it must be signed. Unset "
+            f"{ALLOW_UNSIGNED_ENV} and pass a SignedStepUpApproval, or set "
+            "AGENTAUTH_ENV=development to relax this while developing."
         )
     return approval
 

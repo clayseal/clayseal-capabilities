@@ -9,7 +9,7 @@ the product.
 So the published adaptive numbers describe rungs, and the thing a deployment
 actually runs — `DeployableStack`, floor plus intent envelope plus provenance
 plus flow plus session state — had never been put in front of an adaptive
-adversary at all. `docs/production_sota_path.md` names this as open work: "extend
+adversary at all. `notes/production_sota_path.md` names this as open work: "extend
 the adaptive adversary from the detector to the plan-plus-taint path; report the
 residual."
 
@@ -95,6 +95,15 @@ class DeployableStackEngine:
     #: blamed the mechanism for the harness's blind spot, which is the failure
     #: `adequacy.py` exists to catch one level up.
     observe_reads: bool = True
+    #: Compile an intent envelope from the task goal, and whether that envelope
+    #: carries goal-derived occurrence counts. Both exposed so the count rung's
+    #: contribution can be attributed by difference rather than assumed.
+    with_envelope: bool = True
+    #: Follows the library default, which is OFF. Measured on AgentHarm per
+    #: session, the rung moves containment 45.0% to 46.2% and false positives
+    #: 0.0% to 10.2%, so the arm named `deployable-stack` has to be the one that
+    #: ships or the headline describes a configuration nobody runs.
+    derive_counts: bool = False
     #: The value a secret-marked read is simulated to return. Shared with the
     #: attacker, because both sides have to agree on what the tool returned.
     secret_value: str = ""
@@ -116,7 +125,10 @@ class DeployableStackEngine:
                 _goal_for(task), entailment_judge=None, replay_pin_clock=True
             )
         else:
-            self._stack = stack_from_benchmark_task(task, entailment_judge=None)
+            self._stack = stack_from_benchmark_task(
+                task, entailment_judge=None,
+                intent_envelope=... if self.with_envelope else None,
+                derive_counts=self.derive_counts)
         return self._stack
 
     def reset(self) -> None:

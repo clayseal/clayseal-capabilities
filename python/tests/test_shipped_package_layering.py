@@ -1,7 +1,8 @@
 """The wheel must be importable from the wheel alone.
 
-``pyproject.toml`` ships ``only-include = ["agentauth/capabilities"]``. Anything
-the library reaches for outside that tree — the ``benchmarks`` harness, the
+``pyproject.toml`` ships
+``only-include = ["agentauth/capabilities", "agentauth/core"]``. Anything the
+library reaches for outside those trees — the ``benchmarks`` harness, the
 ``demo`` package, the optional identity layer at module scope — is present in
 the development checkout and absent in every real install, so the failure never
 shows up here and always shows up for the integrator.
@@ -35,7 +36,10 @@ FORBIDDEN_ROOTS = {"benchmarks", "demo", "examples", "scratchpad", "scripts"}
 #: it, which is the whole point of it being an extra.
 OPTIONAL_SIBLINGS = ("agentauth.identity", "agentauth.receipts", "agentauth.backend")
 
+CORE = PACKAGE.parent / "core"
+
 SOURCES = sorted(PACKAGE.rglob("*.py"))
+CORE_SOURCES = sorted(CORE.rglob("*.py"))
 
 
 def _imported_roots(tree: ast.AST) -> set[str]:
@@ -62,9 +66,47 @@ def test_module_does_not_import_anything_outside_the_wheel(path: Path):
     leaked = _imported_roots(tree) & FORBIDDEN_ROOTS
     assert not leaked, (
         f"{path.relative_to(PACKAGE.parent.parent)} imports {sorted(leaked)}, which is "
-        f"not shipped in the wheel (only-include = ['agentauth/capabilities']). "
-        f"Move the dependency to the caller, or invert it."
+        f"not shipped in the wheel. Move the dependency to the caller, or "
+        f"invert it."
     )
+
+
+def test_there_are_core_sources_to_check():
+    assert len(CORE_SOURCES) > 15, len(CORE_SOURCES)
+
+
+@pytest.mark.parametrize("path", CORE_SOURCES, ids=lambda p: f"core/{p.name}")
+def test_core_does_not_import_the_layer_above_it(path: Path):
+    """`agentauth.core` is the bottom of the stack and has to stay there.
+
+    It was a separate distribution, so this was enforced by the fact that the
+    package it would have imported was not installed. Vendoring it into this
+    repository removes that enforcement: `agentauth.capabilities` is now one
+    directory away, and an import in the wrong direction would build cleanly, run
+    cleanly, and make the two impossible to separate again.
+    """
+    tree = ast.parse(path.read_text(), filename=str(path))
+    offenders = {
+        name for name in _dotted_imports(tree)
+        if name.startswith("agentauth.capabilities")
+    }
+    assert not offenders, (
+        f"agentauth/core/{path.name} imports {sorted(offenders)}. Core is the "
+        f"contracts layer and nothing in it may depend on the layer above."
+    )
+    leaked = _imported_roots(tree) & FORBIDDEN_ROOTS
+    assert not leaked, f"agentauth/core/{path.name} imports {sorted(leaked)}"
+
+
+def _dotted_imports(tree: ast.AST) -> set[str]:
+    """Full dotted module names, at any depth, from both import forms."""
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            names.add(node.module)
+    return names
 
 
 def _module_level_imports(tree: ast.AST) -> set[str]:

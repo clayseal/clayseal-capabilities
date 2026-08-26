@@ -67,7 +67,7 @@ class Interval:
             "method": self.method,
         }
 
-    def overlaps(self, other: "Interval") -> bool:
+    def overlaps(self, other: Interval) -> bool:
         """True when two intervals overlap, i.e. the difference is not resolved.
 
         Non-overlap is a conservative test for a real difference; overlapping
@@ -120,7 +120,7 @@ def cluster_bootstrap_ci(
         # event-level interval rather than reporting a zero-width fiction.
         return proportion_ci(total_s, total_n, level)
 
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # noqa: S311 - a bootstrap resampler, not a keystream
     k = len(clusters)
     rates = []
     for _ in range(resamples):
@@ -200,3 +200,86 @@ def is_resolved(a: Interval, b: Interval) -> bool:
 
 def render_row(name: str, ci: Interval) -> str:
     return f"| {name} | {ci.point:.1%} | [{ci.low:.1%}, {ci.high:.1%}] | {ci.n} |"
+
+
+# --------------------------------------------------------------------------- #
+# Paired comparisons
+# --------------------------------------------------------------------------- #
+def mcnemar_exact(both: int, only_a: int, only_b: int, neither: int) -> float:
+    """Two-sided exact McNemar p-value for two defenses on the SAME scenarios.
+
+    The comparison this repository publishes is paired: every condition is
+    replayed against the same 132 scenarios, so `clayseal` and `dataflow-taint`
+    are not two independent samples and a Fisher or chi-square test on the
+    marginals answers a question nobody asked. What matters is the DISCORDANT
+    cells: the scenarios one contains and the other does not.
+
+    Concordant scenarios carry no information about which is better, and
+    including them in the denominator is what makes an unpaired test on paired
+    data both wrong and, here, conservative in the wrong direction: the two
+    mechanisms agree on only 21 of 132, so pooling drowns the signal.
+
+    Exact rather than the chi-square approximation because the discordant count
+    is small enough for it to matter, and because an exact binomial has no
+    continuity-correction argument to have.
+    """
+    n = only_a + only_b
+    if n == 0:
+        return 1.0
+    # Under H0 each discordant scenario is a fair coin.
+    def _c(k: int) -> float:
+        return math.exp(math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1))
+
+    obs = min(only_a, only_b)
+    tail = sum(_c(k) for k in range(0, obs + 1)) / (2 ** n)
+    return min(1.0, 2 * tail)
+
+
+def paired_difference_ci(
+    pairs: list[tuple[bool, bool]], *, level: float = 0.95,
+    resamples: int = 4000, seed: int = 0,
+) -> Interval:
+    """Bootstrap CI for `rate(a) - rate(b)` on paired binary outcomes.
+
+    Resamples SCENARIOS, not outcomes, so the pairing is preserved in every
+    resample. An unpaired interval on the same data is wider and centred in the
+    same place, which reads as caution and is simply the wrong estimator: it
+    discards the fact that the two conditions saw identical inputs.
+    """
+    if not pairs:
+        return Interval(0.0, -1.0, 1.0, 0, level, "paired-bootstrap")
+    point = (sum(a for a, _ in pairs) - sum(b for _, b in pairs)) / len(pairs)
+    rng = random.Random(seed)  # noqa: S311 - a bootstrap resampler, not a keystream
+    k = len(pairs)
+    diffs = []
+    for _ in range(resamples):
+        s = 0
+        for _ in range(k):
+            a, b = pairs[rng.randrange(k)]
+            s += int(a) - int(b)
+        diffs.append(s / k)
+    diffs.sort()
+    alpha = (1 - level) / 2
+    lo = diffs[max(0, int(alpha * len(diffs)))]
+    hi = diffs[min(len(diffs) - 1, int((1 - alpha) * len(diffs)))]
+    return Interval(point, lo, hi, k, level, "paired-bootstrap")
+
+
+def holm_bonferroni(pvalues: dict[str, float], alpha: float = 0.05) -> dict[str, bool]:
+    """Which of a family of tests survive at `alpha`, Holm-corrected.
+
+    The sweep reports five conditions across three suites and three metrics. Any
+    one of those cells can be quoted, so the family is what a reader would scan,
+    and an uncorrected 0.05 over that many comparisons expects a false positive.
+    Holm rather than Bonferroni because it is uniformly more powerful and needs
+    no independence assumption, which these tests do not have.
+    """
+    ordered = sorted(pvalues.items(), key=lambda kv: kv[1])
+    m = len(ordered)
+    out: dict[str, bool] = {}
+    rejected_so_far = True
+    for i, (name, p) in enumerate(ordered):
+        threshold = alpha / (m - i)
+        rejected_so_far = rejected_so_far and p <= threshold
+        out[name] = rejected_so_far
+    return out

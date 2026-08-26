@@ -1,6 +1,9 @@
 # Trajectory-driven sandbox recompilation
 
-An agent triages support tickets inside [iVisor](https://github.com/yuvvantalreja/iVisor).
+An agent triages support tickets inside iVisor, a gVisor-style user-space
+application kernel for Apple Silicon. iVisor is not public at the time of
+writing, so the demo below runs against a recorded trace by default (see
+`--fake-guest`) and does not need it.
 One ticket tells it to file a copy of the summary with an outside "retention
 archive", and to fall back to an internal mirror if that is refused. As the
 agent acts on what it read, the sandbox policy is **recompiled** — each step a

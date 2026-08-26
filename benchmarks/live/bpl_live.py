@@ -240,7 +240,7 @@ def run(model: str, runs: int, scenario: str, conditions: list[str],
     # `gpt-5-mini-2025-08-07`. Every line this harness printed before this call
     # was labelled with the deployment name, so a results file produced against
     # Azure claimed a weak-model cell while a frontier model answered. A
-    # model-strength trend is the central claim of `docs/improvements.md`
+    # model-strength trend is the central claim of `notes/improvements.md`
     # ("25 -> 19 -> 3 points as model strength rises"); one mislabelled cell
     # inverts it. See benchmarks/core/reporting.ModelIdentity.
     from benchmarks.core.reporting import ModelIdentity

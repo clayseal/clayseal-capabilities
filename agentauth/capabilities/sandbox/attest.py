@@ -24,9 +24,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from agentauth.core.hash_util import hash_canonical_json
-
 from agentauth.capabilities.sandbox.driver import IVisorResult
+from agentauth.core.hash_util import hash_canonical_json
 
 SANDBOX_SCHEMA = "agentauth.capabilities.sandbox.attestation.v1"
 

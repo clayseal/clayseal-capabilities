@@ -87,6 +87,16 @@ def _pair(ttl: int = 300):
 
 
 def _verify(signed, ctx, trusted, **kw):
+    """Verify the way a deployment has to: minter pinned, replay store present.
+
+    The store used to be optional here, because it was optional anywhere the
+    deployment environment was unset. It is required now, and this harness spent
+    one run reporting BASELINE=1 — "a valid token did not verify" — which is the
+    guard working and the harness not having caught up. Each call gets a FRESH
+    store unless the caller passes one, so a mutation check is not accidentally
+    measuring replay defense.
+    """
+    kw.setdefault("used_token_store", InMemoryUsedTokenStore())
     return verify_commit_token(signed, ctx=ctx, trusted_minting_keys=trusted, **kw)
 
 
