@@ -16,7 +16,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.monitor.action import Action, resource_class
+from agentauth.capabilities.monitor.action import Action
+from agentauth.capabilities.monitor.surface import (
+    in_surface,
+    resource_readings,
+    surface_from,
+)
 from agentauth.capabilities.scoping.goal import GoalSpec
 
 # Verbs an agent may use when the goal does not narrow them further.
@@ -36,7 +41,10 @@ class TypedGoalEnvelope:
     @classmethod
     def from_goal(cls, goal: GoalSpec) -> TypedGoalEnvelope:
         intent = goal.structured_intent or {}
-        resource_classes = {resource_class(r) for r in goal.allow_resources}
+        # `surface_from` is the one reading used on both sides of every
+        # membership test, and it drops the blank classes that would make an
+        # empty surface look populated. See `monitor/surface.py`.
+        resource_classes = set(surface_from(goal.allow_resources))
         # Explicit files imply a repo/file surface even if not listed as resources.
         if goal.explicit_allow_files():
             resource_classes.update({"repo", "file"})
@@ -67,10 +75,22 @@ class TypedGoalEnvelope:
             read_only=not write_allowed,
         )
 
-    def assess(self, action: Action) -> EnvelopeVerdict:
+    def assess(self, action: Action, *,
+               resources_comparable: bool = True) -> EnvelopeVerdict:
+        """Structural verdict for one action.
+
+        `resources_comparable` is the caller's answer to "has this session ever
+        spoken the surface's vocabulary". It defaults to True so a caller with
+        no trajectory behaves as before; a caller that has one should pass
+        `monitor.surface.surface_is_comparable`, because a surface that has
+        never matched cannot tell a violation from a naming convention. See
+        `monitor/surface.py` for what this cost when it was missing.
+        """
         reasons: list[str] = []
-        rc = resource_class(action.resource)
-        if self.allowed_resource_classes and rc not in self.allowed_resource_classes:
+        if (self.allowed_resource_classes and resources_comparable
+                and not in_surface(action, self.allowed_resource_classes)):
+            readings = resource_readings(action)
+            rc = readings[0] if readings else ""
             reasons.append(f"resource-class {rc!r} not in goal envelope")
         if self.allowed_verbs and action.verb.lower() not in self.allowed_verbs:
             reasons.append(f"verb {action.verb!r} not expected for goal")

@@ -26,6 +26,12 @@ from typing import Any
 
 from agentauth.capabilities.monitor.action import Action, Trajectory, resource_class
 from agentauth.capabilities.monitor.ontology import ToolOntology
+from agentauth.capabilities.monitor.surface import (
+    in_surface,
+    resource_readings,
+    surface_from,
+    surface_is_comparable,
+)
 from agentauth.capabilities.scoping.goal import GoalSpec
 
 INTENT_ENVELOPE_SCHEMA = "agent-receipts.intent-envelope.v1"
@@ -52,6 +58,11 @@ class Deviation(str, Enum):
     OFF_RESOURCE = "off-resource"
     OUT_OF_ORDER = "out-of-order"
     OFF_SLOT = "off-slot"
+    #: More occurrences of a phase than the sealed goal asked for. Soft by
+    #: construction: the bound is DERIVED from the goal rather than declared by
+    #: an operator, so it is evidence that the trace left the plan and not proof
+    #: that the action is wrong. The broker turns it into a step-up.
+    OVER_COUNT = "over-count"
 
 
 class SlotSource(str, Enum):
@@ -119,12 +130,31 @@ class Phase:
     resource_classes: frozenset[str] = frozenset()
     min: int = 0            # required occurrences (a landmark when > 0)
     repeatable: bool = True
+    #: Most occurrences the sealed goal accounts for. 0 means unbounded, which is
+    #: the default and the only safe one: a bound nobody derived must never
+    #: refuse work.
+    #:
+    #: This is the rung that was missing. A phase could say WHICH tools and
+    #: whether it may repeat at all, never HOW MANY TIMES, so a goal reading
+    #: "email a summary" admitted one send and fifty identically. Measured on
+    #: independently-authored corpora, 0 of 520 tasks declare a budget
+    #: (`external_corpora_structure.md`), so the aggregate rung is inert for
+    #: exactly the deployments that never write one. A count the gateway derives
+    #: from the goal is the version that works when nobody declares anything.
+    max: int = 0
+    #: Where `max` came from: "declared", "derived", or "inferred". A step-up
+    #: whose provenance is unknown is not reviewable, and these three carry very
+    #: different weight: an operator wrote one, a regex read one off the goal
+    #: text, and a model proposed one. It travels into the deviation reason so
+    #: the person clearing the step-up can see which.
+    max_source: str = ""
 
     def to_dict(self) -> dict:
         return {
             "tools": sorted(self.tools), "verbs": sorted(self.verbs),
             "resource_classes": sorted(self.resource_classes),
-            "min": self.min, "repeatable": self.repeatable,
+            "min": self.min, "repeatable": self.repeatable, "max": self.max,
+            "max_source": self.max_source,
         }
 
     def matches(self, action: Action) -> bool:
@@ -256,7 +286,9 @@ class IntentEnvelope:
         verbs = set(declared)
         for v in declared:
             verbs.add(_canonical_verb(v))
-        rclasses = {resource_class(r) for r in goal.allow_resources}
+        # `surface_from` is the one reading used on both sides of every
+        # membership test. See `monitor/surface.py`.
+        rclasses = set(surface_from(goal.allow_resources))
         # Tools implied by the goal's allowed resources (mcp:tool:<name>).
         for r in goal.allow_resources:
             if r.startswith("mcp:tool:"):
@@ -336,18 +368,27 @@ class IntentEnvelope:
                         f"slot {slot.name!r}: {reason}")
         return None
     # -- membership ----------------------------------------------------------
-    def _membership(self, action: Action) -> StepConformance | None:
-        rc = resource_class(action.resource)
+    def surface_is_comparable(self, traj: Trajectory) -> bool:
+        """Whether this tier has any standing to refuse. See `monitor.surface`."""
+        return surface_is_comparable(self.allowed_resource_classes, traj.actions)
+
+    def _membership(self, action: Action,
+                    *, resources_comparable: bool = True) -> StepConformance | None:
         if self.allowed_tools and action.tool not in self.allowed_tools:
             return StepConformance(action.step, Deviation.OFF_TOOL,
                                    f"tool {action.tool!r} not in the goal's plan")
         if self.allowed_verbs and action.verb.lower() not in self.allowed_verbs:
             return StepConformance(action.step, Deviation.OFF_VERB,
                                    f"verb {action.verb!r} not expected for the goal")
-        if self.allowed_resource_classes and rc not in self.allowed_resource_classes:
-            return StepConformance(action.step, Deviation.OFF_RESOURCE,
-                                   f"resource class {rc!r} outside the goal surface")
-        return None
+        if not (self.allowed_resource_classes and resources_comparable):
+            return None
+        if in_surface(action, self.allowed_resource_classes):
+            return None
+        readings = resource_readings(action)
+        return StepConformance(
+            action.step, Deviation.OFF_RESOURCE,
+            f"resource class {(readings[0] if readings else '')!r} "
+            f"outside the goal surface")
 
     # -- conformance ---------------------------------------------------------
     def _mode_paths(self) -> tuple[tuple[Phase, ...], ...]:
@@ -362,12 +403,36 @@ class IntentEnvelope:
         return frozenset(tools)
 
     def _assess_phases(self, traj: Trajectory, phases: tuple[Phase, ...]) -> IntentConformance:
-        steps: list[StepConformance] = []
-        satisfied = [0] * len(phases)
         plan_tools = self._plan_tools()
         mode_tools = frozenset().union(*(p.tools for p in phases)) if phases else frozenset()
-        for action in traj.actions:
-            off = self._membership(action)
+        # Once per assessment rather than once per action: whether this tier has
+        # any standing at all is a property of the session, not of a call.
+        comparable = self.surface_is_comparable(traj)
+
+        # RESUME rather than rescan. The broker re-assesses the whole trajectory
+        # after every action, so a session of N actions costs O(N^2): measured
+        # at 13.1 seconds for 2,000 actions before this, with the thousandth
+        # decision costing fourteen times the first. No corpus here has a task
+        # long enough to see it, and an agent that runs for an hour does.
+        #
+        # The only state this loop carries across actions is `steps`, which is
+        # append-only, and `satisfied`, which counts phase occurrences. Every
+        # other input is constant within a call. So a prefix already assessed
+        # under the SAME comparability flag can be resumed exactly, and the two
+        # conditions that make that sound are checked rather than assumed: the
+        # cached prefix must still be the head of this trajectory, identity-wise,
+        # and `comparable` must not have flipped. `_rollback` pops the last
+        # action after a refusal, which shortens the trajectory and fails the
+        # first check, so the next assessment recomputes.
+        #
+        # `test_intent_envelope_incremental.py` holds the equality against a
+        # full recomputation over randomized trajectories including rollbacks,
+        # because an optimization inside an enforcement path that is subtly
+        # wrong is worse than the cost it saves.
+        steps, satisfied, start = self._resume(traj, phases, comparable)
+
+        for action in traj.actions[start:]:
+            off = self._membership(action, resources_comparable=comparable)
             if off is not None:
                 steps.append(off)
                 continue
@@ -406,8 +471,55 @@ class IntentEnvelope:
                     f"{action.verb} {action.tool} before required earlier phase {missing}"))
                 continue
             satisfied[target] += 1
+            limit = phases[target].max
+            if limit and satisfied[target] > limit:
+                source = phases[target].max_source or "derived"
+                steps.append(StepConformance(
+                    action.step, Deviation.OVER_COUNT,
+                    f"{action.verb} {action.tool} occurrence {satisfied[target]} "
+                    f"of a phase the sealed goal accounts for {limit} time(s) "
+                    f"[{source}]"))
+                continue
             steps.append(StepConformance(action.step, Deviation.IN_PLAN, "in plan"))
+        self._remember(traj, phases, comparable, steps, satisfied)
         return IntentConformance(steps=steps)
+
+    # -- incremental assessment ---------------------------------------------
+    def _memo_key(self, phases: tuple[Phase, ...], comparable: bool) -> tuple:
+        return (id(self), id(phases), comparable)
+
+    def _resume(self, traj: Trajectory, phases: tuple[Phase, ...],
+                comparable: bool) -> tuple[list, list[int], int]:
+        """The assessed prefix to carry forward, or an empty start."""
+        empty = ([], [0] * len(phases), 0)
+        cache = getattr(traj, "_envelope_memo", None)
+        if not cache:
+            return empty
+        entry = cache.get(self._memo_key(phases, comparable))
+        if entry is None:
+            return empty
+        length, last, steps, satisfied = entry
+        actions = traj.actions
+        # The cached prefix must still BE the prefix: same length position, same
+        # action object at its end. A pop-then-push leaves the length equal and
+        # the identity different, which fails here and recomputes.
+        if 0 < length <= len(actions) and actions[length - 1] is last:
+            return (list(steps), list(satisfied), length)
+        return empty
+
+    def _remember(self, traj: Trajectory, phases: tuple[Phase, ...],
+                  comparable: bool, steps: list, satisfied: list[int]) -> None:
+        if not traj.actions:
+            return
+        cache = getattr(traj, "_envelope_memo", None)
+        if cache is None:
+            try:
+                cache = {}
+                traj._envelope_memo = cache
+            except (AttributeError, TypeError):
+                return  # a frozen trajectory simply recomputes
+        cache[self._memo_key(phases, comparable)] = (
+            len(traj.actions), traj.actions[-1], tuple(steps), tuple(satisfied))
 
     def assess(self, traj: Trajectory) -> IntentConformance:
         """Conformance under the best-explaining mode (a conforming one if any)."""
@@ -591,13 +703,14 @@ def verify_intent_envelope(signed: dict, *, trusted_keys=None) -> tuple[bool, st
         # plan wholesale, and every later conformance check then measured the
         # action against the attacker's plan. A signature proves integrity, not
         # authority, and the envelope path was reading it as both.
-        from agentauth.core.production import is_production
+        from agentauth.core.production import fail_closed
 
-        if is_production():
+        if fail_closed():
             return (
                 False,
-                "intent envelope trusted control-plane keys required in "
-                "production (pass trusted_keys=...)",
+                "intent envelope trusted control-plane keys required "
+                "(pass trusted_keys=...; set AGENTAUTH_ENV=development to relax "
+                "this while developing)",
             )
     return True, None
 

@@ -39,6 +39,7 @@ from agentauth.capabilities.monitor.provenance import TaintTracker
 from agentauth.capabilities.monitor.reachability import EnvelopeDeparture, PathEnvelope
 from agentauth.capabilities.monitor.scoring.base import SequenceScorer
 from agentauth.capabilities.monitor.scoring.ngram import NGramScorer, goal_bucket
+from agentauth.capabilities.monitor.surface import surface_is_comparable
 from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
 
 
@@ -209,6 +210,14 @@ class TrajectoryDetector:
         """
         bucket = goal_bucket(traj)
         envelope = TypedGoalEnvelope.from_goal(traj.goal) if self.use_envelope else None
+        # The envelope tier is NOT inside the conformal budget below, so a
+        # refusal it makes is not bounded by alpha and no choice of alpha
+        # softens it. That is exactly why it has to establish that its surface
+        # is comparable with this session's vocabulary before it may refuse:
+        # measured on sleight it blocked benign trajectories at p=0.912.
+        env_comparable = (
+            surface_is_comparable(envelope.allowed_resource_classes, traj.actions)
+            if envelope is not None else False)
         taint = TaintTracker.from_trajectory(traj) if self.use_taint else None
         scored = {s.step: s.surprise for s in self.scorer.surprise(traj)}
 
@@ -233,7 +242,7 @@ class TrajectoryDetector:
             in_envelope = True
             reasons: list[str] = []
             if envelope is not None:
-                ev = envelope.assess(action)
+                ev = envelope.assess(action, resources_comparable=env_comparable)
                 in_envelope = ev.in_envelope
                 reasons.extend(ev.reasons)
 
