@@ -2,12 +2,25 @@
 
 Clay Seal gates the tool calls an agent framework reports. That stream is
 mediated by the agent, so a sufficiently capable or compromised agent can act
-below it. [iVisor](https://github.com/yuvvantalreja/iVisor) — a gVisor-style
-user-space application kernel for Apple Silicon — services every syscall of an
-untrusted Linux binary, giving one action stream the agent cannot lie about or
-route around. If the envelope is enforced there, the agent cannot produce a side
-effect the monitor does not see, because it cannot make a syscall iVisor does
-not service.
+below it. A syscall-servicing sandbox gives one action stream the agent cannot
+lie about or route around: if the envelope is enforced there, the agent cannot
+produce a side effect the monitor does not see, because it cannot make a syscall
+the sandbox does not service.
+
+**What ships, and what does not.** The seam is
+`agentauth.sandbox_backends`, a plugin entry point, and it is what makes the
+execution substrate swappable. The one backend we ship drives **iVisor**, a
+gVisor-style user-space application kernel for Apple Silicon, and iVisor is not
+public at the time of writing. That backend is also macOS only by construction:
+Hypervisor.framework allows one VM per process, its run call blocks with no stop
+handle, and it applies an irreversible Seatbelt profile to its caller
+(`sandbox/driver.py` states all three, which is why the driver spawns rather than
+embeds).
+
+So the honest position on this tier is: the interface is real, the reference
+backend is real and tested end to end, and neither is available to a Linux reader
+today. A seccomp or Landlock backend under the same `SandboxBackend` protocol
+would make it available, and that is open work rather than something we ship.
 
 The same stream is the asset the behavioral layer has been starved of: realistic,
 goal-labeled traces with syscall-level ground truth. One substrate serves both

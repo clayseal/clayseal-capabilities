@@ -29,7 +29,7 @@ The ladder is an **ablation** — a monotone sequence of floor constructions use
 to attribute containment to a mechanism. The system the meta names (`clayseal`)
 is `DeployableStack`: floor **plus** intent envelope, parameter provenance,
 confidentiality flow and session state. It had never faced an adaptive adversary
-at all, which `docs/production_sota_path.md` lists as open work.
+at all, which `notes/production_sota_path.md` lists as open work.
 
 This closes that. `benchmarks/core/stack_engine.py` presents the stack through
 the `DecisionEngine` protocol, so the existing search, its knowledge levels and

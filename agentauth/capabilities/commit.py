@@ -368,13 +368,14 @@ def verify_commit_token(
         ):
             return False, "commit token signer is not a trusted minting key"
     else:
-        from agentauth.core.production import is_production
+        from agentauth.core.production import fail_closed
 
-        if is_production():
+        if fail_closed():
             return (
                 False,
-                "commit token trusted minting keys required in production "
-                f"(set {COMMIT_TOKEN_TRUSTED_KEYS_ENV} or pass trusted_minting_keys)",
+                "commit token trusted minting keys required "
+                f"(set {COMMIT_TOKEN_TRUSTED_KEYS_ENV} or pass trusted_minting_keys; "
+                "set AGENTAUTH_ENV=development to relax this while developing)",
             )
     expires_at = _parse_dt(signed.token.expires_at)
     if expires_at is None:
@@ -417,13 +418,14 @@ def verify_commit_token(
         except ImportError:
             used_token_store = None
     if used_token_store is None:
-        from agentauth.core.production import is_production
+        from agentauth.core.production import fail_closed
 
-        if is_production():
+        if fail_closed():
             return (
                 False,
-                "commit token replay store required in production "
-                "(configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store)",
+                "commit token replay store required "
+                "(configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store; "
+                "set AGENTAUTH_ENV=development to relax this while developing)",
             )
     if used_token_store is not None:
         try:

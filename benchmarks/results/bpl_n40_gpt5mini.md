@@ -43,7 +43,7 @@ is a different cell on a stronger model and must be reported as such. The Azure
 resource has no gpt-4o-mini deployment; the OpenAI account that does returns
 `credit_balance_exhausted`. The replication is blocked on billing, not code.
 
-**Arguably a harder test, which is worth stating.** `docs/improvements.md` rests
+**Arguably a harder test, which is worth stating.** `notes/improvements.md` rests
 on utility cost shrinking as models get stronger. A stronger agent is also better
 at finding routes to complete the task, so 100% violation for both competitors on
 a frontier model is a more demanding result for them than the same figure on a

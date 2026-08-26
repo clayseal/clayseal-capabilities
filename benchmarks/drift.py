@@ -20,7 +20,7 @@ adaptive monitor does and what `CusumDrift.fit` does whenever a caller refits it
 on recent traffic.
 
 **anchored** fits once against a human-signed epoch and never refits without a
-signature, which is Moonshot 1 in `docs/moonshots.md`.
+signature, which is Moonshot 1 in `notes/moonshots.md`.
 
 The headline is not containment, it is **anchor displacement**: how far the
 monitor's notion of normal moved by the end. A defense whose baseline tracks the

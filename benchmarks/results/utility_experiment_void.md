@@ -4,7 +4,7 @@ STATUS: current
 
 ## What was being tested
 
-`docs/production_sota_path.md` frames the open problem: we reach zero attack
+`notes/production_sota_path.md` frames the open problem: we reach zero attack
 success and pay clean utility for it, so on the security-utility frontier we are
 Pareto-dominated — same security, less utility. `head_to_head_injection.md` puts
 a number on it: banking clean utility 16.7% against 50.0% undefended.

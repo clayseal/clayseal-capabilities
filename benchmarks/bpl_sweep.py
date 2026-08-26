@@ -132,6 +132,51 @@ def _pct(num: int, den: int) -> str:
     return f"{num / den:.0%} ({num}/{den})" if den else "n/a"
 
 
+def _suite_members(suite: str) -> list[str]:
+    """Scenario ids in a named suite, from the frozen SUITES.yaml."""
+    import yaml
+
+    path = Path(__file__).resolve().parent / "bpl" / "SUITES.yaml"
+    data = yaml.safe_load(path.read_text())
+    return list(data[suite]["scenarios"])
+
+
+def _composition(names: list[str], suite: str) -> None:
+    """What this set is made of, printed WITH the result rather than under it.
+
+    A containment number is a property of the set it was measured on, and the
+    Core set is chosen rather than sampled: `SUITES.yaml` says so in its own
+    description, "mostly clayseal_expected contain|partial". Reading that
+    description requires opening a different file from the one carrying the
+    number, which is how a selected set gets quoted as a representative one.
+
+    Printing the composition next to the result costs four lines and removes the
+    only way to quote the headline honestly by accident.
+    """
+    labels = collections.Counter()
+    families = collections.Counter()
+    for name in names:
+        scenario = get_scenario(name)
+        labels[getattr(scenario, "clayseal_expected", "?")] += 1
+        families[getattr(scenario, "family", "?")] += 1
+
+    def pct(counter, key, total):
+        return f"{key}={counter.get(key, 0)} ({counter.get(key, 0) / total:.0%})"
+
+    total = len(names) or 1
+    print("COMPOSITION of this set")
+    print("  expected: " + "  ".join(
+        pct(labels, k, total) for k in ("contain", "partial", "open")))
+    print("  family:   " + "  ".join(
+        pct(families, k, total) for k in ("aggregate", "confidentiality", "escape")))
+    if suite == "core":
+        print("  NOTE: Core is the chosen leaderboard set, not a sample of the "
+              "suite. Compare with `--suite full`, where 47 of 133 scenarios are")
+        print("        labelled `open` and the escape family is 44% rather than "
+              "17% of the set.")
+    print()
+
+
 def _report(rows: list[dict]) -> None:
     fams = sorted({r["family"] for r in rows})
 
@@ -168,6 +213,297 @@ def _report(rows: list[dict]) -> None:
         ok = sum(1 for r in rows if r["cells"][cond]["completed"])
         cells.append(f"{_pct(ok, len(rows)):>22}")
     print(f"{'ALL':<18}{len(rows):>4}" + "".join(cells))
+
+    # The two columns above are reported separately and a reader cannot tell
+    # whether they are the SAME scenarios. A defense that contains half the suite
+    # and completes the other half scores 50/50 on both and is useless. This is
+    # the conjunction, per scenario, and it is the only column of the three that
+    # neither control can win: `deny-all` takes containment and loses completion,
+    # `none` the reverse, and both score zero here by construction.
+    print("\nBOTH — the attack was contained AND its benign twin completed")
+    print(head)
+    print("-" * len(head))
+    for fam in fams:
+        sel = [r for r in rows if r["family"] == fam]
+        cells = []
+        for cond in CONDITIONS:
+            ok = sum(1 for r in sel
+                     if r["cells"][cond]["contained"] is True
+                     and r["cells"][cond]["completed"])
+            cells.append(f"{_pct(ok, len(sel)):>22}")
+        print(f"{fam:<18}{len(sel):>4}" + "".join(cells))
+    cells = []
+    for cond in CONDITIONS:
+        ok = sum(1 for r in rows
+                 if r["cells"][cond]["contained"] is True
+                 and r["cells"][cond]["completed"])
+        cells.append(f"{_pct(ok, len(rows)):>22}")
+    print(f"{'ALL':<18}{len(rows):>4}" + "".join(cells))
+
+
+def _friction(rows: list[dict]) -> None:
+    """What a block on a benign script actually cost.
+
+    `completed` is strict: any refusal at all fails the column. That is the right
+    primary metric, because an interruption is a cost even when the work survives
+    it, and a softer definition is the kind a defense's authors reach for.
+
+    It also merges two different outcomes. Of the three benign twins this gate
+    refuses, two still reach `progress == 1.0`: the refused call was not on the
+    critical path, so the interruption cost a human's attention and not the task.
+    The third loses half its work. Those are different deployment facts and the
+    strict column cannot tell them apart, so both are reported rather than one
+    replacing the other.
+
+    The caveat travels with the number: `progress` is scenario-defined, and a
+    progress function that is insensitive to the blocked call would report 1.0
+    for work that did not happen. Read this column as the OPTIMISTIC bound on
+    friction and the strict one as the pessimistic bound.
+    """
+    print("\n\nFRICTION — benign scripts that were refused at least once\n")
+    head = (f"{'condition':<18}{'refused':>9}{'work lost':>11}"
+            f"{'work done anyway':>19}")
+    print(head)
+    print("-" * len(head))
+    for cond in CONDITIONS:
+        blocked = [r for r in rows if r["cells"][cond]["benign_blocks"] > 0]
+        lost = [r for r in blocked if (r["cells"][cond]["benign_progress"] or 0) < 1.0]
+        print(f"{cond:<18}{len(blocked):>9}{len(lost):>11}"
+              f"{len(blocked) - len(lost):>19}")
+    print()
+    for cond in ("clayseal",):
+        for r in rows:
+            cell = r["cells"][cond]
+            if cell["benign_blocks"] > 0:
+                progress = cell["benign_progress"] or 0.0
+                verdict = "work lost" if progress < 1.0 else "work done anyway"
+                print(f"  {r['scenario']:32} {r['family']:16} "
+                      f"blocks={cell['benign_blocks']} progress={progress:.2f}  "
+                      f"{verdict}")
+
+
+def _batch_of(name: str) -> str:
+    """Which authoring file a scenario came from.
+
+    The unit of correlation, and it is not the family. Scenarios were written in
+    batches of four to twelve by one person in one sitting, so they share
+    assumptions about what a violation looks like far more than two scenarios in
+    the same family written months apart. Treating 132 scenarios as 132
+    independent samples understates every interval; clustering on the family
+    gives three clusters, which is too few for a bootstrap to say anything.
+    """
+    scen = get_scenario(name)
+    for attr in ("handler", "make_env", "violated", "progress"):
+        fn = getattr(scen, attr, None)
+        module = getattr(fn, "__module__", None)
+        if module:
+            return module.rsplit(".", 1)[-1]
+    return "?"
+
+
+def _statistics(rows: list[dict]) -> None:
+    """The headline comparison, tested the way paired data has to be.
+
+    Every condition is replayed against the SAME scenarios, so the conditions are
+    not independent samples and an unpaired test answers a question nobody asked.
+    McNemar uses only the discordant scenarios, which is where the information
+    about which is better actually lives: the two mechanisms agree on 21 of 132,
+    so pooling the concordant cells drowns the signal.
+    """
+    from benchmarks.core.stats import (
+        cluster_bootstrap_ci,
+        holm_bonferroni,
+        mcnemar_exact,
+        paired_difference_ci,
+        proportion_ci,
+    )
+
+    def joint(row, cond):
+        cell = row["cells"][cond]
+        return cell["contained"] is True and cell["completed"]
+
+    print("\n\nSTATISTICS — the joint metric, paired across conditions\n")
+    print(f"  primary metric: contained AND benign twin completed, n={len(rows)}")
+    print("  test: exact McNemar on discordant scenarios; difference by paired")
+    print("        bootstrap over scenarios; family-wise correction over the")
+    print("        conditions compared here.\n")
+
+    head = (f"{'clayseal vs':<18}{'wins':>6}{'losses':>8}"
+            f"{'difference (95% CI)':>26}{'p':>12}")
+    print(head)
+    print("-" * len(head))
+    pvalues: dict[str, float] = {}
+    for cond in CONDITIONS:
+        if cond == "clayseal":
+            continue
+        pairs = [(joint(r, "clayseal"), joint(r, cond)) for r in rows]
+        wins = sum(1 for a, b in pairs if a and not b)
+        losses = sum(1 for a, b in pairs if b and not a)
+        both = sum(1 for a, b in pairs if a and b)
+        neither = len(pairs) - wins - losses - both
+        p = mcnemar_exact(both, wins, losses, neither)
+        pvalues[cond] = p
+        ci = paired_difference_ci(pairs, seed=7)
+        print(f"{cond:<18}{wins:>6}{losses:>8}{ci.render():>26}{p:>12.2e}")
+
+    survived = holm_bonferroni(pvalues)
+    print()
+    print("  Holm-corrected at 0.05: " + ", ".join(
+        f"{k}={'yes' if v else 'NO'}" for k, v in survived.items()))
+
+    print()
+    print("  Cluster-robust rates. The naive interval assumes 132 independent")
+    print("  scenarios, which they are not; the clustered one resamples whole")
+    print("  authoring batches and is the one to quote.\n")
+    batches = {name: _batch_of(name) for name in {r["scenario"] for r in rows}}
+    print(f"  {'condition':<18}{'naive (iid)':>24}{'clustered':>26}")
+    for cond in CONDITIONS:
+        per: dict[str, tuple[int, int]] = {}
+        for row in rows:
+            key = batches[row["scenario"]]
+            got, total = per.get(key, (0, 0))
+            per[key] = (got + int(joint(row, cond)), total + 1)
+        clustered = cluster_bootstrap_ci(list(per.values()), seed=7, resamples=4000)
+        naive = proportion_ci(sum(g for g, _ in per.values()),
+                              sum(t for _, t in per.values()))
+        print(f"  {cond:<18}{naive.render():>24}{clustered.render():>26}")
+    print(f"\n  {len(set(batches.values()))} authoring batches over {len(rows)} scenarios.")
+
+
+def _complementarity(rows: list[dict]) -> None:
+    """Which scenarios each mechanism catches that the other does not.
+
+    A leaderboard says which row is highest. This asks whether the rows are
+    measuring the same thing, and on this suite they are not: the two mechanisms
+    overlap on 21 scenarios and each contains about the same number the other
+    misses. That is worth more to a deployment than the ranking, because it says
+    what a second layer would buy and what it would cost.
+    """
+    other = "dataflow-taint"
+    n = len(rows) or 1
+
+    def contained(row, cond):
+        return row["cells"][cond]["contained"] is True
+
+    def completed(row, cond):
+        return row["cells"][cond]["completed"]
+
+    ours_only = [r for r in rows if contained(r, "clayseal") and not contained(r, other)]
+    theirs_only = [r for r in rows if contained(r, other) and not contained(r, "clayseal")]
+    both = [r for r in rows if contained(r, "clayseal") and contained(r, other)]
+    union = len(ours_only) + len(theirs_only) + len(both)
+
+    print(f"\n\nCOMPLEMENTARITY — clayseal vs {other}, n={len(rows)}\n")
+    print(f"  contained by clayseal only     {len(ours_only):4}")
+    print(f"  contained by {other} only  {len(theirs_only):4}")
+    print(f"  contained by both              {len(both):4}")
+    print(f"  contained by neither           {len(rows) - union:4}")
+    print(f"  UNION                          {union:4} ({union / n:.0%})")
+
+    stacked = sum(1 for r in rows
+                  if (contained(r, "clayseal") or contained(r, other))
+                  and completed(r, "clayseal") and completed(r, other))
+    ours = sum(1 for r in rows if contained(r, "clayseal") and completed(r, "clayseal"))
+    broken = sum(1 for r in rows if not completed(r, other) and completed(r, "clayseal"))
+    print()
+    print(f"  Stacking both would contain {union} of {len(rows)}, up from "
+          f"{sum(1 for r in rows if contained(r, 'clayseal'))}.")
+    print(f"  On the joint metric it would score {stacked} ({stacked / n:.0%}), "
+          f"DOWN from {ours} ({ours / n:.0%}),")
+    print(f"  because {other} refuses {broken} benign scripts that clayseal "
+          f"completes.")
+    print("  Complementary in containment and anti-complementary in utility, so")
+    print("  the coverage those scenarios represent has to be earned at this")
+    print("  layer's precision rather than bought by adding that one.")
+
+
+def _label_free(rows: list[dict]) -> None:
+    """Generalization measured without consulting a single label.
+
+    The suite's `clayseal_expected` labels predict containment with 97.7%
+    accuracy, so the generalization map that compares measurement against label
+    has almost no power: it can only rediscover what the author already wrote
+    down. Everything here avoids the labels entirely.
+
+    Two questions, and the second answers the first.
+
+    LEAVE ONE BATCH OUT. Scenarios were written in batches at a sitting. If
+    containment is a property of the mechanism it should survive holding a batch
+    out; if it is fitted to particular scenarios, held-out batches score worse.
+
+    WHAT THE GRANT CONFIGURES. Whether a scenario's own `make_broker` sets up a
+    value or call budget is a property of the CONFIGURATION, fixed before
+    anything runs and readable from source. It is the closest thing to a
+    pre-registered covariate this suite has.
+    """
+    import inspect
+    import statistics
+
+    from benchmarks.core.stats import proportion_ci
+
+    def joint(row, cond):
+        cell = row["cells"][cond]
+        return cell["contained"] is True and cell["completed"]
+
+    print("\n\nLABEL-FREE GENERALIZATION — no `clayseal_expected` is read here\n")
+
+    # ---- leave one batch out -------------------------------------------- #
+    batches: dict[str, list] = {}
+    for row in rows:
+        batches.setdefault(_batch_of(row["scenario"]), []).append(row)
+    if len(batches) > 1:
+        print("  Leave one authoring batch out:\n")
+        print(f"  {'held-out batch':18}{'n':>4}{'held out':>12}{'the rest':>12}")
+        print("  " + "-" * 46)
+        held_rates = []
+        for name in sorted(batches):
+            held = batches[name]
+            rest = [r for r in rows if r not in held]
+            h = sum(joint(r, "clayseal") for r in held) / len(held)
+            e = (sum(joint(r, "clayseal") for r in rest) / len(rest)) if rest else 0.0
+            held_rates.append(h)
+            print(f"  {name:18}{len(held):>4}{h:>11.1%}{e:>12.1%}")
+        pooled = sum(joint(r, "clayseal") for r in rows) / len(rows)
+        spread = statistics.pstdev(held_rates) if len(held_rates) > 1 else 0.0
+        print(f"\n  pooled {pooled:.1%}, held-out rates range "
+              f"{min(held_rates):.1%} to {max(held_rates):.1%}, sd {spread:.3f}")
+        if spread > 0.2:
+            print("  The spread is the result. A pooled rate over batches that")
+            print("  behave this differently is a property of the suite's mix as")
+            print("  much as of the mechanism, which is why the interval to quote")
+            print("  is the cluster-robust one and not the naive one.")
+
+    # ---- what the grant configures --------------------------------------- #
+    def budgeted(name: str) -> bool:
+        scen = get_scenario(name)
+        try:
+            src = inspect.getsource(scen.make_broker)
+        except Exception:  # noqa: BLE001 - a scenario without a readable builder
+            return False
+        return any(k in src for k in ("SessionValueBudget", "SessionCallBudget",
+                                      "value_budget", "call_budget"))
+
+    groups = {True: [], False: []}
+    for row in rows:
+        groups[budgeted(row["scenario"])].append(row)
+    if all(groups.values()):
+        print("\n  Split on whether the scenario's own grant configures a budget,")
+        print("  which is fixed before anything runs and readable from source:\n")
+        print(f"  {'grant':28}{'n':>4}{'clayseal':>24}{'dataflow-taint':>24}")
+        print("  " + "-" * 80)
+        for flag, label in ((True, "configures a budget"),
+                            (False, "configures none")):
+            g = groups[flag]
+            ours = proportion_ci(sum(joint(r, "clayseal") for r in g), len(g))
+            theirs = proportion_ci(sum(joint(r, "dataflow-taint") for r in g), len(g))
+            print(f"  {label:28}{len(g):>4}{ours.render():>24}{theirs.render():>24}")
+
+        correct = sum(1 for r in rows if budgeted(r["scenario"]) == joint(r, "clayseal"))
+        print(f"\n  Configuration alone predicts the outcome {correct}/{len(rows)} "
+              f"({correct / len(rows):.1%}).")
+        print("  So most of what the label knows is not private knowledge about the")
+        print("  mechanism, it is a fact about the grant that anyone can read off")
+        print("  the scenario. The remainder is the part that cannot be checked.")
 
 
 def _generalization(rows: list[dict]) -> None:
@@ -229,6 +565,14 @@ def _generalization(rows: list[dict]) -> None:
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--family", default=None)
+    p.add_argument("--suite", choices=("core", "hard", "full"), default="full",
+                   help="core: the twelve scenarios the leaderboard scores. "
+                        "hard: the twenty-four harder composites. full: all 133. "
+                        "Core is the DEFAULT LEADERBOARD SET, not a random "
+                        "sample, and `--suite core` prints what it is made of "
+                        "next to the result, because a containment number over a "
+                        "set chosen for expected containment is a different "
+                        "quantity from one over the suite.")
     p.add_argument("--envelope", choices=("scenario", "canonical"),
                    default="scenario",
                    help="scenario: the verbs each scenario declares. canonical: "
@@ -241,6 +585,8 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
 
     names = list(SCENARIOS)
+    if args.suite != "full":
+        names = [n for n in _suite_members(args.suite) if n in set(names)]
     if args.family:
         names = [n for n in names if get_scenario(n).family == args.family]
     if args.envelope == "canonical":
@@ -268,8 +614,13 @@ def main(argv=None) -> int:
         from benchmarks.bpl.schema import legacy_verb_for
         verb_fn = legacy_verb_for
     rows = sweep(names, verb_fn=verb_fn)
-    print(f"[verbs] {args.verbs}\n")
+    print(f"[verbs] {args.verbs}  [suite] {args.suite}  [n] {len(names)}\n")
+    _composition(names, args.suite)
     _report(rows)
+    _statistics(rows)
+    _friction(rows)
+    _complementarity(rows)
+    _label_free(rows)
     _generalization(rows)
 
     if args.json:

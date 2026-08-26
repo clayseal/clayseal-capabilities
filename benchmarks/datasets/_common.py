@@ -11,36 +11,11 @@ from typing import Any
 
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 
-_WRITE = ("create", "update", "delete", "send", "pay", "transfer", "set", "add",
-          "remove", "cancel", "book", "post", "share", "write", "schedule",
-          "execute", "run", "make", "submit", "toggle", "enable", "disable",
-          "refund", "exchange", "modify", "reserve", "mkdir", "mv", "cp", "rm",
-          "touch", "echo")
-_READ = ("get", "list", "search", "read", "find", "view", "show", "check",
-         "fetch", "lookup", "query", "describe", "calculate", "cd", "ls", "cat",
-         "grep", "sort", "diff", "pwd", "du", "wc", "tail", "head")
-
-
-def classify_verb(tool: str) -> str:
-    low = tool.lower()
-    # A leading acquisition verb wins over a later write-like substring: a tool's
-    # primary verb is its prefix, so get_scheduled_transactions is a read even
-    # though it contains 'schedule'. Misreading a read as an effect makes the
-    # floor hard-deny a benign, reversible call, the main utility leak.
-    for v in _READ:
-        if low.startswith(v):
-            return "read"
-    for v in _WRITE:
-        if low.startswith(v) or f"_{v}" in low:
-            if v in ("pay", "transfer", "refund", "exchange"):
-                return "transfer"
-            if v == "send":
-                return "send"
-            return "write"
-    for v in _READ:
-        if f"_{v}" in low:
-            return "read"
-    return "call"
+# Verb classification moved into the shipped package: it is library behaviour
+# that every integration needs and the benchmark tree is not installable. Re-
+# exported here so the loaders keep their existing import and the two cannot
+# drift apart, because they are now the same function.
+from agentauth.capabilities.tool_verbs import classify_verb  # noqa: E402
 
 
 def benign_task_from_calls(

@@ -15,7 +15,7 @@ levels.
 There was already an adaptive search with three knowledge levels. It judged
 candidates with a LADDER RUNG, which is an ablation used to attribute containment
 to a mechanism, not the product. So the thing a deployment actually runs had
-never faced an adaptive adversary. `docs/production_sota_path.md` names it:
+never faced an adaptive adversary. `notes/production_sota_path.md` names it:
 "extend the adaptive adversary from the detector to the plan-plus-taint path;
 report the residual."
 

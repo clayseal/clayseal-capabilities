@@ -654,13 +654,23 @@ def _samples_are_free_text(samples: list[dict[str, str]]) -> bool:
     return False
 
 
-def llm_entailment_judge(client: Any, model: str) -> EntailmentJudge:
+def llm_entailment_judge(
+    client: Any, model: str, *, budget_seconds: float | None = None
+) -> EntailmentJudge:
     """Ask a model whether content hides a harmful objective.
 
     Soft only: a high-confidence ``conflicts`` entry becomes an escalate reason.
     Fail open on API errors. Uses a coding-sabotage prompt for Write/Edit bodies
     and a harm-intent prompt for free-text effect tools (AgentHarm-shaped).
+
+    ``budget_seconds`` bounds the retry loop as a whole. It runs on the
+    authorization path under the session lock, so "retry four times with
+    exponential backoff" has to mean "until the budget is spent", not "however
+    long four attempts take".
     """
+    from agentauth.capabilities.monitor.llm_clients import DEFAULT_TOTAL_BUDGET
+
+    budget = DEFAULT_TOTAL_BUDGET if budget_seconds is None else budget_seconds
 
     def judge(goal: str, samples: list[dict[str, str]]) -> list[str]:
         if not samples:
@@ -683,7 +693,10 @@ def llm_entailment_judge(client: Any, model: str) -> EntailmentJudge:
             system = _ENTAILMENT_SYSTEM
             prefix = "entailment"
         import time
+        deadline = time.monotonic() + budget
         for attempt in range(4):
+            if time.monotonic() >= deadline:
+                return []
             try:
                 resp = client.chat.completions.create(
                     model=model, temperature=0,
@@ -711,7 +724,10 @@ def llm_entailment_judge(client: Any, model: str) -> EntailmentJudge:
                 # treats an absent verdict as "no advisory", never as consent.
                 name = type(exc).__name__
                 if "RateLimit" in name or "429" in str(exc):
-                    time.sleep(0.5 * (2 ** attempt))
+                    backoff = 0.5 * (2 ** attempt)
+                    if time.monotonic() + backoff >= deadline:
+                        return []
+                    time.sleep(backoff)
                     continue
                 break
         return []

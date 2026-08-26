@@ -19,14 +19,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from agentauth.core.hash_util import hash_canonical_json
-from agentauth.core.task_scope import compile_task_scope
-
 from agentauth.capabilities.call_budget import session_call_budget_from_mandate
 from agentauth.capabilities.deployable_stack import DeployableStack
 from agentauth.capabilities.monitor.action import Trajectory
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.value_budget import session_value_budget_from_mandate
+from agentauth.core.hash_util import hash_canonical_json
+from agentauth.core.task_scope import compile_task_scope
 
 
 def stack_from_benchmark_task(
@@ -38,8 +37,19 @@ def stack_from_benchmark_task(
     detector=None,
     scope_is_advisory: bool = False,
     require_declaration_for_egress: bool = False,
+    intent_envelope: Any = ...,
+    derive_counts: bool = False,
+    inferrer: Any = None,
 ) -> DeployableStack:
-    """Build the stack from a ``BenchmarkTask`` mandate (scoreboard / CTR)."""
+    """Build the stack from a ``BenchmarkTask`` mandate (scoreboard / CTR).
+
+    `intent_envelope` defaults to one compiled from the task's goal. It used to
+    be absent entirely, so every structural analysis routed through here measured
+    a stack with no envelope and therefore no goal-derived plan at all. Pass
+    `None` to reproduce that, which is what the `derive_counts=False` arm below
+    is for: the two together are how the count rung's contribution is attributed
+    rather than assumed.
+    """
     from benchmarks.core.detector_eval import _goal_for
 
     g = goal or _goal_for(task)
@@ -68,8 +78,16 @@ def stack_from_benchmark_task(
         if mandate else None
     )
 
+    envelope = intent_envelope
+    if envelope is ...:
+        from agentauth.capabilities.monitor.generation import compile_envelope
+
+        envelope = compile_envelope(
+            g, derive_counts=derive_counts, inferrer=inferrer).envelope
+
     return DeployableStack.from_goal(
         g,
+        intent_envelope=envelope,
         scope=scope,
         allowed_tools=set(task.allowed_tools) if task.allowed_tools else None,
         tool_patterns=list(task.tool_patterns) if task.tool_patterns else None,

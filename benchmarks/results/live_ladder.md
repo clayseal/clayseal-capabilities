@@ -42,7 +42,7 @@ Two things stop that being the headline, and both belong in the same breath:
 1. **The oracle path is a ceiling, not a product.** It seeds the trusted
    destination set from ground truth. The deployable paths cost 18.8 to 21.9
    points, which is roughly three times CaMeL's 7-point cost. Closing that gap
-   is item 1 of [docs/improvements.md](../../docs/improvements.md), and it is now
+   is item 1 of [notes/improvements.md](../../notes/improvements.md), and it is now
    quantified against a comparable baseline rather than asserted.
 2. **The oracle reaches parity by asking.** 0.72 endorsements per task, against
    0.03 for the deployable paths, a factor of twenty-four. Supervised utility of
@@ -205,7 +205,7 @@ arrive in structured fields. Slack does not, and no rule that discriminates by
 *field type* can work here.
 
 The fix direction follows from the diagnosis and is item 1 in
-[docs/improvements.md](../../docs/improvements.md): discriminate by the
+[notes/improvements.md](../../notes/improvements.md): discriminate by the
 provenance of the *containing object*, not the field it sat in. A name in a
 message from a channel the user's own goal named is task-derived; a name in a
 webpage fetched from an unrelated domain is not. That is a transitive trust
@@ -265,7 +265,7 @@ on their side rather than a harness problem. Retry in progress.
   [head_to_head_injection.md](head_to_head_injection.md).
 - **Utility is task-binary.** A task completing 9 of 10 steps scores the same as
   one doing nothing, which is most of why the numbers move so much between runs.
-  Action-level scoring is item 6 in [docs/improvements.md](../../docs/improvements.md).
+  Action-level scoring is item 6 in [notes/improvements.md](../../notes/improvements.md).
 
 ## Complete 4x4: the deployable envelope costs 3 points on a strong model
 

@@ -111,4 +111,4 @@ Optional companion (evidence plane, not ASR):
 
 ## Architecture shipped with this packet
 
-Containing-object provenance (structured → allow; free-text of goal-named object → `STEP_UP`), typed plan slots + `reclear_extend_template`, friction-budget rate + `utility_report()` triple (autonomous / supervised / endorsements-per-action). See `docs/production_sota_path.md` and `python/tests/test_containing_object_provenance.py`.
+Containing-object provenance (structured → allow; free-text of goal-named object → `STEP_UP`), typed plan slots + `reclear_extend_template`, friction-budget rate + `utility_report()` triple (autonomous / supervised / endorsements-per-action). See `notes/production_sota_path.md` and `python/tests/test_containing_object_provenance.py`.

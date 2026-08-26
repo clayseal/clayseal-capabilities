@@ -1,25 +1,38 @@
-# Developer guide — Clay Seal Capabilities (Layer 2)
+# Developer guide
 
-This guide explains how to **use and operate** the capabilities layer: dynamic, attenuated authorization that sits between identity (layer 1) and verifiable receipts (layer 3). Read it end-to-end if you are wiring Clay Seal into an agent runtime, an MCP gateway, or an enterprise IdP you already run.
+How to operate Clay Seal. Start with the gateway, which is what most deployments
+use; the primitives underneath it are documented after, because you need them
+only when you are building something the gateway does not already do.
+
+If you are looking for the shortest path to a running system, it is
+[the policy document](POLICY.md) and `clayseal proxy`. If you are looking for
+what the layer defends and what it does not, that is
+[THREAT_MODEL.md](THREAT_MODEL.md).
 
 ---
 
-## What problem this layer solves
+## What this enforces
 
-Layer 1 answers *who* is acting. Real agent systems also need to answer:
+One question, per action: **may this agent do this exact thing, right now,
+against this resource, with these arguments, given everything it has already
+done?**
 
-- May this agent **commit** this specific action (file write, API call, payment)?
-- Can a sub-agent receive **strictly narrower** rights than its parent?
-- How do we enforce **mandates** and **budgets** without calling home on every tool invocation?
+The last clause is the one that distinguishes it. Per-call authorization answers
+the first four and cannot answer the fifth, so an agent that issues eleven
+refunds of $900 each against a $1,000 ceiling passes every individual check.
+Measured across twelve business-process scenarios, per-call enforcement handed
+the policy lands at 55.0% violation against 56.2% undefended
+([bpl_shared_policy.md](../benchmarks/results/bpl_shared_policy.md)).
 
-**Clay Seal Capabilities** implements that middle layer. Its package name is
-still `agentauth-capabilities`, and its Python namespace is still
-`agentauth.capabilities`, but the product name developers and customers should
-see is Clay Seal. It takes verified identity facts and produces
-**action-scoped capability artifacts** — commit tokens, leases, attenuated
-Biscuits — that verifiers and runtimes can check offline.
+Three things follow from that, and they shape the whole API:
 
-Without this layer, you either over-trust the agent’s static IAM role or under-protect individual tool calls. With it, authorization becomes **per-action, per-resource, and cryptographically constrained**.
+- Authorization is **per session**, not per call. The gateway is a stateful
+  object that lives as long as the task.
+- The gateway needs to be **told what the agent read**, not only what it is
+  about to do, because that is what separates a destination the user asked for
+  from one a document supplied.
+- A refusal is **evidence**, so every decision goes on a hash-chained log
+  whether it was allowed or not.
 
 ---
 
@@ -42,7 +55,10 @@ Without this layer, you either over-trust the agent’s static IAM role or under
 └─────────────────────────────────────────┘
 ```
 
-**Dependency rule:** this repo requires [agentauth-core](https://github.com/pberlizov/clay-seal-core) installed at a **matching tag** (currently `v0.5.0`). The default Biscuit backend also requires [agentauth-identity](https://github.com/pberlizov/clayseal-identity) at the same tag.
+**Dependency rule:** there is no private dependency. `agentauth.core` ships in
+this distribution. The optional Biscuit backend needs `agentauth-identity`, which
+is a separate distribution and is not required to use this layer: bring your own
+`CapabilityTokenBackend` through the `agentauth.capability_backends` entry point.
 
 **Import convention:**
 
@@ -58,24 +74,18 @@ There is no top-level `from agentauth import …` in this repo alone.
 
 ## Installation
 
-### Standard install (pinned)
-
 ```bash
-pip install "git+https://github.com/pberlizov/clayseal-identity.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
+pip install agentauth-capabilities
 ```
 
-### Editable development
+Two runtime dependencies, `cryptography` and `pyyaml`.
+
+### From a checkout
 
 ```bash
-git clone https://github.com/pberlizov/clayseal-identity.git ../clayseal-identity
-git clone https://github.com/pberlizov/clay-seal-core.git ../clay-seal-core
 git clone https://github.com/pberlizov/clay-seal-capabilities.git
 cd clay-seal-capabilities
 python -m venv .venv && source .venv/bin/activate
-pip install -e "../clay-seal-core[dev]"
-pip install -e "../clayseal-identity[dev]"
 pip install -e ".[dev]"
 ```
 
@@ -83,9 +93,163 @@ pip install -e ".[dev]"
 
 ```bash
 pytest python/tests -q
-python examples/03_commit_token.py
-python examples/04_cross_provider_commit.py
+ruff check agentauth
+python examples/01_gateway.py
+clayseal policy lint examples/policy.yaml
 ```
+
+---
+
+## The gateway
+
+### In front of the tools
+
+The enforcement point most deployments want is a process, not an import. The
+agent connects to `clayseal proxy` and `clayseal proxy` runs the real MCP server,
+so a refused call is answered with a JSON-RPC error and the server subprocess
+never receives the frame.
+
+```bash
+clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server
+```
+
+In a client that reads an MCP config, put the proxy where the server used to be:
+
+```json
+{
+  "mcpServers": {
+    "billing": {
+      "command": "clayseal",
+      "args": ["proxy", "--policy", "/etc/clayseal/billing.yaml",
+               "--", "npx", "@your-org/mcp-server"]
+    }
+  }
+}
+```
+
+Two things happen. Every `tools/call` is authorized before it is forwarded, and
+`tools/list` is filtered to the policy, so the agent is never offered a tool it
+would then be refused. The proxy refuses to start on a policy error rather than
+enforcing a document whose author did not mean what it says.
+
+What this does and does not mediate is worth stating exactly. It covers every
+call on that transport. An agent that can reach the same capability another way,
+through its own network access or a server it started itself, is outside the
+boundary, and closing that is what the syscall tier is for.
+
+A `STEP_UP` reaches the agent as a refusal that names the reason. Nothing in a
+stdio proxy can hold a call open while a person is asked, and forwarding it
+because it was not a hard deny would turn the supervised profile into the
+autonomous one at the transport layer.
+
+### In the process
+
+When you own the harness, call the gateway directly. This is the same object the
+proxy runs.
+
+```python
+from agentauth.capabilities.monitor.action import Action
+from agentauth.capabilities.policy import load_policy
+from agentauth.capabilities.tool_verbs import classify_verb
+
+gateway = load_policy("examples/policy.yaml").build()
+
+agent_calls = [("read_ticket", {"id": "T-1042"}, ()),
+               ("send_email", {"to": "ops@acme-internal.com"}, ("tickets/T-1042.txt",))]
+
+for step, (tool, args, cited_context_ids) in enumerate(agent_calls):
+    decision = gateway.authorize(Action(
+        step=step,
+        tool=tool,
+        resource=f"mcp:tool:{tool}",
+        verb=classify_verb(tool),
+        args=args,
+        # Which context items the agent cited for this call. This is what the
+        # taint layer reads, so an empty tuple means "nothing influenced this".
+        derived_from=cited_context_ids,
+    ))
+    if not decision.allowed:
+        # Hand the reasons back to the agent. A refusal it can read is a refusal
+        # it can retry correctly, which is where most recovered utility comes from.
+        print("refused:", decision.reasons)
+        continue
+    gateway.observe_output(tool, {"ok": True})
+```
+
+`classify_verb` is a default for callers who have only tool names. If you have a
+real catalog or a mandate that declares each tool's effect, pass the verb
+explicitly: a name-based classifier reads `check_out_book` as a read.
+
+### Telling it what the agent read
+
+```python
+gateway.observe_context(ContextItem(
+    item_id="tickets/T-1042.txt",
+    trust=TrustLevel.UNTRUSTED,
+    introduced_at_step=step,
+    summary=document_text,
+))
+```
+
+This is not optional detail. Without it every destination looks equally
+well-sourced, and the provenance tier cannot tell a recipient the user named from
+one an injected document supplied. `examples/01_gateway.py` is the whole loop in
+40 lines, including the injection it refuses.
+
+### Resolving a step-up
+
+A step-up is a request for authority the floor refused, so the approval must be
+signed. In production an unsigned one raises rather than applying.
+
+```python
+from agentauth.capabilities.step_up import sign_step_up_approval
+
+approval = sign_step_up_approval(operator_approval, key=control_plane_key)
+ok, reason = gateway.resolve_step_up(approval)
+```
+
+### Reading the evidence
+
+```python
+records = gateway.decision_log.records()      # hash-chained, tamper-evident
+print(gateway.metrics.prevented_violations)
+```
+
+Configure a durable sink through `decision_sinks`. The default is a `NullSink`
+that **counts what it drops**, so "nothing configured" and "configured and
+working" do not look alike.
+
+### Surviving a restart
+
+The gateway holds session state, so a process that restarts mid-task loses the
+running totals. Snapshot it into your own store:
+
+```python
+from agentauth.capabilities.session_state import restore, snapshot
+
+state = snapshot(gateway.broker)              # plain JSON, taken under the lock
+restore(rebuilt_broker, state)                # onto a broker built from the SAME policy
+```
+
+`restore` rebuilds and re-verifies the decision-log hash chain and refuses a
+snapshot that does not verify. Authority is not carried in the snapshot, only
+what the session accumulated, so a restore cannot widen a grant. Read-modify-write
+around it needs your store's own compare-and-set.
+
+### Choosing a posture
+
+`profiles.py` names three points on the one axis that matters: what happens to an
+action the floor cleared and the plan did not predict.
+
+```python
+from agentauth.capabilities.profiles import AUTONOMOUS, SUPERVISED
+
+print(SUPERVISED.describe())        # the switches, and why each one is set
+```
+
+Set it in the policy document rather than at the call site. Passing a posture
+switch to `build()` is refused, because a call site quietly changing the posture
+is exactly the failure the document exists to prevent.
 
 ---
 
@@ -417,7 +581,15 @@ why `data_export_bytes` still fails closed).
 2. **Short TTLs** on commit tokens (minutes, not hours).
 3. **Bind inputs** — include action input hash in the execution context when the action is parameterized.
 4. **Attenuate sub-agents** — never widen scope when delegating; use Biscuit attenuation APIs.
-5. **Pin versions** — mismatched L1/L2 tags are a common source of subtle verification bugs.
+5. **Pin the minting key.** A signature proves integrity, not authority. Set
+   `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`, or pass `trusted_minting_keys`. The
+   same applies to the intent envelope, which is the object `reclear` swaps
+   mid-session.
+6. **Share the replay store** across instances. An in-memory store on two
+   gateways makes a single-use token usable twice.
+7. **Leave the guards closed.** `AGENTAUTH_ENV=development` relaxes items 5 and
+   6 and the step-up signature requirement. It warns once per process; do not
+   let that warning become normal.
 
 ---
 
@@ -439,12 +611,16 @@ business transactions through this layer.
 
 ## Releases
 
-Tag **after** agentauth-core and agentauth-identity at the same semver line. Consumers install:
+This distribution stands alone, so a release is one tag here.
 
 ```bash
-pip install "git+https://github.com/pberlizov/clay-seal-core.git@v0.5.0"
-pip install "git+https://github.com/pberlizov/clay-seal-capabilities.git@v0.5.0"
+pip install agentauth-capabilities
 ```
+
+Before tagging: `pytest python/tests -q`, `ruff check agentauth`, and build the
+wheel and import every shipped module from it in an environment with no source
+tree on the path. CI does the last one, because a lazy import inside a method is
+fine in a checkout and a `ModuleNotFoundError` in every real install.
 
 See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 
@@ -452,7 +628,9 @@ See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 
 ## Further reading
 
-- [Layer 1 DEV_GUIDE](https://github.com/pberlizov/clayseal-identity/blob/main/docs/DEV_GUIDE.md)
-- [Layer 3 DEV_GUIDE](https://github.com/pberlizov/clay-seal-receipts/blob/main/docs/DEV_GUIDE.md)
+- [The policy document](POLICY.md)
+- [Threat model and key management](THREAT_MODEL.md)
+- [Syscall-level enforcement](ivisor_integration.md)
 - [cross_layer_integration.md](cross_layer_integration.md)
 - [Privacy and data handling](PRIVACY.md)
+- [Benchmark methodology and results](../benchmarks/README.md)

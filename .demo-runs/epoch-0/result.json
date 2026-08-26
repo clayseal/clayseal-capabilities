@@ -5,7 +5,7 @@
     "size": 5032
   },
   "config_path": ".demo-runs/epoch-0/ivisor.conf",
-  "cpu_seconds": 0.037279,
+  "cpu_seconds": 0.0317,
   "denied": [],
   "evidence_ok": true,
   "exit": {
@@ -38,7 +38,7 @@
     "miss": 0,
     "unverified_claims": 0
   },
-  "wall_seconds": 0.07722,
+  "wall_seconds": 0.073809,
   "workspace_delta": {
     "created": [
       "out/summary.md",

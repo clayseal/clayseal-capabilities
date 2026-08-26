@@ -29,50 +29,16 @@ jobs:
         python-version: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Check the sibling-repo token before anything depends on it
-        env:
-          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
-        run: |
-          if [ -z "$TOKEN" ]; then
-            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
-            exit 1
-          fi
-      - uses: actions/checkout@v4
-        with:
-          repository: pberlizov/clay-seal-core
-          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
-          path: deps/agentauth-core
-          ref: main
-      # identity is an OPTIONAL extra ([biscuit-service]), so its absence must not
-      # fail the build — that is what "optional" means, and the tests that need it
-      # skip cleanly via importorskip. It is checked out when available so the dev
-      # suite can exercise the default Biscuit backend.
-      - uses: actions/checkout@v4
-        id: identity
-        continue-on-error: true
-        with:
-          repository: pberlizov/clayseal-identity
-          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
-          path: deps/agentauth-identity
-          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install (core, then optional identity, then this layer)
-        run: |
-          pip install "./deps/agentauth-core[dev]"
-          # The identity layer is an optional extra AND declares
-          # requires-python >=3.11, so on the 3.10 leg of the matrix it cannot
-          # install at all. A failed install of an OPTIONAL dependency must not
-          # fail the build — the tests that need it skip via importorskip. This
-          # was the second thing CI found on its first real run.
-          if [ -d deps/agentauth-identity ]; then
-            pip install "./deps/agentauth-identity" \
-              || echo "::notice::identity layer not installable on this Python; [biscuit-service] tests will skip"
-          else
-            echo "::notice::identity layer unavailable; [biscuit-service] tests will skip"
-          fi
-          pip install -e ".[oidc,a2a,redis]" pytest ruff fakeredis
+      # One install, from a clean index. `agentauth.core` is vendored in this
+      # repo, so there is no sibling checkout and no PAT. The optional identity
+      # layer is a separate distribution; the tests that want it skip via
+      # importorskip when it is absent, which is what "optional" has to mean for
+      # anyone who clones this repo.
+      - name: Install
+        run: pip install -e ".[dev,redis]"
       # The layering contract is now `python/tests/test_shipped_package_layering.py`
       # rather than a CLI step. The step this replaces invoked
       # `python -m agentauth.core.layering`, a module that does not exist in
@@ -95,20 +61,6 @@ jobs:
     if: github.event_name != 'schedule'
     steps:
       - uses: actions/checkout@v4
-      - name: Check the sibling-repo token before anything depends on it
-        env:
-          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
-        run: |
-          if [ -z "$TOKEN" ]; then
-            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
-            exit 1
-          fi
-      - uses: actions/checkout@v4
-        with:
-          repository: pberlizov/clay-seal-core
-          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
-          path: deps/agentauth-core
-          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
@@ -119,16 +71,18 @@ jobs:
       - name: Install it somewhere the source tree is not
         run: |
           mkdir -p /tmp/clean && cd /tmp/clean
-          pip install "$GITHUB_WORKSPACE/deps/agentauth-core"
           pip install "$GITHUB_WORKSPACE"/dist/*.whl
       - name: Import every shipped module from the installed wheel
         working-directory: /tmp/clean
         run: |
           python - <<'PY'
           import importlib, pkgutil, sys
-          import agentauth.capabilities as pkg
+          import agentauth.capabilities, agentauth.core
           failed = []
-          for mod in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+          mods = []
+          for pkg in (agentauth.core, agentauth.capabilities):
+              mods += list(pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."))
+          for mod in mods:
               try:
                   importlib.import_module(mod.name)
               except ImportError as exc:
@@ -169,27 +123,11 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
-      - name: Check the sibling-repo token before anything depends on it
-        env:
-          TOKEN: ${{ secrets.CLAY_SEAL_CI_TOKEN }}
-        run: |
-          if [ -z "$TOKEN" ]; then
-            echo "::error title=CLAY_SEAL_CI_TOKEN is not set::agentauth-core is a hard dependency and lives in a PRIVATE sibling repo. The default GITHUB_TOKEN cannot read a different private repository, so the checkout below fails with a misleading 'Repository not found'. Create a fine-grained PAT with Contents:read on pberlizov/clay-seal-core and pberlizov/clayseal-identity, then add it as the CLAY_SEAL_CI_TOKEN repository secret."
-            exit 1
-          fi
-      - uses: actions/checkout@v4
-        with:
-          repository: pberlizov/clay-seal-core
-          token: ${{ secrets.CLAY_SEAL_CI_TOKEN || github.token }}
-          path: deps/agentauth-core
-          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - name: Install
-        run: |
-          pip install "./deps/agentauth-core[dev]"
-          pip install -e ".[oidc,a2a,redis]" pytest fakeredis
+        run: pip install -e ".[dev,redis]"
       # Needs the fetched corpora, so it skips cleanly when they are absent
       # rather than failing the build.
       - name: Fetch benchmark corpora

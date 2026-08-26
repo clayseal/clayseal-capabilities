@@ -3,14 +3,13 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from agentauth.core.runtime import SideEffectLevel
-
 from agentauth.capabilities.scoping.tools.models import ToolCapabilityLease
 from agentauth.capabilities.scoping.tools.tool_call_budget import (
     ToolCallBudget,
     ToolCallReservation,
 )
 from agentauth.capabilities.scoping.tools.tool_enforcement import check_tool_call_allowed
+from agentauth.core.runtime import SideEffectLevel
 
 _TARGET_ARG_KEYS: dict[str, tuple[str, ...]] = {
     "issue_payroll_bonus": ("employee_id",),

@@ -3,11 +3,10 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from agentauth.core.runtime import SideEffectLevel
-
 from agentauth.capabilities.scoping.enforcement import check_repo_path_allowed
 from agentauth.capabilities.scoping.models import CapabilityLease
 from agentauth.capabilities.task_scope import action_path_candidates
+from agentauth.core.runtime import SideEffectLevel
 
 # See tool_lease_enforcement.LEASE_STRICT_ENV -- shared opt-in strict flag.
 LEASE_STRICT_ENV = "AGENTAUTH_LEASE_STRICT"
@@ -19,9 +18,9 @@ def _strict_default() -> bool:
         return True
     if explicit in {"0", "false", "no", "off"}:
         return False
-    from agentauth.core.production import is_production
+    from agentauth.core.production import fail_closed
 
-    return is_production()
+    return fail_closed()
 
 _WRITE_TOOL_MARKERS = (
     "write",

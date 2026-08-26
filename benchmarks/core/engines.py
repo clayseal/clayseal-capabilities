@@ -557,6 +557,46 @@ LADDER = [
 ]
 
 
+def _deployable_stack_engine():
+    from benchmarks.core.stack_engine import DeployableStackEngine
+
+    return DeployableStackEngine(name="deployable-stack", treat_step_up="block")
+
+
+def _deployable_stack_engine_permissive():
+    """The pessimistic supervised reading: a human approves every step-up.
+
+    Reported beside the other because the gap between them IS the contribution of
+    the step-up path, and `adaptive_stack_labelfree.md` measured that gap at 74
+    points on one attack class.
+    """
+    from benchmarks.core.stack_engine import DeployableStackEngine
+
+    return DeployableStackEngine(name="deployable-stack-stepup-allow",
+                                 treat_step_up="allow")
+
+
+def _deployable_stack_with_counts():
+    """The goal-derived count rung, which is OFF in what ships.
+
+    Kept as an arm so its contribution stays attributable by difference. The
+    difference is why it is off: +1.2 points of containment for +10.2 points of
+    false positives, per session on AgentHarm.
+    """
+    from benchmarks.core.stack_engine import DeployableStackEngine
+
+    return DeployableStackEngine(name="deployable-stack-with-counts",
+                                 treat_step_up="block", derive_counts=True)
+
+
+def _deployable_stack_no_envelope():
+    """What every structural analysis measured before the envelope was wired."""
+    from benchmarks.core.stack_engine import DeployableStackEngine
+
+    return DeployableStackEngine(name="deployable-stack-no-envelope",
+                                 treat_step_up="block", with_envelope=False)
+
+
 def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
     factory = {
         "allow-all": AllowAllEngine,
@@ -574,6 +614,18 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
         "task-scope+binding+budget+velocity+density": DensityLadderEngine,
         # Also out of LADDER pending the friction measurement below.
         "task-scope+binding+budget+velocity+density+staging": StagingLadderEngine,
+        # The SHIPPED product, behind the same protocol as the ladder rungs.
+        # It was absent here while `adaptive_stack.py` used it directly, so every
+        # structural analysis that went through `build_engines` measured the
+        # ablation ladder and reported it as the system. The ladder tops out
+        # below the stack: no intent envelope, no parameter provenance, no
+        # confidentiality flow, no session rules.
+        "deployable-stack": _deployable_stack_engine,
+        # The count rung, attributed by difference: same stack, envelope with and
+        # without goal-derived occurrence counts.
+        "deployable-stack-with-counts": _deployable_stack_with_counts,
+        "deployable-stack-no-envelope": _deployable_stack_no_envelope,
+        "deployable-stack-stepup-allow": _deployable_stack_engine_permissive,
         "opa": opa_engine,
         "cedar": cedar_engine,
         "openfga": openfga_engine,

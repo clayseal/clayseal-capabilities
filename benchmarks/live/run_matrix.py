@@ -8,7 +8,7 @@ demands (arXiv:2606.26479, arXiv:2505.18333): same models, same attack, same
 suites, same metrics for every defense, repeats for confidence, and the DEPLOYABLE
 provenance path (not the oracle) as the headline. CaMeL / Progent are not built-in
 AgentDojo defenses; adding them is a separate integration (their repos + a py3.12
-env) tracked in docs/head_to_head_plan.md.
+env) tracked in notes/head_to_head_plan.md.
 
     # validate the plan without any API calls or the live stack (runs anywhere):
     python -m benchmarks.live.run_matrix --dry-run

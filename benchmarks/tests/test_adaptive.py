@@ -293,7 +293,7 @@ def _task_with_sensitive_read_in_scope() -> BenchmarkTask:
 def test_side_channel_is_not_contained_by_per_call_authorization():
     """Per-call rungs cannot see a channel built from individually legal calls.
 
-    Documented as an open gap in docs/improvements.md. Asserting the weakness
+    Documented as an open gap in notes/improvements.md. Asserting the weakness
     keeps it honest: if a future change appears to close it, this test fails and
     forces us to check whether the fix is real or the harness stopped probing.
     """
