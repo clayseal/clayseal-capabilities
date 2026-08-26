@@ -256,3 +256,147 @@ def sink_from_env() -> Any:
     if len(sinks) == 1:
         return sinks[0]
     return CompositeSink(sinks=tuple(sinks))
+
+
+# --------------------------------------------------------------------------- #
+# Where a security team already looks.
+# --------------------------------------------------------------------------- #
+
+#: OCSF class 6003, "API Activity", which is the class an authorization decision
+#: about a tool call belongs to. Activity 1 is Create and 3 is Update; a gateway
+#: decision is neither, so `Other` with the verb in the metadata is the honest
+#: mapping rather than forcing it into a shape it does not have.
+OCSF_API_ACTIVITY = 6003
+OCSF_SEVERITY = {"allow": 1, "step_up": 3, "deny": 4}   # Informational/Medium/High
+#: OCSF status: 1 Success, 2 Failure. A refusal is a SUCCESS of the control and
+#: a FAILURE of the attempt, and the field describes the attempt.
+OCSF_STATUS = {"allow": 1, "step_up": 2, "deny": 2}
+
+
+def to_ocsf(record: dict[str, Any]) -> dict[str, Any]:
+    """A decision record in the shape a SIEM already parses.
+
+    The original release audit closed with "decisions do not reach the systems
+    that watch for incidents", and shipping JSONL did not fix that: a security
+    team does not write a bespoke parser for one vendor's log. OCSF is the shape
+    they already ingest, so this maps rather than invents.
+
+    Nothing is added that the record did not already carry. Arguments stay
+    hashed, the receipt hash and the previous hash travel so the chain is
+    verifiable from the SIEM's copy, and the trace id travels so the event joins
+    to the caller's trace. A SIEM event that cannot be tied back to the receipt
+    it came from is a rumour.
+    """
+    decision = record.get("decision") or {}
+    action = record.get("action") or {}
+    outcome = str(decision.get("outcome", "")).lower()
+    trace = record.get("trace") or {}
+    return {
+        "class_uid": OCSF_API_ACTIVITY,
+        "class_name": "API Activity",
+        "category_uid": 6,
+        "activity_id": 0,
+        "activity_name": "Other",
+        "type_uid": OCSF_API_ACTIVITY * 100,
+        "severity_id": OCSF_SEVERITY.get(outcome, 0),
+        "status_id": OCSF_STATUS.get(outcome, 0),
+        "status_detail": "; ".join(decision.get("reasons") or ()) or None,
+        "time": record.get("created_at"),
+        "api": {
+            "operation": action.get("verb"),
+            "service": {"name": action.get("tool")},
+            "request": {"uid": record.get("receipt_id")},
+        },
+        "resources": [{"uid": action.get("resource")}]
+        if action.get("resource") else [],
+        "actor": {"session": {"uid": record.get("query_id")}},
+        "metadata": {
+            "product": {"name": "clayseal", "vendor_name": "clayseal"},
+            "version": "1.4.0",
+            "log_name": record.get("schema"),
+            "trace_uid": trace.get("trace_id"),
+            "correlation_uid": trace.get("span_id"),
+        },
+        "unmapped": {
+            "layer": decision.get("layer"),
+            "anomaly_score": decision.get("anomaly_score"),
+            "arguments_hash": action.get("arguments_hash"),
+            "receipt_hash": record.get("receipt_hash"),
+            "prev_hash": record.get("prev_hash"),
+            "seq": record.get("seq"),
+        },
+    }
+
+
+@dataclass
+class OcsfSink:
+    """Re-shape each record and hand it on. Composes with any other sink."""
+
+    inner: Any
+    dropped: int = 0
+
+    def __call__(self, record: dict[str, Any]) -> None:
+        try:
+            event = to_ocsf(record)
+        except Exception:  # noqa: BLE001 - a mapping failure is not a lost decision
+            self.dropped += 1
+            return
+        self.inner(event)
+
+
+@dataclass
+class OtelSpanSink:
+    """One span per decision, when an OpenTelemetry SDK is installed.
+
+    Optional by construction. This library has two runtime dependencies and
+    that is a large part of why it installs at all, so the SDK is imported
+    lazily and its absence makes this a counter rather than an error: a
+    deployment without OTel gets `unavailable` incrementing, which is visible,
+    instead of a crash at the first decision.
+
+    The span is created with the decision's own trace id as its parent when one
+    is present, which is the whole point: the span lands inside the caller's
+    trace rather than beside it.
+    """
+
+    tracer_name: str = "clayseal"
+    dropped: int = 0
+    unavailable: int = 0
+    _tracer: Any = None
+    _looked: bool = False
+
+    def _tracer_or_none(self) -> Any:
+        if not self._looked:
+            self._looked = True
+            try:
+                from opentelemetry import trace as otel
+
+                self._tracer = otel.get_tracer(self.tracer_name)
+            except Exception:  # noqa: BLE001 - absence is the ordinary case
+                self._tracer = None
+        return self._tracer
+
+    def __call__(self, record: dict[str, Any]) -> None:
+        tracer = self._tracer_or_none()
+        if tracer is None:
+            self.unavailable += 1
+            return
+        decision = record.get("decision") or {}
+        action = record.get("action") or {}
+        try:
+            with tracer.start_as_current_span(
+                f"clayseal.authorize {action.get('tool', '')}".strip()
+            ) as span:
+                span.set_attribute("clayseal.outcome",
+                                   str(decision.get("outcome", "")))
+                span.set_attribute("clayseal.layer",
+                                   str(decision.get("layer", "")))
+                span.set_attribute("clayseal.tool", str(action.get("tool", "")))
+                span.set_attribute("clayseal.verb", str(action.get("verb", "")))
+                span.set_attribute("clayseal.receipt_hash",
+                                   str(record.get("receipt_hash", "")))
+                reasons = decision.get("reasons") or ()
+                if reasons:
+                    span.set_attribute("clayseal.reasons", "; ".join(reasons))
+        except Exception:  # noqa: BLE001 - telemetry is never load-bearing
+            self.dropped += 1

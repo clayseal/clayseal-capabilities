@@ -287,6 +287,89 @@ class ValueReservation:
             self._budget._release_reservation(self)
 
 
+def parse_amount(
+    config: ValueBudgetConfig, tool_name: str, args: dict[str, Any],
+) -> tuple[str, Decimal | None] | None:
+    """Tri-state, because two of the states used to be conflated.
+
+    Module level rather than a method, because `PrincipalBudgetView` needs
+    exactly this reading to debit a shared ledger and a second implementation
+    of "how much does this call move" would be a second answer. Every defect
+    this repository has found in a duplicated idea argues against one.
+
+    ``None``                  the call is genuinely untracked: this tool has
+                              no money spec, or carries no amount argument.
+    ``(budget_id, None)``     the call IS tracked and the amount is present
+                              but unusable — non-numeric, unparseable, or
+                              non-finite.
+    ``(budget_id, Decimal)``  a usable amount.
+
+    The middle state is the one that did not exist, and its absence was a
+    fail-open. Every unparseable amount returned ``None``, callers read that
+    as "untracked", and the reservation came back ``allowed=True`` with
+    reason ``ok_untracked`` — no ceiling check at all. Measured against a
+    ceiling of 10, all of these were allowed and booked nothing:
+
+        '1e999'  'Infinity'  '-Infinity'  'sNaN'  '0x10'  ''  10**30
+
+    ``1e999`` is not an exotic input. It is what an injected agent writes
+    for "transfer everything", and ``10**30`` is an ordinary Python int that
+    merely overflows cent-quantization. A spend ceiling that stops applying
+    precisely when the amount is absurd is worse than no ceiling, because
+    the rest of the stack reports that the budget rung passed.
+
+    Non-finite values are rejected explicitly rather than left to raise.
+    ``Decimal('NaN')`` quantizes without complaint and then raises
+    ``InvalidOperation`` on the very next comparison — ``amount < 0`` — which
+    escaped ``reserve`` unhandled and took the whole authorization call with
+    it. Fail-closed on a bad amount; never fail by exception.
+    """
+    effect = config.spec_for(tool_name)
+    if effect is None:
+        return None
+    arg_name, budget_id = effect.amount_arg, effect.budget_id
+    if arg_name not in args:
+        return None  # tracked tool, but this call carries no amount
+    raw = args[arg_name]
+    if not isinstance(raw, (int, float, str, Decimal)) or isinstance(raw, bool):
+        return budget_id, None
+    try:
+        amount = _money(raw)
+    except (ValueError, ArithmeticError, TypeError):
+        return budget_id, None
+    if not amount.is_finite():
+        return budget_id, None
+
+    # Multiplicity, then unit. Both are declared by the mandate because both
+    # are properties of the TOOL that the argument does not carry.
+    #
+    # Without them the ledger debits the number in the field and a per-call
+    # ceiling is defeated by arity or by denomination:
+    # `benchmarks/stress_aggregation.py` lands 4,500 and 9,900 against a
+    # ceiling of 100 that way, with every reservation individually legal.
+    if effect.count_arg:
+        raw_count = args.get(effect.count_arg, 1)
+        if isinstance(raw_count, (list, tuple, set)):
+            raw_count = len(raw_count)      # a batch argument IS its length
+        try:
+            count = _money(raw_count)
+        except (TypeError, ValueError, ArithmeticError):
+            return budget_id, None          # declared multiplicity, unusable
+        if not count.is_finite() or count < 0:
+            return budget_id, None
+        amount = amount * count
+    if effect.scale not in (1, "1", None):
+        try:
+            amount = amount * _money(effect.scale)
+        except (TypeError, ValueError, ArithmeticError):
+            return budget_id, None
+    try:
+        amount = amount.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
+    except (ArithmeticError, ValueError):
+        return budget_id, None
+    return budget_id, amount
+
+
 @dataclass
 class SessionValueBudget:
     """One instance per session (the instance *is* the session's ledger)."""
@@ -307,79 +390,7 @@ class SessionValueBudget:
     def _amount(
         self, tool_name: str, args: dict[str, Any]
     ) -> tuple[str, Decimal | None] | None:
-        """Tri-state, because two of the states used to be conflated.
-
-        ``None``                  the call is genuinely untracked: this tool has
-                                  no money spec, or carries no amount argument.
-        ``(budget_id, None)``     the call IS tracked and the amount is present
-                                  but unusable — non-numeric, unparseable, or
-                                  non-finite.
-        ``(budget_id, Decimal)``  a usable amount.
-
-        The middle state is the one that did not exist, and its absence was a
-        fail-open. Every unparseable amount returned ``None``, callers read that
-        as "untracked", and the reservation came back ``allowed=True`` with
-        reason ``ok_untracked`` — no ceiling check at all. Measured against a
-        ceiling of 10, all of these were allowed and booked nothing:
-
-            '1e999'  'Infinity'  '-Infinity'  'sNaN'  '0x10'  ''  10**30
-
-        ``1e999`` is not an exotic input. It is what an injected agent writes
-        for "transfer everything", and ``10**30`` is an ordinary Python int that
-        merely overflows cent-quantization. A spend ceiling that stops applying
-        precisely when the amount is absurd is worse than no ceiling, because
-        the rest of the stack reports that the budget rung passed.
-
-        Non-finite values are rejected explicitly rather than left to raise.
-        ``Decimal('NaN')`` quantizes without complaint and then raises
-        ``InvalidOperation`` on the very next comparison — ``amount < 0`` — which
-        escaped ``reserve`` unhandled and took the whole authorization call with
-        it. Fail-closed on a bad amount; never fail by exception.
-        """
-        effect = self.config.spec_for(tool_name)
-        if effect is None:
-            return None
-        arg_name, budget_id = effect.amount_arg, effect.budget_id
-        if arg_name not in args:
-            return None  # tracked tool, but this call carries no amount
-        raw = args[arg_name]
-        if not isinstance(raw, (int, float, str, Decimal)) or isinstance(raw, bool):
-            return budget_id, None
-        try:
-            amount = _money(raw)
-        except (ValueError, ArithmeticError, TypeError):
-            return budget_id, None
-        if not amount.is_finite():
-            return budget_id, None
-
-        # Multiplicity, then unit. Both are declared by the mandate because both
-        # are properties of the TOOL that the argument does not carry.
-        #
-        # Without them the ledger debits the number in the field and a per-call
-        # ceiling is defeated by arity or by denomination:
-        # `benchmarks/stress_aggregation.py` lands 4,500 and 9,900 against a
-        # ceiling of 100 that way, with every reservation individually legal.
-        if effect.count_arg:
-            raw_count = args.get(effect.count_arg, 1)
-            if isinstance(raw_count, (list, tuple, set)):
-                raw_count = len(raw_count)      # a batch argument IS its length
-            try:
-                count = _money(raw_count)
-            except (TypeError, ValueError, ArithmeticError):
-                return budget_id, None          # declared multiplicity, unusable
-            if not count.is_finite() or count < 0:
-                return budget_id, None
-            amount = amount * count
-        if effect.scale not in (1, "1", None):
-            try:
-                amount = amount * _money(effect.scale)
-            except (TypeError, ValueError, ArithmeticError):
-                return budget_id, None
-        try:
-            amount = amount.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
-        except (ArithmeticError, ValueError):
-            return budget_id, None
-        return budget_id, amount
+        return parse_amount(self.config, tool_name, args)
 
     def _prior_effect(
         self, tool_name: str, budget_id: str, args: dict[str, Any]

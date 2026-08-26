@@ -39,10 +39,6 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from agentauth.core.hash_util import hash_canonical_json
-from agentauth.core.operations import capability_allows, normalize_capabilities
-from agentauth.core.task_scope import TaskScope, task_scope_allows_path
-
 from agentauth.capabilities.call_budget import SessionCallBudget
 from agentauth.capabilities.decision_log import DecisionLog
 from agentauth.capabilities.hardening.egress_policy import EgressPolicy
@@ -59,6 +55,7 @@ from agentauth.capabilities.monitor import (
     TrajectoryDetector,
     is_consequential,
 )
+from agentauth.capabilities.monitor.intent_envelope import Deviation
 from agentauth.capabilities.replan import verb_class
 from agentauth.capabilities.scoping.goal import GoalSpec
 from agentauth.capabilities.scoping.metrics import ScopingMetrics
@@ -70,6 +67,9 @@ from agentauth.capabilities.step_up import (
     verify_step_up_approval,
 )
 from agentauth.capabilities.value_budget import SessionValueBudget
+from agentauth.core.hash_util import hash_canonical_json
+from agentauth.core.operations import capability_allows, normalize_capabilities
+from agentauth.core.task_scope import TaskScope, task_scope_allows_path
 
 
 class Outcome(str, Enum):
@@ -332,6 +332,17 @@ class SessionBroker:
     metrics: ScopingMetrics = field(default_factory=ScopingMetrics)
     decision_log: DecisionLog = field(default_factory=DecisionLog)
     receipt_sink: Callable[[dict[str, Any]], None] | None = None
+    #: W3C Trace Context for the work this session is part of, stamped onto
+    #: every decision record so a receipt joins to the trace that produced it.
+    #: Set per request in a stateless deployment, once per session otherwise.
+    trace: Any = None
+    #: Decisions the evidence plane could not account for: an audit append or a
+    #: receipt sink raised. Never silently zero, and a deployment should alert on
+    #: it, because an unlogged decision is an unauditable one.
+    unrecorded_decisions: int = field(default=0, init=False)
+    #: Telemetry calls that raised. Counted for the same reason and separated
+    #: because losing a metric is not losing evidence.
+    telemetry_failures: int = field(default=0, init=False)
     _trajectory: Trajectory = field(init=False)
     # Fail-closed reasons from check_declaration_against_goal. Populated once
     # when a declaration is present; every authorize() then denies.
@@ -339,6 +350,12 @@ class SessionBroker:
     # Soft entailment advisories from an optional plan-level judge (ARGUS-shaped).
     # Never fail closed; first consequential authorize steps up instead.
     entailment_judge: Any | None = None
+    # Wall-clock ceiling on the judge, enforced by the broker rather than trusted
+    # to the judge. The judge is a remote model called on the authorization path
+    # while this session's lock is held, so an endpoint that stops answering must
+    # cost a bounded pause and one lost advisory, not a stalled session. None
+    # takes `llm_clients.DEFAULT_TOTAL_BUDGET`.
+    judge_budget_seconds: float | None = None
     _declaration_advisories: tuple[str, ...] = field(default_factory=tuple, init=False)
     # Compiled constraints from an accepted declaration (argv / digest / callee).
     # Used at authorize time so honest_declare→sabotage is on the gateway, not
@@ -364,6 +381,10 @@ class SessionBroker:
     # Ladder-parity floor grants (same checks as TaskScopeInputBindingEngine).
     # Empty/None keeps prior broker behaviour for callers that only set scope.
     allowed_tools: set[str] | None = None
+    #: Tools the grant admits only while a condition holds. Withdraws from
+    #: `allowed_tools` and never adds, so a fact an attacker can assert can only
+    #: reduce authority. See `conditional_ceiling.ConditionalTools`.
+    conditional_tools: Any = None
     tool_patterns: list[str] | None = None
     capabilities: list[dict[str, str]] | None = None
     # tool -> set of authorized argument hashes (commit-token binding).
@@ -377,6 +398,16 @@ class SessionBroker:
 
         if self.session is None:
             self.session = SessionMemory()
+        if self.entailment_judge is not None:
+            # Bound whatever was supplied, including a caller's own callable.
+            # Doing it here rather than at the construction site is what makes
+            # the ceiling a property of the gateway instead of a convention the
+            # next integration can forget.
+            from agentauth.capabilities.monitor.llm_clients import bounded
+
+            self.entailment_judge = bounded(
+                self.entailment_judge, budget_seconds=self.judge_budget_seconds
+            )
         self._trajectory = Trajectory(goal=self.goal, actions=[], context=[])
         self.metrics.goal_id = self.goal.query_id
         self._seed_goal_provenance()
@@ -644,6 +675,33 @@ class SessionBroker:
                 ]
                 if len(cols) >= 2 and all(cols):
                     self._csv_columns[path] = cols
+        # Conditional ceilings read FACTS, and a fact is only ever a structured
+        # field of a tool output. Free text never becomes one: the guard
+        # machinery is monotone-tightening precisely because this input may be
+        # attacker-controlled, and the structured/free-text split is the same
+        # distinction `ParameterProvenance` already draws about what counts as a
+        # trustworthy origin. Feeding facts here rather than at a new entry point
+        # is deliberate; `observe_context` was dead for exactly that reason.
+        if structured_fields and self.conditional_tools is not None:
+            try:
+                self.conditional_tools.observe_facts(structured_fields)
+            except Exception:  # noqa: BLE001, S110 - same reasoning as below
+                pass
+        if structured_fields:
+            for budget in (self.value_budget, self.call_budget):
+                config = getattr(budget, "config", None)
+                observe = getattr(config, "observe_facts", None)
+                if observe is not None:
+                    try:
+                        observe(structured_fields)
+                    except Exception:  # noqa: BLE001, S110 - see below
+                        # A malformed field must not take down the agent run from
+                        # the OBSERVATION path, which grants no authority. And a
+                        # fact that fails to land can only leave a ceiling
+                        # LOOSER than intended by the tightening rule, so this is
+                        # the one place where a swallowed error is not a
+                        # fail-open: the base ceiling still applies.
+                        pass
         if self.provenance is not None:
             self.provenance.record_observation(
                 tool, payload,
@@ -741,6 +799,12 @@ class SessionBroker:
                 return False, f"tool {action.tool!r} not granted", {}, True
         elif self.allowed_tools is not None and action.tool not in self.allowed_tools:
             return False, f"tool {action.tool!r} not granted", {}, True
+        if self.conditional_tools is not None and \
+                action.tool in self.conditional_tools.withdrawn():
+            return (False,
+                    f"tool {action.tool!r} withdrawn: "
+                    f"{self.conditional_tools.reason_for(action.tool)}",
+                    {}, True)
         if self.capabilities:
             if not capability_allows(
                 normalize_capabilities(self.capabilities),
@@ -912,7 +976,7 @@ class SessionBroker:
         if not ok:
             if hard:
                 if prevented:
-                    self.metrics.record_prevented(**prevented)
+                    self._telemetry(self.metrics.record_prevented, **prevented)
                 return self._finalize(action, Outcome.DENY, "floor", (reason,), None,
                                       is_write, start, blocked=True)
             # Soft scope miss (uncertainty, not positive malice): step up. Halts
@@ -1148,7 +1212,8 @@ class SessionBroker:
             if v_res is not None and v_res.allowed:
                 v_res.release()
             reason = (v_res.reason if v_res and not v_res.allowed else c_res.reason)  # type: ignore[union-attr]
-            self.metrics.record_prevented(protected_write=is_write)
+            self._telemetry(self.metrics.record_prevented,
+                            protected_write=is_write)
             return self._finalize(action, Outcome.DENY, "floor", (reason,), None,
                                   is_write, start, blocked=True)
 
@@ -1186,6 +1251,21 @@ class SessionBroker:
             # a goal condition that can no longer be met. Replanning may answer
             # the first and must not answer the second.
             replannable = False
+            # A DERIVED count miss is not the same kind of evidence as an
+            # off-plan tool. The bound came from reading the sealed goal, not
+            # from anyone declaring it, so "you said one and this is the second"
+            # is a reason to ask rather than a reason to refuse: a retry after a
+            # failed send looks exactly like this. It steps up even when the
+            # action is consequential, which is the one place the usual
+            # off-plan-and-consequential denial does not apply.
+            # `getattr` rather than attribute access: `intent_envelope` is a
+            # pluggable seam and `last_deviation` returns whatever that
+            # implementation returns. Reading a field off it unguarded made a
+            # test double with a different shape raise from inside the
+            # authorization path, which is the failure mode this file spends
+            # most of its comments avoiding.
+            derived_count_miss = (
+                getattr(dev, "deviation", None) is Deviation.OVER_COUNT)
             if dev is not None:
                 reason = dev.reason
                 replannable = True
@@ -1283,6 +1363,17 @@ class SessionBroker:
                             action, Outcome.STEP_UP, "intent-envelope",
                             (reason, "off-plan but destination-bound"), None,
                             is_write, start, step_up=request, step_up_flag=True)
+                    if derived_count_miss:
+                        self._rollback(action, v_res, c_res)
+                        request = build_step_up_request(
+                            request_id=str(uuid4()), query_id=self.goal.query_id,
+                            resource_ref=action.resource, operation=action.verb,
+                            violations=[reason])
+                        return self._finalize(
+                            action, Outcome.STEP_UP, "intent-envelope",
+                            (reason, "count derived from the goal, not declared"),
+                            None, is_write, start, step_up=request,
+                            step_up_flag=True)
                     self._rollback(action, v_res, c_res)
                     return self._finalize(action, Outcome.DENY, "intent-envelope",
                                           (reason, "off-plan and consequential"), None,
@@ -1333,6 +1424,15 @@ class SessionBroker:
         against a ledger that never recorded them and a cumulative ceiling could
         never be reached.
         """
+        # The gateway's own record that this tool ran, which is what an ordering
+        # rule reads. Set HERE because this is the only way to return ALLOW, so
+        # a tool that was refused never counts as having run. `record_call` is
+        # separate from `observe_facts` on purpose: tool output may not write it.
+        if self.conditional_tools is not None:
+            try:
+                self.conditional_tools.record_call(action.tool)
+            except Exception:  # noqa: BLE001, S110 - bookkeeping never decides
+                pass
         if v_res is not None and v_res.allowed:
             v_res.commit()
         if c_res is not None and c_res.allowed:
@@ -1428,9 +1528,14 @@ class SessionBroker:
         """Grounded values a blocked agent may retry with (re-audited).
 
         Allow-list recipients first: those can clear the floor autonomously.
-        Provenance structured values follow — they earn STEP_UP at egress
+        Provenance structured values follow: they earn STEP_UP at egress
         (supervision), not silent ALLOW, so an autonomous retry prefers the
-        allow-list. Cap at 8 — ARGUS-style hints, not a dump.
+        allow-list. Cap at 8, since these are hints rather than a dump.
+
+        A hint is the least load-bearing thing this class produces, and fault
+        injection found it able to crash a decision that had already been made:
+        a raising provenance graph took a DENY and turned it into an exception.
+        A failure here costs the agent a retry suggestion and nothing else.
         """
         out: list[str] = []
         seen: set[str] = set()
@@ -1440,10 +1545,15 @@ class SessionBroker:
                     seen.add(r)
                     out.append(r)
         if self.provenance is not None:
-            for c in self.provenance.trusted_candidates(
-                structured_only=True,
-                goal_named_objects=self.goal_named_objects or None,
-            ):
+            try:
+                candidates = self.provenance.trusted_candidates(
+                    structured_only=True,
+                    goal_named_objects=self.goal_named_objects or None,
+                )
+            except Exception:  # noqa: BLE001 - a hint never blocks a decision
+                self.telemetry_failures += 1
+                candidates = ()
+            for c in candidates:
                 if c not in seen:
                     seen.add(c)
                     out.append(c)
@@ -1510,15 +1620,38 @@ class SessionBroker:
             )
             if step_up_flag:
                 self._pending[step_up.commitment()] = step_up
-        self.metrics.record_action(blocked=blocked, step_up=step_up_flag, is_write=is_write,
-                                   overhead_ms=(time.perf_counter() - start) * 1000)
-        record = self.decision_log.append(
-            query_id=self.goal.query_id, tool=action.tool, resource=action.resource,
-            action_verb=action.verb, arguments_hash=hash_canonical_json(action.args),
-            outcome=outcome.value, layer=layer, reasons=tuple(reasons), anomaly_score=score,
-        ).to_dict()
-        if self.receipt_sink is not None:
-            self.receipt_sink(record)
+        # Everything below this line is bookkeeping: the decision is already
+        # made. Fault injection found that a failure in any of it took the whole
+        # gateway down, so a metrics backend or an audit sink going away turned
+        # into a total outage of authorization. A telemetry call is not allowed
+        # to be load-bearing, and an audit write that fails must not discard a
+        # decision that was correctly reached.
+        #
+        # None of it is swallowed. `unrecorded_decisions` counts every decision
+        # the evidence plane cannot account for, which is the number a
+        # deployment alerts on, in the same spirit as `DecisionLog.durability`
+        # reporting what was evicted without reaching a sink.
+        self._telemetry(self.metrics.record_action, blocked=blocked,
+                        step_up=step_up_flag, is_write=is_write,
+                        overhead_ms=(time.perf_counter() - start) * 1000)
+
+        record = None
+        try:
+            record = self.decision_log.append(
+                query_id=self.goal.query_id, tool=action.tool,
+                resource=action.resource, action_verb=action.verb,
+                arguments_hash=hash_canonical_json(action.args),
+                outcome=outcome.value, layer=layer, reasons=tuple(reasons),
+                anomaly_score=score,
+                trace=self.trace.to_dict() if self.trace is not None else None,
+            ).to_dict()
+        except Exception:  # noqa: BLE001 - an unrecorded decision, not a lost one
+            self.unrecorded_decisions += 1
+        if record is not None and self.receipt_sink is not None:
+            try:
+                self.receipt_sink(record)
+            except Exception:  # noqa: BLE001 - a sink is downstream of the decision
+                self.unrecorded_decisions += 1
         return BrokerDecision(
             outcome, layer, tuple(reasons), step_up=step_up, record=record,
             trusted_candidates=candidates,
@@ -1565,9 +1698,24 @@ class SessionBroker:
             self._extended_pairs = set()
         return self._extended_pairs
 
+    def _telemetry(self, call, /, **kwargs) -> None:
+        """Record a metric, and never let recording one change a decision.
+
+        Every telemetry call in this class goes through here. Fault injection
+        found two that took the whole gateway down when the metrics object
+        raised, and a third that only survived because the probe's own verdict
+        rule was too lenient to notice. A counter is the right shape for what a
+        deployment does about it: alert, not fail.
+        """
+        try:
+            call(**kwargs)
+        except Exception:  # noqa: BLE001 - telemetry is never load-bearing
+            self.telemetry_failures += 1
+
     def _record_triggers(self, reasons: list[str]) -> None:
         joined = " ".join(reasons).lower()
-        self.metrics.record_monitor_trigger(
+        self._telemetry(
+            self.metrics.record_monitor_trigger,
             scan=any(t in joined for t in ("path-envelope", "aml", "burst", "fan-out", "structuring")),
             drift="cusum" in joined or "drift" in joined,
             novelty="surprise" in joined or "novel" in joined,

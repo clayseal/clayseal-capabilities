@@ -140,9 +140,12 @@ class Hold:
     hold_id: str = field(default_factory=lambda: uuid4().hex)
     #: The ceiling this hold was checked against, captured at reserve time. A
     #: late commit has to re-check, and the caller of `commit_hold` does not
-    #: pass a ceiling — the authorize/act/commit split means it may not still
+    #: pass a ceiling: the authorize/act/commit split means it may not still
     #: have one in scope.
     ceiling: Decimal = Decimal(0)
+    #: The object this reservation acts on, when the effect declares one. Held
+    #: so that releasing gives the identity back and committing keeps it.
+    identity: str = ""
 
 
 @dataclass(frozen=True)
@@ -153,12 +156,20 @@ class LedgerEntry:
     at: float
     session: str = ""
     idempotency_key: str = ""
+    #: The object this spend acted on, when the effect declares one. Persisted
+    #: because once-per-object has to survive a PROCESS boundary and not only a
+    #: session one: a stateless deployment is many processes, and an identity
+    #: kept only in memory let a second process pay the same invoice again. The
+    #: ceiling survived that boundary and the duplicate check did not, which is
+    #: the more specific half of the same escape.
+    identity: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "principal": self.principal, "budget_id": self.budget_id,
             "amount": str(self.amount), "at": self.at,
             "session": self.session, "idempotency_key": self.idempotency_key,
+            "identity": self.identity,
         }
 
     @classmethod
@@ -167,6 +178,7 @@ class LedgerEntry:
             principal=d["principal"], budget_id=d["budget_id"],
             amount=Decimal(d["amount"]), at=float(d["at"]),
             session=d.get("session", ""), idempotency_key=d.get("idempotency_key", ""),
+            identity=d.get("identity", ""),
         )
 
 
@@ -208,6 +220,13 @@ class PrincipalLedger:
     # booked against a ceiling that has since been re-let. It is still booked —
     # the effect happened — but it is recorded as a breach rather than absorbed.
     _voided: set[str] = field(default_factory=set)
+    #: (principal, budget_id) -> object identities already committed, and those
+    #: currently held by an open reservation. Once-per-object was a
+    #: `SessionValueBudget` rule and therefore reset with the session, which is
+    #: the same escape the spend ledger moved here to close: paying the same
+    #: invoice once per session is not paying it once.
+    _identities: dict[tuple[str, str], set[str]] = field(default_factory=dict)
+    _held_identities: dict[tuple[str, str], set[str]] = field(default_factory=dict)
     _late_breaches: list[LedgerEntry] = field(default_factory=list)
     _lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
     _tail_checked: bool = False
@@ -257,6 +276,8 @@ class PrincipalLedger:
             key = (e.principal, e.budget_id)
             self._index.setdefault(key, []).append(e)
             self._totals[key] = self._totals.get(key, Decimal(0)) + e.amount
+            if e.identity:
+                self._identities.setdefault(key, set()).add(e.identity)
 
     def _repair_torn_tail(self) -> None:
         """Drop a partial final record before appending after it.
@@ -353,7 +374,7 @@ class PrincipalLedger:
     # -- mutation -----------------------------------------------------------
     def book(self, principal: str, budget_id: str, amount: Decimal, *,
              session: str = "", idempotency_key: str = "",
-             now: float | None = None) -> LedgerEntry:
+             now: float | None = None, identity: str = "") -> LedgerEntry:
         """Record spend. Idempotent on ``idempotency_key`` within a session.
 
         Idempotency exists so a retried tool call does not debit twice. It is
@@ -370,7 +391,8 @@ class PrincipalLedger:
         from trusted context rather than from arguments the agent controls.
         """
         at = time.time() if now is None else now
-        entry = LedgerEntry(principal, budget_id, amount, at, session, idempotency_key)
+        entry = LedgerEntry(principal, budget_id, amount, at, session,
+                            idempotency_key, identity)
         key = (principal, budget_id)
         # A control must not trust its own callers. `_amount` already rejects
         # non-positive values at the boundary, and this is the second gate: a
@@ -405,8 +427,15 @@ class PrincipalLedger:
     # of the order of the tool timeout.
     reservation_ttl_seconds: float = 300.0
 
+    def identity_seen(self, principal: str, budget_id: str, identity: str) -> bool:
+        """Has this object already been acted on, committed or held right now?"""
+        key = (principal, budget_id)
+        return (identity in self._identities.get(key, ())
+                or identity in self._held_identities.get(key, ()))
+
     def reserve(self, principal: str, budget_id: str, amount: Decimal,
-                ceiling: Decimal, *, now: float | None = None) -> Hold | None:
+                ceiling: Decimal, *, now: float | None = None,
+                identity: str | None = None) -> Hold | None:
         """Atomically check the ceiling and hold the amount against it.
 
         `would_allow` followed by `commit` is a check-then-act race: eight
@@ -428,14 +457,24 @@ class PrincipalLedger:
         with self._transaction():
             key = (principal, budget_id)
             self._expire_holds(key, at)
+            # Once-per-object, checked under the SAME lock as the ceiling. A
+            # ceiling answers "is the total under the limit" and answers it
+            # correctly while the same invoice is paid twice.
+            if identity is not None and (
+                    identity in self._identities.get(key, ())
+                    or identity in self._held_identities.get(key, ())):
+                return None
             held = sum((h.amount for h in self._holds.get(key, ())), Decimal(0))
             projected = self.spent(principal, budget_id, now=now) + held + amount
             if projected > ceiling:
                 return None
             hold = Hold(principal=principal, budget_id=budget_id,
-                        amount=amount, created_at=at, ceiling=ceiling)
+                        amount=amount, created_at=at, ceiling=ceiling,
+                        identity=identity or "")
             self._holds.setdefault(key, []).append(hold)
             self._reserved[key] = held + amount
+            if identity is not None:
+                self._held_identities.setdefault(key, set()).add(identity)
             return hold
 
     def _expire_holds(self, key: tuple[str, str], at: float) -> None:
@@ -475,6 +514,13 @@ class PrincipalLedger:
         for hold in holds:
             if hold.created_at < cutoff:
                 self._voided.add(hold.hold_id)
+                # The identity goes back with the headroom, and for the same
+                # reason: an abandoned hold must not shrink the ceiling forever,
+                # and it must not put one object out of reach forever either. A
+                # voided hold that is later committed re-adds the identity in
+                # `commit_hold`, so the object cannot be acted on twice.
+                if hold.identity:
+                    self._held_identities.get(key, set()).discard(hold.identity)
         self._holds[key] = live
         self._reserved[key] = sum((h.amount for h in live), Decimal(0))
 
@@ -498,6 +544,11 @@ class PrincipalLedger:
             else:
                 return
             self._reserved[key] = sum((h.amount for h in holds), Decimal(0))
+            # The object goes back on the shelf. A refused action did not act on
+            # it, so holding its identity forever would make one denial a
+            # permanent one.
+            if hold.identity:
+                self._held_identities.get(key, set()).discard(hold.identity)
 
     def commit_hold(self, hold: Hold | None, *, session: str = "",
                     idempotency_key: str = "", now: float | None = None):
@@ -536,10 +587,18 @@ class PrincipalLedger:
                 breached = hold.ceiling > 0 and projected > hold.ceiling
             entry = self.book(hold.principal, hold.budget_id, hold.amount,
                               session=session or ("late-commit" if breached else ""),
-                              idempotency_key=idempotency_key, now=now)
+                              idempotency_key=idempotency_key, now=now,
+                              identity=hold.identity)
             self._settled[hold.hold_id] = entry
             if breached:
                 self._late_breaches.append(entry)
+            # Committed, so the identity moves from held to permanent BEFORE the
+            # release below gives the held one back. `identity_seen` reads both,
+            # so the object stays spent either way and the order only decides
+            # which set holds it.
+            if hold.identity:
+                self._identities.setdefault(
+                    (hold.principal, hold.budget_id), set()).add(hold.identity)
             self.release(hold)
             return entry
 
@@ -769,7 +828,8 @@ class PrincipalBudgetView:
         return (self.principal, *self.chain)
 
     def _reserve_group(self, budget_id: str, amount: Decimal,
-                       ceiling: Decimal, now: float | None):
+                       ceiling: Decimal, now: float | None,
+                       identity: str | None = None):
         """Reserve against self and every ancestor, all-or-nothing.
 
         A partial reservation would leave an ancestor's headroom consumed for a
@@ -778,13 +838,62 @@ class PrincipalBudgetView:
         """
         taken = []
         for who in self._principals():
-            hold = self.ledger.reserve(who, budget_id, amount, ceiling, now=now)
+            hold = self.ledger.reserve(who, budget_id, amount, ceiling, now=now,
+                                       identity=identity)
             if hold is None:
                 for done in taken:
                     self.ledger.release(done)
                 return None
             taken.append(hold)
         return taken
+
+    def reserve(self, tool_name: str, args: dict[str, Any]):
+        """The broker's entry point, against a ledger the session does not own.
+
+        Mirrors `SessionValueBudget.reserve` and deliberately does not
+        re-implement it: the amount is read by the shared `parse_amount`, so
+        there is one answer to "how much does this call move", and the
+        once-per-object check happens inside `PrincipalLedger.reserve` under the
+        same lock as the ceiling, because a ceiling answers "is the total under
+        the limit" and answers it correctly while the same invoice is paid twice.
+
+        The tri-state that `parse_amount` returns is preserved exactly. An
+        untracked call is allowed; a TRACKED call whose amount cannot be read is
+        refused, because reading that as untracked is the fail-open this
+        library already had once.
+        """
+        from agentauth.capabilities.value_budget import parse_amount
+
+        config = getattr(self, "config", None)
+        if config is None:
+            return PrincipalReservation(True, "ok_untracked")
+        parsed = parse_amount(config, tool_name, args)
+        if parsed is None:
+            return PrincipalReservation(True, "ok_untracked")
+        if getattr(config, "tightened", False):
+            return PrincipalReservation(False, "value_budget_disabled_tightened")
+        budget_id, amount = parsed
+        if amount is None:
+            return PrincipalReservation(False, "value_budget_unparseable_amount")
+        if amount < 0:
+            return PrincipalReservation(False, "value_budget_negative_amount")
+        ceiling = config.ceiling_for(budget_id)
+        if ceiling is None:
+            return PrincipalReservation(True, "ok_uncapped")
+        spec = config.spec_for(tool_name)
+        identity = spec.identity_of(args) if spec is not None else None
+        if identity is not None and any(
+                self.ledger.identity_seen(who, budget_id, identity)
+                for who in self._principals()):
+            return PrincipalReservation(False, "value_budget_duplicate_effect")
+        raw_key = args.get("_idempotency_key")
+        idem = raw_key.strip() if isinstance(raw_key, str) and raw_key.strip() else None
+        holds = self._reserve_group(budget_id, amount, ceiling, None,
+                                    identity=identity)
+        if holds is None:
+            return PrincipalReservation(False, "value_budget_exceeded")
+        return PrincipalReservation(True, "ok", _view=self, _holds=holds,
+                                    _idempotency_key=idem)
 
     def _amount(self, tool_name: str, args: dict[str, Any]) -> tuple[str, Decimal] | None:
         spec = self.tracked.get(tool_name)
@@ -1265,3 +1374,44 @@ class SharedPrincipalLedger(PrincipalLedger):
             else:
                 return
             self._reserved[key] = sum((h.amount for h in holds), Decimal(0))
+            # The object goes back on the shelf. A refused action did not act on
+            # it, so holding its identity forever would make one denial a
+            # permanent one.
+            if hold.identity:
+                self._held_identities.get(key, set()).discard(hold.identity)
+
+
+@dataclass
+class PrincipalReservation:
+    """`ValueReservation`'s shape, backed by holds on a shared ledger.
+
+    The broker only ever calls `reserve`, then exactly one of `commit` or
+    `release`, and it does not care which ledger is underneath. Presenting the
+    same three methods is what lets a principal-scoped budget be dropped in
+    where a session-scoped one was, which is the substitution MCP 2026-07-28
+    forces: with the session handshake removed, a per-session ceiling counts
+    over nothing.
+    """
+
+    allowed: bool
+    reason: str
+    _view: Any = None
+    _holds: list = field(default_factory=list)
+    _settled: bool = False
+    _idempotency_key: str | None = None
+
+    def commit(self) -> None:
+        if self._settled:
+            return
+        self._settled = True
+        for hold in self._holds:
+            self._view.ledger.commit_hold(
+                hold, session=self._view.session,
+                idempotency_key=self._idempotency_key or "")
+
+    def release(self) -> None:
+        if self._settled:
+            return
+        self._settled = True
+        for hold in self._holds:
+            self._view.ledger.release(hold)
