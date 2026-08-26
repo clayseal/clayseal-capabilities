@@ -1,0 +1,96 @@
+# A Clay Seal policy document.
+#
+#   clayseal policy show examples/policy.yaml     what it authorizes
+#   clayseal policy lint examples/policy.yaml     what a reviewer should ask
+#   clayseal proxy --policy examples/policy.yaml -- npx @acme/mcp-server
+#
+# This is the whole grant. Copy it, change the goal and the allow-lists, and
+# review the diff the way you review any other change that grants access.
+
+version: 1
+
+# The sealed goal. Everything downstream derives from it: the provenance roots,
+# the content checks, and the plan an envelope is compiled from. Write it as the
+# task, not as a category.
+goal:
+  id: billing-triage-2026-08
+  summary: >-
+    Triage the open billing tickets, write a summary to out/summary.md, and
+    email it to the operations archive.
+
+# What happens to an action the floor cleared and the plan did not predict.
+#   autonomous  refuse it. Nobody is watching.
+#   supervised  ask about it. A person is on the escalation path.
+#   benchmark   what the published numbers were measured under. Not a deployment.
+profile: supervised
+
+# A grant with no expiry authorizes forever. `clayseal policy lint` says so.
+expires_at: 2026-12-31T00:00:00Z
+
+tools:
+  allow:
+    - list_tickets
+    - read_ticket
+    - write_summary
+    - send_email
+  # Tools you assert have no side effect worth counting. The linter cannot tell
+  # a read from a write by name, so this is where a person says so, in the file
+  # that gets reviewed. Anything effectful and not listed here needs a budget.
+  harmless:
+    - list_tickets
+    - read_ticket
+    - write_summary
+
+paths:
+  allow:
+    - "out/**"
+    - "tickets/**"
+  # Denies win over allows. These are on top of the built-in protected zones,
+  # which already cover credentials, SSH keys and version-control internals.
+  deny:
+    - ".env"
+    - ".git/**"
+
+  # Which argument carries the path each tool acts on. The gateway recognises
+  # file_path, path, filename and file on its own; anything else has to be named
+  # here or the scope cannot be applied to that tool. An effectful call whose
+  # path cannot be resolved is refused rather than allowed unchecked, so a tool
+  # missing from here fails loudly instead of quietly escaping the scope.
+  arg_names:
+    write_summary: path
+
+  # Tools that genuinely act on no path. Without this there is no way to tell
+  # "this tool has no path" from "nobody said what its path argument is called",
+  # and the second one must not be treated as the first.
+  pathless:
+    - send_email
+
+egress:
+  # Where this session may send anything. A destination that is not here is
+  # refused, including one the agent read out of a document it was allowed to
+  # read, which is the shape prompt injection takes when the floor is doing its
+  # job.
+  domains:
+    - acme-internal.com
+  # Require that an action carrying a destination actually had it checked, so
+  # "no destination to check" and "destination on the allow-list" stop looking
+  # the same in the audit trail.
+  bind_recipients: true
+
+budgets:
+  # The control that per-call authorization cannot express: every individual
+  # send is authorized, and three of them is the limit.
+  calls:
+    ceilings:
+      emails: 3
+    tracked:
+      send_email: emails
+
+  # The same idea over an amount rather than a count. Ceilings are strings so a
+  # currency value is never accumulated as a float.
+  #
+  # value:
+  #   ceilings:
+  #     refunds: "5000.00"
+  #   tracked:
+  #     issue_refund: {arg: amount, budget: refunds}
