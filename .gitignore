@@ -12,7 +12,7 @@ __pycache__/
 dist/
 build/
 .venv/
-.venv-audit/
+.venv*/
 venv/
 .python-version
 .pytest_cache/

@@ -9,11 +9,21 @@ description = "Clay Seal layer 2 — dynamic capability tokens, leases, commit t
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10,<3.14"
+# The whole runtime, in two third-party packages. `cryptography` signs and
+# verifies; `pyyaml` parses the policy document. Everything else the gateway
+# needs is stdlib or lives in this repo: `agentauth.core` used to be a separate
+# private distribution and is vendored here now, because a hard dependency on a
+# repository nobody can read is not a dependency, it is a wall.
 dependencies = [
-  "agentauth-core>=0.5,<0.6",
   "cryptography>=42.0",
   "pyyaml>=6.0",
 ]
+
+# The CLI is how a deployment that does not want to write Python uses this.
+# `clayseal proxy` is the enforcement point that does not depend on the agent
+# cooperating; `clayseal policy lint` is the pre-merge gate on the authority.
+[project.scripts]
+clayseal = "agentauth.capabilities.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/pberlizov/clay-seal-capabilities"
@@ -36,9 +46,12 @@ ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
 # openai is only needed by --provider openai/live; the mock provider
 # needs neither a key nor a model.
 demo = ["rich>=13.7", "openai>=1.40"]
-# The default Biscuit token backend wraps the identity layer's primitives;
-# identity is otherwise NOT required to use this layer (bring your own
-# CapabilityTokenBackend via the agentauth.capability_backends entry point).
+# The default Biscuit token backend wraps the identity layer's primitives.
+# Identity is a SEPARATE distribution and is not required to use this layer:
+# bring your own CapabilityTokenBackend via the agentauth.capability_backends
+# entry point. This extra is listed for deployments that already have identity
+# installed, and it is deliberately NOT part of [dev], because [dev] has to
+# resolve from a clean index for anyone who clones this repo.
 biscuit-service = ["agentauth-identity>=0.5,<0.6"]
 # Verifying identity adapters (VerifyingOidcProvider, EntraAgentIdProvider):
 # live JWT verification against OIDC discovery/JWKS.
@@ -65,12 +78,13 @@ monitor = ["torch>=2.2"]
 # `fakeredis` backs the cross-host ledger tests. It is a double, not a Redis:
 # set AGENTAUTH_TEST_REDIS_URL to run the same suite against a live server.
 dev = ["pytest>=8.0", "ruff>=0.4", "fakeredis>=2.21", "redis>=5.0",
-       "agentauth-capabilities[biscuit-service,oidc,a2a]"]
+       "agentauth-capabilities[oidc,a2a]"]
 
-# Ship ONLY the capabilities subpackage in the shared `agentauth` namespace.
-# `agentauth.core` comes from the agentauth-core wheel.
+# Ship both subpackages of the `agentauth` PEP 420 namespace. There is no
+# `agentauth/__init__.py` on purpose: the namespace stays open, so a separately
+# installed `agentauth.identity` still resolves alongside these two.
 [tool.hatch.build.targets.wheel]
-only-include = ["agentauth/capabilities"]
+only-include = ["agentauth/capabilities", "agentauth/core"]
 
 # Lint rules are PINNED rather than inherited from ruff's defaults, because
 # `ruff check agentauth` is now a CI gate and an implicit rule set makes that
@@ -125,6 +139,17 @@ ignore = [
 "agentauth/capabilities/commit.py" = ["S105"]
 "agentauth/capabilities/used_token_store.py" = ["S105"]
 "agentauth/capabilities/hardening/object_class.py" = ["S105"]
+# Same NAME heuristic in the vendored core. `TOKEN_LIMIT` is a budget-type enum
+# member and `SIGNING_KEY_PASSWORD_ENV` is the NAME of the variable you read a
+# passphrase from, not a passphrase.
+"agentauth/core/budget.py" = ["S105"]
+"agentauth/core/signing.py" = ["S105", "TRY004"]
+# TRY004 wants TypeError where these raise ValueError on a malformed document.
+# The contract callers are written against is that every parse and compile
+# failure in this layer is a ValueError, and there are call sites that catch it
+# by that type. Changing the exception to satisfy a lint preference would break
+# them silently, which is a worse outcome than the preference is worth.
+"agentauth/core/task_scope.py" = ["TRY004"]
 # This module DETECTS Trojan-Source bidi overrides, zero-width joiners and tag
 # characters, so its pattern tables necessarily contain them. Flagging the
 # detector for holding the thing it detects is the lint equivalent of an
