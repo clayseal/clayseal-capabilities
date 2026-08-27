@@ -11,6 +11,7 @@ friction split reports both bounds rather than the flattering one.
 """
 from __future__ import annotations
 
+import pytest
 import yaml
 
 from benchmarks import bpl_sweep
