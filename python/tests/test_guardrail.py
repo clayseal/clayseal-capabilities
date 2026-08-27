@@ -94,10 +94,15 @@ def test_the_budget_and_once_per_object_both_hold(tools):
     _guard, wrapped, _ran = tools
     wrapped["get_order"](order_id="O-1")
     wrapped["pay_vendor"](amount="30000", invoice="INV-1")
-    with pytest.raises(Refused, match="duplicate_effect"):
+    # Match on `.reasons`, the stable code surface, not on the message. The
+    # message carries the explained form now (see reasons.py) and is meant to
+    # change as the wording improves; the codes are what integrations pin to.
+    with pytest.raises(Refused) as dup:
         wrapped["pay_vendor"](amount="10", invoice="INV-1")
-    with pytest.raises(Refused, match="exceeded"):
+    assert any("duplicate_effect" in r for r in dup.value.reasons), dup.value.reasons
+    with pytest.raises(Refused) as over:
         wrapped["pay_vendor"](amount="30000", invoice="INV-2")
+    assert any("exceeded" in r for r in over.value.reasons), over.value.reasons
 
 
 # ------------------------------------------------- what a framework reads ---

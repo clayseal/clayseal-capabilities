@@ -46,20 +46,30 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from clayseal.capabilities.reasons import explained
+
 
 class GuardrailError(RuntimeError):
     """Base for anything this adapter raises in place of running a tool."""
 
 
 class Refused(GuardrailError):
-    """The gateway denied the call. The agent may read this and adapt."""
+    """The gateway denied the call. The agent may read this and adapt.
+
+    ``reasons`` holds the stable codes to match on. The message carries the
+    explained form, because this is the string that gets handed back to an agent
+    and `value_budget_exceeded` on its own says nothing about what to do
+    instead. Both are available: ``exc.reasons`` for code, ``str(exc)`` for a
+    person or a model.
+    """
 
     def __init__(self, tool: str, reasons: tuple[str, ...]) -> None:
         self.tool = tool
         self.reasons = tuple(reasons)
+        self.explanations = explained(self.reasons)
         super().__init__(
             f"{tool} was refused by policy: "
-            f"{'; '.join(reasons) or 'no reason recorded'}")
+            f"{'; '.join(self.explanations) or 'no reason recorded'}")
 
 
 class StepUpRequired(GuardrailError):
@@ -75,9 +85,10 @@ class StepUpRequired(GuardrailError):
         self.tool = tool
         self.reasons = tuple(reasons)
         self.request = request
+        self.explanations = explained(self.reasons)
         super().__init__(
             f"{tool} needs approval: "
-            f"{'; '.join(reasons) or 'no reason recorded'}")
+            f"{'; '.join(self.explanations) or 'no reason recorded'}")
 
 
 def _payload(result: Any) -> tuple[str, dict[str, Any] | None]:

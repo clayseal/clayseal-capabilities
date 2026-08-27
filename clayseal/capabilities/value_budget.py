@@ -286,6 +286,33 @@ class ValueReservation:
         if self._budget is not None:
             self._budget._release_reservation(self)
 
+    # A reservation is a two-phase thing, and every two-phase thing in Python
+    # should be spellable as a `with`. Written out by hand, the failure mode is
+    # a reservation that is never settled: it holds against the ceiling for the
+    # life of the session, so the budget quietly shrinks and later legitimate
+    # calls are refused with `value_budget_exceeded` for spend that never
+    # happened.
+    #
+    #     with budget.reserve("issue_refund", args) as res:
+    #         if not res.allowed:
+    #             return refuse(res.reason)
+    #         do_the_refund()          # commits on the way out
+    #
+    # Leaving the block by exception releases instead, which is the direction
+    # that cannot overcharge: a call that did not complete has not spent.
+    def __enter__(self) -> ValueReservation:
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        if not self.allowed:
+            # Nothing was booked, so there is nothing to settle either way.
+            return False
+        if exc_type is None:
+            self.commit()
+        else:
+            self.release()
+        return False
+
 
 def parse_amount(
     config: ValueBudgetConfig, tool_name: str, args: dict[str, Any],
@@ -531,7 +558,24 @@ class SessionValueBudget:
     def commit(self, tool_name: str, args: dict[str, Any]) -> None:
         """Debit the budget directly (legacy check-then-commit path). Call only
         after a call is confirmed non-blocked. Lock-guarded, but NOT atomic with
-        an earlier ``would_allow`` -- prefer :meth:`reserve` for the gate."""
+        an earlier ``would_allow`` -- prefer :meth:`reserve` for the gate.
+
+        **Never pair this with** :meth:`reserve`. There are two ``commit``
+        methods one line apart in this module and they are not alternatives:
+
+            res = budget.reserve(tool, args)   # holds the amount
+            res.commit()                       # <- settles the hold
+            budget.commit(tool, args)          # <- books it a SECOND time
+
+        The second spelling leaves the reservation outstanding and adds the
+        amount to ``spent`` as well, so the budget is charged twice and the
+        ceiling arrives at half its stated size. Nothing raises; the session
+        simply starts refusing legitimate calls. Reviewing this module, the
+        mistake was made on the first attempt, which is why it is written down
+        here rather than left to be inferred.
+
+        Use ``with budget.reserve(...) as res:`` and this method never comes up.
+        """
         parsed = self._amount(tool_name, args)
         if parsed is None:
             return
