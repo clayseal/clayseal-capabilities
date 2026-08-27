@@ -48,7 +48,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from agentauth.capabilities.monitor.scoring.target import (
+from clayseal.capabilities.monitor.scoring.target import (
     TargetDensityScorer,
     action_target,
     segments,

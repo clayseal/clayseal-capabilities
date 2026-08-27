@@ -79,9 +79,9 @@ def test_atif_loader_produces_real_long_trajectories():
 
 def test_delegated_trust_and_ensemble():
     import random
-    from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
-    from agentauth.capabilities.monitor.scoring.ensemble import EnsembleScorer
-    from agentauth.capabilities.monitor.training.synth_corpus import generate, inject_delegated_trust
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
+    from clayseal.capabilities.monitor.scoring.ensemble import EnsembleScorer
+    from clayseal.capabilities.monitor.training.synth_corpus import generate, inject_delegated_trust
 
     benign = generate(800, seed=3)
     det = TrajectoryDetector(scorer=EnsembleScorer([NGramScorer(), NGramScorer()]), alpha=0.02)

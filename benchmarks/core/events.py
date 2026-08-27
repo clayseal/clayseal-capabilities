@@ -81,7 +81,7 @@ class BenchmarkTask:
     """A single scenario: the granted authorization plus the events to judge.
 
     ``mandate`` is a plain dict compilable by
-    ``agentauth.core.task_scope.compile_task_scope`` (an ``allowed_resources`` /
+    ``clayseal.core.task_scope.compile_task_scope`` (an ``allowed_resources`` /
     ``grant_id`` mandate or an ``allowed_paths`` human-authorization document).
     ``capabilities`` is the ``[{"resource","action"}, ...]`` list used by the
     capability-token engine. ``authorized_args`` records, per tool, the argument

@@ -78,7 +78,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
         # why it is stated before it is measured.
-        from agentauth.capabilities.confidentiality import FlowTracker
+        from clayseal.capabilities.confidentiality import FlowTracker
         from benchmarks.bpl.sensitivity import derive
 
         broker.sensitivity = derive(scen)
@@ -682,7 +682,7 @@ def main(argv=None) -> int:
         # Re-expressing the same intent in the vocabulary the classifier emits
         # separates containment that DISCRIMINATES from containment that is a
         # blanket refusal of everything write-shaped.
-        from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
+        from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 
         _canon = frozenset({"read", "call", "write", "transfer", "send"})
         _orig = IntentEnvelope.__init__

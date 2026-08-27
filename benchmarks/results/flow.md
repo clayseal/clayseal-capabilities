@@ -8,7 +8,7 @@ for the chunked and fan-out arms at every width, it published a single
 false-block figure for a rate that moves with session length, and it listed
 eight evasion transforms as though they were a closed set.
 
-The module under test is `agentauth/capabilities/confidentiality.py`. It is
+The module under test is `clayseal/capabilities/confidentiality.py`. It is
 carrying uncommitted changes, and where those changes moved a number the
 attribution is measured and printed rather than asserted.
 
@@ -808,7 +808,7 @@ python -m pytest python/tests/test_flow_order_independence.py \
 The attribution table, which runs the split arms against the module as
 committed at `9bd0ec0` alongside the working tree, is a probe rather than a
 committed entry point. It extracts the old module with
-`git show 9bd0ec0:agentauth/capabilities/confidentiality.py`, loads it under a
+`git show 9bd0ec0:clayseal/capabilities/confidentiality.py`, loads it under a
 second name with `importlib`, and drives both modules over the same sessions
 from `benchmarks.flow.build_sessions` with the same ladder accounting
 `flow_probes.py` uses.

@@ -5,10 +5,10 @@ sports advantage/restart.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 
 

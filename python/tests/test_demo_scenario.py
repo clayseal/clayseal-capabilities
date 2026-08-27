@@ -1,7 +1,7 @@
 """The scenario, and the guards that keep it from quietly becoming dishonest."""
 import pytest
 
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from demo.scenario import (
     COLLECTOR,
     COLLECTOR_TO,

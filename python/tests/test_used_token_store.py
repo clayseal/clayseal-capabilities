@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from agentauth.capabilities.commit import InMemoryUsedTokenStore
-from agentauth.capabilities.used_token_store import load_used_token_store_from_env
-from agentauth.capabilities import used_token_store as stores
+from clayseal.capabilities.commit import InMemoryUsedTokenStore
+from clayseal.capabilities.used_token_store import load_used_token_store_from_env
+from clayseal.capabilities import used_token_store as stores
 import pytest
 
 
@@ -18,7 +18,7 @@ def test_in_memory_store_rejects_replay():
 
 
 def test_load_memory_store_from_env(monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_COMMIT_TOKEN_STORE", "memory")
+    monkeypatch.setenv("CLAYSEAL_COMMIT_TOKEN_STORE", "memory")
     store = load_used_token_store_from_env()
     assert isinstance(store, InMemoryUsedTokenStore)
 
@@ -31,9 +31,9 @@ def reset_default_store():
 
 
 def test_default_used_token_store_initializes_to_none(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_STORE", raising=False)
-    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_REDIS_URL", raising=False)
-    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_DYNAMODB_TABLE", raising=False)
+    monkeypatch.delenv("CLAYSEAL_COMMIT_TOKEN_STORE", raising=False)
+    monkeypatch.delenv("CLAYSEAL_COMMIT_TOKEN_REDIS_URL", raising=False)
+    monkeypatch.delenv("CLAYSEAL_COMMIT_TOKEN_DYNAMODB_TABLE", raising=False)
 
     assert stores.default_used_token_store() is None
 
@@ -46,7 +46,7 @@ def test_default_used_token_store_can_be_set_explicitly():
 
 
 def test_unknown_store_config_raises(monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_COMMIT_TOKEN_STORE", "bogus")
+    monkeypatch.setenv("CLAYSEAL_COMMIT_TOKEN_STORE", "bogus")
 
-    with pytest.raises(ValueError, match="unsupported AGENTAUTH_COMMIT_TOKEN_STORE"):
+    with pytest.raises(ValueError, match="unsupported CLAYSEAL_COMMIT_TOKEN_STORE"):
         stores.default_used_token_store()

@@ -32,7 +32,7 @@ Capabilities virtualenv, which has `agentauth` installed:
 
 ```bash
 cd ~/Projects/clayseal-ivisor-demo
-PY=~/Projects/agentauth-capabilities/.venv/bin/python
+PY=~/Projects/clayseal/.venv/bin/python
 
 $PY arena.py live 07-beaconing          # live panelled TUI (needs rich)
 $PY arena.py live all                   # the whole roster, live

@@ -90,7 +90,7 @@ def test_shuffling_the_unrelated_reads_does_not_move_a_verdict(corpus):
     """
     _available(corpus)
     policy = _policy(**MODES["value+effects+reread"])
-    from agentauth.capabilities.staleness import ObservationLedger, content_version
+    from clayseal.capabilities.staleness import ObservationLedger, content_version
 
     from benchmarks.state import _scalars
 

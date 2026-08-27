@@ -3,7 +3,7 @@
 STATUS: current
 
 `python -m benchmarks.stress_identity`. The adapters in
-`agentauth/capabilities/identity_adapters/` were the last unfuzzed wire boundary
+`clayseal/capabilities/identity_adapters/` were the last unfuzzed wire boundary
 in the library. Every other one gave up a fail-open when fuzzed, and so did this.
 
 115 malformed claims dicts across five adapters, plus a differential authority

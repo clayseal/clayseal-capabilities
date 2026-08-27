@@ -63,8 +63,8 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.mandate_lint import lint_mandate
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.mandate_lint import lint_mandate
+from clayseal.capabilities.value_budget import (
     EffectSpec,
     SessionValueBudget,
     ValueBudgetConfig,
@@ -241,11 +241,11 @@ def envelope_asr() -> dict[str, bool]:
     # `classify_verb` comes from the library, NOT from `benchmarks.live.
     # broker_defense`, which re-exports it and hard-imports the optional
     # `agentdojo` extra at module scope. See `bpl/schema.verb_for`.
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.tool_verbs import classify_verb
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.tool_verbs import classify_verb
 
     def escapes(tool: str) -> bool:
         broker = SessionBroker(

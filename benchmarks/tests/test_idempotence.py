@@ -99,19 +99,19 @@ def test_verification_refuses_by_default_without_a_replay_store(monkeypatch):
 
     This used to read the SOURCE of `verify_commit_token` for the string
     "is_production()", which passed while the guard itself was inert: it only
-    applied in a deployment that had set AGENTAUTH_ENV. Asserting on behaviour
+    applied in a deployment that had set CLAYSEAL_ENV. Asserting on behaviour
     with the variable unset is the check that would have failed then.
     """
-    from agentauth.core.runtime import (
+    from clayseal.core.runtime import (
         ActionDescriptor,
         AuthorityContext,
         ExecutionContext,
     )
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
-    from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
+    from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
 
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
 
     key = generate_keypair()

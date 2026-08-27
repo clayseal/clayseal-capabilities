@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentauth-capabilities"
-version = "0.5.0"
+name = "clayseal"
+version = "0.6.0"
 description = "Clay Seal: an MCP gateway that authorizes each agent action against the whole session, not one call at a time"
 readme = "README.md"
 license = { text = "MIT" }
@@ -40,7 +40,7 @@ classifiers = [
 requires-python = ">=3.10,<3.15"
 # The whole runtime, in two third-party packages. `cryptography` signs and
 # verifies; `pyyaml` parses the policy document. Everything else the gateway
-# needs is stdlib or lives in this repo: `agentauth.core` used to be a separate
+# needs is stdlib or lives in this repo: `clayseal.core` used to be a separate
 # private distribution and is vendored here now, because a hard dependency on a
 # repository nobody can read is not a dependency, it is a wall.
 dependencies = [
@@ -52,21 +52,21 @@ dependencies = [
 # `clayseal proxy` is the enforcement point that does not depend on the agent
 # cooperating; `clayseal policy lint` is the pre-merge gate on the authority.
 [project.scripts]
-clayseal = "agentauth.capabilities.cli:main"
+clayseal = "clayseal.capabilities.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/pberlizov/clay-seal-capabilities"
-Documentation = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/clay-seal-capabilities"
-Issues = "https://github.com/pberlizov/clay-seal-capabilities/issues"
-Changelog = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/pberlizov/clayseal"
+Documentation = "https://github.com/pberlizov/clayseal/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/pberlizov/clayseal"
+Issues = "https://github.com/pberlizov/clayseal/issues"
+Changelog = "https://github.com/pberlizov/clayseal/blob/main/CHANGELOG.md"
 
-# Execution-sandbox backends, resolved by name via agentauth.core.plugins. The
+# Execution-sandbox backends, resolved by name via clayseal.core.plugins. The
 # built-in iVisor backend needs no dependency here (it drives an external
 # binary); registering it makes the substrate swappable, a Linux deployment can
 # ship a gVisor/seccomp backend under the same Protocol without touching callers.
-[project.entry-points."agentauth.sandbox_backends"]
-ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
+[project.entry-points."clayseal.sandbox_backends"]
+ivisor = "clayseal.capabilities.sandbox.backend:IVisorBackend"
 
 [project.optional-dependencies]
 # The live TUI in demo/. Deliberately NOT folded into [dev]: the demo's pure
@@ -77,7 +77,7 @@ ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
 demo = ["rich>=13.7", "openai>=1.40"]
 # The default Biscuit token backend wraps the identity layer's primitives.
 # Identity is a SEPARATE distribution and is not required to use this layer:
-# bring your own CapabilityTokenBackend via the agentauth.capability_backends
+# bring your own CapabilityTokenBackend via the clayseal.capability_backends
 # entry point. This extra is listed for deployments that already have identity
 # installed, and it is deliberately NOT part of [dev], because [dev] has to
 # resolve from a clean index for anyone who clones this repo.
@@ -100,23 +100,25 @@ dynamodb = ["boto3>=1.34"]
 # under a 3.12 interpreter. InjecAgent/ToolEmu are separate checkouts (see
 # benchmarks/README.md), not pip deps.
 benchmarks = ["agentdojo>=0.1.35,<0.2"]
-# Learned goal-conditioned trajectory scorer (agentauth.capabilities.monitor).
+# Learned goal-conditioned trajectory scorer (clayseal.capabilities.monitor).
 # Optional: the n-gram scorer + conformal layer run with no extra deps; torch is
 # only needed to train/serve the transformer scorer (do it on a GPU VM).
 monitor = ["torch>=2.2"]
 # `fakeredis` backs the cross-host ledger tests. It is a double, not a Redis:
-# set AGENTAUTH_TEST_REDIS_URL to run the same suite against a live server.
+# set CLAYSEAL_TEST_REDIS_URL to run the same suite against a live server.
 dev = ["pytest>=8.0", "ruff>=0.4", "fakeredis>=2.21", "redis>=5.0",
-       "agentauth-capabilities[oidc,a2a]"]
+       "clayseal[oidc,a2a]"]
 
-# Ship both subpackages of the `agentauth` PEP 420 namespace. There is no
-# `agentauth/__init__.py` on purpose: the namespace stays open, so a separately
-# installed `agentauth.identity` still resolves alongside these two.
+# Ship both subpackages of the `clayseal` PEP 420 namespace, plus the `agentauth`
+# compatibility shim. There is no `clayseal/__init__.py` on purpose: the namespace
+# stays open, so a separately installed `clayseal.identity` resolves alongside
+# these two. `agentauth/` re-exports the old paths with a DeprecationWarning for
+# one release; see docs/MIGRATION.md.
 [tool.hatch.build.targets.wheel]
-only-include = ["agentauth/capabilities", "agentauth/core"]
+only-include = ["clayseal/capabilities", "clayseal/core", "agentauth"]
 
 # Lint rules are PINNED rather than inherited from ruff's defaults, because
-# `ruff check agentauth` is now a CI gate and an implicit rule set makes that
+# `ruff check clayseal` is now a CI gate and an implicit rule set makes that
 # gate change meaning whenever ruff releases. The families below are the ones
 # already firing on this tree plus the correctness core.
 [tool.ruff]
@@ -165,25 +167,25 @@ ignore = [
 # set of environment-variable NAMES, the things you read a credential from, not
 # a credential. Suppressed per file rather than globally so a genuine hardcoded
 # secret elsewhere in the package still fails the build.
-"agentauth/capabilities/commit.py" = ["S105"]
-"agentauth/capabilities/used_token_store.py" = ["S105"]
-"agentauth/capabilities/hardening/object_class.py" = ["S105"]
+"clayseal/capabilities/commit.py" = ["S105"]
+"clayseal/capabilities/used_token_store.py" = ["S105"]
+"clayseal/capabilities/hardening/object_class.py" = ["S105"]
 # Same NAME heuristic in the vendored core. `TOKEN_LIMIT` is a budget-type enum
 # member and `SIGNING_KEY_PASSWORD_ENV` is the NAME of the variable you read a
 # passphrase from, not a passphrase.
-"agentauth/core/budget.py" = ["S105"]
-"agentauth/core/signing.py" = ["S105", "TRY004"]
+"clayseal/core/budget.py" = ["S105"]
+"clayseal/core/signing.py" = ["S105", "TRY004"]
 # TRY004 wants TypeError where these raise ValueError on a malformed document.
 # The contract callers are written against is that every parse and compile
 # failure in this layer is a ValueError, and there are call sites that catch it
 # by that type. Changing the exception to satisfy a lint preference would break
 # them silently, which is a worse outcome than the preference is worth.
-"agentauth/core/task_scope.py" = ["TRY004"]
+"clayseal/core/task_scope.py" = ["TRY004"]
 # This module DETECTS Trojan-Source bidi overrides, zero-width joiners and tag
 # characters, so its pattern tables necessarily contain them. Flagging the
 # detector for holding the thing it detects is the lint equivalent of an
 # antivirus quarantining its own signature file.
-"agentauth/capabilities/hardening/input_hardening.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
+"clayseal/capabilities/hardening/input_hardening.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]

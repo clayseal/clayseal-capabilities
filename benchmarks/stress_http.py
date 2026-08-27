@@ -34,9 +34,9 @@ import string
 import sys
 from collections import Counter
 
-from agentauth.capabilities.http_gateway import HttpGateway
-from agentauth.capabilities.mcp_proxy import McpProxy
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.http_gateway import HttpGateway
+from clayseal.capabilities.mcp_proxy import McpProxy
+from clayseal.capabilities.policy import load_policy_text
 
 POLICY = """
 version: 1
@@ -138,7 +138,7 @@ def check(gateway: HttpGateway, forwarded: list, headers: dict,
             json.loads(sent)
         except ValueError:
             failures.append("NO-BYPASS(forwarded text is not JSON)")
-        from agentauth.capabilities.http_gateway import check_headers
+        from clayseal.capabilities.http_gateway import check_headers
 
         try:
             if not check_headers(headers, json.loads(sent), require=False).ok:

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.behavior_baseline import (
+from clayseal.capabilities.behavior_baseline import (
     APPROACHING,
     INSIDE,
     UNCHANGED,
@@ -158,7 +158,7 @@ def test_a_null_result_carries_what_it_could_not_have_resolved():
 
 def test_the_profile_holds_counts_and_never_arguments():
     """A profile is committable and auditable because there is nothing in it."""
-    from agentauth.capabilities.decision_log import DecisionRecord
+    from clayseal.capabilities.decision_log import DecisionRecord
 
     record = DecisionRecord(
         seq=0, receipt_id="r", created_at="t", query_id="q", tool="pay_vendor",
@@ -209,7 +209,7 @@ def test_the_approximation_agrees_with_the_exact_test_where_both_run():
     Pins the crossover: a future edit that moves `EXACT_MAX_TOTAL` without
     checking the two against each other fails here.
     """
-    from agentauth.capabilities.behavior_baseline import _normal_greater
+    from clayseal.capabilities.behavior_baseline import _normal_greater
 
     for a, b, c, d in [(30, 70, 20, 80), (60, 140, 40, 160),
                        (250, 750, 200, 800), (400, 600, 350, 650)]:
@@ -218,7 +218,7 @@ def test_the_approximation_agrees_with_the_exact_test_where_both_run():
 
 
 def test_the_crossover_is_named_rather_than_silent():
-    from agentauth.capabilities.behavior_baseline import (
+    from clayseal.capabilities.behavior_baseline import (
         EXACT_MAX_TERMS,
         EXACT_MAX_TOTAL,
     )

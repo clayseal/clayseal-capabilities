@@ -598,7 +598,7 @@ def test_agentleak_confidentiality_cannot_see_a_leaked_human_name():
     Our own flow benchmark uses secrets like ``sk-live-9f2...``, which is why
     this never appeared there. A human name is the canonical piece of PII.
     """
-    from agentauth.capabilities.parameter_provenance import (
+    from clayseal.capabilities.parameter_provenance import (
         MIN_ATTRIBUTABLE,
         ParameterProvenance,
     )

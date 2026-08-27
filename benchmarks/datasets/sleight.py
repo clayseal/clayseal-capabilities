@@ -212,7 +212,7 @@ def _authorized_surface(events) -> list[str]:
     """
     import posixpath
 
-    from agentauth.capabilities.monitor.sealed_plan import extract_destinations
+    from clayseal.capabilities.monitor.sealed_plan import extract_destinations
 
     out: set[str] = set()
     for event in events:

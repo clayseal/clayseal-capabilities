@@ -1,9 +1,9 @@
 """Family A, aggregate / sequence scenarios (longer than legacy)."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import (
     EffectSpec,
     SessionValueBudget,
     ValueBudgetConfig,

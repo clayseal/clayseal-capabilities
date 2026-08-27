@@ -17,7 +17,7 @@ human is another sampling problem.
 
 Every approver signs with a real key and goes through
 `SessionBroker.resolve_step_up`. The harness must **not** set
-`AGENTAUTH_STEP_UP_ALLOW_UNSIGNED`, or the measured path stops being the deployed
+`CLAYSEAL_STEP_UP_ALLOW_UNSIGNED`, or the measured path stops being the deployed
 path and the numbers describe a system nobody ships.
 
 ## The one that matters
@@ -34,13 +34,13 @@ import random
 from dataclasses import dataclass, field
 from typing import Callable
 
-from agentauth.capabilities.step_up import (
+from clayseal.capabilities.step_up import (
     SignedStepUpApproval,
     StepUpApproval,
     StepUpRequest,
     sign_step_up_approval,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 __all__ = [
     "Approver", "NeverApprove", "AlwaysApprove", "OracleApprover",

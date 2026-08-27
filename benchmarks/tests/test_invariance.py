@@ -68,7 +68,7 @@ def test_a_read_prefix_launders_an_effectful_tool():
     """
     # From the library rather than through `broker_defense`, which re-exports
     # it and hard-imports the optional `agentdojo` extra at module scope.
-    from agentauth.capabilities.tool_verbs import classify_verb
+    from clayseal.capabilities.tool_verbs import classify_verb
 
     for tool in ("get_vendor_payment", "read_and_pay", "view_delete_all",
                  "get_grant_admin", "list_transfer_execute"):

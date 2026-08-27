@@ -1,7 +1,7 @@
 # AML → BPL translation map
 
 ClaySeal’s monitor already treats agent tool streams like AML activity streams
-(`agentauth/capabilities/monitor/aml.py`): **velocity, fan-out, structuring,
+(`clayseal/capabilities/monitor/aml.py`): **velocity, fan-out, structuring,
 post-read escalation, delegated-trust laundering, peer deviation**, scoring
 *shape*, not memo text. BPL scenarios are the **composite-policy unit tests**
 for those typologies in an agent loop (Progent-blind per call; violation in the

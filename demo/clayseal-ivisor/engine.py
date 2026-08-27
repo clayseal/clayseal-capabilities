@@ -20,8 +20,8 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.monitor import Action
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.monitor import Action
 
 from capability import Capability
 

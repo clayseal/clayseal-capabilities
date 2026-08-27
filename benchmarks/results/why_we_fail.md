@@ -119,7 +119,7 @@ who deploys this against content-defined harm will discover it in production.
 
 ## Implemented: velocity, what it recovered, and a result we had to withdraw
 
-`agentauth/capabilities/velocity.py`, exposed as the ladder rung
+`clayseal/capabilities/velocity.py`, exposed as the ladder rung
 `task-scope+binding+budget+velocity`.
 
 ### The first version was invalid

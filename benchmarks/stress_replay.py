@@ -47,7 +47,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from agentauth.capabilities.commit import InMemoryUsedTokenStore
+from clayseal.capabilities.commit import InMemoryUsedTokenStore
 
 FUTURE = datetime.now(timezone.utc) + timedelta(hours=1)
 
@@ -93,7 +93,7 @@ def attack_race(threads: int) -> dict:
 
 def attack_outage() -> dict:
     """What the verifier does when the replay store cannot be reached."""
-    from agentauth.capabilities.commit import verify_commit_token
+    from clayseal.capabilities.commit import verify_commit_token
     from benchmarks.stress_commit import _pair
 
     signed, ctx, trusted = _pair()

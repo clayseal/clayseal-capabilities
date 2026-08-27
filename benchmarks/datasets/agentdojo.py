@@ -17,7 +17,7 @@ AgentDojo's Python API has shifted across releases, so suite discovery and
 ground-truth extraction each try a few known call conventions and fail loudly
 with an actionable message. Validated end-to-end on the Azure VM run (see
 ``benchmarks/azure/run_benchmark.sh``); install with
-``pip install 'agentauth-capabilities[benchmarks]'``.
+``pip install 'clayseal[benchmarks]'``.
 """
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ def _load_suites() -> dict[str, Any]:
     except ImportError as exc:
         raise RuntimeError(
             "agentdojo is not installed. Install the benchmark extra: "
-            "pip install 'agentauth-capabilities[benchmarks]'."
+            "pip install 'clayseal[benchmarks]'."
         ) from exc
     # API confirmed against agentdojo 0.1.35 (benchmark versions up to v1.2.2):
     #   get_suites(version) -> dict[str, TaskSuite]

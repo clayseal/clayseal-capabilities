@@ -62,5 +62,6 @@ Capabilities are designed to be short-lived. Production systems should:
 
 ## Compatibility and Branding
 
-The product brand is Clay Seal. Package names and import paths currently remain
-`agentauth-capabilities` and `agentauth.capabilities` for compatibility.
+The product, the distribution, the import root and the CLI are all `clayseal`.
+The pre-0.6 `agentauth.*` import paths still resolve with a `DeprecationWarning`
+and are removed in 0.7; see [MIGRATION.md](MIGRATION.md).

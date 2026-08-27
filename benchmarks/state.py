@@ -80,8 +80,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agentauth.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
-from agentauth.capabilities.staleness import (
+from clayseal.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
+from clayseal.capabilities.staleness import (
     CONSEQUENTIAL_VERBS, OBSERVING_VERBS, ObservationLedger, StalenessPolicy,
     content_version)
 from benchmarks.core.engines import VelocityLadderEngine, build_engines
@@ -646,7 +646,7 @@ def _cross_axis(scenarios: list[Scenario], rng: random.Random) -> dict:
     read's object sensitive, the sink the goal named declassified, and then with
     declassification withheld, which is the strictest setting available.
     """
-    from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+    from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 
     out = {"declassified": {"stale_refused": 0, "fresh_refused": 0, "total": 0},
            "strict": {"stale_refused": 0, "fresh_refused": 0, "total": 0}}

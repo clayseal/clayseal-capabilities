@@ -1,14 +1,14 @@
 """Family B, privilege-escape / scope-creep scenarios."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.call_budget import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.call_budget import (
     CallBudgetConfig,
     CallEffectSpec,
     SessionCallBudget,
 )
-from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+from clayseal.capabilities.scoping.goal import GoalSpec
 from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 
 

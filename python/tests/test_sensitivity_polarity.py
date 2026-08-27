@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     FlowTracker,
     SensitivityPolicy,
     _lexical_normalize,

@@ -32,7 +32,7 @@ import random
 
 import pytest
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     SINK_VERBS, FlowTracker, SensitivityPolicy)
 from benchmarks.core.events import EventLabel
 
@@ -137,7 +137,7 @@ def test_the_work_per_check_does_not_grow_with_session_length():
     on characters scanned rather than on wall clock, so it does not flake on a
     loaded machine.
     """
-    from agentauth.capabilities import confidentiality
+    from clayseal.capabilities import confidentiality
 
     seen: list[int] = []
     original = confidentiality._subsequence_coverage
@@ -248,7 +248,7 @@ def test_the_window_is_wider_than_the_widest_split_it_claims_to_catch():
     implied: a value longer than the window, dripped one character per write,
     falls outside it.
     """
-    from agentauth.capabilities.confidentiality import _ACCUMULATOR_WRITES
+    from clayseal.capabilities.confidentiality import _ACCUMULATOR_WRITES
 
     assert _ACCUMULATOR_WRITES >= 2 * len(SECRET)
     assert FlowTracker().max_blocks == _ACCUMULATOR_WRITES

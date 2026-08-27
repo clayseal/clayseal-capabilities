@@ -13,10 +13,10 @@ import random
 
 import pytest
 
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.generation import compile_envelope
-from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.generation import compile_envelope
+from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 TOOLS = ["read_file", "write_file", "send_email", "pay_vendor", "unknown_tool"]
 VERBS = ["read", "write", "send", "transfer"]

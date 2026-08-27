@@ -17,7 +17,7 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.principal_ledger import (
+from clayseal.capabilities.principal_ledger import (
     PrincipalBudgetView,
     PrincipalLedger,
     structuring_signal,
@@ -204,7 +204,7 @@ def _book_all(ledger: PrincipalLedger, amounts, principal="p"):
 def test_uniform_split_against_the_ceiling_is_flagged():
     """Four payments of 2500 under a 10000 ceiling. No round-number test sees
     this, and it is the entire attack."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger()
     _book_all(ledger, ["2500", "2500", "2500", "2500"])
@@ -216,7 +216,7 @@ def test_uniform_split_against_the_ceiling_is_flagged():
 
 def test_just_under_parking_is_flagged():
     """The classic signature: repeated amounts in the top band below the limit."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger(window_seconds=86400)
     _book_all(ledger, ["9000", "9000", "9000", "9000"])
@@ -228,7 +228,7 @@ def test_just_under_parking_is_flagged():
 def test_varied_business_payments_are_not_flagged():
     """The false-positive case that decides whether anyone leaves this on.
     Real invoice runs vary in size and do not consume the whole ceiling."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger()
     _book_all(ledger, ["1200.50", "340", "2750.25", "89.99", "1500"])
@@ -240,7 +240,7 @@ def test_uniform_but_low_utilisation_is_not_flagged():
     """Payroll is uniform. Uniformity only counts as evidence when the
     fragments also consume most of the ceiling, which is what makes the limit
     look like the binding constraint."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger()
     _book_all(ledger, ["100", "100", "100", "100", "100"])
@@ -250,7 +250,7 @@ def test_uniform_but_low_utilisation_is_not_flagged():
 
 def test_a_single_large_payment_is_not_structuring():
     """One payment cannot be a split, whatever its size."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger()
     _book_all(ledger, ["9900"])
@@ -260,7 +260,7 @@ def test_a_single_large_payment_is_not_structuring():
 
 def test_signal_respects_the_window():
     """Yesterday's split is not today's evidence."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     ledger = PrincipalLedger(window_seconds=3600)
     t0 = 1_000_000.0
@@ -330,7 +330,7 @@ def test_jittered_fragments_do_not_evade_detection():
     """10% jitter defeated the uniformity signal while the same money moved.
     The fragmentation signal does not depend on the amounts resembling each
     other."""
-    from agentauth.capabilities.principal_ledger import structuring_signal
+    from clayseal.capabilities.principal_ledger import structuring_signal
 
     for amounts in (["2500", "2475", "2520", "2505"],       # 1%
                     ["2500", "2250", "2750", "2500"],       # 10%
@@ -591,7 +591,7 @@ def test_a_ledger_survives_repeated_crash_and_restart(tmp_path):
 # The threshold's own just-under evasion
 # --------------------------------------------------------------------------- #
 def _windows(pattern, ceiling="10000", window=86400):
-    from agentauth.capabilities.principal_ledger import parks_below_the_gate
+    from clayseal.capabilities.principal_ledger import parks_below_the_gate
 
     ledger = PrincipalLedger(window_seconds=window)
     now = (len(pattern) + 1) * window
@@ -719,14 +719,14 @@ def test_committing_one_hold_twice_books_once():
 # Delegation splitting: the axis the plan called unclosed by construction
 # --------------------------------------------------------------------------- #
 def _delegated(sub: str, chain: list[str] | None = None):
-    from agentauth.core.authority_binding import AuthorityBinding
+    from clayseal.core.authority_binding import AuthorityBinding
     return AuthorityBinding(subject_id=sub, authority_id="a",
                             issuer="https://corp.example",
                             delegation_chain=list(chain or []))
 
 
 def _chain_view(ledger, binding, ceiling=Decimal("100")):
-    from agentauth.capabilities.principal_ledger import (
+    from clayseal.capabilities.principal_ledger import (
         PrincipalBudgetView, principal_chain, principal_key,
     )
     return PrincipalBudgetView(
@@ -752,7 +752,7 @@ def test_a_parent_ceiling_bounds_everything_it_delegates_to():
     sub-agents mints headroom. The plan names this axis "unclosed by
     construction, and where MCP deployments live".
     """
-    from agentauth.capabilities.principal_ledger import principal_key
+    from clayseal.capabilities.principal_ledger import principal_key
 
     ledger = PrincipalLedger()
     parent = _delegated("parent")
@@ -783,7 +783,7 @@ def test_a_refused_delegate_action_does_not_consume_ancestor_headroom():
     that never happened, which is the denial of service the hold TTL exists to
     prevent arriving by another route.
     """
-    from agentauth.capabilities.principal_ledger import principal_key
+    from clayseal.capabilities.principal_ledger import principal_key
 
     ledger = PrincipalLedger()
     parent = _delegated("parent")
@@ -809,8 +809,8 @@ def test_an_undelegated_principal_is_unchanged():
 def test_the_chain_is_issuer_qualified():
     """An unqualified chain entry would collide across issuers exactly as a bare
     `sub` does, which is the defect `principal_key` exists to avoid."""
-    from agentauth.capabilities.principal_ledger import principal_chain
-    from agentauth.core.authority_binding import AuthorityBinding
+    from clayseal.capabilities.principal_ledger import principal_chain
+    from clayseal.core.authority_binding import AuthorityBinding
 
     good = AuthorityBinding(subject_id="s", authority_id="a",
                             issuer="https://good.example",
@@ -829,8 +829,8 @@ def test_claims_cannot_assert_their_own_delegation_chain():
     now books against its ancestors, an attacker could charge an unrelated
     principal's ceiling to exhaust it.
     """
-    from agentauth.capabilities.identity_adapters import oidc
-    from agentauth.capabilities.principal_ledger import principal_chain
+    from clayseal.capabilities.identity_adapters import oidc
+    from clayseal.capabilities.principal_ledger import principal_chain
 
     forged = oidc.provider.to_binding(
         {"subject_id": "attacker", "iss": "https://corp.example",

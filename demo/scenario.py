@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agentauth.capabilities.hardening.egress_policy import extract_destinations
+from clayseal.capabilities.hardening.egress_policy import extract_destinations
 from demo.escalation import Level, SealedGoal
 from demo.expectations import (
     Allow,

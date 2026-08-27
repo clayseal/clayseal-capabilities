@@ -1,10 +1,10 @@
 """Envelope -> iVisor policy lowering, and the boundary it must not cross."""
 import pytest
-from agentauth.core.task_scope import TaskScope
+from clayseal.core.task_scope import TaskScope
 
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.sandbox.lowering import LoweringError, lower_to_ivisor
-from agentauth.capabilities.scoping.models import CapabilityLease
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.sandbox.lowering import LoweringError, lower_to_ivisor
+from clayseal.capabilities.scoping.models import CapabilityLease
 
 
 def _lower(tmp_path, **kwargs):

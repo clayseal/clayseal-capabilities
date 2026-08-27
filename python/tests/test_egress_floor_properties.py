@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.hardening.egress_policy import (
+from clayseal.capabilities.hardening.egress_policy import (
     EgressPolicy,
     extract_destinations,
 )

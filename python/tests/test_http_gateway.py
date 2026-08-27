@@ -16,14 +16,14 @@ import json
 
 import pytest
 
-from agentauth.capabilities.http_gateway import (
+from clayseal.capabilities.http_gateway import (
     HEADER_MISMATCH,
     MCP_PROTOCOL_VERSION,
     HttpGateway,
     check_headers,
 )
-from agentauth.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
+from clayseal.capabilities.policy import load_policy_text
 
 BASE = """
 version: 1

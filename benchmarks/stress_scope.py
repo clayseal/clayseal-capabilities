@@ -48,7 +48,7 @@ import string
 import sys
 from collections import Counter
 
-from agentauth.core.task_scope import TaskScope, task_scope_allows_path
+from clayseal.core.task_scope import TaskScope, task_scope_allows_path
 
 ALLOWED_PREFIXES = ("data", "finance/ap", "out")
 DENIED_PREFIXES = ("infra/prod", "data/secrets")

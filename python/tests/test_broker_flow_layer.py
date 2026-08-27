@@ -15,11 +15,11 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.step_up import violation_code
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.step_up import violation_code
 
 SECRET = "AKIA0123456789ABCDEFQZ"
 POLICY = SensitivityPolicy(sensitive=("db:customers",),

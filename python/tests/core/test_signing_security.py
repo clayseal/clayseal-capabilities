@@ -1,4 +1,4 @@
-"""Security regression tests for agentauth.core.signing and delegation."""
+"""Security regression tests for clayseal.core.signing and delegation."""
 
 from __future__ import annotations
 
@@ -6,14 +6,14 @@ from uuid import uuid4
 
 import pytest
 
-from agentauth.core.delegation import (
+from clayseal.core.delegation import (
     issue_delegation,
     sign_delegation,
     verify_delegation_chain,
     verify_delegation_envelope,
 )
-from agentauth.core.mandate import mandate_signer_matches_issuer
-from agentauth.core.signing import generate_keypair, load_or_create_key, sign, verify
+from clayseal.core.mandate import mandate_signer_matches_issuer
+from clayseal.core.signing import generate_keypair, load_or_create_key, sign, verify
 
 
 def test_delegation_requires_signature_by_default():
@@ -34,7 +34,7 @@ def test_signed_delegation_passes_default_signature_requirement():
         capabilities=[{"resource": "mcp:tool", "action": "call"}],
     )
     envelope = sign_delegation(token, key)
-    from agentauth.core.delegation import delegation_from_envelope
+    from clayseal.core.delegation import delegation_from_envelope
 
     parsed = delegation_from_envelope(envelope)
     assert verify_delegation_chain(parsed, signed_envelope=envelope) == []
@@ -87,7 +87,7 @@ def test_sign_verify_roundtrip():
 
 
 def test_mandate_signer_rejects_self_referential_issuer_in_production(monkeypatch, tmp_path):
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
     public_key = "aa" * 32
     signature = {"public_key": public_key, "key_id": "issuer-1"}
     assert mandate_signer_matches_issuer(public_key, signature) is False
@@ -95,7 +95,7 @@ def test_mandate_signer_rejects_self_referential_issuer_in_production(monkeypatc
 
 
 def test_load_or_create_key_refuses_unencrypted_in_production(monkeypatch, tmp_path):
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
     dest = tmp_path / "agent_ed25519.key"
     with pytest.raises(ValueError, match="refusing to create unencrypted"):
         load_or_create_key(dest)

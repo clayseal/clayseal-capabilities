@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.sandbox.session import SandboxRunSpec, run_sandboxed
-from agentauth.capabilities.sandbox.verdicts import Verdict
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.sandbox.session import SandboxRunSpec, run_sandboxed
+from clayseal.capabilities.sandbox.verdicts import Verdict
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("IVISOR_E2E"),

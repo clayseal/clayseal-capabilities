@@ -24,7 +24,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from agentauth.capabilities.sandbox.verdicts import (
+from clayseal.capabilities.sandbox.verdicts import (
     POLICY_PREFIX,
     PolicyEvent,
     Verdict,

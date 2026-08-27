@@ -44,8 +44,8 @@ import string
 import sys
 from collections import Counter
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.surface import (
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.surface import (
     in_surface,
     names_a_readable_target,
     resource_readings,

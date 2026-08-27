@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("biscuit_auth")
 # `agentauth.biscuit_scope` and `agentauth.identity` both come from the OPTIONAL
-# identity layer (`pip install agentauth-capabilities[biscuit-service]`). Without
+# identity layer (`pip install clayseal[biscuit-service]`). Without
 # the skip this module raised ModuleNotFoundError at COLLECTION, which is not a
 # skipped test, it aborts the whole run before any other test executes. That is
 # how the suite could be described as green locally only by passing
@@ -15,7 +15,7 @@ pytest.importorskip("biscuit_auth")
 pytest.importorskip(
     "agentauth.biscuit_scope",
     reason="needs the optional identity layer: pip install "
-           "'agentauth-capabilities[biscuit-service]'",
+           "'clayseal[biscuit-service]'",
 )
 pytest.importorskip("agentauth.identity")
 

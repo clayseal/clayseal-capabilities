@@ -16,15 +16,15 @@ import json
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor.action import Action, ContextItem, TrustLevel
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.session_state import (
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor.action import Action, ContextItem, TrustLevel
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.session_state import (
     SESSION_STATE_SCHEMA,
     restore,
     snapshot,
 )
-from agentauth.core.task_scope import TaskScope
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="q-1", summary="pay the approved invoices")
 SCOPE = TaskScope(
@@ -54,13 +54,13 @@ def test_the_snapshot_is_json_serialisable():
 
 def test_a_step_up_asked_on_one_worker_resolves_on_another():
     """The finding this module exists for."""
-    from agentauth.capabilities.step_up import (
+    from clayseal.capabilities.step_up import (
         StepUpApproval,
         bind_to_action,
         build_step_up_request,
         sign_step_up_approval,
     )
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     asking = _fresh()
     request = bind_to_action(
@@ -98,7 +98,7 @@ def test_the_request_survives_a_round_trip_byte_for_byte():
     forgotten in `from_dict` changes the commitment silently, and every approval
     in flight stops matching the request it answers.
     """
-    from agentauth.capabilities.step_up import (
+    from clayseal.capabilities.step_up import (
         StepUpRequest,
         bind_to_action,
         build_step_up_request,
@@ -202,7 +202,7 @@ def test_a_foreign_schema_is_refused():
 
 def test_an_expired_grant_is_restored_expired():
     """Round-tripping must not restart the clock on authority a human gave."""
-    from agentauth.capabilities.session_grants import GrantSource
+    from clayseal.capabilities.session_grants import GrantSource
 
     broker = _fresh()
     broker.grants.grant_one_shot(

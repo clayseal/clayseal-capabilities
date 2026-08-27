@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 class _Boundary:
@@ -24,7 +24,7 @@ class _Boundary:
         self.seen: list[str] = []
 
     def authorize(self, *, principal, resource, action, envelope):
-        from agentauth.capabilities.deputy import PrincipalVerdict
+        from clayseal.capabilities.deputy import PrincipalVerdict
 
         self.seen.append(principal)
         if envelope is None:

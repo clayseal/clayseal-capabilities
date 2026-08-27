@@ -31,9 +31,9 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.principal_ledger import (
+from clayseal.capabilities.principal_ledger import (
     PrincipalBudgetView, PrincipalLedger, structuring_signal)
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 
 
 @dataclass

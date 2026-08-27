@@ -25,12 +25,12 @@ from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.sandbox.monitor_feed import extend_trajectory
-from agentauth.capabilities.sandbox.session import run_sandboxed
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.sandbox.monitor_feed import extend_trajectory
+from clayseal.capabilities.sandbox.session import run_sandboxed
+from clayseal.capabilities.scoping.goal import GoalSpec
 from demo.epoch import PolicyEpoch, open_epoch, spec_for
 from demo.escalation import Level, next_level, policy_for
 from demo.plan import classify_verb, envelope_for_tools

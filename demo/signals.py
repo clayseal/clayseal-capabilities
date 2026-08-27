@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.hardening.input_hardening import scan
-from agentauth.capabilities.monitor.action import Action, ContextItem, Trajectory
-from agentauth.capabilities.monitor.aml import AmlAnalytics
-from agentauth.capabilities.monitor.provenance import TaintTracker
-from agentauth.capabilities.sandbox.verdicts import PolicyEvent, Verdict
+from clayseal.capabilities.hardening.input_hardening import scan
+from clayseal.capabilities.monitor.action import Action, ContextItem, Trajectory
+from clayseal.capabilities.monitor.aml import AmlAnalytics
+from clayseal.capabilities.monitor.provenance import TaintTracker
+from clayseal.capabilities.sandbox.verdicts import PolicyEvent, Verdict
 from demo.escalation import Level, Signals
 
 _EGRESS_EVENTS = ("dns.query", "net.connect", "net.udp")

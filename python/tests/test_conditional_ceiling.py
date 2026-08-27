@@ -17,16 +17,16 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.conditional_ceiling import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.conditional_ceiling import (
     Guard,
     GuardedCeilings,
     guarded_from_config,
     tighten_in_place,
 )
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 
 
 def _config(**kw) -> GuardedCeilings:
@@ -268,7 +268,7 @@ def test_a_budget_with_a_plain_config_is_untouched():
 def test_it_composes_with_a_rolling_window():
     """`ceiling_for` is the single read point, so a guarded config drops into a
     windowed budget with no further work."""
-    from agentauth.capabilities.windowed_budget import WindowedValueBudget
+    from clayseal.capabilities.windowed_budget import WindowedValueBudget
 
     clock = [0.0]
     config = _config(guards=(_rush_guard(),))

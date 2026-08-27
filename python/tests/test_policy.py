@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.policy import (
+from clayseal.capabilities.policy import (
     Policy,
     PolicyError,
     compile_policy,
@@ -287,7 +287,7 @@ def test_the_example_policy_in_the_repo_is_valid():
 # Rolling windows and object identity
 # --------------------------------------------------------------------------- #
 def test_a_window_compiles_to_a_windowed_budget():
-    from agentauth.capabilities.windowed_budget import WindowedValueBudget
+    from clayseal.capabilities.windowed_budget import WindowedValueBudget
 
     policy = compile_policy(_doc(budgets={"value": {
         "ceilings": {"roll": "3000"},
@@ -300,8 +300,8 @@ def test_a_window_compiles_to_a_windowed_budget():
 
 def test_no_window_still_compiles_to_the_session_budget():
     """The default has to be unchanged: every published number predates windows."""
-    from agentauth.capabilities.value_budget import SessionValueBudget
-    from agentauth.capabilities.windowed_budget import WindowedValueBudget
+    from clayseal.capabilities.value_budget import SessionValueBudget
+    from clayseal.capabilities.windowed_budget import WindowedValueBudget
 
     policy = compile_policy(_doc(budgets={"value": {
         "ceilings": {"flat": "3000"},
@@ -332,7 +332,7 @@ def test_a_window_on_a_budget_with_no_ceiling_is_refused():
 def test_identity_compiles_to_an_effect_spec_and_refuses_a_duplicate():
     """A ceiling answers "is the total under the limit" while the same invoice is
     paid twice. Both halves of "once per object, under ceiling" are real."""
-    from agentauth.capabilities.value_budget import EffectSpec
+    from clayseal.capabilities.value_budget import EffectSpec
 
     policy = compile_policy(_doc(budgets={"value": {
         "ceilings": {"payroll": "11000"},
@@ -374,7 +374,7 @@ def test_a_tracked_entry_with_identity_still_needs_its_ceiling():
 # ------------------------------------------------- a policy held as text ---
 def test_a_policy_can_be_compiled_from_text():
     """A grant that arrives over a wire has no file to be read from."""
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
 
     policy = load_policy_text(
         "version: 1\ngoal: {id: g, summary: s}\ntools: {allow: [read_file]}\n",
@@ -383,7 +383,7 @@ def test_a_policy_can_be_compiled_from_text():
 
 
 def test_text_errors_name_where_the_text_came_from():
-    from agentauth.capabilities.policy import PolicyError, load_policy_text
+    from clayseal.capabilities.policy import PolicyError, load_policy_text
 
     with pytest.raises(PolicyError, match="the config service"):
         load_policy_text("just a string", source="the config service")
@@ -398,7 +398,7 @@ def test_a_stateless_deployment_refuses_a_session_scoped_ceiling():
     weaken: it resets on every request and the aggregate rung is inert. A
     warning is right where a session exists and wrong where one cannot.
     """
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
 
     document = """
 version: 1
@@ -426,7 +426,7 @@ budgets:
 
 def test_the_deployment_section_is_a_known_key():
     """An unknown top-level key is reported, so this one has to be declared."""
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
 
     policy = load_policy_text(
         "version: 1\ngoal: {id: g, summary: s}\n"

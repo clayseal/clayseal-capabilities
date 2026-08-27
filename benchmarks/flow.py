@@ -75,7 +75,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     FlowTracker, SensitivityPolicy, SINK_VERBS, SOURCE_VERBS)
 from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel

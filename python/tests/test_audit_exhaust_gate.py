@@ -7,7 +7,7 @@ needs both ends of the policy, but it is gated and stamped.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.broker import Outcome, SessionBroker
 
 
 def _fields():

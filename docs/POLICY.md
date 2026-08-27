@@ -405,8 +405,8 @@ be given silently. Turn it on with
 Optional, off unless you pass one, and it changes nothing about the above:
 
 ```python
-from agentauth.capabilities.monitor.generation import compile_envelope
-from agentauth.capabilities.monitor.multiplicity import default_multiplicity_inferrer
+from clayseal.capabilities.monitor.generation import compile_envelope
+from clayseal.capabilities.monitor.multiplicity import default_multiplicity_inferrer
 
 envelope = compile_envelope(
     goal,
@@ -657,7 +657,7 @@ skipped, so an in-process integration has to do the equivalent itself:
 ## Getting the decisions to the people who watch for incidents
 
 ```python
-from agentauth.capabilities.decision_sinks import (
+from clayseal.capabilities.decision_sinks import (
     CompositeSink, OcsfSink, OtelSpanSink, RotatingJsonlSink)
 
 stack.broker.receipt_sink = CompositeSink(sinks=[
@@ -691,8 +691,8 @@ library installs at all.
 yours and in the same process, `Guardrail` wraps the tools instead.
 
 ```python
-from agentauth.capabilities.guardrail import Guardrail, Refused, StepUpRequired
-from agentauth.capabilities.policy import load_policy
+from clayseal.capabilities.guardrail import Guardrail, Refused, StepUpRequired
+from clayseal.capabilities.policy import load_policy
 
 guard = Guardrail.from_policy(load_policy("policy.yaml"))
 tools = guard.wrap_all({"get_order": get_order, "pay_vendor": pay_vendor})

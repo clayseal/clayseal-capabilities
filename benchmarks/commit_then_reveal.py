@@ -25,14 +25,14 @@ import json
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.monitor import (
+from clayseal.capabilities.monitor import (
     TrajectoryDetector,
     NGramScorer,
     assess_twin_structural,
     check_declaration_against_goal,
     assess_intent_advisory,
 )
-from agentauth.capabilities.monitor.entailment import (
+from clayseal.capabilities.monitor.entailment import (
     assess_plan_entailment,
     content_delta_vs_reference,
     llm_entailment_judge,
@@ -44,7 +44,7 @@ from benchmarks.datasets.sleight import SleightLoader
 
 def _maybe_entailment_judge():
     """Build an LLM entailment judge when an API key / Azure is configured."""
-    from agentauth.capabilities.monitor.llm_clients import make_chat_client
+    from clayseal.capabilities.monitor.llm_clients import make_chat_client
 
     # gpt-4o discriminates content sabotage far better than mini (measured:
     # mini ~88% benign FB with the first prompt; 4o ~0% FB at the operating point).

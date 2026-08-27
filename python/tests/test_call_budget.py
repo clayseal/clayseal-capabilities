@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from agentauth.capabilities.budget import BudgetType, CapabilityBudget
-from agentauth.capabilities.call_budget import (
+from clayseal.capabilities.budget import BudgetType, CapabilityBudget
+from clayseal.capabilities.call_budget import (
     CallBudgetConfig,
     SessionCallBudget,
     session_call_budget_from_mandate,
 )
-from agentauth.capabilities.mandate import Mandate
+from clayseal.capabilities.mandate import Mandate
 
 _TRACKED = {
     "restart_service": "calls",

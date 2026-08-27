@@ -42,17 +42,17 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
-from agentauth.core.runtime import (
+from clayseal.core.runtime import (
     ActionDescriptor,
     AuthorityContext,
     ExecutionContext,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 #: Values a mutated field may take. Includes near-misses, because an equality
 #: check that is really a prefix or substring check fails exactly here.
@@ -239,7 +239,7 @@ def run() -> dict:
     #    an exception. `from_dict` raises ValueError/TypeError/KeyError by
     #    design (it constructs from trusted data); `parse_signed_commit_token`
     #    is the boundary callers should use.
-    from agentauth.capabilities.commit import parse_signed_commit_token
+    from clayseal.capabilities.commit import parse_signed_commit_token
 
     wire = signed.to_dict()
     for mutate in (

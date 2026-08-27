@@ -6,7 +6,7 @@ retry is fully re-authorized. We had `trusted_candidates` on
 
 ## Mechanism
 
-- `agentauth/capabilities/retry_hints.py`, rewrite destination-shaped args
+- `clayseal/capabilities/retry_hints.py`, rewrite destination-shaped args
   only (`to` / `account` / …); never touch `body`.
 - `BrokerToolsExecutor`, on floor egress miss with candidates, one re-audited
   retry via `harness.gate` (full `authorize`). No bypass.

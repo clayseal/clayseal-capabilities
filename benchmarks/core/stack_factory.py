@@ -2,7 +2,7 @@
 
 This used to be ``DeployableStack.from_benchmark_task``, a classmethod on the
 library class whose body did ``from benchmarks.core.detector_eval import
-_goal_for``. The wheel ships ``only-include = ["agentauth/capabilities"]``, so
+_goal_for``. The wheel ships ``only-include = ["clayseal/capabilities"]``, so
 in any real install that import raises ``ModuleNotFoundError``, the library
 depended on the harness that measures it. The import was lazy, so nothing caught
 it until a caller reached the method, and the CI layering check only forbids
@@ -19,13 +19,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from agentauth.capabilities.call_budget import session_call_budget_from_mandate
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Trajectory
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import session_value_budget_from_mandate
-from agentauth.core.hash_util import hash_canonical_json
-from agentauth.core.task_scope import compile_task_scope
+from clayseal.capabilities.call_budget import session_call_budget_from_mandate
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Trajectory
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import session_value_budget_from_mandate
+from clayseal.core.hash_util import hash_canonical_json
+from clayseal.core.task_scope import compile_task_scope
 
 
 def stack_from_benchmark_task(
@@ -80,7 +80,7 @@ def stack_from_benchmark_task(
 
     envelope = intent_envelope
     if envelope is ...:
-        from agentauth.capabilities.monitor.generation import compile_envelope
+        from clayseal.capabilities.monitor.generation import compile_envelope
 
         envelope = compile_envelope(
             g, derive_counts=derive_counts, inferrer=inferrer).envelope

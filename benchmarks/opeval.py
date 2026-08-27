@@ -30,14 +30,14 @@ import random
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.monitor.action import Trajectory
-from agentauth.capabilities.monitor.scoring.base import ScoredStep
-from agentauth.capabilities.monitor.conformal import (
+from clayseal.capabilities.monitor.action import Trajectory
+from clayseal.capabilities.monitor.scoring.base import ScoredStep
+from clayseal.capabilities.monitor.conformal import (
     ConformalCalibrator,
     MondrianConformal,
 )
-from agentauth.capabilities.monitor.scoring.ngram import NGramScorer
-from agentauth.capabilities.monitor.scoring.target import TargetDensityScorer
+from clayseal.capabilities.monitor.scoring.ngram import NGramScorer
+from clayseal.capabilities.monitor.scoring.target import TargetDensityScorer
 
 from benchmarks.core.detector_eval import task_to_trajectories
 from benchmarks.core.events import EventLabel

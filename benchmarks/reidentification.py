@@ -107,9 +107,9 @@ import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     FlowTracker, SensitivityPolicy)
-from agentauth.capabilities.reidentification import (
+from clayseal.capabilities.reidentification import (
     ATTRIBUTES, DEFAULT_FIELD_MAP, DEFAULT_SUBJECT_KEYS,
     PrincipalReidentificationLedger, ReidentificationMonitor,
     ReidentificationPolicy, identifiability_bits)
@@ -459,7 +459,7 @@ def _jittered_table(jitter: float, seed: int):
     the whole evaluation is re-run. A result that survives a 20% error in every
     weight simultaneously does not rest on the weights.
     """
-    from agentauth.capabilities import reidentification as module
+    from clayseal.capabilities import reidentification as module
 
     rng = random.Random(seed)
     original = dict(module.ATTRIBUTES)

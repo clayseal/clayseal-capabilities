@@ -45,7 +45,7 @@ Three things follow from that, and they shape the whole API:
 └─────────────────┬───────────────────────┘
                   │ IdentitySession, CapabilityLayer
 ┌─────────────────▼───────────────────────┐
-│  L2 agentauth-capabilities  ← YOU ARE HERE │
+│  L2 clayseal              ← YOU ARE HERE │
 │  Commit tokens, mandates, leases, budgets │
 └─────────────────┬───────────────────────┘
                   │ AuthorityBinding, verified L1 claims
@@ -55,7 +55,7 @@ Three things follow from that, and they shape the whole API:
 └─────────────────────────────────────────┘
 ```
 
-**Dependency rule:** there is no private dependency. `agentauth.core` ships in
+**Dependency rule:** there is no private dependency. `clayseal.core` ships in
 this distribution. The optional Biscuit backend needs `agentauth-identity`, which
 is a separate distribution and is not required to use this layer: bring your own
 `CapabilityTokenBackend` through the `agentauth.capability_backends` entry point.
@@ -64,8 +64,8 @@ is a separate distribution and is not required to use this layer: bring your own
 
 ```python
 from agentauth.identity import AgentAuth          # from layer 1
-from agentauth.capabilities.commit import issue_commit_token
-from agentauth.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.commit import issue_commit_token
+from clayseal.capabilities.identity_adapters import get_identity_provider
 ```
 
 There is no top-level `from agentauth import …` in this repo alone.
@@ -75,7 +75,7 @@ There is no top-level `from agentauth import …` in this repo alone.
 ## Installation
 
 ```bash
-pip install agentauth-capabilities
+pip install clayseal
 ```
 
 Two runtime dependencies, `cryptography` and `pyyaml`.
@@ -83,8 +83,8 @@ Two runtime dependencies, `cryptography` and `pyyaml`.
 ### From a checkout
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-capabilities.git
-cd clay-seal-capabilities
+git clone https://github.com/pberlizov/clayseal.git
+cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -93,7 +93,7 @@ pip install -e ".[dev]"
 
 ```bash
 pytest python/tests -q
-ruff check agentauth
+ruff check clayseal
 python examples/01_gateway.py
 clayseal policy lint examples/policy.yaml
 ```
@@ -148,9 +148,9 @@ When you own the harness, call the gateway directly. This is the same object the
 proxy runs.
 
 ```python
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy
-from agentauth.capabilities.tool_verbs import classify_verb
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy
+from clayseal.capabilities.tool_verbs import classify_verb
 
 gateway = load_policy("examples/policy.yaml").build()
 
@@ -202,7 +202,7 @@ A step-up is a request for authority the floor refused, so the approval must be
 signed. In production an unsigned one raises rather than applying.
 
 ```python
-from agentauth.capabilities.step_up import sign_step_up_approval
+from clayseal.capabilities.step_up import sign_step_up_approval
 
 approval = sign_step_up_approval(operator_approval, key=control_plane_key)
 ok, reason = gateway.resolve_step_up(approval)
@@ -225,7 +225,7 @@ The gateway holds session state, so a process that restarts mid-task loses the
 running totals. Snapshot it into your own store:
 
 ```python
-from agentauth.capabilities.session_state import restore, snapshot
+from clayseal.capabilities.session_state import restore, snapshot
 
 state = snapshot(gateway.broker)              # plain JSON, taken under the lock
 restore(rebuilt_broker, state)                # onto a broker built from the SAME policy
@@ -242,7 +242,7 @@ around it needs your store's own compare-and-set.
 action the floor cleared and the plan did not predict.
 
 ```python
-from agentauth.capabilities.profiles import AUTONOMOUS, SUPERVISED
+from clayseal.capabilities.profiles import AUTONOMOUS, SUPERVISED
 
 print(SUPERVISED.describe())        # the switches, and why each one is set
 ```
@@ -257,7 +257,7 @@ is exactly the failure the document exists to prevent.
 
 ### AuthorityBinding
 
-Defined in `agentauth.core.authority_binding` (shipped from this repo’s `agentauth.core` package, shared conceptually with L1/L3). It is the **normalized output of layer 1 verification**:
+Defined in `clayseal.core.authority_binding` (shipped from this repo’s `clayseal.core` package, shared conceptually with L1/L3). It is the **normalized output of layer 1 verification**:
 
 - SPIFFE/OIDC subject and issuer
 - Attestation type (`agentauth`, `spiffe_jwt`, `oidc`, …)
@@ -305,13 +305,13 @@ The common case when you control both identity and capabilities:
 
 ```python
 from agentauth.identity import AgentAuth
-from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.integration import execution_context_from_session
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 auth = AgentAuth(trust_domain="example.org")
 agent = auth.register_agent("bots/payment-agent")
@@ -319,7 +319,7 @@ credential = auth.identify(agent, principal="finance-bot@example.org", ttl_secon
 
 session = auth.session(credential).wrap()  # or build via adapter below
 # Prefer adapter for symmetry with cross-provider code:
-from agentauth.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.identity_adapters import get_identity_provider
 identity_session = get_identity_provider("agentauth").build_session(
     credential.to_binding_dict()
 )
@@ -372,14 +372,14 @@ stacks:
 Example with SPIFFE:
 
 ```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
-from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.integration import execution_context_from_session
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 claims = {
     "sub": "spiffe://example.org/agent/payroll",
@@ -409,7 +409,7 @@ Detailed architecture: [docs/cross_layer_integration.md](cross_layer_integration
 Layer 3 imports the same abstractions. Typical pattern:
 
 ```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.identity_adapters import get_identity_provider
 from agentauth.receipts import Policy
 from agentauth.receipts.integration import wrap_with_identity_session
 
@@ -432,8 +432,8 @@ Install [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts) at
 When your IdP is not one of the five built-ins:
 
 ```python
-from agentauth.capabilities.identity_adapters.registry import register_identity_provider
-from agentauth.core.authority_binding import AuthorityBinding
+from clayseal.capabilities.identity_adapters.registry import register_identity_provider
+from clayseal.core.authority_binding import AuthorityBinding
 
 class MyCorpProvider:
     name = "mycorp"
@@ -447,7 +447,7 @@ class MyCorpProvider:
 
     def build_session(self, raw, *, capability_authorizer=None, evidence_verified=True):
         binding = self.to_binding(raw, evidence_verified=evidence_verified)
-        from agentauth.core.identity_protocol import IdentitySession
+        from clayseal.core.identity_protocol import IdentitySession
         return IdentitySession(binding=binding, capability_authorizer=capability_authorizer)
 
 register_identity_provider(MyCorpProvider())
@@ -464,7 +464,7 @@ Never set `evidence_verified=True` unless you performed real cryptographic verif
 For frameworks that want a single “capability layer” object (used by receipts internally):
 
 ```python
-from agentauth.capabilities.layer import AgentAuthCapabilityLayer
+from clayseal.capabilities.layer import AgentAuthCapabilityLayer
 
 layer = AgentAuthCapabilityLayer()
 # Implements CapabilityLayer protocol, issue/verify hooks for L3
@@ -491,14 +491,14 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 
 ## Running under iVisor (syscall-level enforcement)
 
-`agentauth.capabilities.sandbox` compiles an envelope's **egress and path scope**
+`clayseal.capabilities.sandbox` compiles an envelope's **egress and path scope**
 into iVisor sandbox policy, runs the work inside the guest, and returns iVisor's
 unforgeable verdict stream as attested evidence. Everything else, recipients,
 budgets, tool scope, argument binding, stays in the `SessionBroker`. The
 sandbox is a peer of the broker, invoked *after* it allows:
 
 ```python
-from agentauth.capabilities.sandbox import (
+from clayseal.capabilities.sandbox import (
     SandboxRunSpec, run_sandboxed, attach_sandboxing)
 
 decision = broker.authorize(action)
@@ -549,15 +549,15 @@ why `data_export_bytes` still fails closed).
 
 | Path | Purpose |
 |------|---------|
-| `agentauth/capabilities/commit.py` | Commit token issue/verify |
-| `agentauth/capabilities/identity_adapters/` | Five IdP adapters + registry |
-| `agentauth/capabilities/integration.py` | Session → execution context |
-| `agentauth/capabilities/layer.py` | `AgentAuthCapabilityLayer` |
-| `agentauth/capabilities/sandbox/` | iVisor syscall-level enforcement + attestation |
-| `agentauth/capabilities/compute_budget.py` | Compute-seconds ledger (sandbox-metered) |
+| `clayseal/capabilities/commit.py` | Commit token issue/verify |
+| `clayseal/capabilities/identity_adapters/` | Five IdP adapters + registry |
+| `clayseal/capabilities/integration.py` | Session → execution context |
+| `clayseal/capabilities/layer.py` | `AgentAuthCapabilityLayer` |
+| `clayseal/capabilities/sandbox/` | iVisor syscall-level enforcement + attestation |
+| `clayseal/capabilities/compute_budget.py` | Compute-seconds ledger (sandbox-metered) |
 | `demo/` | Runnable demo: sandbox policy recompiled every step from the trajectory |
-| `agentauth/core/authority_binding.py` | Shared L1→L2/L3 contract |
-| `agentauth/core/identity_protocol.py` | Protocol types |
+| `clayseal/core/authority_binding.py` | Shared L1→L2/L3 contract |
+| `clayseal/core/identity_protocol.py` | Protocol types |
 | `examples/` | Runnable demos |
 | `docs/cross_layer_integration.md` | Provider matrix and L3 snippets |
 
@@ -582,12 +582,12 @@ why `data_export_bytes` still fails closed).
 3. **Bind inputs**, include action input hash in the execution context when the action is parameterized.
 4. **Attenuate sub-agents**, never widen scope when delegating; use Biscuit attenuation APIs.
 5. **Pin the minting key.** A signature proves integrity, not authority. Set
-   `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`, or pass `trusted_minting_keys`. The
+   `CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS`, or pass `trusted_minting_keys`. The
    same applies to the intent envelope, which is the object `reclear` swaps
    mid-session.
 6. **Share the replay store** across instances. An in-memory store on two
    gateways makes a single-use token usable twice.
-7. **Leave the guards closed.** `AGENTAUTH_ENV=development` relaxes items 5 and
+7. **Leave the guards closed.** `CLAYSEAL_ENV=development` relaxes items 5 and
    6 and the step-up signature requirement. It warns once per process; do not
    let that warning become normal.
 
@@ -614,10 +614,10 @@ business transactions through this layer.
 This distribution stands alone, so a release is one tag here.
 
 ```bash
-pip install agentauth-capabilities
+pip install clayseal
 ```
 
-Before tagging: `pytest python/tests -q`, `ruff check agentauth`, and build the
+Before tagging: `pytest python/tests -q`, `ruff check clayseal`, and build the
 wheel and import every shipped module from it in an environment with no source
 tree on the path. CI does the last one, because a lazy import inside a method is
 fine in a checkout and a `ModuleNotFoundError` in every real install.

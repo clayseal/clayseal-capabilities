@@ -17,7 +17,7 @@ import json
 import re
 from pathlib import Path
 
-from agentauth.capabilities.monitor.entailment import _HARM_CUES
+from clayseal.capabilities.monitor.entailment import _HARM_CUES
 from benchmarks.datasets.agentharm import _default_root, _read_split
 
 
@@ -68,7 +68,7 @@ def _pair_prompts() -> list[tuple[str, str, str, str]]:
 
 
 def _maybe_llm_judge():
-    from agentauth.capabilities.monitor.llm_clients import make_chat_client
+    from clayseal.capabilities.monitor.llm_clients import make_chat_client
 
     client, label = make_chat_client()
     if client is None:

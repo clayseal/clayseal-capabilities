@@ -113,7 +113,7 @@ class GateResult:
 # Gate adapters, each declares what it polices and how to call it
 # --------------------------------------------------------------------------- #
 def gate_value_budget():
-    from agentauth.capabilities.value_budget import (
+    from clayseal.capabilities.value_budget import (
         SessionValueBudget, ValueBudgetConfig)
 
     def probe(value) -> GateResult:
@@ -128,7 +128,7 @@ def gate_value_budget():
 
 
 def gate_call_budget():
-    from agentauth.capabilities.call_budget import (
+    from clayseal.capabilities.call_budget import (
         CallBudgetConfig, SessionCallBudget)
 
     def probe(value) -> GateResult:
@@ -144,7 +144,7 @@ def gate_call_budget():
 
 
 def gate_compute_budget():
-    from agentauth.capabilities.compute_budget import (
+    from clayseal.capabilities.compute_budget import (
         ComputeBudgetConfig, SessionComputeBudget)
 
     def probe(value) -> GateResult:
@@ -169,7 +169,7 @@ def gate_compute_budget():
 
 
 def gate_task_scope():
-    from agentauth.core.task_scope import TaskScope, task_scope_allows_path
+    from clayseal.core.task_scope import TaskScope, task_scope_allows_path
 
     scope = TaskScope(allowed_paths=("/app/**",), denied_paths=("/app/secret/**",))
 
@@ -190,7 +190,7 @@ def gate_task_scope():
 
 
 def gate_protected_zones():
-    from agentauth.capabilities.hardening.protected_zones import is_protected_path
+    from clayseal.capabilities.hardening.protected_zones import is_protected_path
 
     def probe(value) -> GateResult:
         protected = is_protected_path(value)
@@ -203,7 +203,7 @@ def gate_protected_zones():
 
 
 def gate_egress_policy():
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 
     policy = EgressPolicy(allowed_domains=frozenset({"trusted.test"}),
                           allowed_recipients=frozenset({"ok@trusted.test"}))

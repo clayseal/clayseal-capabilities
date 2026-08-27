@@ -24,9 +24,9 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
 from benchmarks.live.approver import NeverApprove
 
 # `broker_defense` imports `agentdojo`, which is an optional benchmark

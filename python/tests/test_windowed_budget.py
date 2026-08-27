@@ -17,12 +17,12 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.value_budget import (
     EffectSpec,
     SessionValueBudget,
     ValueBudgetConfig,
 )
-from agentauth.capabilities.windowed_budget import WindowedValueBudget
+from clayseal.capabilities.windowed_budget import WindowedValueBudget
 
 HOUR = 3600.0
 

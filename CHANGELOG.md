@@ -529,7 +529,7 @@ invalidates, an unchanged file still hits the cache.
 
 ### Integration
 
-- **`Guardrail` is exported from `agentauth.capabilities`** and gains
+- **`Guardrail` is exported from `clayseal.capabilities`** and gains
   `from_policy_file`. Governing an agent is now one import and two lines:
 
   ```python
@@ -623,7 +623,7 @@ Economist's rules on sentences.
   `benchmarks/bpl/schema.verb_for` reached `classify_verb` through
   `benchmarks.live.broker_defense`, which re-exports it from
   `benchmarks.datasets._common`, which re-exports it from
-  `agentauth.capabilities.tool_verbs` where it actually lives, and which
+  `clayseal.capabilities.tool_verbs` where it actually lives, and which
   hard-imports `agentdojo` at module scope. Without that optional extra
   installed, the classifier raised on **every action of every scenario** and the
   sweep scored all 132 Clay Seal cells as errored. It imports from the library
@@ -1130,7 +1130,7 @@ had neither path. Two of the three are closed here.
   compile time**: it dies with the process, a stateless deployment is many
   processes, and the ceiling would still reset.
 
-- **`agentauth.capabilities.aio`.** The decision core stays synchronous and
+- **`clayseal.capabilities.aio`.** The decision core stays synchronous and
   pure, which is what makes it replayable and readable top to bottom. The façade
   dispatches to a worker thread so an advisory tier reaching a model, a person
   or a socket cannot stall every other coroutine in the process. `authorize_all`
@@ -1589,7 +1589,7 @@ interpretation.
 
 ### Added: the release pass
 
-- **`agentauth.core` is vendored into this repository.** It was a separate
+- **`clayseal.core` is vendored into this repository.** It was a separate
   private distribution, and the `agentauth-core` project on PyPI is a reserved
   name holding a `0.0.1.dev0` stub, so `pip install agentauth-capabilities` could
   never resolve the dependency and a stranger who cloned this repo could not
@@ -2386,7 +2386,7 @@ tests exercised the shapes their author had in mind.
   bounded by a deadline rather than an attempt count, and `SessionBroker` wraps
   whatever judge it was handed so the ceiling is a property of the gateway rather
   than of the judge's good manners.
-- **`agentauth.core` reached upward into `agentauth.capabilities`.**
+- **`clayseal.core` reached upward into `clayseal.capabilities`.**
   `task_scope.attenuate_biscuit_for_scope` imported the layer above it to resolve
   a default backend. It was invisible while the two were separate distributions,
   because the lazy import simply resolved at call time in an environment holding
@@ -2401,7 +2401,7 @@ tests exercised the shapes their author had in mind.
 - **Two signed objects did not fail closed in production.** The intent envelope
   accepted any keyholder when `trusted_keys` was unset, and it is the object
   `reclear` swaps mid-session, so a self-signed envelope replaced the sealed plan
-  wholesale. The step-up approval honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1`
+  wholesale. The step-up approval honoured `CLAYSEAL_STEP_UP_ALLOW_UNSIGNED=1`
   in production, so one environment variable turned a refusal into a grant. Found
   by writing the threat model; both now match the commit-token posture.
 - **Five encoding evasions in the confidentiality flow tracker.**
@@ -2477,7 +2477,7 @@ below shipped unrecorded.
 
 - **The package did not import on Python 3.10 or 3.11.** `value_budget.py` put a
   backslash escape inside an f-string expression, a syntax error before 3.12,
-  in a module `agentauth/capabilities/__init__.py` imports. `requires-python`
+  in a module `clayseal/capabilities/__init__.py` imports. `requires-python`
   claimed `>=3.10`. CI never caught it because CI has never run.
 - **`issue_commit_token` returned a tuple** instead of a token when
   `action_name` was not a string, a guard copy-pasted from the verifier, which
@@ -2531,11 +2531,11 @@ below shipped unrecorded.
 
 - **Cross-provider identity integration**, layer 2 works with five built-in L1 adapters:
   - `agentauth`, `spiffe_jwt`, `oidc`, `auth0`, `aws_sts`
-- Shared authority contract in `agentauth.core`:
+- Shared authority contract in `clayseal.core`:
   - `AuthorityBinding`, `IdentityProvider`, `IdentitySession`, `CapabilityTokenBackend`, `CapabilityLayer`
-- `agentauth.capabilities.identity_adapters` registry with `get_identity_provider(name)`.
-- `agentauth.capabilities.integration`, `execution_context_from_session`, `default_biscuit_backend()`.
-- `AgentAuthCapabilityLayer` in `agentauth.capabilities.layer`.
+- `clayseal.capabilities.identity_adapters` registry with `get_identity_provider(name)`.
+- `clayseal.capabilities.integration`, `execution_context_from_session`, `default_biscuit_backend()`.
+- `AgentAuthCapabilityLayer` in `clayseal.capabilities.layer`.
 - `docs/cross_layer_integration.md` and `examples/04_cross_provider_commit.py`.
 - `docs/DEV_GUIDE.md`, comprehensive developer guide.
 - GitHub Actions CI (installs identity from sibling repo, runs `python/tests`).

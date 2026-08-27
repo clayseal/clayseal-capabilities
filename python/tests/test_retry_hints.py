@@ -1,13 +1,13 @@
 """Re-audited retry with trusted destination hints (ARGUS-style utility path)."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.parameter_provenance import ParameterProvenance
-from agentauth.capabilities.retry_hints import reaudited_retry, rewrite_destination_args
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.parameter_provenance import ParameterProvenance
+from clayseal.capabilities.retry_hints import reaudited_retry, rewrite_destination_args
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def test_rewrite_replaces_destination_not_body():
@@ -82,7 +82,7 @@ def test_broker_lists_allowlist_on_deny_even_without_observation():
 
 
 def test_stack_decision_carries_candidates():
-    from agentauth.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.deployable_stack import DeployableStack
 
     stack = DeployableStack.from_goal(
         GoalSpec(query_id="t", summary="email bob@corp.example"),

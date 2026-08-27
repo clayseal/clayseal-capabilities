@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
-from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
+from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
+from clayseal.capabilities.monitor.twin_corridor import assess_twin_structural
 from benchmarks.core.detector_eval import (
     run_detector_benchmark,
     task_to_trajectories,

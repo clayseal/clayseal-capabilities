@@ -39,7 +39,7 @@ def allow_stub_proofs(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def trusted_signer(monkeypatch: pytest.MonkeyPatch):
     """Pin a generated Ed25519 key as a trusted envelope signer."""
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     key = generate_keypair()
     monkeypatch.setenv("AGENT_RECEIPTS_TRUSTED_SIGNER_PUBLIC_KEYS", key.public_key_hex)

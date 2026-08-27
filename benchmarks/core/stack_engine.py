@@ -48,7 +48,7 @@ from benchmarks.core.events import BenchmarkEvent, BenchmarkTask
 
 def _action_for(event: BenchmarkEvent, step: int) -> Any:
     """A `BenchmarkEvent` as the `Action` the broker takes."""
-    from agentauth.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.action import Action
 
     args = dict(event.args or {})
     meta: dict[str, Any] = {}

@@ -3,12 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from agentauth.capabilities.layer import (
+from clayseal.capabilities.layer import (
     get_capability_layer,
     list_capability_layers,
     register_capability_layer,
 )
-from agentauth.capabilities.authorizers import (
+from clayseal.capabilities.authorizers import (
     cedar_authorizer,
     external_authorizer,
     opa_authorizer,
