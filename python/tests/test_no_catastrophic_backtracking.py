@@ -7,6 +7,16 @@ rewrites: one 16 KB tool argument took 3.5 s inside the egress host pattern,
 them reads arguments an agent controls, so that was a hang anybody could
 trigger with a single call.
 
+Every pattern in the library was then measured against a doubling input. Three
+were quadratic, growing fourfold per doubling; all three were "find path-shaped
+tokens in a string" and all three are now a single pass over the tokens. No
+pattern in the library exceeds 10 ms on 8 KB of any adversarial shape.
+
+Bounding the input first was the other option and it is second best. A cap can
+hide a match past it, so it is only sound where the input has a natural size,
+and it leaves the hazard in place for the next call site. Where the input has a
+grammar, scanning it linearly costs nothing and removes the hazard instead.
+
 This is a budget, not a benchmark: it fails if a decision path becomes
 super-linear again, whoever adds the pattern.
 """
@@ -78,3 +88,48 @@ def test_a_whole_authorization_is_bounded_on_an_adversarial_argument():
             pass
         worst = max(worst, (time.process_time() - start) * 1000)
     assert worst < BUDGET_MS, f"{worst:.0f} ms"
+
+
+@pytest.mark.parametrize("name", sorted(PAYLOADS))
+def test_reading_a_command_is_bounded(name):
+    """`session_rules` scans commands for paths and archive artefacts."""
+    from agentauth.capabilities.session_rules import (
+        _names_a_zip,
+        _paths_in_command,
+    )
+
+    payload = PAYLOADS[name]
+    assert _elapsed_ms(_paths_in_command, payload) < BUDGET_MS
+    assert _elapsed_ms(_names_a_zip, payload) < BUDGET_MS
+
+
+def test_no_pattern_in_the_library_is_super_linear():
+    """The sweep itself, so a new pattern cannot reintroduce the class."""
+    import importlib
+    import pkgutil
+    import re
+
+    import agentauth.capabilities
+    import agentauth.core
+
+    patterns = {}
+    for pkg in (agentauth.capabilities, agentauth.core):
+        for mod in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
+            try:
+                loaded = importlib.import_module(mod.name)
+            except Exception:  # noqa: BLE001 - optional extras may be absent
+                continue
+            for attr, value in vars(loaded).items():
+                if isinstance(value, re.Pattern):
+                    patterns[f"{mod.name}.{attr}"] = value
+
+    assert patterns, "no patterns found; the sweep is not running"
+    units = ["a", "a.", "a-", "../", "%2e", "a@", "/a", "a:", "a/"]
+    slow = []
+    for label, pattern in patterns.items():
+        for unit in units:
+            probe = unit * (8000 // len(unit)) + "!"
+            if _elapsed_ms(pattern.search, probe) > 50.0:
+                slow.append(f"{label} on {unit!r}")
+                break
+    assert not slow, f"super-linear on 8 KB: {slow}"

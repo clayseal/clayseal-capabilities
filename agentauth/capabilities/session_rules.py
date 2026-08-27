@@ -53,8 +53,6 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from agentauth.core.scan_limits import MAX_COMMAND
-
 #: Verbs that move data off the machine. Mirrors ``broker._EGRESS_ACTIONS``;
 #: passed in rather than imported to keep this module free of a broker import.
 _DEFAULT_EGRESS = frozenset({"send", "post", "transfer", "share"})
@@ -66,10 +64,46 @@ _WEIGHTS = re.compile(r"model|checkpoint|weight", re.IGNORECASE)
 _ZIP = re.compile(r"\bzip\b")
 _ZIP_SYMLINK_SAFE = re.compile(r"\bzip\s+[^\n]*-\S*y")
 _UPLOADER = re.compile(r"\b(gsutil|aws|az|curl|scp)\b", re.IGNORECASE)
-_ZIP_ARTIFACT = re.compile(r"\b\S*results\S*\.zip\b|\.zip\b", re.IGNORECASE)
+#: Does this command name a .zip? `\S*results\S*\.zip` was quadratic: 230 ms on
+#: 8 KB and growing fourfold per doubling, because the engine retries every
+#: split of the two `\S*` runs. Membership in a token is what it was asking.
+def _names_a_zip(command: str) -> bool:
+    return ".zip" in command.lower()
+
+
 _AWK_FIELD = re.compile(r"awk\b[^\n]*\$(\d+)")
 _SED_ABS_INDENT = re.compile(r"sed\s+-i\s+'?(\d+)s/\^([ \t]+)/([ \t]+)/")
-_SED_PATHS = re.compile(r"(/[^\s;|&]+|[A-Za-z0-9_./-]+\.py)\b")
+#: Path-shaped tokens in a command: an absolute path, or a `.py` file. The
+#: pattern this replaces was quadratic on a long argument, because
+#: `[A-Za-z0-9_./-]+\.py` retries every split of a run that contains dots.
+#: A command is already whitespace-separated, so one pass over its tokens
+#: answers the same question and cannot backtrack.
+_PATH_STOP = frozenset(" \t\r\n;|&")
+_SED_PATH_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./-")
+
+
+def _paths_in_command(command: str) -> list[str]:
+    """Path-shaped tokens, in the order they appear.
+
+    Callers take the LAST one, which is the file a `sed` or `awk` invocation
+    acts on. Quotes are stripped and a token that is only separators is
+    dropped, so an in-place expression like `s/a/b/` does not contribute a
+    bare `/` that could be mistaken for the target.
+    """
+    out: list[str] = []
+    for raw in "".join(
+            " " if c in _PATH_STOP else c for c in command).split():
+        token = raw.strip("'\"")
+        if not token or not token.strip("/"):
+            continue
+        if token.startswith("/"):
+            out.append(token)
+        elif token.endswith(".py") and _SED_PATH_CHARS.issuperset(token):
+            out.append(token)
+    return out
+
+
 _GUARDED_CALL = re.compile(
     r"_upload_external|upload_external|sync_model_weights|check_approval",
     re.IGNORECASE,
@@ -144,7 +178,7 @@ def check(
     if (
         session.symlink_taints
         and _UPLOADER.search(cmd)
-        and _ZIP_ARTIFACT.search(cmd[:MAX_COMMAND])
+        and _names_a_zip(cmd)
         and any(word in lowered for word in _UPLOAD_ARTIFACT_WORDS)
     ):
         return SessionRuleHit(
@@ -202,7 +236,7 @@ def _sed_line_drift(cmd: str, session: Any) -> SessionRuleHit | None:
         return None
     line_n = int(sed.group(1))
     old_ws, new_ws = sed.group(2), sed.group(3)
-    paths = _SED_PATHS.findall(cmd[:MAX_COMMAND])
+    paths = _paths_in_command(cmd)
     path = paths[-1] if paths else ""
     shift = session.file_line_shift.get(path, 0) if path else 0
     if not shift and len(session.file_line_shift) == 1:

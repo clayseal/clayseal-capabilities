@@ -444,10 +444,33 @@ class VelocityLadderEngine(BudgetLadderEngine):
         super().__init__()
         self._cap: int | None = None
         self._velocity: dict[str, object] = {}
+        #: False once `observe_corpus` has run and found nothing to calibrate on.
+        #: A cap that was never calibrated is a constant, not a measurement, and
+        #: the report has to be able to say which one it printed.
+        self.calibrated: bool = False
 
     @classmethod
     def calibrate(cls, tasks: list[BenchmarkTask]) -> int:
         """Cap from clean traffic. Attack events are never inspected."""
+        return cls.calibrate_with_provenance(tasks)[0]
+
+    @classmethod
+    def calibrate_with_provenance(cls, tasks: list[BenchmarkTask]) -> tuple[int, bool]:
+        """`(cap, calibrated)`. `calibrated=False` means the default was used.
+
+        A corpus supplies calibration data only if it has a task with no attack
+        event. A loader that concatenates a benign twin and its attack into one
+        task therefore supplies NONE, and the cap silently became
+        `default_cap`, an arbitrary constant, while the table reported the
+        resulting containment as though a limit had been learned from traffic.
+
+        Measured: of the corpora in this repo, SLEIGHT and ASB both have zero
+        clean tasks and both ran on the constant. On SLEIGHT that constant
+        manufactures the rung's entire 60-point containment jump, because the
+        corpus concatenates benign-then-attack so the constant is spent on the
+        benign prefix. Returning the provenance is what lets the report say so
+        instead of printing a number that looks learned.
+        """
         from agentauth.capabilities.velocity import EFFECT_VERBS
 
         volumes = [
@@ -456,14 +479,14 @@ class VelocityLadderEngine(BudgetLadderEngine):
             if not any(e.label is EventLabel.ATTACK for e in t.events)
         ]
         if not volumes:
-            return cls.default_cap
+            return cls.default_cap, False
         volumes.sort()
         idx = max(0, math.ceil(cls.percentile * len(volumes)) - 1)
-        return max(cls.floor, volumes[idx])
+        return max(cls.floor, volumes[idx]), True
 
     def observe_corpus(self, tasks: list[BenchmarkTask]) -> None:
         """Declare the cap for this class of work, once, before replay."""
-        self._cap = self.calibrate(tasks)
+        self._cap, self.calibrated = self.calibrate_with_provenance(tasks)
         self._velocity.clear()
 
     def _limiter(self, task: BenchmarkTask):
@@ -545,6 +568,67 @@ class DelegationLadderEngine(VelocityLadderEngine):
 # --------------------------------------------------------------------------- #
 # Registry
 # --------------------------------------------------------------------------- #
+class PositionOnlyEngine:
+    """Control: block every event past position `k`, reading nothing else.
+
+    ## Why a control row for ORDER
+
+    `deny-all` is a permanent row because a containment number that does not beat
+    it is not a measurement. This is the same argument one axis over.
+
+    A corpus that replays a benign prefix and then an attack suffix can be
+    "contained" by counting. Nothing about the tool, the path, the destination or
+    the policy is needed: block late events and the attack share falls, because
+    the attack events are the late ones. Any stateful rung, budget or velocity or
+    anything else with a running total, is exposed to this, and the exposure is
+    invisible in a table that only reports containment and false-block.
+
+    Measured across the paired corpora, ALL of them segregate: in 100% of paired
+    tasks every benign event precedes every attack event. The gap is what varies,
+    and it is what decides whether the exposure matters. SLEIGHT's median benign
+    event sits at index 3 and its median attack event at index 11, so on SLEIGHT
+    a cut at index 8 alone scores 71.3% containment at 20.9% false-block, which
+    is the velocity rung's published 65.9%/16.1% with the policy removed.
+
+    ## How to read this row
+
+    It is not a defense and is never a rung. It is the floor an ordering-exposed
+    number has to clear. A rung that does not beat this control on a corpus is
+    reporting position, not enforcement, and the honest move is to say so or to
+    fix the corpus so the two halves are separate sessions, which is what the
+    AgentHarm loader already does.
+
+    `k` is the corpus's own median benign index plus one, chosen from the clean
+    side only so the control never inspects an attack event, matching the rule
+    the velocity rung calibrates under.
+    """
+
+    name = "position-only-control"
+    default_k = 5
+
+    def __init__(self) -> None:
+        self._k: int | None = None
+        self._seen: dict[str, int] = {}
+
+    def observe_corpus(self, tasks: list[BenchmarkTask]) -> None:
+        positions = [
+            i for t in tasks for i, e in enumerate(t.events)
+            if e.label is EventLabel.BENIGN
+        ]
+        if positions:
+            positions.sort()
+            self._k = positions[len(positions) // 2] + 1
+        self._seen.clear()
+
+    def decide(self, task: BenchmarkTask, event: BenchmarkEvent) -> Decision:
+        k = self.default_k if self._k is None else self._k
+        n = self._seen.get(task.task_id, 0)
+        self._seen[task.task_id] = n + 1
+        if n >= k:
+            return Decision(False, f"position {n} >= {k} (order only)", self.name)
+        return Decision(True, "early enough (order only)", self.name)
+
+
 LADDER = [
     "allow-all",
     "tool-allowlist",
@@ -554,6 +638,14 @@ LADDER = [
     "task-scope+binding+budget",
     "task-scope+binding+budget+velocity",
     "deny-all",
+]
+
+#: Rows that are NOT rungs. Printed beside the ladder in every report, never
+#: inside it: `LADDER` is a monotone ablation chain and the invariants in
+#: `test_ladder_invariants.py` and `test_patterns.py` depend on it staying one.
+#: A control is a floor to clear, not a step to climb.
+CONTROLS = [
+    "position-only-control",
 ]
 
 
@@ -601,6 +693,7 @@ def build_engines(names: list[str] | None = None) -> list[DecisionEngine]:
     factory = {
         "allow-all": AllowAllEngine,
         "deny-all": DenyAllEngine,
+        "position-only-control": PositionOnlyEngine,
         "tool-allowlist": ToolAllowlistEngine,
         "capability-token": CapabilityTokenEngine,
         "task-scope": TaskScopeEngine,
