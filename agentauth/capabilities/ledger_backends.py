@@ -358,7 +358,15 @@ def redis_ledger_from_env(**kwargs: Any) -> RedisPrincipalLedger | None:
     url = os.environ.get(LEDGER_REDIS_URL_ENV, "").strip()
     if not url:
         return None
-    import redis  # optional extra, imported only when configured
+    try:
+        import redis  # optional extra, imported only when configured
+    except ImportError as exc:  # pragma: no cover - depends on the environment
+        # Every other optional adapter names its extra here. This one did not,
+        # so an operator who set the ledger URL got a bare ImportError and no
+        # indication of which install fixes it.
+        raise ImportError(
+            "the shared principal ledger needs the redis client. Install with: "
+            "pip install 'agentauth-capabilities[redis]'") from exc
 
     prefix = os.environ.get(LEDGER_REDIS_PREFIX_ENV, "").strip() or "agentauth:ledger"
     return RedisPrincipalLedger(

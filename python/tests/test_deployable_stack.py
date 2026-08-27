@@ -50,6 +50,10 @@ def test_session_memory_shared_across_stack_authorize():
             allowed_resources=["workspace"],
             allowed_actions=["write", "execute", "send"]),
         entailment_judge=None,
+        # The taint is OBSERVED by the corpus-derived pack, which is off by
+        # default now. This test is about the memory being shared, so it asks
+        # for the reader that can see it.
+        session_rules=True,
     )
     stack.broker.session.adopt(shared)
     d = stack.authorize(Action(

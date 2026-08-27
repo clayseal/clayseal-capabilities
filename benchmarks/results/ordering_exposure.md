@@ -67,6 +67,12 @@ denominators differ by two orders of magnitude across these corpora.
 `injecagent` and `ipi_coding` each report 100% containment that a position cut
 also reaches at the same zero false-block.
 
+Coverage of this screen is 14 of the 20 registered corpora. The other six
+(`atbench`, `atbench500`, `atif`, `bfcl`, `tau2`, `toolemu`) are single-label:
+they carry a benign side or an attack side but not both, so the question does not
+arise. That is printed by the tool rather than left as a gap in the table,
+because "not applicable" and "not run" look identical in a list that omits both.
+
 Read that as a statement about the **corpus**, not about the rung. Those rungs
 may well be right, and on ASB and InjecAgent the tool-allowlist result is
 independently sensible: the attack calls a tool nobody granted. What the corpus

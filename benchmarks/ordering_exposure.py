@@ -120,14 +120,24 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--limit", type=int, default=400)
     args = p.parse_args(argv)
 
-    rows = []
+    rows, skipped, unpaired = [], [], []
     for name in sorted(available_datasets()):
         try:
             row = measure(name, limit=args.limit)
-        except Exception:                                  # noqa: BLE001
-            continue                                       # corpus not fetched
+        except Exception as exc:                           # noqa: BLE001
+            # Almost always an unfetched external corpus, but SAY which and why.
+            # A screen that silently covers eleven corpora and reports on three
+            # reads exactly like one that covered all fourteen.
+            skipped.append(f"{name} ({type(exc).__name__})")
+            continue
         if row:
             rows.append(row)
+        else:
+            # Loaded fine, but carries only one label, so there is no benign
+            # side to place an attack against and the question does not arise.
+            # Reported rather than dropped, because "not applicable" and
+            # "not run" look identical in a table that omits both.
+            unpaired.append(name)
 
     print("| corpus | med benign idx | med attack idx | best rung | containment | "
           "false-block | counting at same false-block | verdict |")
@@ -144,6 +154,16 @@ def main(argv: list[str] | None = None) -> int:
           f"{', '.join(exposed) if exposed else 'none'}.")
     print("An exposed corpus cannot distinguish a rung from counting. That is a "
           "statement about the corpus, not about the rung.")
+    total = len(rows) + len(skipped) + len(unpaired)
+    if unpaired:
+        print(f"\nNot applicable ({len(unpaired)}): {', '.join(unpaired)}. "
+              f"Single-label corpora, so there is no benign side to place an "
+              f"attack against.")
+    if skipped:
+        print(f"\nNot screened ({len(skipped)}): {', '.join(skipped)}.")
+    print(f"\nCoverage of this analysis: {len(rows)} screened, "
+          f"{len(unpaired)} not applicable, {len(skipped)} not runnable, "
+          f"of {total} registered corpora.")
 
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)

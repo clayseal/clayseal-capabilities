@@ -16,10 +16,16 @@ Profile (``DeployableStack``)
    ``deterministic_content_reasons`` on consequential writes (STEP_UP)
 4. Session memory: CSV bind, line maps, packaging/sealed-violation taints
    (``SessionMemory``, same object shape live and replay), evaluated by the
-   ``session_rules`` pack. ON by default here because every published number was
-   measured with it on; it is corpus-derived and STEP_UP-only, and a deployment
-   on unlike traffic should measure with ``session_rules=False`` too. See
-   ``agentauth/capabilities/session_rules.py``.
+   ``session_rules`` pack. **OFF by default.** It is corpus-derived, its own
+   module says it will not generalise, and its contribution was measured at
+   ZERO on every published number: the external corpora and the BPL headline
+   are identical with it on and off
+   (``benchmarks/results/corpus_rule_contribution.md``). It was on by default
+   because the published numbers had been produced that way, which is a reason
+   to keep an arm reproducible and not a reason to run non-general pattern
+   matching in front of everybody's traffic. Turn it on with
+   ``session_rules=True`` if your workload looks like the scenarios it was
+   written against. See ``agentauth/capabilities/session_rules.py``.
 5. Parameter provenance (default on): containing-object sources for destinations
 6. Runtime replan when an intent envelope is present: ``catalog_shape_judge``
    (trusted goal+catalog only) or caller-supplied LLM judge, never tool output
@@ -194,7 +200,7 @@ class DeployableStack:
         sensitivity=None,
         enable_flow: bool = True,
         strict_mandate: bool = False,
-        session_rules: bool = True,
+        session_rules: bool = False,
         receipt_sink: Any = ...,
     ) -> DeployableStack:
         if entailment_judge is ...:

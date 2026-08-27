@@ -144,6 +144,13 @@ RULE_MARKERS = (
     # check ("if a user is traveling outside their home network, you should
     # check"). Neither carries any marker above.
     "is not ", "are not ", "you should check", "should check",
+    # `requires approval` was here and `require approval` was not, so a plural
+    # subject lost the line entirely: "Payments over $10,000 require approval"
+    # produced no rule AND no TODO, which is the one failure this module exists
+    # to prevent. That is the canonical sentence in a delegation-of-authority
+    # document. The bare stems cover require/requires/required/requirement and
+    # approve/approval/approved.
+    "require", "approval", "approve", "sign-off", "signed off",
 )
 
 #: Words naming a period so `_period_in` does not read "$10,000 payment" as one.
@@ -178,6 +185,17 @@ class Draft:
         parts = ", ".join(f"{k}={v}" for k, v in sorted(kinds.items()))
         return (f"{len(self.rules)} rule(s) extracted [{parts}], "
                 f"{len(self.unmapped)} sentence(s) left for a person")
+
+
+#: Phrasings that put a human above the ceiling rather than a refusal.
+_APPROVAL_PHRASES = ("require approval", "requires approval", "required approval",
+                     "require sign-off", "requires sign-off", "need approval",
+                     "needs approval", "must be approved", "requires approving",
+                     "subject to approval", "with approval")
+
+
+def _needs_approval(low: str) -> bool:
+    return any(phrase in low for phrase in _APPROVAL_PHRASES)
 
 
 def _money(text: str) -> str | None:
@@ -470,7 +488,16 @@ def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
         if not line or line.startswith("#") or _heading_of(line) is not None:
             continue
         low = line.lower()
-        if not any(marker in low for marker in RULE_MARKERS):
+        # A line naming an amount of money is stating a constraint, whatever
+        # words it uses. The marker list is a phrase list, and a phrase list
+        # loses on phrasing it has not seen: "No payment may exceed $500",
+        # "Payments are capped at $50,000 per day" and "The daily limit is
+        # $20,000" carried no marker and were dropped with no rule AND no TODO,
+        # which is the one failure this module exists to prevent. Money is a
+        # structural signal rather than another phrase, so it ends the arms
+        # race for this class instead of extending it by three.
+        if not any(marker in low for marker in RULE_MARKERS) and \
+                _MONEY.search(line) is None:
             continue
 
         scoped, section = scope.current()
@@ -493,7 +520,12 @@ def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
                 kind="value", line_no=line_no, source=line,
                 payload={"ceiling": amount, "window_seconds": period,
                          "per_call": not aggregate,
-                         "needs_approval_above": "requires approval" in low}))
+                         # Same singular/plural miss as the marker above: a
+                         # plural subject says "require approval", and the
+                         # ceiling was extracted with approval recorded as not
+                         # needed, which is the rule inverted rather than
+                         # missed.
+                         "needs_approval_above": _needs_approval(low)}))
 
         # A ceiling on a count, but not when the number was the money.
         if count is not None and (amount is None or count != amount):
