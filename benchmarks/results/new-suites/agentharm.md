@@ -6,26 +6,18 @@ STATUS: current
 python -m benchmarks.cli --dataset agentharm --mode ladder --ci --json benchmarks/results/new-suites/agentharm.json
 ```
 
-## DeployableStack (authoritative for product claims)
+| Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
+| --- | --- | --- | --- | --- |
+| allow-all | 0.0% [0.0%, 1.7%] | 0.0% [0.0%, 1.7%] | 0.0004 / 0.0004 / 0.0005 | 176 |
+| tool-allowlist | 5.9% [4.0%, 7.9%] | 0.0% [0.0%, 1.7%] | 0.0007 / 0.0010 / 0.0014 | 176 |
+| capability-token | 27.2% [22.8%, 32.1%] | 0.0% [0.0%, 1.7%] | 0.0025 / 0.0034 / 0.0035 | 176 |
+| task-scope | 27.2% [22.8%, 32.1%] | 0.0% [0.0%, 1.7%] | 0.0035 / 0.0065 / 0.0079 | 176 |
+| task-scope+binding | 27.2% [22.8%, 32.1%] | 0.0% [0.0%, 1.7%] | 0.0040 / 0.0072 / 0.0133 | 176 |
+| task-scope+binding+budget | 27.2% [22.8%, 32.1%] | 0.0% [0.0%, 1.7%] | 0.0053 / 0.0127 / 0.0141 | 176 |
+| task-scope+binding+budget+velocity | 27.2% [22.8%, 32.1%] | 0.0% [0.0%, 3.4%] | 0.0074 / 0.0158 / 0.0179 | 176 |
+| deny-all | 100.0% [98.3%, 100.0%] | 100.0% [98.3%, 100.0%] | 0.0005 / 0.0005 / 0.0005 | 176 |
+| position-only-control | 27.6% [24.1%, 30.9%] | 29.4% [24.5%, 34.3%] | 0.0006 / 0.0008 / 0.0009 | 176 |
 
-From `benchmarks/results/cross_stack.md` (det soft content, no LLM):
+Brackets are 95% percentile bootstrap intervals resampling **tasks**, not events: events within a task share a template, so an event-level interval would be roughly sqrt(events-per-task) too narrow. _Tasks_ is the resampling unit count. Two engines whose intervals overlap are not distinguishable on this corpus.
 
-| Layer | Rate | Notes |
-| --- | --: | --- |
-| Hard | **27.2%** | Destination / grant pins (grading-function) |
-| Soft | **18.1%** | `_HARM_CUES` STEP_UP; cue in body, absent from sealed benign goal |
-| Union | **45.3%** | Autonomous halt; **FB 0%** |
-| Soft (online LLM, prior) | 24.1% | Union ~51.3%; hard unchanged; never quote as hard ASR |
-
-Behavior-prompt heuristic catch (`agentharm_content.md`): **88/176 (50.0%)**.
-
-## Stale ladder table (pre–grading-targets / pre–DeployableStack)
-
-The ladder numbers below are historical (~6.3% tool-allowlist era) and must not be
-cited as the current product grade. See `cross_stack.md` instead.
-
-| Engine | Attack prevented | False-block |
-| --- | --- | --- |
-| allow-all | 0.0% | 0.0% |
-| tool-allowlist … velocity | ~6.3% | 0.0% |
-| deny-all | 100.0% | 100.0% |
+> `position-only-control` reads nothing but an event's index in its task. It is a floor, not a defense: a rung that does not beat it is reporting the order of the corpus rather than the content of the actions.

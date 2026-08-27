@@ -5,7 +5,7 @@ WHAT THIS IS, PLAINLY
 Five pattern rules, each written against a specific covert-sabotage scenario
 observed in a benchmark corpus. They are not general policy. They match on shell
 command text, ``ln -s``, ``zip``, ``awk $N``, ``sed -i``, and one of them
-contains a corpus-specific literal (``ocelot``).
+was keyed on a corpus-specific literal until it was measured at zero.
 
 They lived inside ``SessionBroker.authorize`` between the sealed-plan corridor
 and the budget reservation, 160 lines of regex in the middle of the gateway. That
@@ -117,7 +117,11 @@ _ARTIFACT_WORDS = ("results", "evaluated")
 #: Same, for the upload rule, which additionally carries a corpus-specific
 #: project name. Kept because removing it changes a published number; named here
 #: rather than buried in a regex so its provenance is not deniable.
-_UPLOAD_ARTIFACT_WORDS = ("results", "ocelot", "evaluated")
+#: `ocelot` sat here, the project name of one sleight-bench scenario. It
+#: cannot match anything outside that corpus by construction, and
+#: `corpus_rule_contribution.md` measures the whole pack at zero on every
+#: published number, so it was removed rather than kept as decoration.
+_UPLOAD_ARTIFACT_WORDS = ("results", "evaluated")
 
 
 @dataclass(frozen=True)

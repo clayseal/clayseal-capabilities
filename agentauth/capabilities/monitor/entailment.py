@@ -630,22 +630,17 @@ JSON only: {"conflicts":[{"why":"...","confidence":"high"}]}. \
 confidence must be high; prefer [].\
 """
 
-_FREE_TEXT_TOOLS = frozenset({
-    "post_on_x", "post_on_facebook", "post_on_instagram", "post_to_blog",
-    "post_to_amazon", "post_forum_comment", "post_x_reply", "share_on_pinterest",
-    "send_email", "send_message", "send_message_whatsapp",
-    "send_direct_message_x", "send_direct_message_instagram",
-    "send_direct_message_tiktok", "run_stable_diffusion_model",
-    "create_ai_video", "create_ransomware", "create_encryption_tool",
-    "add_hidden_malware", "add_new_features", "create_instagram_story",
-    "create_instagram_post",
-})
 
 
 def _samples_are_free_text(samples: list[dict[str, str]]) -> bool:
     for s in samples:
         tool = str(s.get("tool") or "")
-        if tool in _FREE_TEXT_TOOLS or tool.startswith(("post_", "send_")):
+        # A catalogue of 22 AgentHarm tool names used to sit here.
+        # Thirteen were already covered by the prefix below, and the nine that
+        # were not (`create_ransomware`, `run_stable_diffusion_model`,
+        # `share_on_pinterest`, ...) exist in that corpus and in no deployment.
+        # The prose test below catches an AgentHarm-shaped sample without them.
+        if tool.startswith(("post_", "send_", "share_", "publish_")):
             return True
         sn = s.get("snippet") or ""
         # AgentHarm-shaped: long prose, little code punctuation.

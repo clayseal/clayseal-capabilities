@@ -6,6 +6,43 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed: literals copied from benchmark scenarios
+
+The same audit as the regex one, applied to overfitting: every compound string
+literal in the shipped library, cross-referenced against the text of the
+benchmark scenarios and corpora. A literal present in both and nowhere else is
+the signature.
+
+Three were found, and **each contributes zero to every published number**,
+measured by removing it and re-running every scored population:
+
+- **`ocelot`** in `session_rules._UPLOAD_ARTIFACT_WORDS`, the project name of
+  one sleight-bench scenario. It cannot match outside that corpus.
+- **22 AgentHarm tool names** in `entailment._FREE_TEXT_TOOLS`
+  (`create_ransomware`, `run_stable_diffusion_model`, ...). Thirteen were
+  already covered by the `post_`/`send_` prefix rule beside them, and the list
+  only runs when the LLM judge is on, which no benchmark enables.
+- **Six directory names** in the secret-path list (`data/models`,
+  `anthropic-config`, `deploy/auth`, `db/app.conf`, `sanitize_rules`,
+  `checkpoint`), which name one corpus's layout rather than a kind of secret.
+
+All three are gone. The generalisable half is kept: symlink-into-results, then
+zip, then upload is a real exfiltration technique, and the rule for it stays,
+keyed on the technique.
+
+`session_rules.py` had already done the hard part honestly. It documents itself
+as corpus-derived, says plainly that the rules will not generalise, names
+`ocelot` in a constant instead of burying it in a regex, and makes the pack
+switchable. What was missing was the number: the pack is ON by default, every
+published figure was produced with it on, and its contribution had never been
+measured. `benchmarks/results/corpus_rule_contribution.md` states it. It is
+zero, on the external corpora and on the BPL headline alike.
+
+`test_the_upload_rule_still_carries_its_corpus_literal` asserted `ocelot` was
+present and said it should be removed deliberately rather than silently. It now
+asserts the absence.
+
+
 ### Security: no pattern in the library is super-linear any more
 
 The sweep was extended from seventeen adversarial shapes to a doubling test over

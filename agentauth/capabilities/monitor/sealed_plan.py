@@ -238,10 +238,12 @@ def structural_digest(text: str) -> str:
 
 #: Anywhere in the path.
 _SECRET_SUBSTRINGS = (
-    "credential", "secret", "password", "token", "id_rsa", "shadow",
-    "data/models", "checkpoint", "anthropic-config", "deploy/auth",
-    "db/app.conf", "sanitize_rules", ".env",
+    "credential", "secret", "password", "token", "id_rsa", "shadow", ".env",
 )
+#: `data/models`, `checkpoint`, `anthropic-config`, `deploy/auth`, `db/app.conf`
+#: and `sanitize_rules` sat in the list above. Each names one corpus's directory
+#: layout rather than a kind of secret, and removing all six changes no number
+#: on any corpus: see `benchmarks/results/corpus_rule_contribution.md`.
 #: `api_key`, `api-key`, `apikey`.
 _API_KEY_FORMS = ("api_key", "api-key", "apikey")
 #: A whole path segment.
