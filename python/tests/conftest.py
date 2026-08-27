@@ -1,4 +1,10 @@
-"""Shared pytest fixtures for agent-receipts."""
+"""Shared pytest fixtures for the Clay Seal library suite.
+
+The `AGENT_RECEIPTS_*` variables the fixtures below set are not a leftover from
+the rename: they belong to the separate receipts distribution and were
+deliberately left alone when this package became `clayseal`. See
+`docs/MIGRATION.md` for which names moved and which did not.
+"""
 
 from __future__ import annotations
 
