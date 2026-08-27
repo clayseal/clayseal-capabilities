@@ -21,12 +21,12 @@ _DEMO = Path(__file__).resolve().parents[1] / "demo" / "clayseal-ivisor"
 if str(_DEMO) not in sys.path:
     sys.path.insert(0, str(_DEMO))
 
-from engine import (  # noqa: E402, demo path on sys.path
+from engine import (
     build_pin_map,
     evaluate,
     parse_trace,
 )
-from scenarios import ROSTER  # noqa: E402
+from scenarios import ROSTER
 
 
 def _action_from_event(event):
@@ -38,6 +38,11 @@ def _action_from_event(event):
         verb=event.verb,
         args={"path": event.path} if event.path else {},
     )
+
+
+def _is_non_event(scen) -> bool:
+    """A scenario whose captured trace attempts nothing the fd-3 channel sees."""
+    return scen.id in {"05-host-escape", "06-audit-evasion"}
 
 
 def evaluate_scenario(scen, trace_path: Path) -> dict:
@@ -65,12 +70,21 @@ def evaluate_scenario(scen, trace_path: Path) -> dict:
     if scen.benign:
         ok = len(clay_denies) == 0
         reason = "benign: no Clay Seal denials" if ok else f"benign but {len(clay_denies)} denials"
-    elif scen.id in {"05-host-escape", "06-audit-evasion"}:
-        # Documented: floor denial may be a non-event on the fd-3 channel.
-        ok = True
+    elif not events or (ivisor_denies == 0 and not clay_denies
+                        and _is_non_event(scen)):
+        # NOT A PASS. These two scenarios were hardcoded `ok = True` by
+        # scenario id, and their trace files are byte-identical to each other
+        # and contain three lines of ordinary allowed activity: opening a
+        # notes file, resolving pypi.org, connecting to it. Nothing is
+        # attempted, so nothing is contained, and counting them in the
+        # numerator took a 6-of-6 result to "100.0% (8/8)".
+        #
+        # They are reported, and excluded from the rate, because a replay that
+        # carries no attack is evidence of neither containment nor escape.
+        ok = None
         reason = (
-            f"syscall-floor scenario; ivisor_denies={ivisor_denies}, "
-            f"clay_denies={len(clay_denies)} (non-event on fd-3 is expected)"
+            f"no syscall-level event to decide: ivisor_denies={ivisor_denies}, "
+            f"clay_denies={len(clay_denies)}; excluded from the rate"
         )
     else:
         ok = len(clay_denies) > 0 or ivisor_denies > 0
@@ -109,16 +123,25 @@ def evaluate_all(trace_dir: Path) -> dict:
             continue
         rows.append(evaluate_scenario(scen, path))
     n = len(rows)
-    passed = sum(1 for r in rows if r["pass"])
+    decided = [r for r in rows if r["pass"] is not None]
+    passed = sum(1 for r in decided if r["pass"])
     return {
         "tier": "syscall_boundary",
         "n_scenarios": n,
-        "pass_rate": (passed / n) if n else 0.0,
+        "n_decided": len(decided),
+        "n_non_events": n - len(decided),
+        "pass_rate": (passed / len(decided)) if decided else 0.0,
         "rows": rows,
         "caveat": (
             "Replay of captured iVisor fd-3 traces through demo/clayseal-ivisor "
             "capability evaluator (envelope / egress / task-scope / BPL budget). "
-            "Not a live sandbox run. Scenarios 05/06 may be non-events on fd-3 "
+            "Not a live sandbox run. Scenarios 05 and 06 attempt nothing the "
+            "fd-3 channel sees, and their captured traces are byte-identical "
+            "to each other: three lines of ordinary allowed activity. They "
+            "used to be hardcoded to pass by scenario id, which made a 6-of-6 "
+            "result read as 8/8. They are excluded from the rate now, because "
+            "a replay carrying no attack is evidence of neither containment "
+            "nor escape. Previously read: scenarios 05/06 may be non-events "
             "by design and are scored as documented limits, not failures."
         ),
     }
@@ -128,10 +151,21 @@ def render_md(result: dict) -> str:
     lines = [
         "# Tier 4, syscall boundary (iVisor trace replay)",
         "",
+        # `check_claims` requires both of these on every result file, and the
+        # generator emitted neither, so each regeneration reintroduced the debt.
+        "STATUS: current",
+        "",
+        "```bash",
+        "python -m benchmarks.syscall_tier",
+        "```",
+        "",
         result["caveat"],
         "",
         f"**Pass rate: {100 * result['pass_rate']:.1f}%** "
-        f"({sum(1 for r in result['rows'] if r['pass'])}/{result['n_scenarios']}).",
+        f"({sum(1 for r in result['rows'] if r['pass'])}/{result['n_decided']} "
+        f"scenarios that produce a syscall-level event"
+        + (f"; {result['n_non_events']} excluded as non-events)."
+           if result["n_non_events"] else ")."),
         "",
         "| scenario | events | iVisor deny | Clay deny | layers | pass | reason |",
         "|---|---:|---:|---:|---|---|---|",
@@ -141,7 +175,8 @@ def render_md(result: dict) -> str:
         lines.append(
             f"| {r['scenario']} | {r['events']} | {r['ivisor_denies']} | "
             f"{r['clay_denies']} | {layers} | "
-            f"{'yes' if r['pass'] else 'NO'} | {r['reason']} |"
+            f"{'yes' if r['pass'] else ('n/a' if r['pass'] is None else 'NO')}"
+            f" | {r['reason']} |"
         )
     lines.append("")
     return "\n".join(lines)

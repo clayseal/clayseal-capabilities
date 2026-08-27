@@ -6,6 +6,8 @@ STATUS: current
 python -m benchmarks.cli --dataset agentharm --mode ladder --ci --json benchmarks/results/new-suites/agentharm.json
 ```
 
+> **The ladder is an ablation; the shipped product scores higher.** `--mode stack` runs the `DeployableStack` this library actually ships, which has the intent envelope, parameter provenance, the confidentiality flow tracker and the session rules the ladder stops below: **union 55.3% (hard 30.9% / soft 24.4%)** against the ladder's 27.2%, at 0.00% false-block. Soft is a step-up, never fold it into a hard containment headline. The full product tier is in [`benchmarks/scoreboard.py`](../../scoreboard.py).
+
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |
 | allow-all | 0.0% [0.0%, 1.7%] | 0.0% [0.0%, 1.7%] | 0.0004 / 0.0004 / 0.0005 | 176 |

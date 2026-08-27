@@ -38,6 +38,7 @@ FORMAT
     expires_at: 2026-08-24T00:00:00Z
     tools:
       allow: [list_tickets, read_ticket, write_summary, send_email]
+      patterns: ["get_*"]                     # grant a FAMILY, unioned with allow
       harmless: [list_tickets, read_ticket]   # asserted to have no countable effect
       effects:                                # what each tool actually does
         write_summary: write
@@ -312,11 +313,35 @@ class Policy:
                 "whole filesystem and makes the rest of the section decorative.",
             ))
 
-        if self.allowed_tools is None:
+        if self.allowed_tools is None and self.tool_patterns is None:
             out.append(Finding(
                 "warning", "no-tool-allowlist",
                 "no tools.allow: any tool the agent can reach is in scope.",
             ))
+
+        if self.tool_patterns:
+            # A pattern grant is the one part of this document whose extent is
+            # not visible from reading it: `get_*` is a sentence, and what it
+            # admits depends on a catalog the document does not contain. Say so
+            # every time, with the patterns spelled out, so the reviewer knows
+            # this is the line to check against the server's `tools/list`.
+            out.append(Finding(
+                "warning", "tool-pattern-grant",
+                f"tools.patterns grants by shape, not by name: "
+                f"{', '.join(self.tool_patterns)}. What this admits depends on "
+                f"the server's catalog, so check it against `tools/list` rather "
+                f"than against this file. `clayseal policy init` prints the "
+                f"catalog a server actually advertises.",
+            ))
+            broad = sorted(p for p in self.tool_patterns if p.startswith("*"))
+            if broad:
+                out.append(Finding(
+                    "warning", "tool-pattern-leading-wildcard",
+                    f"{', '.join(broad)} begins with a wildcard, so it matches on "
+                    f"suffix alone: `*_data` admits `delete_data` as readily as "
+                    f"`read_data`. A prefix pattern names a family; a suffix "
+                    f"pattern names whatever happens to end that way.",
+                ))
 
         undeclared = self.tools_with_unverifiable_paths()
         if undeclared:
@@ -436,6 +461,9 @@ class Policy:
         ]
         tools = sorted(self.allowed_tools) if self.allowed_tools else None
         lines.append(f"tools:   {', '.join(tools) if tools else '(any)'}")
+        if self.tool_patterns:
+            lines.append(f"patterns: {', '.join(self.tool_patterns)}  "
+                         f"(matched against the server's catalog at runtime)")
         if self.harmless_tools:
             lines.append(f"harmless: {', '.join(sorted(self.harmless_tools))}")
         if self.allowed_tools:
@@ -566,8 +594,8 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
     elif isinstance(tools_raw, list):
         allowed_tools = {str(t) for t in tools_raw}
 
-    path_args = _path_args_from(raw, allowed_tools)
-    pathless = _pathless_from(raw, allowed_tools)
+    path_args = _path_args_from(raw, allowed_tools, tool_patterns)
+    pathless = _pathless_from(raw, allowed_tools, tool_patterns)
     scope = _scope_from(raw, goal, expires_at)
     egress = _egress_from(raw.get("egress"))
     value_budget, call_budget = _budgets_from(raw.get("budgets"))
@@ -629,13 +657,7 @@ def _verbs_from(raw: Any, allowed_tools: set[str] | None, *,
                 f"{sorted(KNOWN_VERBS)}"
             )
         out[str(tool)] = verb
-    covered = set(allowed_tools or set(out))
-    if patterns:
-        import fnmatch
-
-        covered |= {t for t in out
-                    if any(fnmatch.fnmatch(t, p) for p in patterns)}
-    stray = sorted(set(out) - covered)
+    stray = _uncovered(out, allowed_tools, patterns)
     if stray:
         raise PolicyError(
             f"tools.effects names tools that are not in tools.allow "
@@ -738,7 +760,37 @@ def _paths_section(raw: dict) -> dict[str, Any]:
     return paths if isinstance(paths, dict) else {}
 
 
-def _path_args_from(raw: dict, allowed_tools: set[str] | None) -> dict[str, str]:
+def _uncovered(names, allowed_tools: set[str] | None,
+               patterns: list[str] | None) -> list[str]:
+    """Which of `names` the grant does not cover, by literal OR by pattern.
+
+    Three sections cross-check themselves against the tool grant: `effects`,
+    `paths.arg_names` and `paths.pathless`. Each did its own `set - (allow or
+    set)` and so each had to learn about patterns separately, and each would
+    have been a separate way for the feature to be unusable: declaring what a
+    pattern-granted tool DOES, or which argument carries its path, raised
+    "names tools that are not in tools.allow".
+
+    The `or names` fallback is the "no allowlist means no constraint" rule and
+    it has to be conditioned on BOTH dimensions being absent. Written as
+    `allowed_tools or names` it silently covered everything whenever only
+    patterns were declared, which is precisely the document this field exists
+    for.
+    """
+    names = set(names)
+    if allowed_tools is None and not patterns:
+        return []
+    covered = set(allowed_tools or ())
+    if patterns:
+        import fnmatch
+
+        covered |= {n for n in names
+                    if any(fnmatch.fnmatch(n, p) for p in patterns)}
+    return sorted(names - covered)
+
+
+def _path_args_from(raw: dict, allowed_tools: set[str] | None,
+                    patterns: list[str] | None = None) -> dict[str, str]:
     section = _paths_section(raw).get("arg_names")
     if section is None:
         return {}
@@ -748,7 +800,7 @@ def _path_args_from(raw: dict, allowed_tools: set[str] | None) -> dict[str, str]
             "carries its path, for example {tf_apply: target_dir}"
         )
     out = {str(t): str(a) for t, a in section.items()}
-    stray = sorted(set(out) - (allowed_tools or set(out)))
+    stray = _uncovered(out, allowed_tools, patterns)
     if stray:
         raise PolicyError(
             f"paths.arg_names names tools that are not in tools.allow: {stray}"
@@ -756,10 +808,11 @@ def _path_args_from(raw: dict, allowed_tools: set[str] | None) -> dict[str, str]
     return out
 
 
-def _pathless_from(raw: dict, allowed_tools: set[str] | None) -> frozenset[str]:
+def _pathless_from(raw: dict, allowed_tools: set[str] | None,
+                   patterns: list[str] | None = None) -> frozenset[str]:
     listed = _as_list(_paths_section(raw).get("pathless"), "paths.pathless")
     out = frozenset(str(t) for t in listed)
-    stray = sorted(out - (allowed_tools or out))
+    stray = _uncovered(out, allowed_tools, patterns)
     if stray:
         raise PolicyError(
             f"paths.pathless names tools that are not in tools.allow: {stray}"

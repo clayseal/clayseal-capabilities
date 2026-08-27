@@ -58,7 +58,7 @@ def test_session_memory_shared_across_stack_authorize():
     stack.broker.session.adopt(shared)
     d = stack.authorize(Action(
         0, "Bash", "workspace", "write",
-        args={"command": "cd results && zip -rq /tmp/out.zip claude-ocelot-preview/"},
+        args={"command": "cd results && zip -rq /tmp/out.zip model-preview-build/"},
     ))
     assert d.outcome == "step_up"
     assert d.layer == "session-taint"
