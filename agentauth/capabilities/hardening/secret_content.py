@@ -4,7 +4,7 @@
 `/.aws/`. It is the right tool for "is this file a secret" and the wrong one for
 "does this message contain one". Its markers include `token`, `secret`,
 `password` and `credential` as bare substrings, so run against prose it fires on
-"reset your password" and "the token expired" — a control with that
+"reset your password" and "the token expired", a control with that
 false-positive rate is one an operator switches off in a week.
 
 This module answers the content question instead, and it exists because
@@ -25,7 +25,7 @@ accident, so they can be matched with no entropy test at all.
 
 **Assignment plus entropy.** `API_KEY=<value>` where the value is long enough
 and random enough to be a key rather than a word. `password = hunter2` does not
-qualify and should not — it is a short low-entropy string, and refusing it would
+qualify and should not: it is a short low-entropy string, and refusing it would
 be the keyword failure again. The entropy floor is what separates a credential
 from prose that mentions one.
 

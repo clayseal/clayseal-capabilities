@@ -87,7 +87,7 @@ class Finding:
     escape: str            # the stress_aggregation axis this corresponds to
 
     def __str__(self) -> str:
-        return f"[{self.severity}] {self.code}: {self.subject} — {self.detail}"
+        return f"[{self.severity}] {self.code}: {self.subject}, {self.detail}"
 
 
 def _tracked_pairs(tracked: Mapping[str, Any]) -> list[tuple[str, str, Any]]:
@@ -134,7 +134,7 @@ def lint_mandate(
     #
     #    Two rules, and the second is the one that matters. Name matching finds
     #    `payments.wire`; it cannot find `process_item_47`, and
-    #    `benchmarks/mandate_search.py` measures what that costs — over 4,000
+    #    `benchmarks/mandate_search.py` measures what that costs, over 4,000
     #    sampled mandates, **211 escaped while this linter called them clean**,
     #    every one of them through an opaquely-named tool.
     #
@@ -223,7 +223,7 @@ def lint_mandate(
                         f"({', '.join(sorted(scales))}); check they agree"),
                 escape="unit confusion"))
 
-    # 6. Session restart. Not a defect in anything, and the fix already exists —
+    # 6. Session restart. Not a defect in anything, and the fix already exists
     #    `principal_ledger.py` keys the ledger to the mandate rather than the
     #    session. So this reports whether that fix is in use, and it is a warning
     #    rather than an error because a genuinely per-session ceiling is a
@@ -274,7 +274,7 @@ def require_clean(findings: Iterable[Finding], *, strict: bool = False) -> None:
     `strict=True` raises on warnings too, and it is what the closure property
     actually requires. Measured over 4,000 sampled mandates in
     `benchmarks/mandate_search.py`: 1,870 escaped, and **466 of them carried no
-    error-level finding** — every one through a tool the mandate never accounted
+    error-level finding**, every one through a tool the mandate never accounted
     for. So a deployment that wants "if the linter is happy, the ceiling holds"
     has to pay for it by declaring its catalog, and one that does not should know
     it is relying on tool names being honest.

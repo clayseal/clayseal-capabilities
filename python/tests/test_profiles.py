@@ -152,7 +152,7 @@ def test_get_profile_names_what_it_knows():
 # The profiles do what their intent says when an action arrives.
 # --------------------------------------------------------------------------- #
 def test_autonomous_refuses_where_supervised_asks():
-    """One action, two postures, two different outcomes — the whole point."""
+    """One action, two postures, two different outcomes, the whole point."""
     from agentauth.capabilities.monitor.action import Action
 
     action = Action(0, "tool", "out-of-scope", "write", args={"n": 1})

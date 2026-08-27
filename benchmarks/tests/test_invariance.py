@@ -62,11 +62,13 @@ def test_a_read_prefix_launders_an_effectful_tool():
 
     `classify_verb` takes a tool's verb from its name prefix, deliberately, and
     that is sound for a catalog you control. Under MCP the catalog comes from
-    servers the user connects to, so the name is attacker-supplied — the premise
+    servers the user connects to, so the name is attacker-supplied, the premise
     of the tool-description-poisoning literature. Pinned as a FACT about the
     classifier so that anything keyed on it has to reckon with this.
     """
-    from benchmarks.live.broker_defense import classify_verb
+    # From the library rather than through `broker_defense`, which re-exports
+    # it and hard-imports the optional `agentdojo` extra at module scope.
+    from agentauth.capabilities.tool_verbs import classify_verb
 
     for tool in ("get_vendor_payment", "read_and_pay", "view_delete_all",
                  "get_grant_admin", "list_transfer_execute"):

@@ -1,7 +1,11 @@
 # Baselines audit: the "Best alternative" column
 
-Audit of every cell in `docs/_results_table_draft.tex`, plus the two rows being added now.
-Nothing in `docs/_results_table_draft.tex` was edited. Nothing was committed. All "ours"
+
+> The audited document is kept outside this repository. The findings below are
+> checks of its claims against this code.
+
+Audit of every cell in `_results_table_draft.tex`, plus the two rows being added now.
+Nothing in `_results_table_draft.tex` was edited. Nothing was committed. All "ours"
 figures re-verified against committed HEAD `9bd0ec0` in a detached worktree, not the
 working tree.
 
@@ -19,7 +23,7 @@ Kind markers used throughout, and proposed as the table's footnote key:
 
 ## 1. Ready to paste: the two new rows
 
-Drop these into the `tabular` in `docs/_results_table_draft.tex`. They assume the
+Drop these into the `tabular` in `_results_table_draft.tex`. They assume the
 kind-marker footnote from section 3 is in place.
 
 ```latex
@@ -81,7 +85,7 @@ scores ten samples, and `eval.yaml` carries no `baselines` field.
 - **Presidio NER (D1), 19/22 = 86.4% of leaking C3 tool calls neutralised.** Measured.
   I installed `presidio-analyzer`, `presidio-anonymizer`, `en_core_web_lg` and
   `en_core_web_sm` into `.venv` and reran the existing unmodified script at
-  `/tmp/scratch/bb985f9b-3c54-43bc-b89c-47f06594ad01/scratchpad/agentleak_defense_h2h.py`.
+  `agentleak_defense_h2h.py` (a local scratch script).
   No repository file was edited.
 - **It contains by destroying the payload.** All 5 of 5 benign C3 calls are altered.
   `{"tool": "lab_results", "params": {}}` becomes
@@ -304,7 +308,7 @@ shippable system loses.
 ## 5. Cheap head-to-heads worth running, ranked by credibility bought
 
 **1. Progent on gpt-4o, four AgentDojo suites.** The fork is at
-`/Users/pberlizov/Projects/progent` and is already driven end to end for this comparison.
+a local Progent checkout and is already driven end to end for this comparison.
 gpt-4o with hand-written policies is where Progent published 0.00%, and it is the first
 thing a reviewer will ask for. Cost: a few hours, tens of dollars of API. Buys the most,
 because it either retires the strongest objection in the table or tells us we lose on the

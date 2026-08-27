@@ -1,4 +1,4 @@
-"""AgentDojo loader — real prompt-injection corpus mapped to BenchmarkTask.
+"""AgentDojo loader, real prompt-injection corpus mapped to BenchmarkTask.
 
 AgentDojo (ETH SPY Lab) ships suites (banking, slack, travel, workspace) where
 each *user task* has a ground-truth tool-call sequence (the legitimate steps)

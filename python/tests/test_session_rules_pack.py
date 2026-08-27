@@ -5,8 +5,8 @@ sit inline in ``SessionBroker.authorize``, where no caller could see them and no
 caller could turn them off. Extracting them to ``session_rules.py`` is only
 worth something if two things stay true, and both are asserted here.
 
-**The published numbers still reproduce.** ``DeployableStack.from_goal`` — the
-one profile every benchmark path builds through — keeps them ON, so the
+**The published numbers still reproduce.** ``DeployableStack.from_goal``, the
+one profile every benchmark path builds through, keeps them ON, so the
 scoreboard measures the same system it measured before.
 
 **The library primitive does not carry them.** A ``SessionBroker`` built
@@ -110,7 +110,7 @@ def test_the_upload_rule_still_carries_its_corpus_literal():
     One rule matches a corpus's own project name. That is a real limit on how far
     these generalize, and the module names it in a constant so it appears in a
     reader's grep rather than only inside a regex. If it is ever removed, this
-    test should be removed with it deliberately — not silently.
+    test should be removed with it deliberately, not silently.
     """
     from agentauth.capabilities.session_rules import _UPLOAD_ARTIFACT_WORDS
 

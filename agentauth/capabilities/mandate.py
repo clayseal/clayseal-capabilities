@@ -1,4 +1,4 @@
-"""Signed Mandate contract — canonical home: ``agentauth.core.mandate``.
+"""Signed Mandate contract, canonical home: ``agentauth.core.mandate``.
 
 The mandate schema and its validation rules ARE the cross-layer contract
 (Seam C), so they live in the core package where receipts can verify mandate

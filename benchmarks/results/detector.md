@@ -19,7 +19,7 @@ read earlier in the stream), computed identically for benign and attack events;
 the ATTACK label is never consulted to taint an action or to decide a block. The
 sealed goal's expected verbs likewise come from the user's own benign steps, not
 from the injected events. Taint hard-blocks only when the untrusted-driven action
-also leaves the typed envelope — untrusted-driven AND off-goal, the injection
+also leaves the typed envelope, untrusted-driven AND off-goal, the injection
 shape. The numbers below are what the detector earns under that rule.
 
 ## The setup is right: the per-call ladder is totally blind
@@ -54,7 +54,7 @@ The headline is honest and it is strong: on bfcl the detector contains **100
 percent of in-scope-burst at a 0 percent observed false-alarm rate** on the
 fully-authorized aggregate class the entire per-call ladder scores 0 on. On tau2,
 whose benign corridor is loose (heterogeneous dual-control), the same detector
-gets 66.7% at a 5.4% false-alarm rate — weaker, and honestly so. atif is too
+gets 66.7% at a 5.4% false-alarm rate, weaker, and honestly so. atif is too
 small to calibrate a corridor, so the detector abstains (0 containment, 0
 false-block) rather than over-flag.
 
@@ -81,8 +81,8 @@ statement is that the floor owns them and the detector owns in-scope-burst.
 
 ## The false-alarm bound: per-tier conformal, honestly stated
 
-Each hard-blocking tier — the learned trajectory scorer, the CUSUM drift tier, and
-the path-envelope — is a proper per-bucket (Mondrian) split-conformal test, so
+Each hard-blocking tier, the learned trajectory scorer, the CUSUM drift tier, and
+the path-envelope, is a proper per-bucket (Mondrian) split-conformal test, so
 each is individually bounded at alpha. They fire on different shapes (novel
 bigrams, sustained elevation, corridor departure), so their benign flags barely
 overlap and the empirical UNION false-alarm rate stays near alpha; the honest
@@ -109,7 +109,7 @@ The field's central critique is static-only evaluation, so: a defense-aware
 aggregate attacker that shapes the burst to stay in-corridor. The result is the
 same split the numbers above imply. Where benign is homogeneous (bfcl), the
 corridor is tight and the attacker cannot both stay inside it and move a large
-aggregate — containment stays high. Where benign is heterogeneous (tau2), the
+aggregate, containment stays high. Where benign is heterogeneous (tau2), the
 corridor is loose, so a small aggregate fits inside natural variation and shape
 alone cannot catch it; containment degrades toward the false-alarm floor. That
 residual is not a shape problem to tune away, it is the province of a different

@@ -1,4 +1,4 @@
-"""Tamper-evident decision log — the L2 side of the receipts loop.
+"""Tamper-evident decision log, the L2 side of the receipts loop.
 
 The broker decides; the receipts layer (L3) makes those decisions verifiable.
 This is the seam between them. For every authorization the broker emits a
@@ -90,14 +90,14 @@ class DecisionRecord:
 
 #: How many records one session keeps in memory before the oldest are dropped.
 #:
-#: A live session is unbounded — a coding agent runs for hours — and every
+#: A live session is unbounded, a coding agent runs for hours, and every
 #: decision appended a record that was never released, so the log grew with the
 #: session and was lost whole on exit. Two failures in one: a memory leak in a
 #: long run, and no evidence at all unless the integrator wired a sink.
 #:
 #: The bound only affects what is held in MEMORY. `retained` records are still
 #: enough to verify the recent chain, and `head_hash` still covers everything
-#: ever appended, so an evicted record is not erased from the chain's history —
+#: ever appended, so an evicted record is not erased from the chain's history
 #: only from this process's copy of it. Durable retention is the sink's job.
 DEFAULT_MAX_RECORDS = 10_000
 

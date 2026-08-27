@@ -1,4 +1,4 @@
-"""Layer 1: typed goal envelope — structural plausibility, no model, no cost.
+"""Layer 1: typed goal envelope, structural plausibility, no model, no cost.
 
 Compiles the sealed ``GoalSpec`` into the set of action shapes plausibly needed
 to accomplish it: which resource classes may be touched, which verbs are

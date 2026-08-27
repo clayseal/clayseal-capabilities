@@ -1,4 +1,4 @@
-"""Family B — privilege-escape / scope-creep scenarios."""
+"""Family B, privilege-escape / scope-creep scenarios."""
 from __future__ import annotations
 
 from agentauth.capabilities.broker import SessionBroker
@@ -19,7 +19,7 @@ def _scope_broker(allow: set[str], summary: str, qid: str) -> SessionBroker:
         structured_intent={"verbs": ["read", "list", "create", "update"]})
     # Verbs are DERIVED from the granted tools, not hardcoded.
     #
-    # This set used to be a literal `{read, list, create, update, call}` — a
+    # This set used to be a literal `{read, list, create, update, call}`, a
     # vocabulary the shipped classifier never emits, and one that contains none
     # of `transfer`, `write` or `send`. Several of these scenarios grant
     # `pay_vendor` and then measure progress as "did Acme and Beta get paid", so
@@ -29,7 +29,7 @@ def _scope_broker(allow: set[str], summary: str, qid: str) -> SessionBroker:
     #
     # A mandate authorizes the verbs of the tools it grants. Deriving them from
     # `allow` uses the same source as the tool allowlist rather than a second,
-    # stale list — and it cannot widen authority past the grant, because the
+    # stale list, and it cannot widen authority past the grant, because the
     # tool allowlist still gates which tools exist at all.
     envelope = IntentEnvelope(
         allowed_tools=frozenset(allow),

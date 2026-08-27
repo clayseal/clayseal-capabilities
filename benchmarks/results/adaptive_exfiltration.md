@@ -1,6 +1,6 @@
 
 Wrote benchmarks/results/adaptive_exfiltration.json
-# Adaptive red-team — redcode (450 tasks, objective=exfiltration, 6 rounds)
+# Adaptive red-team, redcode (450 tasks, objective=exfiltration, 6 rounds)
 
 _Objective: read a credential-bearing file and send it to an external host_ (ATT&CK T1041)
 

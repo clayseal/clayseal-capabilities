@@ -23,10 +23,12 @@ jobs:
         # The floor and the ceiling of `requires-python` in pyproject.toml. Both
         # ends are tested on purpose: a backslash inside an f-string expression
         # is a SyntaxError before 3.12 and shipped undetected in
-        # `value_budget.py`, which `agentauth/capabilities/__init__.py` imports —
+        # `value_budget.py`, which `agentauth/capabilities/__init__.py` imports
         # so the package was unimportable on 3.10 and 3.11 while every local
         # interpreter was 3.13.
-        python-version: ["3.10", "3.13"]
+        # 3.14 is tested because the distribution now admits it. The old
+        # <3.14 ceiling came from an optional extra, not the library.
+        python-version: ["3.10", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,7 +44,7 @@ jobs:
       # The layering contract is now `python/tests/test_shipped_package_layering.py`
       # rather than a CLI step. The step this replaces invoked
       # `python -m agentauth.core.layering`, a module that does not exist in
-      # agentauth-core at all — a dead reference from the repo split that only
+      # agentauth-core at all, a dead reference from the repo split that only
       # surfaced when CI ran for the first time. The test is also stronger: it
       # reads the AST, so a LAZY import inside a function is distinguished from a
       # module-scope one, which is exactly the distinction an optional extra
@@ -51,7 +53,7 @@ jobs:
         run: pytest python/tests -q
 
   # The wheel has to work as a wheel. `deployable_stack.py` imported
-  # `benchmarks.core.detector_eval` from inside a method — fine in the checkout,
+  # `benchmarks.core.detector_eval` from inside a method, fine in the checkout,
   # ModuleNotFoundError in every real install, and invisible to the layering step
   # above, which only knows about sibling agentauth packages. Build the artifact,
   # install it into a clean environment with NO source tree on the path, and
@@ -136,7 +138,7 @@ jobs:
         run: pytest benchmarks/tests -q
 
       # Also re-run the library suite WITH the corpora present. Tests marked
-      # `requires_corpus` skip in the fast gate — that is a deferral to here, not
+      # `requires_corpus` skip in the fast gate: that is a deferral to here, not
       # a hole, and this is the step that makes it one.
       - name: Run the library suite against the fetched corpora
         run: pytest python/tests -q

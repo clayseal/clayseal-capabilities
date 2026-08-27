@@ -8,14 +8,14 @@ import pytest
 def requires_corpus(*names: str) -> pytest.MarkDecorator:
     """Skip unless the named external corpora have been fetched.
 
-    `python/tests` is the FAST gate — it runs on every push and must not need the
+    `python/tests` is the FAST gate, it runs on every push and must not need the
     1.1 GB of external corpora that `benchmarks/fetch_corpora.sh` pulls. A test in
     here that loads one is not wrong, it is in the wrong tier, and it should say
     so by skipping rather than failing the build for everyone who has not cloned
     RedCode.
 
     The nightly `invariants` job fetches the corpora and runs `python/tests` as
-    well, so these are still exercised — a skip here is a deferral, not a hole.
+    well, so these are still exercised, a skip here is a deferral, not a hole.
     """
     from pathlib import Path
 

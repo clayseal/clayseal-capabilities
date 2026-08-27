@@ -1,5 +1,5 @@
 """Phase C2: symbolic diverse-planner. Derives the plan from the ontology by
-landmark analysis — deterministic, sound, non-injectable, multi-modal aware."""
+landmark analysis, deterministic, sound, non-injectable, multi-modal aware."""
 from __future__ import annotations
 
 from agentauth.core.signing import generate_keypair

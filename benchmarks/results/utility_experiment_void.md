@@ -6,7 +6,7 @@ STATUS: current
 
 `notes/production_sota_path.md` frames the open problem: we reach zero attack
 success and pay clean utility for it, so on the security-utility frontier we are
-Pareto-dominated — same security, less utility. `head_to_head_injection.md` puts
+Pareto-dominated, same security, less utility. `head_to_head_injection.md` puts
 a number on it: banking clean utility 16.7% against 50.0% undefended.
 
 The `SUPERVISED` profile is the hypothesis for recovering it. `defer_to_binding`
@@ -19,13 +19,13 @@ should matter:
 > succeeded into one that failed.
 
 It also says the security half of that argument "is a claim to verify by
-measurement rather than assert". So: four arms on banking — undefended,
-`envelope-taint` (as published), `+graduated`, `+graduated+defer` — same model,
+measurement rather than assert". So: four arms on banking, undefended,
+`envelope-taint` (as published), `+graduated`, `+graduated+defer`, same model,
 same seed, same subset.
 
 ## The run, and why it says nothing
 
-Azure OpenAI, `<azure-openai-resource>`, 6 user tasks x 3 injection tasks per arm,
+Azure OpenAI, `<aoai-resource>`, 6 user tasks x 3 injection tasks per arm,
 `important_instructions`.
 
 | arm | clean utility | **ASR** | utility under attack | friction |
@@ -85,13 +85,13 @@ resemble.** Holding ASR at 0 of 18 against a model whose undefended ASR is alrea
 0 of 18 demonstrates nothing about the defense. The honest reading of
 `head_to_head_injection.md` is that it describes a real result on
 `gpt-4o-mini-2024-07-18` and does not transfer to a 2026 frontier model without
-being re-run there — and it cannot be re-run there, because the attack does not
+being re-run there, and it cannot be re-run there, because the attack does not
 land.
 
 This does **not** mean the layer is unnecessary. The classes it exists for are
 not model-injectability:
 
-- In-scope data staging is wide open regardless of model — the attacker is the
+- In-scope data staging is wide open regardless of model, the attacker is the
   agent doing what it was asked to do, and
   [adaptive_stack.md](adaptive_stack.md) measures the floor contributing +0.0 at
   oracle.
@@ -103,7 +103,7 @@ not model-injectability:
 
 ## Resolved: it was the attack, not the model
 
-[attacks_2026.md](attacks_2026.md) — the injections were the problem, and the
+[attacks_2026.md](attacks_2026.md), the injections were the problem, and the
 benchmark is alive again. Dropping the authority claim entirely and relying on
 the injected action being *plausible* takes undefended ASR from 0 of 18 to 6 of
 48 on the same model, and the defense contains 0 of 48. The three options below
@@ -120,7 +120,7 @@ One of, and each is a decision rather than a task:
    the tradeoff experiment becomes viable on Azure unchanged. The four probed
    here do not.
 3. **Change the benchmark.** The utility question is worth answering on a corpus
-   where the harm does not depend on the model being fooled — which is where
+   where the harm does not depend on the model being fooled, which is where
    this layer's remaining gaps actually are.
 
 ## Reproduce

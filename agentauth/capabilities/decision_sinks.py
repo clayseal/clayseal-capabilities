@@ -1,6 +1,6 @@
 """Where decision records go when the process ends.
 
-`DecisionLog` is correct — hash-chained, tamper-evident, verifiable offline — and
+`DecisionLog` is correct, hash-chained, tamper-evident, verifiable offline, and
 it lived entirely in memory behind an optional `receipt_sink` callback that
 defaulted to `None`. For a layer whose pitch is "the decision can be verified
 offline by a gateway or receipt verifier", the default was that nothing was
@@ -14,7 +14,7 @@ WHY THERE IS STILL NO DEFAULT DESTINATION
 -----------------------------------------
 A sink writes an audit trail, and where an audit trail belongs is a deployment
 decision with legal and retention consequences. Picking one here would mean
-either writing to a path nobody asked for or silently doing nothing — and doing
+either writing to a path nobody asked for or silently doing nothing, and doing
 nothing while appearing configured is the failure mode this module exists to
 close. So the default is a sink that REFUSES to be silent: `NullSink` counts what
 it drops and `DecisionLog` reports it, and a stack built without a sink says so
@@ -31,8 +31,8 @@ The sinks here cover the shapes a deployment already has:
 EVERY SINK IS BEST-EFFORT AND NONE OF THEM CAN DENY
 ---------------------------------------------------
 A sink runs after the decision is made. A sink that raised would turn a disk full
-into a failed authorization — converting an evidence problem into an availability
-problem — and a sink that could veto would be an undeclared authorization layer.
+into a failed authorization, converting an evidence problem into an availability
+problem, and a sink that could veto would be an undeclared authorization layer.
 So failures are counted and exposed, never raised. `dropped` going non-zero is
 what an operator alerts on: it means decisions were made that the evidence plane
 did not record.
@@ -52,6 +52,36 @@ DECISION_SINK_REDIS_STREAM_ENV = "AGENTAUTH_DECISION_LOG_REDIS_STREAM"
 DECISION_SINK_FSYNC_ENV = "AGENTAUTH_DECISION_LOG_FSYNC"
 
 
+#: Audit evidence and ledger state are created private to the owning user.
+#:
+#: These files carry principal identity, resource paths, decision outcomes and
+#: spend. Created through a plain `open("a")` they inherit the process umask,
+#: which on a typical host is 0o644: every local user can read the whole
+#: authorization trail of a security control. `os.open` applies the mode at
+#: creation instead of leaving a window between create and chmod.
+PRIVATE_FILE_MODE = 0o600
+PRIVATE_DIR_MODE = 0o700
+
+
+def open_private_append(path, *, encoding: str = "utf-8"):
+    """Append-open `path`, creating it 0o600 rather than umask-default."""
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_APPEND,
+                 PRIVATE_FILE_MODE)
+    return os.fdopen(fd, "a", encoding=encoding)
+
+
+def make_private_parent(path) -> None:
+    """Create the containing directory 0o700 when this call is what makes it."""
+    parent = Path(path).parent
+    existed = parent.exists()
+    parent.mkdir(parents=True, exist_ok=True)
+    if not existed:
+        try:
+            parent.chmod(PRIVATE_DIR_MODE)
+        except OSError:      # a filesystem that does not carry modes
+            pass
+
+
 @runtime_checkable
 class DecisionSink(Protocol):
     """Somewhere a decision record durably lands."""
@@ -66,7 +96,7 @@ class DecisionSink(Protocol):
 
 @dataclass
 class NullSink:
-    """Explicitly nowhere — and it counts, which is the whole point.
+    """Explicitly nowhere, and it counts, which is the whole point.
 
     The previous default was `receipt_sink=None`, indistinguishable at runtime
     from a sink that was configured and working. This one makes "no durable
@@ -100,7 +130,7 @@ class JsonlFileSink:
 
     def __post_init__(self) -> None:
         self.path = Path(self.path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        make_private_parent(self.path)
 
     def __call__(self, record: dict[str, Any]) -> None:
         try:
@@ -111,7 +141,7 @@ class JsonlFileSink:
         with self._lock:
             try:
                 if self._handle is None:
-                    self._handle = self.path.open("a", encoding="utf-8")
+                    self._handle = open_private_append(self.path)
                 self._handle.write(line + "\n")
                 self._handle.flush()
                 if self.fsync:
@@ -174,7 +204,7 @@ class RedisStreamSink:
 
     The natural pairing for a deployment already running Redis for the replay
     store and the shared ledger, and the one that gets records off the box the
-    agent runs on — which is where an audit trail should not live if the box is
+    agent runs on, which is where an audit trail should not live if the box is
     what you are auditing.
     """
 

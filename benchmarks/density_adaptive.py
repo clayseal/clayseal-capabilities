@@ -16,10 +16,10 @@ each rung leaves.
 
 ## The ladder
 
-    L0  original              /etc/shadow — outside the observed tree entirely
-    L1  in-tree, novel subtree    app/<novel>/<novel> — root is known, rest is not
-    L2  known parent, novel leaf  app/<novel> — one novel segment at a dense node
-    L3  exact known target        app/document — a file the cohort routinely uses
+    L0  original              /etc/shadow, outside the observed tree entirely
+    L1  in-tree, novel subtree    app/<novel>/<novel>, root is known, rest is not
+    L2  known parent, novel leaf  app/<novel>, one novel segment at a dense node
+    L3  exact known target        app/document, a file the cohort routinely uses
 
 ## The honest reading, stated before the numbers
 
@@ -28,7 +28,7 @@ is not a defeat, and reporting it as one would misdescribe the mechanism. A
 density says "this agent went somewhere its cohort does not go"; an attacker who
 confines itself to where the cohort does go has been *constrained*, which is the
 whitelist-of-behavior thesis at target granularity. The security question is not
-whether L3 evades the density — it must — but **what an attacker can still
+whether L3 evades the density, it must, but **what an attacker can still
 accomplish from inside the benign target set**, which is a property of the
 deployment's data layout, not of this estimator.
 
@@ -88,7 +88,7 @@ def relocate(path: str, level: int, benign: list[str], rng: random.Random) -> st
     """Rewrite an attack target at the given mimicry level.
 
     The attacker controls where it points, not what the defense learned, so
-    every rewrite is drawn from the *observed benign surface* — which is what a
+    every rewrite is drawn from the *observed benign surface*, which is what a
     real adversary reconstructs by watching its own session.
     """
     if level == 0 or not benign:
@@ -184,7 +184,7 @@ def render(corpus: str, rows: dict, levels, seeds, path_level: int) -> str:
     head = (f"{'mimicry level':<28}{'contained':>12}{'by density':>13}"
             f"{'false-block':>13}{'n atk':>8}")
     lines = [
-        f"adaptive mimicry against the density rung — {corpus}, "
+        f"adaptive mimicry against the density rung, {corpus}, "
         f"path grant = {'exact' if path_level == 0 else f'up{path_level}'}, "
         f"{len(seeds)} seeds",
         "=" * len(head), "", head, "-" * len(head),
@@ -219,7 +219,7 @@ def main(argv=None) -> int:
     print(render(args.corpus, rows, args.levels, args.seeds, args.path_level))
     print("\n'by density' is the share of attacks the DENSITY rung refused; the")
     print("gap to 'contained' is what the rungs below it caught anyway.")
-    print("L3 detection is 0 by construction — see the module docstring.")
+    print("L3 detection is 0 by construction, see the module docstring.")
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(rows, indent=2))

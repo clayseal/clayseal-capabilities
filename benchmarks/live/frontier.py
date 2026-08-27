@@ -14,10 +14,10 @@ audit budget are points on a curve nobody drew.
 
 Reported per configuration:
 
-* **ASR** — attack success, lower better. The safety axis.
-* **clean utility** — task completion with no attack, higher better. The
+* **ASR**, attack success, lower better. The safety axis.
+* **clean utility**, task completion with no attack, higher better. The
   usefulness axis.
-* **friction** — human interruptions per task. The third axis the control
+* **friction**, human interruptions per task. The third axis the control
   literature insists on, because a protocol that buys safety with unlimited
   human attention has moved the cost rather than removed it.
 
@@ -153,8 +153,8 @@ def plot(points: list[dict], width: int = 46, height: int = 14) -> str:
     grid = [[" "] * width for _ in range(height)]
     labels = {}
     # Collisions matter here. Configurations that land on identical coordinates
-    # are the interesting ones — they are doing the same job by different means
-    # — and an earlier version silently overwrote them, so `envelope-taint`
+    # are the interesting ones: they are doing the same job by different means
+    #, and an earlier version silently overwrote them, so `envelope-taint`
     # vanished behind `deferallow` and the plot showed 5 of 9 points with no
     # indication that 4 were missing.
     occupied: dict[tuple[int, int], list[str]] = {}
@@ -201,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
 
     configs = [c.strip() for c in args.configs.split(",") if c.strip()]
-    print(f"# Safety/usefulness frontier — {args.suite}, {args.model}, "
+    print(f"# Safety/usefulness frontier, {args.suite}, {args.model}, "
           f"{args.n_user}x{args.n_inj} runs per config\n", flush=True)
 
     runs = []

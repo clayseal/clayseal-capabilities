@@ -8,7 +8,7 @@ Only the `ivisor: policy ` prefix and the `verdict=` key are contract; every
 other key may be added or dropped by a future iVisor, so unknown keys are kept
 rather than rejected. A value starting with `"` is a JSON string (unescaped
 here); one starting with `[` is a JSON array (kept verbatim, callers re-parse).
-Anything that does not conform is dropped rather than fatal — the stream is
+Anything that does not conform is dropped rather than fatal, the stream is
 shared with whatever else the sentry writes.
 
 THE FORGERY BOUNDARY: `verified` is true only for lines that arrived on the
@@ -33,7 +33,7 @@ _ESCAPES = {"n": "\n", "t": "\t", "r": "\r"}
 class Verdict(str, Enum):
     """A policy outcome.
 
-    MISS is not a refusal — the path simply is not in the guest's namespace.
+    MISS is not a refusal, the path simply is not in the guest's namespace.
     Counting it as a denial inflates every containment number.
     """
 
@@ -57,7 +57,7 @@ class PolicyEvent:
 
     @property
     def subsystem(self) -> str:
-        """`net`, `fs`, `dns`, `proc` — the left half of the event name."""
+        """`net`, `fs`, `dns`, `proc`, the left half of the event name."""
         return self.event.split(".", 1)[0]
 
     def subject(self) -> str:
@@ -163,7 +163,7 @@ def _scan_quoted(text: str, start: int) -> tuple[str, int]:
 
 
 def _scan_bracketed(text: str, start: int) -> tuple[str, int]:
-    """Read a bracketed JSON array verbatim — callers that want structure
+    """Read a bracketed JSON array verbatim, callers that want structure
     re-parse it with json.loads."""
     i, n = start, len(text)
     in_string = False

@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, injecagent (1054 tasks, 1054 benign / 1598 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/injecagent.json
-# Clay Seal enforcement benchmark — injecagent (1054 tasks, 1054 benign / 1598 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset injecagent --mode ladder --ci --json benchmarks/results/new-suites/injecagent.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

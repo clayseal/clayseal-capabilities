@@ -1,12 +1,12 @@
-"""Gorilla BFCL loader — real function-call ground truth.
+"""Gorilla BFCL loader, real function-call ground truth.
 
 BFCL pairs a question with a provided function schema and, in
 ``possible_answer/``, the ground-truth call(s). Two forms are handled:
 
 - dict form (simple / live / multiple / parallel): ``ground_truth`` is a list of
-  ``{func_name: {arg: [values]}}`` — short trajectories;
+  ``{func_name: {arg: [values]}}``, short trajectories;
 - multi-turn form: ``ground_truth`` is a list of turns, each a list of call
-  strings like ``mv(source='a', destination='b')`` — real multi-step trajectories
+  strings like ``mv(source='a', destination='b')``, real multi-step trajectories
   over a shared tool surface (file-system ops), a well-sampled goal bucket for
   the detector.
 

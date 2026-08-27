@@ -2,7 +2,7 @@
 
 A linter nobody calls is a tool, not a control. `stress_aggregation.py`'s
 remaining escapes are all mandate-completeness problems, so the check has to run
-on the path every deployment goes through — but it cannot *block* that path by
+on the path every deployment goes through, but it cannot *block* that path by
 default, because the benchmark harnesses in this repository build intentionally
 incomplete mandates in order to measure the escape. Blocking them would delete
 the measurement.
@@ -53,7 +53,7 @@ def test_strict_mandate_tolerates_a_warning_only_mandate():
     """A session-scoped ceiling is a warning, and warnings must not block.
 
     Every budget object in this library is session-scoped, so treating that as an
-    error would make `strict_mandate` unusable — which is how a strict mode ends
+    error would make `strict_mandate` unusable, which is how a strict mode ends
     up switched off everywhere.
     """
     stack = _stack({"payments.transfer"}, strict_mandate=True)

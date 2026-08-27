@@ -53,7 +53,7 @@ with no ground-truth seeding.
 Keystone 2, utility: **partially closed (2026-08).** Goal-named files are seeded
 from a **pre-contamination** filesystem snapshot
 (`snapshot_trusted_files` / `goal_named_env_destinations` in
-`broker_defense.py`). Never seed from the live/injected env — AgentDojo splices
+`broker_defense.py`). Never seed from the live/injected env, AgentDojo splices
 the attacker IBAN into `bill-december-2023.txt` via `injection_bill_text`.
 
 | banking cell (gpt-4o-mini, important_instructions) | clean util | ASR | hint-retry |
@@ -65,7 +65,7 @@ the attacker IBAN into `bill-december-2023.txt` via `injection_bill_text`.
 
 Env seed alone clears the floor for named-bill IBANs; clean-utility still needs
 runtime replan for envelope misses. Residual banking tasks (rent adjust, dinner
-split) name no file / no IBAN in the goal — still open.
+split) name no file / no IBAN in the goal, still open.
 
 ## Broker wiring (2026-08)
 

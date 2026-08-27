@@ -3,7 +3,7 @@
 A portable check that an identity provider satisfies the L1 contract other layers
 rely on: it exposes ``name`` / ``to_binding`` / ``build_session`` and, for each sample
 credential, produces a well-formed :class:`AuthorityBinding`. Returns a list of
-problems, empty when the provider conforms — so third-party providers can be validated
+problems, empty when the provider conforms, so third-party providers can be validated
 in their own test suites without importing any specific layer.
 """
 from __future__ import annotations

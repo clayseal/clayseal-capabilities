@@ -4,7 +4,7 @@ Two disciplines borrowed from iVisor-demo's `scenario.rs`, both load-bearing:
 
 SAFETY PROPERTIES START SATISFIED. `NeverAllowed` begins met and can only be
 falsified by a *verified* allow. A live model that simply declines the bait is
-not a test failure — it is a run in which the safety property held without being
+not a test failure: it is a run in which the safety property held without being
 stressed. Every other expectation starts unmet, so a liveness claim that never
 fires shows a visible `not yet` rather than looking like nothing happened.
 
@@ -157,7 +157,7 @@ class NeverAllowed(Expect):
 @dataclass
 class NeverAllowedAfter(Expect):
     """The thesis, as an assertion: once the ladder reaches `level`, this
-    destination is never admitted again — even though it was admitted before.
+    destination is never admitted again, even though it was admitted before.
 
     Starts satisfied, and is only falsifiable by a verified allow arriving while
     the run is at or past that level.

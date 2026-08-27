@@ -61,7 +61,7 @@ def test_capabilities_narrow_monotonically_with_level():
 
 
 # --------------------------------------------------------------------------- #
-# L1 takes nothing — the claim the demo's utility depends on
+# L1 takes nothing, the claim the demo's utility depends on
 # --------------------------------------------------------------------------- #
 
 def test_suspect_is_capability_identical_to_baseline():

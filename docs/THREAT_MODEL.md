@@ -1,11 +1,11 @@
-# Threat model and key management — Clay Seal Layer 2
+# Threat model and key management, Clay Seal Layer 2
 
 STATUS: current
 
 This document exists because "who signs what, and what happens when they don't"
 was answered only by `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS` and a reader's
 inference. Writing it found two live gaps, both now closed and both recorded
-below rather than quietly fixed — a threat model whose first draft finds nothing
+below rather than quietly fixed, a threat model whose first draft finds nothing
 was not a threat model.
 
 ---
@@ -92,7 +92,7 @@ until this document was written.
 **The intent envelope accepted any signer.** `verify_commit_token` had refused
 an unpinned minter in production for some time; `verify_intent_envelope` did
 not. It mattered more than the asymmetry suggests, because the envelope is the
-object `SessionBroker.reclear` swaps *mid-session* — the supported way a running
+object `SessionBroker.reclear` swaps *mid-session*, the supported way a running
 session's plan is legitimately widened. A self-signed envelope replaced the
 sealed plan wholesale, and every later conformance check then measured the agent
 against the attacker's plan. Now fails closed in production.
@@ -103,7 +103,7 @@ An approval is the one object in this protocol whose job is to grant something
 the floor refused, so one environment variable converted a refusal into a grant.
 Its siblings (`AGENT_RECEIPTS_ALLOW_STUB`, `AGENTAUTH_DEV_ATTESTOR`) were
 already in the production deny-list; this one was not. Now refused in production
-regardless of how it is spelled — the env var and the explicit
+regardless of how it is spelled, the env var and the explicit
 `allow_unsigned=True` argument are the same fail-open.
 
 Both are the defect class `principal_ledger.py` already names: *a control that
@@ -183,8 +183,8 @@ Verified in production posture:
 1. **A compromised control plane defeats everything here.** Every guarantee is
    downstream of "the thing that mints and seals is honest".
 2. **Content-defined harm is open.** 77% of missed attacks carry no target at
-   all, so nothing binds. The obvious fix — escalate every untargeted
-   consequential action — blocks 55% of legitimate work on tau2 and was
+   all, so nothing binds. The obvious fix, escalate every untargeted
+   consequential action, blocks 55% of legitimate work on tau2 and was
    rejected on measurement, not on taste.
 3. **In-scope staging is open**, as above.
 4. **Adaptive adversaries are under-tested.** The published sweep replays

@@ -3,7 +3,7 @@
 Every "supervised utility" figure in `benchmarks/results/` is arithmetic:
 `summarize_ladder.py` adds the step-up losses back to the autonomous number and
 calls the sum supervised. That assumes two things nobody has checked. It assumes
-the human would have approved, and it assumes the task then *succeeded* — a
+the human would have approved, and it assumes the task then *succeeded*, a
 resumed run can still fail downstream for reasons that have nothing to do with
 the defense. The second assumption is why the measured delta is likely to be
 negative.
@@ -136,7 +136,7 @@ class FatiguedApprover(Approver):
 
     Alert fatigue is the best-evidenced failure mode of any human-in-the-loop
     control, and `broker.py` already names it as a security property rather than
-    a UX one: "a step-up policy is attackable by exhaustion — issue enough
+    a UX one: "a step-up policy is attackable by exhaustion, issue enough
     benign-looking confirmations and the human stops reading."
 
     The curve is linear between `base_p` and `ceiling_p`, reaching the ceiling

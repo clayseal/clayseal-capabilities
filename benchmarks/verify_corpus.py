@@ -68,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
             problems.append(f"{name}: missing (expected {want['files']} files)")
         elif got["sha256"] != want["sha256"]:
             problems.append(
-                f"{name}: hash mismatch — expected {want['sha256'][:12]} "
+                f"{name}: hash mismatch, expected {want['sha256'][:12]} "
                 f"({want['files']} files), got {got['sha256'][:12]} ({got['files']} files)"
             )
     for name in current:

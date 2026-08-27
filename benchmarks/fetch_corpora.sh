@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fetch the external corpora the RedCode / AgentHarm / ASB suites replay.
 #
-# All three ship static labeled ground truth, so this is a plain download — no
+# All three ship static labeled ground truth, so this is a plain download, no
 # LLM, no environment, no GPU. Total ~4 MB. Everything lands in
 # .benchmark-corpus/ at the repo root, which is gitignored.
 #
@@ -14,7 +14,7 @@ CORPUS="${ROOT}/.benchmark-corpus"
 mkdir -p "${CORPUS}"
 
 # --------------------------------------------------------------------------- #
-# RedCode-Exec — 1,410 risky code-execution cases (Apache-2.0)
+# RedCode-Exec, 1,410 risky code-execution cases (Apache-2.0)
 # Sparse checkout: the dataset dir only, not the Docker environment.
 # --------------------------------------------------------------------------- #
 if [ ! -d "${CORPUS}/RedCode/dataset" ]; then
@@ -28,7 +28,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- #
-# AgentHarm — 176 harmful + 176 matched benign behaviors (UK AISI, MIT license)
+# AgentHarm, 176 harmful + 176 matched benign behaviors (UK AISI, MIT license)
 # --------------------------------------------------------------------------- #
 echo "==> AgentHarm"
 AH="${CORPUS}/AgentHarm/benchmark"
@@ -40,7 +40,7 @@ for f in harmful_behaviors_test_public.json benign_behaviors_test_public.json \
 done
 
 # --------------------------------------------------------------------------- #
-# Agent Security Bench — 400 attacker tools across 10 domain agents
+# Agent Security Bench, 400 attacker tools across 10 domain agents
 # --------------------------------------------------------------------------- #
 echo "==> ASB"
 ASB="${CORPUS}/ASB/data"
@@ -51,7 +51,7 @@ for f in agent_task.jsonl all_attack_tools.jsonl all_normal_tools.jsonl; do
 done
 
 # --------------------------------------------------------------------------- #
-# Gorilla BFCL multi-turn ground truth — the benign file-system trajectories
+# Gorilla BFCL multi-turn ground truth, the benign file-system trajectories
 # RedCode is scored against (Apache-2.0).
 # --------------------------------------------------------------------------- #
 echo "==> BFCL multi-turn"
@@ -68,7 +68,7 @@ done
     -o "${BF}/multi_turn_func_doc/gorilla_file_system.json"
 
 # --------------------------------------------------------------------------- #
-# InjecAgent — indirect prompt-injection tool-attack JSON (pinned for replay)
+# InjecAgent, indirect prompt-injection tool-attack JSON (pinned for replay)
 # --------------------------------------------------------------------------- #
 if [ ! -d "${CORPUS}/InjecAgent/data" ]; then
   echo "==> InjecAgent"
@@ -81,7 +81,7 @@ else
 fi
 
 # --------------------------------------------------------------------------- #
-# ToolEmu normalized traces — copy the shipped fixture when corpus assets lack
+# ToolEmu normalized traces, copy the shipped fixture when corpus assets lack
 # clayseal_traces.jsonl (honest path; raw toolkit mapping has no attack events).
 # --------------------------------------------------------------------------- #
 TE_ASSETS="${CORPUS}/ToolEmu/assets"
@@ -101,7 +101,7 @@ echo "Corpora ready in ${CORPUS}"
 du -sh "${CORPUS}"/* 2>/dev/null || true
 
 # --------------------------------------------------------------------------- #
-# SLEIGHT-Bench (arXiv:2605.16626, 2026) — 44 covert-harm coding-agent
+# SLEIGHT-Bench (arXiv:2605.16626, 2026), 44 covert-harm coding-agent
 # transcripts across 12 evasion categories, each with a benign pair.
 #
 # Canary-protected: the transcripts carry an explicit opt-out string and ship

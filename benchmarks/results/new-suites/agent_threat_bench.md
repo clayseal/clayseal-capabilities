@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, agent_threat_bench (24 tasks, 24 benign / 6 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/agent_threat_bench.json
-# Clay Seal enforcement benchmark — agent_threat_bench (24 tasks, 24 benign / 6 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset agent_threat_bench --mode ladder --ci --json benchmarks/results/new-suites/agent_threat_bench.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

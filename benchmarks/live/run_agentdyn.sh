@@ -41,7 +41,7 @@ if [ ! -d "${AGENTDYN}/agentdojo" ]; then
 fi
 
 export OPENAI_API_KEY="${OPENAI_API_KEY:-$(cat ~/.openai_api_key)}"
-# Azure stays unset for the same reason as the model ladder: the <azure-openai-resource>
+# Azure stays unset for the same reason as the model ladder: `<aoai-resource>`
 # deployment is named gpt-4o-mini and serves gpt-5-mini.
 unset AZURE_OPENAI_ENDPOINT AZURE_OPENAI_KEY AZURE_OPENAI_API_KEY || true
 

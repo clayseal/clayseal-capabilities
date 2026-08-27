@@ -7,7 +7,7 @@ workspace state carries across the ~50 ms per-call relaunches).
 
 Migration between epochs is explicit policy rather than a filesystem accident:
 only `capabilities.carry_forward` paths are copied into the next epoch's
-workspace. That is what makes QUARANTINED's revocation real — the next epoch
+workspace. That is what makes QUARANTINED's revocation real, the next epoch
 simply does not stage the tickets or migrate the summary, and what is not staged
 is not in the guest's namespace at all.
 
@@ -72,7 +72,7 @@ def _egress_policy(caps: Capabilities) -> EgressPolicy | None:
     if not caps.egress_domains:
         # Deny-all. Passing None rather than an empty policy keeps the rendered
         # config free of an `allow =` line, which is what iVisor's own default
-        # means — not "allow nothing listed" but "no allow-list at all".
+        # means, not "allow nothing listed" but "no allow-list at all".
         return None
     return EgressPolicy(allowed_domains=set(caps.egress_domains))
 
@@ -147,8 +147,8 @@ def spec_for(epoch: PolicyEpoch, tool: str, args: dict, *, scenario,
         # and absence is only visible if misses are traced). `fsallow` makes the
         # ordinary work visible: without it iVisor logs fs allows only for
         # MUTATING operations, so six permitted ticket reads would produce no
-        # evidence at all. Both are high-rate — a bare CPython start emits
-        # hundreds — so the reducer shows only watched subjects while counting
+        # evidence at all. Both are high-rate, a bare CPython start emits
+        # hundreds, so the reducer shows only watched subjects while counting
         # everything.
         trace=("policy", "fsmiss", "fsallow"),
     )

@@ -1,1 +1,0 @@
-{"event": "dns.query", "verdict": "allow", "fields": {"verdict": "allow", "name": "acme-internal.com", "qtype": "1", "rcode": "NXDOMAIN", "reason": "no-addresses"}, "at_ms": 1787546589730}

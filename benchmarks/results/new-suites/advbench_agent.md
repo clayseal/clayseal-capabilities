@@ -1,4 +1,10 @@
-# Clay Seal enforcement benchmark — advbench_agent (6 tasks, 11 benign / 6 attack events)
+# Clay Seal enforcement benchmark, advbench_agent (6 tasks, 11 benign / 6 attack events)
+
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset advbench_agent --mode ladder --ci --json benchmarks/results/new-suites/advbench_agent.json
+```
 
 | Engine | Attack prevented | False-block | Benign utility | Attacks let through | Overhead p95 (ms) |
 | --- | --- | --- | --- | --- | --- |

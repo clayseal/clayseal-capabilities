@@ -2,7 +2,7 @@
 
 Keeping the reducer pure is what makes the demo testable: feed it canned events,
 assert the resulting state, no terminal and no sandbox required. It is also what
-keeps the two renderers honest — `plain.py` and `tui.py` read `AppState` and
+keeps the two renderers honest, `plain.py` and `tui.py` read `AppState` and
 nothing else, hold no parsing logic of their own, and therefore cannot disagree
 about what happened.
 
@@ -32,7 +32,7 @@ from agentauth.capabilities.sandbox.verdicts import (
 )
 
 # --------------------------------------------------------------------------- #
-# Events — the one ordered stream. Recording is just serializing this.
+# Events, the one ordered stream. Recording is just serializing this.
 # --------------------------------------------------------------------------- #
 
 
@@ -142,7 +142,7 @@ def event_from_dict(raw: dict) -> Event:
 
 
 # --------------------------------------------------------------------------- #
-# Rendered lines — what the panes hold
+# Rendered lines, what the panes hold
 # --------------------------------------------------------------------------- #
 
 
@@ -213,10 +213,10 @@ class Counters:
 
 @dataclass
 class AppState:
-    # LEFT — the agent's own account. Untrusted by construction.
+    # LEFT, the agent's own account. Untrusted by construction.
     agent: list[AgentLine] = field(default_factory=list)
 
-    # RIGHT — verified only. Nothing the agent authored can reach these.
+    # RIGHT, verified only. Nothing the agent authored can reach these.
     verdicts: list[Rendered] = field(default_factory=list)
     watched_misses: list[Rendered] = field(default_factory=list)
 
@@ -317,7 +317,7 @@ def _apply_verdict(state: AppState, ev: VerdictLine) -> None:
     else:
         # Everything is counted; only high-rate noise is held back from the
         # pane. A DENIAL is never noise, and neither is anything on the network,
-        # so the filter applies solely to permitted filesystem reads — of which
+        # so the filter applies solely to permitted filesystem reads, of which
         # a CPython start makes hundreds before the agent does anything at all.
         if _displayable(state, parsed):
             state.verdicts.append(rendered)

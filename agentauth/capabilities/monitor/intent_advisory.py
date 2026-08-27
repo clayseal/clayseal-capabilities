@@ -1,4 +1,4 @@
-"""Intent advisory — soft signal for in-surface / content-same-dest harm.
+"""Intent advisory, soft signal for in-surface / content-same-dest harm.
 
 Per-call authorization binds *where* an action points. When harm is defined by
 what the action *says* (AgentHarm deepfake prompt, SLEIGHT sed-line sabotage on
@@ -8,12 +8,12 @@ verifier is the published answer; it puts a model in the decision path.
 This module is the subordination we already use for the statistical detector:
 it may ESCALATE, never hard-block on its own. Deterministic signals first:
 
-1. **Digest delta vs declared plan** — same destination, different write body
+1. **Digest delta vs declared plan**, same destination, different write body
    than the commit-then-reveal declaration. Deployable (no benign twin). The
    twin corridor already hard-blocks this when a reference exists; the advisory
    surfaces the same evidence on the soft path when the corridor is off or the
    action is still under review.
-2. **Optional judge** — ``judge(action, goal_text) -> str | None``. A caller may
+2. **Optional judge**, ``judge(action, goal_text) -> str | None``. A caller may
    plug an LLM entailment check; a non-None reason escalates. The default is no
    judge, so the core stays model-free.
 
@@ -32,7 +32,7 @@ from agentauth.capabilities.monitor.sealed_plan import _write_body
 
 Judge = Callable[[Action, str], str | None]
 
-# ``cat > path <<EOF`` / ``tee path`` — path_hint often misses these when the
+# ``cat > path <<EOF`` / ``tee path``, path_hint often misses these when the
 # loader did not put the path in meta (unit tests; some live Bash writes).
 _REDIRECT_DEST = re.compile(
     r"(?:(?:cat|tee)\s+>\s*|tee\s+)(?P<path>/[^\s;|&]+|\./[^\s;|&]+)",

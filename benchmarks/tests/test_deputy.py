@@ -129,7 +129,7 @@ def test_the_two_headline_columns_come_from_the_same_engine_call(corpus, split):
 # KNOWN INTERMITTENT: `[tool-tau2]` failed once in four consecutive full-suite
 # runs and has not reproduced since. Recorded rather than dismissed, with what
 # has been ruled out, because a parity test that flakes is worse than one that
-# fails — it makes every future green run slightly less informative.
+# fails, it makes every future green run slightly less informative.
 #
 #   isolation        passes standalone; 3 consecutive module runs, 44 tests each
 #   full suite       2302 passed on the very next run, same code
@@ -139,7 +139,7 @@ def test_the_two_headline_columns_come_from_the_same_engine_call(corpus, split):
 #                    (60/60/60/0 every time)
 #
 # What remains is cross-test contamination under a specific `pytest-randomly`
-# ordering. The failing run's seed was not captured — `pytest -q | tail` drops
+# ordering. The failing run's seed was not captured, `pytest -q | tail` drops
 # the "Using --randomly-seed=NNNN" banner, which is the actual lesson here.
 # **If this fails again, record that seed first**; `-p randomly --randomly-seed=N`
 # replays the exact order and turns this from a flake into a bug.
@@ -164,7 +164,7 @@ def test_a_refusal_does_not_creep_over_the_principal(corpus):
     refuse the sub-agent: its later in-scope work still runs.
 
     Asserted on what this rung ADDS, because the ladder below it can still
-    refuse a later action for its own reasons — one BFCL session runs seven
+    refuse a later action for its own reasons, one BFCL session runs seven
     effect actions against a cap of six, and that block is velocity's.
     """
     _available(corpus)

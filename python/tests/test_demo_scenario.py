@@ -57,7 +57,7 @@ def test_the_injection_offers_an_internal_fallback(scen):
 
 
 # --------------------------------------------------------------------------- #
-# What the broker does with each attempt — the beats of the run
+# What the broker does with each attempt, the beats of the run
 # --------------------------------------------------------------------------- #
 
 def test_the_legitimate_send_is_allowed(egress):
@@ -85,7 +85,7 @@ def test_the_internal_relay_is_allowed_by_the_broker(egress):
 
     Nothing external appears anywhere in these arguments, so the tool-level
     gate has no grounds to refuse. Whatever stops this attempt is therefore the
-    sandbox, under a policy recompiled from the trajectory — which is the one
+    sandbox, under a policy recompiled from the trajectory, which is the one
     beat that isolates the dynamic contribution.
     """
     ok, _ = egress.check("mcp:tool:send_email",
@@ -139,7 +139,7 @@ def test_the_benign_control_asserts_no_capability_loss():
     benign = ticket_triage_benign()
     assert any(e.describe() == "a clean trajectory loses no capability"
                for e in benign.expectations)
-    # It must not assert escalation — that is the whole point of the control.
+    # It must not assert escalation: that is the whole point of the control.
     assert not any("escalates" in e.describe() for e in benign.expectations)
 
 

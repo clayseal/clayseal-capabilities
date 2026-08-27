@@ -97,7 +97,7 @@ def test_valid_allow_entries(entry):
 
 
 @pytest.mark.parametrize("entry", [
-    "*.example.com",     # no wildcard rules in iVisor — this would be dropped
+    "*.example.com",     # no wildcard rules in iVisor: this would be dropped
     "not a host",
     "localhost",         # no dot: iVisor cannot parse it as a domain
     "",

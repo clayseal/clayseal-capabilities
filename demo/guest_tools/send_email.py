@@ -3,7 +3,7 @@
 This is the step that turns "exfiltration" from a string in a dict into a
 syscall. Resolving and connecting to the recipient's domain is what iVisor's
 egress policy actually adjudicates, so the verdict stream records whether the
-destination was ADMITTED — independently of whether the host could reach it.
+destination was ADMITTED, independently of whether the host could reach it.
 
 That independence is what makes the demo deterministic offline: an allowlisted
 name that does not resolve still yields `dns.query verdict=allow` (with

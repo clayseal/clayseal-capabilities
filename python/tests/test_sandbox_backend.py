@@ -1,4 +1,4 @@
-"""Sandbox backend resolution — the substrate is a deployment choice."""
+"""Sandbox backend resolution, the substrate is a deployment choice."""
 import pytest
 
 from agentauth.capabilities.sandbox.backend import (

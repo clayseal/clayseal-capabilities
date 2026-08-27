@@ -1,6 +1,6 @@
 """Driver tests against a fake iVisor binary.
 
-No HVF, no codesigning, no Apple Silicon — these run wherever CI does. The real
+No HVF, no codesigning, no Apple Silicon, these run wherever CI does. The real
 sentry is exercised separately in test_ivisor_e2e.py.
 """
 import json

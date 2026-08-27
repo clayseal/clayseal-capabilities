@@ -2,12 +2,12 @@
 
 A dataset-agnostic harness for evaluating **architectural approaches to agent
 authorization** on external agent-security data. It replays labeled tool-call
-traces — benign (the user's own task steps) vs attack (prompt-injection /
-compromised-tool steps) — through Clay Seal's real decision path and scores each
+traces, benign (the user's own task steps) vs attack (prompt-injection /
+compromised-tool steps), through Clay Seal's real decision path and scores each
 engine on two axes:
 
-- **Containment** — fraction of *attack* events blocked (higher is better).
-- **Friction** — fraction of *benign* events wrongly blocked, the false-block
+- **Containment**, fraction of *attack* events blocked (higher is better).
+- **Friction**, fraction of *benign* events wrongly blocked, the false-block
   rate (lower is better).
 
 No LLM inference is involved: each dataset provides ground-truth call sequences,
@@ -40,7 +40,7 @@ Monotonicity is enforced as a per-event test on every corpus
 asserted in prose. It has to be per-event: two rungs can report the same
 containment percentage while disagreeing about which events they caught, and
 that disagreement is the defect class worth hunting. It found one on the first
-run, now fixed — under a path-scoped mandate `compile_task_scope` leaves
+run, now fixed, under a path-scoped mandate `compile_task_scope` leaves
 `allowed_resources` empty, so `task-scope` was skipping the resource check that
 `capability-token`, a *lower* rung, enforces. `TaskScopeEngine` now composes the
 rung below instead of replacing it.
@@ -49,7 +49,7 @@ Every rate carries a task-clustered bootstrap interval with `--ci`. Events
 inside a task share a template, so an event-level interval is roughly
 sqrt(events-per-task) too narrow; see [core/stats.py](core/stats.py).
 
-**Engine-integration family** — `opa`, `cedar`, `openfga` carry the *same*
+**Engine-integration family**, `opa`, `cedar`, `openfga` carry the *same*
 compiled policy across the pluggable `agentauth.capabilities.authorizers` seam.
 Holding policy fixed isolates the engine integration (decision parity + overhead)
 and answers "which external authz engine should we adopt?" separately from
@@ -82,7 +82,7 @@ Fixture result (offline, `python -m benchmarks.cli --dataset fixture`):
 | `asb` | [Agent Security Bench](https://github.com/agiresearch/ASB) | ready — 400 attacker tools x 10 domains; saturated at the allowlist rung (breadth, not discrimination) |
 
 Fetch the last three (and the BFCL benign trajectories RedCode scores against)
-with `benchmarks/fetch_corpora.sh` — ~4 MB total, static JSON, no LLM or
+with `benchmarks/fetch_corpora.sh`, ~4 MB total, static JSON, no LLM or
 container needed. See [results/new_suites.md](results/new_suites.md) for what
 each one does and does not prove.
 
@@ -142,7 +142,7 @@ pip install -e ".[benchmarks]"
 python -m benchmarks.cli --dataset agentdojo --limit 200 --json results/agentdojo.json
 ```
 
-On a VM — the workload is CPU-only, so a small general-purpose instance or a
+On a VM, the workload is CPU-only, so a small general-purpose instance or a
 laptop is sufficient; no GPU:
 
 ```bash

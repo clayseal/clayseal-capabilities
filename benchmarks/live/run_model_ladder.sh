@@ -43,7 +43,7 @@ mkdir -p "${OUT}"
 
 FOUNDRY_BASE="https://clayseal-foundry.services.ai.azure.com/models"
 FOUNDRY_KEY="$(az cognitiveservices account keys list -n clayseal-foundry \
-  -g <azure-resource-group> --query key1 -o tsv)"
+  -g <aoai-resource-group> --query key1 -o tsv)"
 
 # AgentDojo validates the model id against its own enum, so every run passes the
 # same recognized id while the client underneath is pointed at a different
@@ -56,7 +56,7 @@ run_one() {
     echo "---- skipping ${label} (filtered)"
     return 0
   fi
-  echo "############ ${label} — ${SUITE}, n_user=${N_USER}"
+  echo "############ ${label}, ${SUITE}, n_user=${N_USER}"
   if [ -n "${base}" ]; then
     export OPENAI_COMPAT_BASE_URL="${base}" OPENAI_COMPAT_KEY="${key}" \
            OPENAI_COMPAT_MODEL="${model}" OPENAI_COMPAT_LABEL="${label}" \
@@ -76,7 +76,7 @@ run_one() {
 }
 
 export OPENAI_API_KEY="${OPENAI_API_KEY:-$(cat ~/.openai_api_key)}"
-# Azure OpenAI is unset here on purpose: the <azure-openai-resource> deployment is NAMED
+# Azure OpenAI is unset here on purpose: `<aoai-resource>` is NAMED
 # gpt-4o-mini-2024-07-18 but SERVES gpt-5-mini, so leaving it configured would
 # silently make the "gpt-4o-mini" rung a gpt-5-mini run.
 unset AZURE_OPENAI_ENDPOINT AZURE_OPENAI_KEY AZURE_OPENAI_API_KEY || true

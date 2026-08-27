@@ -68,7 +68,7 @@ def test_broker_slot_denies_ungrounded_send():
         allowed_resource_classes=frozenset(),
         call_templates=templates,
     )
-    # Egress unrestricted so the slot check is what decides — not the floor.
+    # Egress unrestricted so the slot check is what decides, not the floor.
     broker = SessionBroker(
         goal=GoalSpec(query_id="t", summary="summarise inbox"),
         scope=TaskScope(

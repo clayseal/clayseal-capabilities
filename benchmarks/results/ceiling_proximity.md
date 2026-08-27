@@ -36,7 +36,7 @@ freed while the hold stays committable.
 **Refusing the late commit** is the payment-industry answer (an expired
 authorization cannot be captured) and it under-counts here: the effect happened,
 and a ledger that declines to record it reports headroom that is already spent.
-This module's own docstring rules it out — "under-counting is the failure that
+This module's own docstring rules it out, "under-counting is the failure that
 lets an attack through".
 
 **Settling the hold as spend on expiry** never under-counts and closes the
@@ -48,7 +48,7 @@ failed immediately. That test was right and the fix was wrong.
 **Voiding** is the one that satisfies all three constraints. Expiry frees the
 headroom, so the DoS stays fixed. The hold's id is remembered, and the ceiling
 it was checked against is captured on the Hold itself, so `commit_hold` can
-re-check at commit time. It books either way — the effect landed — and records a
+re-check at commit time. It books either way, the effect landed, and records a
 breach when it no longer fits. The escape becomes visible instead of silent,
 which is the standard [aggregation_residual.md](aggregation_residual.md) already
 holds the mandate escapes to.
@@ -92,7 +92,7 @@ A delegate's spend now charges its ancestors, so a forged chain is an attack on
 someone else's ceiling: name the victim as your parent and exhaust it. That is
 covered because `delegation_chain` is in `AUTHORITY_FIELDS`, so
 [identity_boundary.md](identity_boundary.md)'s strip already stops a claims dict
-naming its own ancestors — a fix made for a different reason that this change
+naming its own ancestors, a fix made for a different reason that this change
 turned load-bearing. Chain entries are issuer-qualified for the same reason the
 principal key is. Both are pinned.
 
@@ -140,7 +140,7 @@ ceiling across four demand shapes, reporting both error directions.
 | front-loaded | 140 | **0/140, 97.5% upper bound 2.6%** | 0/140 | 140/140 |
 
 Pooled over all four shapes: **0 of 427, 97.5% upper bound 0.9%**. The `single`
-row is thin on purpose — that shape is one action per session, so seven ratios
+row is thin on purpose, that shape is one action per session, so seven ratios
 give seven actions and its bound is correspondingly wide.
 
 **Over-ceiling value on demand that does not fit (ratio > 1.0):**

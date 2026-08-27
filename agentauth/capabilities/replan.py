@@ -142,7 +142,7 @@ def catalog_shape_judge(
     Admits a shape when the tool is in the static catalog and either its verb
     class is in ``allowed_classes``, a significant tool-name token appears in
     the sealed goal, or the verb class is observational. Never sees argument
-    values or tool results — same trust boundary as :func:`llm_shape_judge`.
+    values or tool results, same trust boundary as :func:`llm_shape_judge`.
     """
 
     allowed = set(allowed_classes or ())

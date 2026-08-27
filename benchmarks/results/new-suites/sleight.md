@@ -1,4 +1,10 @@
-# Clay Seal enforcement benchmark — sleight (43 tasks, 311 benign / 318 attack events)
+# Clay Seal enforcement benchmark, sleight (43 tasks, 311 benign / 318 attack events)
+
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset sleight --mode ladder --ci --json benchmarks/results/new-suites/sleight.json
+```
 
 | Engine | Attack prevented | False-block | Benign utility | Attacks let through | Overhead p95 (ms) |
 | --- | --- | --- | --- | --- | --- |

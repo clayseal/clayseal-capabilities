@@ -39,14 +39,14 @@ arithmetic. `benchmarks/core/heldout.py` rebuilds the grant from half a task's
 benign events and scores the other half, which is the question an operator
 actually faces the day after they write a mandate.
 
-Where a corpus cannot be split — one benign event per task, so there is nothing
-to hold out — the cell is `–` rather than the circular zero. Reporting the
+Where a corpus cannot be split, one benign event per task, so there is nothing
+to hold out, the cell is `–` rather than the circular zero. Reporting the
 identity beside a real containment number is forbidden claim 3 in
 `SEND_PACKET.md`.
 
 Against 18,356 benign events from tau2, BFCL and ATIF the granted-mandate
 false-block rate is 0.00% (0 of 18,356). Held out, the same corpora are 48.13%
-(tau2), 18.04% (BFCL) and 26.95% (ATIF) — the cost of a mandate that did not
+(tau2), 18.04% (BFCL) and 26.95% (ATIF), the cost of a mandate that did not
 anticipate the traffic, and the number a deployment should budget for.
 
 **ASB's 100% means less than it looks.** Its benign side is one synthetic event

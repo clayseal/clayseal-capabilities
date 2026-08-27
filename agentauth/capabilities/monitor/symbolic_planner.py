@@ -1,11 +1,11 @@
-"""Symbolic diverse-planner (Phase C2) — derive the envelope from the ontology.
+"""Symbolic diverse-planner (Phase C2), derive the envelope from the ontology.
 
 Instead of asking an LLM for a plan (a soft, stochastic, injectable function),
 compute the plan structure directly from the tool ontology by classical
 **landmark analysis**: the facts that must be achieved in *any* valid plan, and
 the tools that can achieve them, and the necessary order among them. This is
-deterministic, sound, and not injectable — it is an algorithm over a formal
-domain model, not a model reading text — and it handles multi-modality for free:
+deterministic, sound, and not injectable: it is an algorithm over a formal
+domain model, not a model reading text, and it handles multi-modality for free:
 when a fact can be achieved several ways (deploy by canary *or* blue-green),
 neither tool is individually required, so the plan permits either.
 
@@ -50,7 +50,7 @@ def fact_landmarks(specs, initial: set[str], goals: set[str]) -> set[str]:
         fact = frontier.pop()
         achievers = _achievers(specs, fact)
         if not achievers:
-            continue  # initial or unachievable — no shared prerequisite to add
+            continue  # initial or unachievable, no shared prerequisite to add
         shared = set.intersection(*(set(specs[t].preconditions) for t in achievers))
         for pre in shared - initial:
             if pre not in landmarks:
@@ -86,7 +86,7 @@ def _toposort(nodes: list[str], edges: set[tuple[str, str]]) -> list[str]:
                 incoming[b] -= 1
                 if incoming[b] == 0:
                     ready.append(b)
-    # Any remaining (cycle — shouldn't happen in a monotone relaxation) appended.
+    # Any remaining (cycle, shouldn't happen in a monotone relaxation) appended.
     out.extend(n for n in nodes if n not in out)
     return out
 

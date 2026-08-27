@@ -3,7 +3,7 @@
 `PrincipalLedger` synchronises on a `threading.RLock`. Measured before
 `SharedPrincipalLedger` existed, four OS processes against one ledger file and a
 ceiling of 100: **400 landed**. Each process loaded the log, saw nothing spent,
-reserved, and committed — the same check-then-act race `reserve` already fixes
+reserved, and committed, the same check-then-act race `reserve` already fixes
 for threads, one layer out.
 
 It is the gap that mattered most, because every claim this repository makes about
@@ -77,7 +77,7 @@ def test_an_uncommitted_hold_in_another_process_still_blocks(tmp_path):
 
     This is the part a shared log alone does not fix. Two processes that each
     hold a reservation cannot see each other's, so both pass the ceiling check
-    and both commit later — the ledger ends up over its ceiling with every
+    and both commit later, the ledger ends up over its ceiling with every
     individual decision having looked correct.
     """
     path = tmp_path / "ledger.jsonl"
@@ -125,7 +125,7 @@ def test_a_long_lived_instance_sees_later_writes(tmp_path):
     """The in-memory index is a snapshot; every transaction must tail the log.
 
     A server process holds one ledger for its lifetime, so 'read it at startup'
-    is the same bug as not sharing at all — it just takes longer to show up.
+    is the same bug as not sharing at all, it just takes longer to show up.
     """
     path = tmp_path / "ledger.jsonl"
     long_lived = SharedPrincipalLedger(path=path)
@@ -189,7 +189,7 @@ def test_an_unreachable_backend_refuses_and_says_so(tmp_path):
 
 
 def test_the_allow_policy_exists_but_is_never_the_default(tmp_path):
-    """Availability is sometimes worth more than a ceiling — but say so aloud."""
+    """Availability is sometimes worth more than a ceiling, but say so aloud."""
     assert SharedPrincipalLedger(path=tmp_path / "d.jsonl").on_unavailable == "deny"
 
     ledger = _unreachable(tmp_path, on_unavailable="allow")
@@ -205,7 +205,7 @@ def test_the_allow_policy_exists_but_is_never_the_default(tmp_path):
 def test_one_refused_action_counts_as_one_outage(tmp_path):
     """`reserve` calls `spent`, which opens its own transaction.
 
-    Without re-entrancy on the failure path, one action reported two outages —
+    Without re-entrancy on the failure path, one action reported two outages
     the kind of inflated number an operator learns to ignore, on the one metric
     that says the ceiling stopped being enforced.
     """

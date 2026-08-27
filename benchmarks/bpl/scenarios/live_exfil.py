@@ -1,4 +1,4 @@
-"""Optional iVisor live arm — gated on IVISOR_* env (unchanged from bpl_live)."""
+"""Optional iVisor live arm, gated on IVISOR_* env (unchanged from bpl_live)."""
 from __future__ import annotations
 
 import os

@@ -10,7 +10,7 @@ throwing millions of randomized reserve/commit/release interleavings at the real
 
 The budget ledger is the right target for this treatment. It is the only rung on
 the ladder that carries state across a session, so it is the only one where a
-bug compounds rather than being confined to one decision — and the failure mode
+bug compounds rather than being confined to one decision, and the failure mode
 is a silent double-spend, not an exception. `broker.py` already documents one
 defect of exactly this shape: the replan and `defer_allows_bound` paths returned
 ALLOW after a rollback had released their reservations, so those actions executed
@@ -66,7 +66,7 @@ BUDGET_ID = "payments"
 def _config(ceiling: Decimal) -> ValueBudgetConfig:
     """A one-tool, one-budget config: the smallest thing that can be violated."""
     return ValueBudgetConfig(
-        # (arg_name, budget_id) — that order, and both are `str`, so
+        # (arg_name, budget_id), that order, and both are `str`, so
         # transposing them type-checks fine and silently untracks the tool:
         # every reserve returns allowed=True and the ledger stays at zero.
         # This harness got it backwards on the first run and the symptom
@@ -90,8 +90,8 @@ def _check(budget: SessionValueBudget, ceiling: Decimal, committed: Decimal,
            reserved: Decimal, history: list[str]) -> None:
     """``remaining()`` reflects committed spend AND outstanding reservations.
 
-    That is the correct and safe semantics — money held for an in-flight call is
-    not available to a second one — and modelling it as committed-only was this
+    That is the correct and safe semantics, money held for an in-flight call is
+    not available to a second one, and modelling it as committed-only was this
     harness's second self-inflicted failure. The symptom was a CONSERVATION
     violation reported the instant a reservation opened, which looks exactly like
     the ledger inventing money.

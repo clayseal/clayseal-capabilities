@@ -1,11 +1,11 @@
-"""Session-level cumulative *call-count* budget — the count-based sibling of the
+"""Session-level cumulative *call-count* budget, the count-based sibling of the
 value ledger in ``value_budget.py``. Where that ledger sums quantities carried in
 arguments (dollars moved, headcount touched), this one counts the number of
 tracked tool calls against a ceiling.
 
 A signed mandate can grant "at most N tool calls under this authorization"
-(``BudgetType.TOOL_CALL_LIMIT``). That grant is stateless — it does not remember
-prior calls — so on its own it cannot stop an unauthorized *number* of
+(``BudgetType.TOOL_CALL_LIMIT``). That grant is stateless: it does not remember
+prior calls, so on its own it cannot stop an unauthorized *number* of
 individually-valid calls. This is the stateful layer-2 ledger that does: it
 remembers the running count and refuses the call that would cross the ceiling,
 even though every single call is well-formed.
@@ -21,8 +21,8 @@ Counts are plain :class:`int` (a call is one call); no money quantization is
 involved, which is precisely why a call-count grant must not be run through the
 money ledger.
 
-Concurrency: use the atomic :meth:`SessionCallBudget.reserve` gate — it checks the
-projected count AND records the reservation under one lock — then
+Concurrency: use the atomic :meth:`SessionCallBudget.reserve` gate, it checks the
+projected count AND records the reservation under one lock, then
 :meth:`CallReservation.commit` (call confirmed) or :meth:`CallReservation.release`
 (call blocked/failed).
 """
@@ -52,7 +52,7 @@ def call_budget_config_from_mandate(
 ) -> CallBudgetConfig:
     """Build a live call-count session ledger from a signed mandate.
 
-    Consumes only ``BudgetType.TOOL_CALL_LIMIT`` budgets — the count grants — and
+    Consumes only ``BudgetType.TOOL_CALL_LIMIT`` budgets, the count grants, and
     turns each into an integer ceiling keyed by ``budget_id``. ``tracked`` maps a
     tool name to the ``budget_id`` its calls debit (several tools may share one),
     so the ceiling cannot be evaded by spreading calls across tools.
@@ -105,7 +105,7 @@ class CallEffectSpec:
     attack grants `read`, gets refused on two elevation tools, then simply calls
     the same allow-listed `grant_repo_access` again with `level: write`. Both
     calls are inside any call ceiling, the tool is legitimately granted, and the
-    privilege is escalated. The value budget cannot help — a grant carries no
+    privilege is escalated. The value budget cannot help, a grant carries no
     amount.
 
     Same cumulative framing as `EffectSpec.identity_args`, over calls rather
@@ -138,7 +138,7 @@ class CallBudgetConfig:
     # budget_id -> integer ceiling (the requester-inherited call allowance)
     ceilings: dict[str, int] = field(default_factory=dict)
     # tools where a same-idempotency-key call replaces a prior one (nets 0 extra
-    # slots) rather than counting as a new call — see ToolCallBudgetConfig.
+    # slots) rather than counting as a new call, see ToolCallBudgetConfig.
     supersession_eligible: frozenset[str] = field(default_factory=frozenset)
     tightened: bool = False
 

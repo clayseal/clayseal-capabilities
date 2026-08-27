@@ -91,7 +91,7 @@ TASKS = [_task(f"t{i}") for i in range(10)]
 
 
 # --------------------------------------------------------------------------- #
-# Negative controls — the harness must be able to break things
+# Negative controls, the harness must be able to break things
 # --------------------------------------------------------------------------- #
 def test_sinkhole_is_fully_defeated():
     """An allow-everything engine must score 0% at every knowledge level."""
@@ -111,7 +111,7 @@ def test_control_engine_is_broken_by_traversal():
                           knowledge=Knowledge.BLIND, rounds=5)
     assert result.containment == 0.0
     assert any("obfuscate" in e.strategy or "escape" in e.strategy for e in result.escapes), (
-        "the control fell, but not to a traversal mutation — check what actually broke it"
+        "the control fell, but not to a traversal mutation, check what actually broke it"
     )
 
 

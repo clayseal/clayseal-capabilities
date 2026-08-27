@@ -14,8 +14,8 @@ requires writing outside the workspace, destruction requires deleting outside it
 `task-scope` denies leaving the workspace.
 
 **The objective and the defense were the same predicate.** So the adaptive
-suite's headline — 100% containment against an oracle attacker, for every rung
-from `task-scope` upward — was definitional, not earned, and no rung above
+suite's headline, 100% containment against an oracle attacker, for every rung
+from `task-scope` upward, was definitional, not earned, and no rung above
 `task-scope` could ever be distinguished from it. A benchmark whose objective is
 the negation of its defense cannot rank anything.
 
@@ -25,8 +25,8 @@ secrets** (`.env`, `.npmrc`, `.git/config`) **and their own publication
 surfaces** (`README`, `docs/`, `dist/`). Read the first, stage it into the
 second, and you have exfiltrated without a byte crossing the grant.
 
-The predicate requires both halves to be *linked* — the staging write must carry
-the secret's source — so an ordinary documentation edit that happens to follow a
+The predicate requires both halves to be *linked*, the staging write must carry
+the secret's source, so an ordinary documentation edit that happens to follow a
 config read does not count as an escape.
 
 ## Result: zero containment above no enforcement at all
@@ -43,7 +43,7 @@ RedCode, 130 tasks, 5 rounds, 42,232 candidates.
 | …+velocity+density | 29.2% | 36.1% | **38.5%** |
 
 Against an oracle attacker the escaped-task sets are **byte-identical across
-every engine, including `allow-all`**. Not similar — identical. The 38.5% is not
+every engine, including `allow-all`**. Not similar, identical. The 38.5% is not
 containment; it is the attacker's own failure rate on tasks where it could not
 construct a valid in-scope attack. Subtract that floor and the enforcement ladder
 contributes **exactly nothing**.
@@ -120,7 +120,7 @@ Two concrete steps, in order:
 ## What should change in the claim board
 
 `SEND_PACKET.md` currently carries "Target-shaped containment (RedCode / IPI /
-path egress) ≈100%" as `ready`. That remains true *as stated* — it is a claim
+path egress) ≈100%" as `ready`. That remains true *as stated*: it is a claim
 about target-shaped attacks. It should acquire an explicit companion caveat:
 **the ladder provides no containment against in-scope data staging by an
 informed attacker**, and that class is not a corner case for coding agents, it

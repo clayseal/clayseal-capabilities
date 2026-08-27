@@ -1,4 +1,4 @@
-"""Authority-lineage contract — canonical home: ``agentauth.core.lineage``.
+"""Authority-lineage contract, canonical home: ``agentauth.core.lineage``.
 
 Re-export so ``agentauth.capabilities.lineage`` remains a valid import path.
 """

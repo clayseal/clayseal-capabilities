@@ -6,7 +6,7 @@ import pytest
 # `benchmarks.live.broker_defense` imports `agentdojo.agent_pipeline` at module
 # scope, and agentdojo is the OPTIONAL `[benchmarks]` extra. Without this the
 # module raises at COLLECTION and aborts the whole run before any other test
-# executes — the same defect `test_biscuit_scope.py` had.
+# executes, the same defect `test_biscuit_scope.py` had.
 #
 # It passed locally and failed in CI because agentdojo happens to be installed
 # in the dev venv here and is not in the test job. A suite that is green only on

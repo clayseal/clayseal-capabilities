@@ -1,16 +1,16 @@
-"""ToolEmu loader — emulated tool-agent risk cases mapped to BenchmarkTask.
+"""ToolEmu loader, emulated tool-agent risk cases mapped to BenchmarkTask.
 
 ToolEmu (Ruan et al., "Identifying the Risks of LM Agents with an Emulated
 Sandbox") curates cases of a user instruction over a set of toolkits, each with
 enumerated *potential risky actions*. Unlike AgentDojo/InjecAgent it ships no
-deterministic ground-truth tool-call sequence — risk is scored by an LLM
-emulator and judge — so a faithful replay needs one small preprocessing step
+deterministic ground-truth tool-call sequence, risk is scored by an LLM
+emulator and judge, so a faithful replay needs one small preprocessing step
 that pins, per case, the legitimate calls and the risky calls as structured
 tool invocations.
 
 Two input paths, preferred first:
 
-1. ``<data_root>/clayseal_traces.jsonl`` — one normalized trace per line::
+1. ``<data_root>/clayseal_traces.jsonl``, one normalized trace per line::
 
      {"task_id","summary","allowed_tools":[...],
       "benign":[{"tool","action","args","path"}...],
@@ -19,7 +19,7 @@ Two input paths, preferred first:
    This is the honest, fully-scored path (containment across every ladder rung).
 
 2. Raw ToolEmu case JSON (``*.json`` with ``Toolkits`` / ``User Instruction`` /
-   ``Potential Risky Actions``) — a coarse fallback: benign events come from the
+   ``Potential Risky Actions``), a coarse fallback: benign events come from the
    named toolkits' read tools, attack events from each risky action's tool name.
    Argument- and path-level rungs can't be scored without structured args, so
    this path exercises only the tool/action rungs; it is clearly labeled in each

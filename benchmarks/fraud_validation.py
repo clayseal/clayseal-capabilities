@@ -2,8 +2,8 @@
 
 The AML layer's typologies (structuring, fan-out, velocity) are agent-trajectory
 patterns; the fraud datasets are per-transaction and cannot exercise those
-directly. What they CAN validate is the sensor's learned component — the
-peer-group deviation score (``aml.peer_z_score``) — on genuinely fraudulent
+directly. What they CAN validate is the sensor's learned component, the
+peer-group deviation score (``aml.peer_z_score``), on genuinely fraudulent
 data, grounding the AML inspiration in reality. We fit the peer statistics on
 legitimate transactions and measure how well the same z-score separates held-out
 fraud (ROC-AUC and recall at a 1% false-positive rate).

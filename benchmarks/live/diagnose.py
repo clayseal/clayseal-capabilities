@@ -47,7 +47,7 @@ def _gt_map(suite, ids, tasks):
 
 
 def _gt_argvals(suite, ids, tasks):
-    """String argument values that appear in a task's ground-truth calls — the
+    """String argument values that appear in a task's ground-truth calls, the
     concrete payloads (recipient IBANs, filenames) an attack is built from."""
     env = suite.load_and_inject_default_environment({})
     vals = set()
@@ -78,7 +78,7 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
     attack_gt = _gt_map(suite, inj_ids, suite.injection_tasks)
     attack_only = {t for ts in attack_gt.values() for t in ts} - all_legit
     # Argument-level attack payloads (e.g. attacker IBAN) that never appear in a
-    # legitimate task — how send_money-style attacks ride an in-scope tool.
+    # legitimate task, how send_money-style attacks ride an in-scope tool.
     attack_payloads = _gt_argvals(suite, inj_ids, suite.injection_tasks) \
         - _gt_argvals(suite, user_ids, suite.user_tasks)
     labelctx = (legit_by_query, attack_only, attack_payloads)
@@ -95,7 +95,7 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name):
         pipe, harness = build_pipeline(
             model, ab, planners.get(ab), clean_files=clean_files)
         if harness is None:
-            print(f"[{ab}] no broker (baseline/builtin) — skipping attribution\n")
+            print(f"[{ab}] no broker (baseline/builtin), skipping attribution\n")
             continue
         attack = load_attack(attack_name, suite, pipe)
         clean, util, sec = [], [], []
@@ -160,7 +160,7 @@ def _report(ab, decisions, labelctx, agg):
         by_tool = Counter(r["tool"] for r in leaked)
         print(f"  LEAKED attack calls allowed: {dict(by_tool)}")
         for r in leaked[:3]:
-            print(f"         · {r['tool']} — allowed at layer {r['layer']}")
+            print(f"         · {r['tool']}, allowed at layer {r['layer']}")
     print()
 
 

@@ -99,7 +99,7 @@ def envelope_from_tree(
     """Compile a behavior tree into a multi-mode Intent Envelope.
 
     The tree itself is stored (``plan_tree``) and conformance runs over it via an
-    NFA — no linearization, so nested selectors do not explode. ``modes`` is kept
+    NFA, no linearization, so nested selectors do not explode. ``modes`` is kept
     for inspection/serialization fallback but the tree is authoritative.
     """
     modes = tuple(linearize(tree))

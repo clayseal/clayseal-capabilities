@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Remote workload for the Clay Seal enforcement benchmark.
 #
-# Runs ON the VM (or any Linux/macOS host). The benchmark is CPU-only —
+# Runs ON the VM (or any Linux/macOS host). The benchmark is CPU-only
 # deterministic replay of ground-truth tool-call traces through the enforcement
-# path, no LLM inference — so a small general-purpose VM (or a laptop) is plenty;
+# path, no LLM inference, so a small general-purpose VM (or a laptop) is plenty;
 # no GPU required. Downloading the corpora is the only network-heavy step.
 #
 # Usage (on the VM):

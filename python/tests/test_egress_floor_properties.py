@@ -8,7 +8,7 @@ to diff against.
 
 That module is the load-bearing control. It is what stands between an injected
 send and the attacker's address, and it is the interlock that makes
-`defer_to_binding` and runtime replanning safe — both of those defer to the
+`defer_to_binding` and runtime replanning safe, both of those defer to the
 envelope only because "the destination already cleared the floor".
 
 A module whose provenance cannot be checked has to be verified by its
@@ -119,7 +119,7 @@ def test_a_host_with_an_underscore_is_a_host():
     """The reconstruction's own stated fix, pinned.
 
     Three separate grammars used to reject underscores, so
-    `http://www.resume_templates.com` backtracked to `www.resume` — a host
+    `http://www.resume_templates.com` backtracked to `www.resume`, a host
     nobody can allow-list, and therefore one the policy could neither allow nor
     deny correctly.
     """

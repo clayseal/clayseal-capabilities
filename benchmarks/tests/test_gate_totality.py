@@ -37,7 +37,7 @@ def test_a_gate_never_allows_out_of_confusion(gate):
     """For an input the gate is supposed to police, an unusable value must not
     be allowed.
 
-    Narrow on purpose. Allow-by-default outside a gate's remit is correct — a
+    Narrow on purpose. Allow-by-default outside a gate's remit is correct, a
     destination that names no host is nothing for an egress policy to refuse, and
     a huge compute estimate clamped to the ceiling is the rung working. Each gate
     declares its own remit; getting that predicate wrong is how a harness cries

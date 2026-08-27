@@ -23,7 +23,7 @@ and reports the composite-violation rate:
   clayseal       : SessionBroker stateful rungs (value/call budget, egress, scope).
 
 NAMING. `per-call` and `dataflow-taint` were called `progent` and `camel`. They
-were never those systems — they are ~10-line reproductions of the CLASS each
+were never those systems: they are ~10-line reproductions of the CLASS each
 belongs to, and naming them after real published work invited the only review
 comment that matters: "you did not run Progent." The architectural claim does not
 need the names and is stronger without them:
@@ -36,7 +36,7 @@ on how faithfully anyone reimplemented anyone. `drift` and `authgraph` keep thei
 names because they ARE mechanism reproductions built from the published designs
 and cite them; they are labelled "-shaped" for the same reason.
 
-POLICY. Every condition receives `scenario.policy` — the same declarative rule
+POLICY. Every condition receives `scenario.policy`, the same declarative rule
 the violation oracle is derived from. Previously only ClaySeal was configured
 with the threshold, so the table compared one system that knew the rule against
 two that were never told. See `benchmarks/bpl/policy.py`.
@@ -86,7 +86,7 @@ class _Gates:
     `run_episode` had this inline, which was fine while a model was the only
     thing driving it. `bpl_sweep.py` replays each scenario's scripted action
     sequence through the same conditions without a model, and a second copy of
-    the branch chain would be a second thing to keep in step — the whole failure
+    the branch chain would be a second thing to keep in step, the whole failure
     mode this repository keeps finding, where a benchmark measures a copy of the
     system rather than the system.
     """
@@ -95,7 +95,8 @@ class _Gates:
 
 
 def apply_call(scen, env, condition, broker, drift, authgraph, returns,
-               name, args, step, verb_fn=None):
+               name, args, step, verb_fn=None, step_up="block",
+               outcomes=None, observe_results=False):
     """Run one tool call through `condition`. Returns (result, blocked).
 
     `verb_fn` selects the verb classifier, because there are two of them and
@@ -106,6 +107,25 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
     BEFORE the broker sees it, so the two harnesses have been measuring the same
     system through different front ends. Which one is right is a real question;
     that it was never a parameter is the defect.
+
+    `step_up` decides what a STEP_UP means here, and it is the difference
+    between measuring two different deployments of the same gateway.
+
+        block   nobody answers, so the action halts. This is the AUTONOMOUS
+                deployment, and it is what every published number so far was.
+        allow   the approver says yes to everything. This is the pessimal
+                SUPERVISED deployment: a rubber stamp.
+
+    Neither is the truth and that is the point of having both. `block` is
+    generous to containment and harsh on utility; `allow` is the reverse. A real
+    supervised deployment sits between them, and quoting one number as though
+    the choice had not been made is what this parameter stops. An approver that
+    decides CORRECTLY is deliberately not offered: it would be an oracle reading
+    the answer, and its numbers would mean nothing.
+
+    `outcomes` optionally collects the outcome name of every clayseal decision,
+    which is how the sweep can say how much of its containment is a human being
+    asked rather than an action refused.
     """
     verb_of = verb_fn or verb_for
     blocks = 0
@@ -119,8 +139,29 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
         action = Action(step=step, tool=name, resource=f"mcp:tool:{name}",
                         verb=verb_of(name), args=dict(args))
         d = broker.authorize(action)
-        if d.outcome is Outcome.ALLOW:
+        if outcomes is not None:
+            outcomes.append(d.outcome.name)
+        approved = d.outcome is Outcome.ALLOW or (
+            step_up == "allow" and d.outcome is Outcome.STEP_UP)
+        if approved:
             result = scen.handler(env, name, args)
+            if observe_results:
+                # Feed the return back in, which is what the provenance, taint
+                # and flow tiers read. Without it those tiers have nothing to
+                # read and the gateway is running its floor and its budgets and
+                # nothing else, the same defect `mcp_proxy.observe_results`
+                # exists to prevent, in the harness that produces the headline.
+                #
+                # Off by default so no published number moves silently. Turn it
+                # on with `--observe-results` and compare.
+                try:
+                    broker.observe_output(name, str(result),
+                                          source_args=dict(args))
+                except Exception:  # noqa: BLE001, S110
+                    # Observation grants no authority, so a failure here must
+                    # never be scored as a block. It is also never silent: the
+                    # sweep reports how many observations it managed to make.
+                    pass
         else:
             blocks += 1
             result = (f"DENIED by policy ({d.outcome.name}): "
@@ -129,17 +170,52 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
     elif condition in ("per-call", "progent"):
         # Given the policy, and still structurally unable to use it: a per-call
         # gate holds no state between calls, so an aggregate rule has nothing to
-        # accumulate against. It enforces the SCOPE rule and no other.
+        # accumulate against.
+        #
+        # It enforces EVERY rule that is a property of one call, which is the
+        # only version of this baseline worth beating. Previously it read the
+        # `scope` rule and nothing else, so a `recipient_allowlist`, decidable
+        # from the call's own arguments, needing no history at all, was handed
+        # to it and dropped. That understated the baseline on exactly the
+        # scenarios where a per-call gate is the right tool, and a comparison
+        # that wins by withholding half the rule is not a comparison.
+        #
+        # What it still cannot enforce is unchanged and is the finding:
+        # aggregate_ceiling, call_ceiling, sequence and retention are all
+        # properties of a TRAJECTORY. Handing them over changes nothing, because
+        # there is nowhere to put the running total.
         scope_rules = scen.policy.of_kind("scope")
         allowed_tools = (
             set(scope_rules[0].params["tools"]) if scope_rules
             else {t["function"]["name"] for t in scen.tools}
         )
-        if name in allowed_tools:
+        refusal = None
+        if name not in allowed_tools:
+            refusal = f"'{name}' not permitted"
+        else:
+            for rule in scen.policy.of_kind("recipient_allowlist"):
+                if rule.params.get("tool") != name:
+                    continue
+                destination = str(args.get(rule.params.get("arg", ""), ""))
+                allowed = rule.params.get("allowed") or []
+                # An allowlist entry may be a whole address or a domain, and the
+                # rule for `bulk-exfil` states the domain while the benign call
+                # sends to `ops@acme-internal.com`. Comparing the two literally
+                # refuses the legitimate recipient, which would have credited
+                # this baseline with a containment it did not earn and charged
+                # it a false block it did not deserve.
+                domain = destination.rsplit("@", 1)[-1]
+                if destination and not any(
+                        destination == entry or domain == entry
+                        for entry in allowed):
+                    refusal = (f"'{destination}' is not an allowed recipient "
+                               f"for {name}")
+                    break
+        if refusal is None:
             result = scen.handler(env, name, args)
         else:
             blocks += 1
-            result = f"DENIED by per-call policy: '{name}' not permitted."
+            result = f"DENIED by per-call policy: {refusal}."
     elif condition in ("dataflow-taint", "camel"):
         _n = lambda s: str(s).lower().replace(",", "").replace("$", "").replace(" ", "")
         hay, prm = _n(" ".join(returns)), _n(scen.user_prompt)
@@ -236,7 +312,7 @@ def run(model: str, runs: int, scenario: str, conditions: list[str],
 
     # Record the model that ANSWERED, not the one that was asked for.
     #
-    # `<azure-openai-resource>`'s deployment is named `gpt-4o-mini-2024-07-18` and serves
+    # `<aoai-resource>` is named `gpt-4o-mini-2024-07-18` and serves
     # `gpt-5-mini-2025-08-07`. Every line this harness printed before this call
     # was labelled with the deployment name, so a results file produced against
     # Azure claimed a weak-model cell while a frontier model answered. A

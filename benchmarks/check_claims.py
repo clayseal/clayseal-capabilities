@@ -77,7 +77,7 @@ BARE_ZERO = re.compile(r"(?<![.\d])0(?:\.0+)?\s?%")
 #: Anything on the same line that makes the zero honest. A denominator counts:
 #: the sin is an UNCONTEXTUALISED zero, and `0.00% (0 of 1,242)` lets a reader
 #: compute the bound themselves. Accepting it keeps the linter narrow enough to
-#: be believed — `flow_window.md:16` was flagged on the first run and is exactly
+#: be believed, `flow_window.md:16` was flagged on the first run and is exactly
 #: the shape this rule should permit.
 HAS_BOUND = re.compile(
     r"upper bound|97\.5%|95% CI|\[\s*0?\.|interval|n/a|±|\bCI\b"
@@ -232,8 +232,8 @@ def main(argv=None) -> int:
     # Flagging those as violations is how a linter earns the reputation that gets
     # it switched off.
     #
-    # So bare zeros are counted and RATCHETED — the debt is visible and cannot
-    # grow — while only the literal forbidden phrases block, because those are
+    # So bare zeros are counted and RATCHETED, the debt is visible and cannot
+    # grow, while only the literal forbidden phrases block, because those are
     # matched exactly and do not guess at intent.
     failures: list[str] = []
     for report in reports:

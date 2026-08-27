@@ -67,7 +67,7 @@ def test_ignores_everything_that_is_not_a_policy_line():
     assert parse_policy_line("Traceback (most recent call last):",
                              verified=True) is None
     assert parse_policy_line("", verified=True) is None
-    # Well-formed prefix but no verdict: not classifiable, so not accepted —
+    # Well-formed prefix but no verdict: not classifiable, so not accepted
     # an unclassifiable line must never become a silent allow.
     assert parse_policy_line("ivisor: policy net.connect dst=1.2.3.4:443",
                              verified=True) is None

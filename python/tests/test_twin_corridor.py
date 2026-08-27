@@ -1,4 +1,4 @@
-"""Twin corridor / fine tokens — covert-intent structural layer."""
+"""Twin corridor / fine tokens, covert-intent structural layer."""
 from __future__ import annotations
 
 from agentauth.capabilities.monitor.action import Action, Trajectory, fine_action_token

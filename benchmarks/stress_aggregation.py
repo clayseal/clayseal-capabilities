@@ -18,7 +18,7 @@ claim fail, and the residual it leaves is more useful to publish than another
 100%: `benchmark_program.md` already says it, "a benchmark on which we win
 everything is a marketing asset, not evidence".
 
-Deterministic and offline. No model, no corpus — the primitives are exercised
+Deterministic and offline. No model, no corpus, the primitives are exercised
 directly, because the question is a property of the ledger rather than of an
 agent's behaviour.
 """

@@ -3,7 +3,7 @@
 When the floor denies an egress destination, the provenance graph and allow-list
 already know which values *would* have cleared. Handing those back is ARGUS's
 utility win: the agent (or harness) retries with a grounded recipient, and the
-retry goes through the full authorize path — nothing is bypassed.
+retry goes through the full authorize path, nothing is bypassed.
 
 This module only rewrites destination-shaped arguments. Content fields
 (``body``, ``subject``, …) are left untouched so a hint cannot launder an
@@ -59,7 +59,7 @@ def reaudited_retry(
     """Try up to ``max_attempts`` candidates through ``gate`` (full authorize).
 
     Returns ``(allowed, reason, args_used, candidate_or_None)``. On failure
-    returns the original args and no candidate — caller should keep the first
+    returns the original args and no candidate, caller should keep the first
     denial reason.
     """
     for cand in list(candidates)[:max_attempts]:

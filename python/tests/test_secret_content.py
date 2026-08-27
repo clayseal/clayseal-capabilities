@@ -71,7 +71,7 @@ def test_pii_is_separable_from_credentials():
     """Different operating points, so they are different switches.
 
     On BPL's benign corpus the credential detector flags 0 of 761 arguments and
-    the PII detector flags 1 — a payroll extract sent to the payroll mailbox.
+    the PII detector flags 1, a payroll extract sent to the payroll mailbox.
     That is a question about the destination, not the content, so PII must not
     ride along with the credential check by default.
     """
@@ -85,7 +85,7 @@ def test_the_detector_is_total(payload):
     """It runs on the authorization path, so it may never raise.
 
     A classifier that throws on an odd payload is a control that stops applying
-    exactly when the input is unusual — the shape of all six fail-opens this
+    exactly when the input is unusual, the shape of all six fail-opens this
     repository has shipped.
     """
     assert credential_findings(payload) == [] or isinstance(

@@ -1,10 +1,10 @@
-"""CUSUM drift detection — statistical process control for slow subversion.
+"""CUSUM drift detection, statistical process control for slow subversion.
 
 Borrowed from manufacturing quality control. A Shewhart chart (our max-surprise
 statistic) flags a single point outside limits, but misses a process whose mean
 has *drifted*: many observations each only slightly high. That is precisely the
-memo's coding-agent case — "a harmless-looking refactor in one commit and weakens
-authorization logic in the next" — where every step is marginally suspicious and
+memo's coding-agent case, "a harmless-looking refactor in one commit and weakens
+authorization logic in the next", where every step is marginally suspicious and
 no single one trips a threshold.
 
 CUSUM accumulates the signed deviation of each step's surprise from the benign

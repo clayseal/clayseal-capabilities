@@ -9,14 +9,16 @@ the ledger.
 
 **Per-event containment UNDERSTATES protection.** An attack of five actions
 whose first action is refused scores 1 of 5, 20%. In a live run the agent is
-stopped and the other four never happen. Measured here: sleight goes from 37.7%
-to 78.0% and AgentHarm from 31.6% to 46.2% when the question becomes "was this
+stopped and the other four never happen. Measured here: sleight goes from 23.0%
+to 61.0% and AgentHarm from 38.7% to 53.8% when the question becomes "was this
 attack stopped at all".
 
 **Per-event cost UNDERSTATES disruption**, for the mirror reason. A session of
 twenty benign actions with one refusal scores 5%, and the task it was doing may
-be dead. Measured here: sleight's benign cost goes from 14.1% of events to
-**46.5% of sessions**, and AgentHarm's from 6.3% to 10.2%.
+be dead. That gap is why this module reports both, and it is currently invisible
+only because the cost side is zero in both units: see `false_positives.md` for
+what the session unit exposed when it was not, where sleight's cost read 14.1%
+of events against **46.5% of sessions**.
 
 So neither unit is the answer and reporting either alone picks a side. The event
 pair is the optimistic read of protection and the optimistic read of cost; the
@@ -25,12 +27,11 @@ the honest thing is to publish the pair.
 
 ## What "stopped" does not mean
 
-It does not mean nothing happened. On AgentHarm **113 attack actions ran before
+It does not mean nothing happened. On AgentHarm **97 attack actions ran before
 the first refusal** across the sessions that were eventually stopped, so a
 session counted as contained here still did part of what it set out to do. The
 distribution of where the first stop lands is reported for that reason: on
-sleight 18 of 32 stops land on the attack's FIRST action, on AgentHarm only 4 of
-74 do.
+sleight 15 of 25 stops land on the attack's FIRST action, on AgentHarm 20 of 86.
 """
 from __future__ import annotations
 

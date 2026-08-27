@@ -1,4 +1,4 @@
-"""InjecAgent loader — indirect prompt-injection tool-attack corpus.
+"""InjecAgent loader, indirect prompt-injection tool-attack corpus.
 
 InjecAgent (Zhan et al.) frames each case as a user instruction plus an
 attacker instruction smuggled through a tool's returned content, targeting

@@ -8,7 +8,7 @@ list is what a logger produces; the pattern is what a mandate is.
 
 That gap is measurable and it is the largest number in the project. Rebuild a
 tau2 grant from half a session's benign events and it refuses 47.91% of the other
-half, and 100% of those refusals are ``tool 'x' not granted`` — a tool the same
+half, and 100% of those refusals are ``tool 'x' not granted``, a tool the same
 session used, in the same domain, drawn from the same catalog, that simply did
 not happen to fall in the observed half.
 
@@ -477,7 +477,7 @@ def generalize_corpus(
     it as patterns rather than as an enumeration.
 
     ``paths_from_traffic`` replaces a declared path boundary with one derived from
-    the paths clean sessions in the same bucket actually touched — the operator
+    the paths clean sessions in the same bucket actually touched, the operator
     writing their file scope from a fortnight of their own logs instead of being
     handed the workspace constant. It is the arm that makes RedCode participate
     in the curve at all, since its declared boundary is a constant no held-out

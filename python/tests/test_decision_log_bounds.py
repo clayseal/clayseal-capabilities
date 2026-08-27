@@ -2,7 +2,7 @@
 
 `DecisionLog` held every record for the life of the session with no bound and no
 default sink. A coding agent runs for hours, so the log grew with the run and was
-then lost whole on exit — a memory leak and no evidence, from the same omission.
+then lost whole on exit, a memory leak and no evidence, from the same omission.
 
 Bounding it is only safe if eviction stays distinguishable from tampering. These
 tests pin that line: an evicted window still verifies, a modified record still

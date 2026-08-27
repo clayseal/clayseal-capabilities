@@ -1,4 +1,10 @@
-# Adversarial leaderboard — agentharm (176 benign tasks x 8 attack classes)
+# Adversarial leaderboard, agentharm (176 benign tasks x 8 attack classes)
+
+STATUS: current
+
+```bash
+python -m benchmarks.leaderboard --dataset agentharm
+```
 
 | Engine | Overall | False-block | argument‑tampering | path‑exfiltration | unauthorized‑tool | action‑escalation | connector‑substitution | fragmented‑overspend | goal‑drift | in‑scope‑burst |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

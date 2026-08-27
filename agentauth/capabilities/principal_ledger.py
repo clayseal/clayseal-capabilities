@@ -47,6 +47,11 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from agentauth.capabilities.decision_sinks import (
+    make_private_parent,
+    open_private_append,
+)
+
 # Spend older than the window no longer counts against the ceiling. A day is the
 # usual reporting period for the controls this imitates; callers should set it
 # from policy rather than relying on the default.
@@ -68,7 +73,7 @@ def principal_key(binding: Any) -> str:
     """Derive this ledger's key from an `AuthorityBinding`, without collisions.
 
     Do not pass ``binding.subject_id`` directly. It is the raw ``sub`` claim, and
-    ``sub`` is unique only *within* an issuer — OIDC Core says so explicitly, and
+    ``sub`` is unique only *within* an issuer, OIDC Core says so explicitly, and
     `benchmarks/stress_identity.py` confirms every adapter here behaves that way:
     ``sub="alice"`` from ``https://good.example`` and from ``https://evil.example``
     produce the same ``subject_id`` on all five.
@@ -217,8 +222,8 @@ class PrincipalLedger:
     # second one.
     _settled: dict[str, LedgerEntry] = field(default_factory=dict)
     # Holds whose TTL passed. Their headroom is released, so a late commit is
-    # booked against a ceiling that has since been re-let. It is still booked —
-    # the effect happened — but it is recorded as a breach rather than absorbed.
+    # booked against a ceiling that has since been re-let. It is still booked
+    # the effect happened, but it is recorded as a breach rather than absorbed.
     _voided: set[str] = field(default_factory=set)
     #: (principal, budget_id) -> object identities already committed, and those
     #: currently held by an open reservation. Once-per-object was a
@@ -240,14 +245,14 @@ class PrincipalLedger:
         each saw nothing spent, each reserved, each committed. **400 landed
         against a ceiling of 100.** It is the same check-then-act race `reserve`
         already fixes for threads, one layer out, and it matters because every
-        real deployment is horizontally scaled — a second gunicorn worker or k8s
+        real deployment is horizontally scaled, a second gunicorn worker or k8s
         replica reintroduces exactly the session-restart escape this module
         exists to close.
 
         Subclasses widen this to a lock the operating system or a database
         enforces. `SharedPrincipalLedger` is the POSIX one; the same seam is
         where a Redis or Postgres backend goes, and `RedisUsedTokenStore` is the
-        precedent — the replay layer has been multi-instance for a while and the
+        precedent, the replay layer has been multi-instance for a while and the
         ledger carrying the headline claim had not caught up.
         """
         with self._lock:
@@ -316,11 +321,11 @@ class PrincipalLedger:
     def _append(self, entry: LedgerEntry) -> None:
         if self.path is None:
             return
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        make_private_parent(self.path)
         if not self._tail_checked:
             self._repair_torn_tail()
             self._tail_checked = True
-        with self.path.open("a") as fh:
+        with open_private_append(self.path) as fh:
             fh.write(json.dumps(entry.to_dict()) + "\n")
             fh.flush()
             # Acknowledgement has to mean durable. Without this the caller is
@@ -498,7 +503,7 @@ class PrincipalLedger:
         `test_an_abandoned_hold_expires_instead_of_shrinking_the_ceiling_forever`
         pins that.
 
-        So the hold is voided — headroom returns, DoS stays fixed — and its id
+        So the hold is voided, headroom returns, DoS stays fixed, and its id
         is remembered. `commit_hold` re-checks against the ceiling captured on
         the Hold and books either way, recording a breach when it no longer
         fits. The escape becomes visible instead of silent, which is the same
@@ -1147,7 +1152,7 @@ class SharedPrincipalLedger(PrincipalLedger):
     `PrincipalLedger` synchronises on a `threading.RLock`, which is
     process-local. Measured, four OS processes against one ledger file and a
     ceiling of 100: **400 landed**. Each process loaded the log, saw nothing
-    spent, reserved, and committed. That is not a corner case — a second
+    spent, reserved, and committed. That is not a corner case, a second
     gunicorn worker or a second k8s replica is the normal shape of a
     deployment, and each one is a fresh ceiling, which is precisely the
     session-restart escape this module was written to close.
@@ -1173,7 +1178,7 @@ class SharedPrincipalLedger(PrincipalLedger):
     existing precedent for that shape.
     """
 
-    #: What to do when the lock cannot be taken — a read-only mount, a full
+    #: What to do when the lock cannot be taken, a read-only mount, a full
     #: disk, a permissions change, and for a future Redis backend an unreachable
     #: server. "deny" refuses the action and counts it; "allow" is available
     #: because availability is sometimes worth more than a ceiling, and it is
@@ -1200,7 +1205,7 @@ class SharedPrincipalLedger(PrincipalLedger):
         # Deliberately NOT `super().__post_init__()`, which reads the whole file
         # and then stats it separately for the offset. Anything another process
         # appended between those two calls would be skipped forever, and skipped
-        # entries are spend this process cannot see — it would grant headroom
+        # entries are spend this process cannot see: it would grant headroom
         # that is already gone. Starting at offset 0 and letting the first
         # transaction do the read means the load happens under the lock, which
         # is the only place it is safe.
@@ -1235,7 +1240,7 @@ class SharedPrincipalLedger(PrincipalLedger):
                     # `_in_txn` is set here for the same reason it is set on the
                     # success path: `reserve` calls `spent`, which opens its own
                     # transaction. Without it the nested call re-enters, fails
-                    # again, and counts again — one refused action reported as
+                    # again, and counts again, one refused action reported as
                     # two backend outages, which is exactly the kind of inflated
                     # number an operator learns to ignore.
                     self._in_txn = True
@@ -1266,7 +1271,7 @@ class SharedPrincipalLedger(PrincipalLedger):
 
         Only whole lines are consumed. A partial final line is left unread and
         `_offset` is not advanced past it, so a torn append is picked up on the
-        next transaction rather than dropped — under-counting is the failure
+        next transaction rather than dropped, under-counting is the failure
         direction that lets an attack through.
         """
         size = self.path.stat().st_size
@@ -1324,7 +1329,7 @@ class SharedPrincipalLedger(PrincipalLedger):
             holds.setdefault((hold.principal, hold.budget_id), []).append(hold)
         # The sidecar is the ONLY source of truth for holds. An earlier version
         # merged `self._holds` back in on top of it, to preserve this process's
-        # own Hold objects — but after a sync `self._holds` contains *every*
+        # own Hold objects, but after a sync `self._holds` contains *every*
         # process's holds, so the merge resurrected holds their owners had
         # already released. Measured: 5 phantom holds pinning 50 of a 100
         # ceiling, and 70 landing where 100 should have.
@@ -1349,7 +1354,10 @@ class SharedPrincipalLedger(PrincipalLedger):
             "voided": sorted(self._voided)[-4096:],
         }
         tmp = self._sidecar_path.with_suffix(self._sidecar_path.suffix + ".tmp")
-        tmp.write_text(json.dumps(payload))
+        # Written through the same private-create path: the sidecar carries
+        # identities and outstanding holds.
+        with open_private_append(tmp) as fh:
+            fh.write(json.dumps(payload))
         os.replace(tmp, self._sidecar_path)
 
     def release(self, hold: Hold | None) -> None:

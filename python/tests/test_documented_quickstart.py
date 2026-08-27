@@ -68,7 +68,7 @@ def test_documented_block_executes(label: str, source: str):
     raise `NameError` on a name they never bind, and demanding they run would
     push the docs toward unreadably long examples.
 
-    Every other failure is a real defect and fails the test — including the
+    Every other failure is a real defect and fails the test, including the
     `TypeError: unexpected keyword argument` that the old quickstart's
     `verify_commit_token(token, key=...)` produced, which is the bug class this
     file exists for. A fragment is still compiled, so syntax rot is caught
@@ -159,7 +159,7 @@ def test_minting_raises_and_verifying_returns_a_verdict():
 
     `issue_commit_token` used to carry a guard copy-pasted from the verifier and
     returned `(False, reason)` from a function annotated `-> SignedCommitToken`,
-    so the caller failed with an `AttributeError` one frame out — the exact
+    so the caller failed with an `AttributeError` one frame out, the exact
     failure the guard exists to prevent.
     """
     from agentauth.capabilities.commit import issue_commit_token, verify_commit_token

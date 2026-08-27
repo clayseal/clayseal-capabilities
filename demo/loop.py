@@ -2,17 +2,17 @@
 
 THE ORDER OF OPERATIONS IS THE ARGUMENT. For each tool call:
 
-  1. signals   — computed from the trajectory PREFIX; the pending call is not
+  1. signals, computed from the trajectory PREFIX; the pending call is not
                  an input, so the policy about to govern it cannot have been
                  influenced by it
-  2. level     — `max(current, want)`, so tighten-only by construction
-  3. recompile — only if the level moved; a new epoch means a new run dir, a
+  2. level, `max(current, want)`, so tighten-only by construction
+  3. recompile, only if the level moved; a new epoch means a new run dir, a
                  new immutable config and a new digest
-  4. broker    — the tool-level gate, if enabled
-  5. sandbox   — run under the epoch's config; verdicts stream back verified
-  6. lift      — verified verdicts into the EVIDENCE trajectory (never the
+  4. broker, the tool-level gate, if enabled
+  5. sandbox, run under the epoch's config; verdicts stream back verified
+  6. lift, verified verdicts into the EVIDENCE trajectory (never the
                  broker's, see `signals.DemoTrajectory`)
-  7. register  — the tool's return as untrusted context
+  7. register, the tool's return as untrusted context
 
 Because step 1 precedes step 3, the first exfil attempt is refused under the
 UNCHANGED baseline policy, with `#0 BASELINE` still on the rail. Tightening is
@@ -169,7 +169,7 @@ def _recompile(config, sealed, level, why, prev, broker, traj, step, emit, now):
     changed = prev is None or caps != prev.caps
 
     if not changed:
-        # The level moved but the capabilities did not — L1 is a notice, not a
+        # The level moved but the capabilities did not, L1 is a notice, not a
         # new policy. Keep the compiled config, the run dir, and therefore the
         # digest, so "digest unchanged" on the rail is literally true rather
         # than a caption. Re-staging into a fresh directory here would change
@@ -186,7 +186,7 @@ def _recompile(config, sealed, level, why, prev, broker, traj, step, emit, now):
         traj.contained_at_step = len(traj.verified_events)
 
     if broker is not None and changed:
-        # Re-clear the ENVELOPE only — the tool scope, which `enforced_at` marks
+        # Re-clear the ENVELOPE only, the tool scope, which `enforced_at` marks
         # as the broker's job. The egress set is deliberately NOT narrowed here.
         #
         # Narrowing it would be double-counting, and it would quietly destroy

@@ -1,7 +1,7 @@
 """Egress policy: the enumerated-recipient gap.
 
 A mandate can name exact recipients and a domain at once. The domain is the
-broader grant, and it used to win — so declaring the narrower policy did nothing.
+broader grant, and it used to win, so declaring the narrower policy did nothing.
 """
 from agentauth.capabilities.hardening.egress_policy import EgressPolicy
 
@@ -29,7 +29,7 @@ def test_a_different_mailbox_on_an_allowed_domain_is_refused():
     `extract_recipients` returns opaque identifiers only, so an email address
     yields nothing from it, and the domain loop had already accepted the address
     on the strength of its domain. A mandate that enumerated exact recipients
-    had that enumeration silently ignored — declaring the narrower policy did
+    had that enumeration silently ignored, declaring the narrower policy did
     nothing at all. Payroll addressed to all-hands@ on the same domain was
     allowed.
     """
@@ -64,7 +64,7 @@ def test_the_recipient_check_ignores_addresses_in_the_body():
     `extract_email_addresses` reads destination keys, never message bodies, so a
     report whose text mentions customer addresses is not treated as addressed to
     them. Asserted directly rather than through `check`, because the DOMAIN loop
-    has a separate and pre-existing behaviour — see the test below.
+    has a separate and pre-existing behaviour, see the test below.
     """
     from agentauth.capabilities.hardening.egress_policy import (
         extract_email_addresses,

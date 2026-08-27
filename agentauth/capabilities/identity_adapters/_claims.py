@@ -26,8 +26,8 @@ others were `1e999` against a value ceiling, a `NaN` compute ceiling, a list
 handed to `is_protected_path`, the planner's three fail-open paths, and the
 replay store's outage branch.
 
-The fix is not to delete the fallback — some callers legitimately hold an already
-normalized record — but to make the fallback unable to carry authority. Identity
+The fix is not to delete the fallback, some callers legitimately hold an already
+normalized record, but to make the fallback unable to carry authority. Identity
 claims describe *who*; authority comes from the mandate and the capability
 authorizer. A claims dict that mentions capabilities is either confused or
 hostile, and it costs nothing to treat both the same way.

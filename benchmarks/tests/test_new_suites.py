@@ -1,7 +1,7 @@
 """Loader + invariant tests for the RedCode / AgentHarm / ASB suites.
 
 These corpora live outside the repo (see benchmarks/README.md), so every test
-skips cleanly when the corpus is absent — CI without the data still passes, and
+skips cleanly when the corpus is absent, CI without the data still passes, and
 a developer who has fetched it gets real coverage.
 
 The properties under test are the ones a wrong loader would silently break:
@@ -193,7 +193,7 @@ def test_asb_is_saturated_at_the_allowlist_rung():
 
 
 # --------------------------------------------------------------------------- #
-# SLEIGHT-Bench (2026): covert-intent transcripts — see test_sleight.py
+# SLEIGHT-Bench (2026): covert-intent transcripts, see test_sleight.py
 # --------------------------------------------------------------------------- #
 
 def test_agent_threat_bench_categories_present():

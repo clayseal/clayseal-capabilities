@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, toolemu (5 tasks, 10 benign / 5 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/toolemu.json
-# Clay Seal enforcement benchmark — toolemu (5 tasks, 10 benign / 5 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset toolemu --mode ladder --ci --json benchmarks/results/new-suites/toolemu.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

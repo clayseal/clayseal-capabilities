@@ -1,4 +1,4 @@
-"""AdvBench-agent loader — harmful-instruction → tool-attack replay suite.
+"""AdvBench-agent loader, harmful-instruction → tool-attack replay suite.
 
 Builds target-shaped and argument-bound tasks so the enforcement ladder can
 actually discriminate. Content-only twins (same tool, same destination, harmful

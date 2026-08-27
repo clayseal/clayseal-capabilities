@@ -1,4 +1,4 @@
-"""Mutation stress of the commit-token verifier — the cryptographic root.
+"""Mutation stress of the commit-token verifier, the cryptographic root.
 
     python -m benchmarks.stress_commit
     python -m benchmarks.stress_commit --verbose
@@ -28,8 +28,8 @@ So the property here is not a list of scenarios, it is total:
                           standing grant until expiry.
 
 The mutation corpus is deliberately not "plausible attacker values". It is the
-same hostile set the other gates get — empty strings, wrong types, non-finite
-numbers, near-miss strings — because the interesting failures are where a field
+same hostile set the other gates get, empty strings, wrong types, non-finite
+numbers, near-miss strings, because the interesting failures are where a field
 is compared with ``int()`` or ``==`` after passing through a coercion that
 silently succeeds on nonsense.
 """
@@ -91,7 +91,7 @@ def _verify(signed, ctx, trusted, **kw):
 
     The store used to be optional here, because it was optional anywhere the
     deployment environment was unset. It is required now, and this harness spent
-    one run reporting BASELINE=1 — "a valid token did not verify" — which is the
+    one run reporting BASELINE=1, "a valid token did not verify", which is the
     guard working and the harness not having caught up. Each call gets a FRESH
     store unless the caller passes one, so a mutation check is not accidentally
     measuring replay defense.
@@ -137,7 +137,7 @@ def run() -> dict:
                 checks += 1
             except ValueError:
                 # `CommitToken.__post_init__` refuses to build an unserializable
-                # token. Construction refused IS a denial — the invalid state
+                # token. Construction refused IS a denial, the invalid state
                 # cannot exist, so there is nothing for the verifier to mishandle.
                 checks += 1
                 continue

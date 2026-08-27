@@ -1,4 +1,4 @@
-"""Soft content advisory on AgentHarm — the D-axis beyond destination pins.
+"""Soft content advisory on AgentHarm, the D-axis beyond destination pins.
 
 Hard authorization already recovers ~22% from destination-differing twins
 (grading-function pins). The residual is same-tool, same-or-shared-destination
@@ -179,7 +179,7 @@ def run(*, use_llm: bool = True, limit: int | None = None) -> dict:
         },
         "hard_ladder_reference": {
             "task_scope+binding": 0.224,
-            "note": "destination pins only — see scoreboard agentharm row",
+            "note": "destination pins only, see scoreboard agentharm row",
         },
         "examples": examples,
     }
@@ -231,7 +231,7 @@ def main(argv: list[str] | None = None) -> int:
         "",
         "## Reading",
         "",
-        "- Soft only — never merge into hard ASR.",
+        "- Soft only, never merge into hard ASR.",
         "- Heuristic cues are high-precision phrases rare on benign twins.",
         "- LLM judges harmful prompt vs sealed benign request.",
         "",

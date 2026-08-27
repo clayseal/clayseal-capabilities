@@ -2,26 +2,191 @@
 
 <img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
-**Every action the agent took was authorized. The sequence still broke the rule.**
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-2%2C244%20passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![PyPI](https://img.shields.io/badge/pip-agentauth--capabilities-orange.svg)](https://pypi.org/project/agentauth-capabilities/)
 
-That is the failure this enforces against. An agent with a legitimate goal and a
-legitimate tool grant issues eleven refunds of $900 each against a $1,000
-approval ceiling. Every call passes a per-call check, because every call is
-individually within policy. Nothing that decides one call at a time can see it.
+**A policy gateway for AI agents. It stops the attack where every single call
+is legitimate and the sequence is not.**
 
-Clay Seal is a gateway that sits in front of the tools and decides each action
-against the whole session: the grant, the running totals, where the arguments
-came from, and what the agent has already done.
+Your agent has a $1,000 refund ceiling. It issues eleven refunds of $900. Every
+call is inside the per-refund limit, so every per-call check passes, and $9,900
+goes out the door. Nothing that looks at one call at a time can see this.
+
+Clay Seal sits in front of your tools and judges each call against the whole
+session: the grant, the running totals, where the arguments came from, and what
+the agent has already done.
+
+## Install
 
 ```bash
 pip install agentauth-capabilities
+```
+
+Python 3.10 to 3.14. Two dependencies: `cryptography` and `pyyaml`.
+
+## Use it in two lines
+
+Wrap the tools you already have. Nothing else about your agent changes.
+
+```python
+from agentauth.capabilities import Guardrail, Refused, StepUpRequired
+
+def list_open_refunds():
+    return [{"invoice": "INV-001", "amount": 900.0},
+            {"invoice": "INV-002", "amount": 900.0}]
+
+def issue_refund(invoice, amount):
+    return f"refunded {invoice} ${amount:.2f}"
+
+guard = Guardrail.from_policy_file("examples/refund.yaml")
+tools = guard.wrap_all({"list_open_refunds": list_open_refunds,
+                        "issue_refund": issue_refund})
+
+# Call them exactly as before. The gateway decides before the tool runs.
+for row in tools["list_open_refunds"]():
+    try:
+        print(tools["issue_refund"](invoice=row["invoice"], amount=row["amount"]))
+    except Refused as exc:
+        print("refused:", exc.reasons)      # hand the reason back to the agent
+    except StepUpRequired as exc:
+        print("needs a human:", exc.reasons)
+```
+
+The first refund goes through. The second is refused, because the $1,000
+session ceiling in `examples/refund.yaml` is already spent. Neither call
+reached your function.
+
+The wrappers keep the name, docstring and signature of your originals, so any
+framework that introspects them sees the tool it saw before. That covers
+LangGraph, the OpenAI Agents SDK, CrewAI and hand-written loops, because they
+all agree that a tool is a named callable taking keyword arguments.
+
+## Or put it in front of an MCP server
+
+No code change at all. The gateway speaks MCP, so it sits between your agent and
+the server:
+
+```bash
 clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server
 ```
+
+Tools the policy does not grant are removed from the catalogue, so the agent is
+never told they exist.
+
+## Write the policy
+
+This is a whole policy. It lints clean.
+
+```yaml
+version: 1
+
+goal:
+  id: refund-run
+  summary: Refund the invoices the customer disputed.
+
+expires_at: 2027-12-31T00:00:00Z
+
+tools:
+  allow:    [list_open_refunds, issue_refund]
+  harmless: [list_open_refunds]                 # a read spends nothing
+  effects:  {list_open_refunds: read, issue_refund: write}
+
+paths:
+  pathless: [list_open_refunds, issue_refund]   # these act on invoices, not files
+
+budgets:
+  value:
+    ceilings: {refunds: "1000.00"}              # dollars, for the whole session
+    tracked:
+      issue_refund: {arg: amount, budget: refunds}
+```
+
+Run `clayseal policy lint policy.yaml` before you ship. It catches the mistake
+that matters most: a tool that can spend money but debits no budget. On the file
+above it reports no errors and two warnings, both of which name a real decision
+you have not made yet.
+
+Full reference: [docs/POLICY.md](docs/POLICY.md).
+
+## See it stop the attack
+
+From a checkout:
+
+```bash
+python examples/02_the_proxy.py
+```
+
+```
+tools advertised to the agent: list_open_refunds, issue_refund
+  (the server offers wire_funds; the policy does not grant it, so the agent is never told it exists)
+
+  ok   issue_refund       INV-001   paid INV-001 $900.00
+  DENY issue_refund       INV-002   refused by policy: value_budget_exceeded
+  ...
+  DENY issue_refund       INV-011   refused by policy: value_budget_exceeded
+  DENY wire_funds         ops-float refused by policy: tool 'wire_funds' is not in this session's policy
+
+the server executed 2 call(s):
+  list_open_refunds {}
+  issue_refund {"amount": 900.0, "invoice": "INV-001"}
+
+clayseal proxy: 2 allowed, 11 denied, 0 held for approval; withheld from the catalog: wire_funds
+```
+
+Read the last block. A JSON-RPC error proves the agent was told
+no; the server's own ledger proves the refund did not happen, and those are
+different claims. The same run on the command line, which is the deployment
+shape a deployment actually uses:
+
+```bash
+clayseal proxy --policy examples/refund.yaml -- python examples/refund_server.py
+```
+
+## How it works
+
+You give the gateway a **policy file** and a **goal** for the session. It seals
+the goal at the start, so nothing the agent reads later can widen what was
+approved. Every tool call then goes through one decision point before it runs.
+
+A call gets one of three answers:
+
+- **allow** and the call goes to the tool
+- **step up** and the call waits for a person to approve it
+- **deny** and the call never runs
+
+Step-up exists because a wrong refusal is expensive. An autonomous attacker is
+stopped just as hard by a call that waits for approval as by one that is
+refused, and a legitimate agent is not stopped permanently. Denial is reserved
+for cases with positive evidence of a problem.
+
+The checks that produce those answers run in a fixed order, cheapest and
+strictest first, so a call refused early never reaches the expensive layers.
+
+1. **Floor.** The flat rules: has the grant expired, is this tool allowed, is
+   this path in scope, is this destination on the egress list, is there budget
+   left. Fastest and most of the denials.
+2. **Declaration.** If the agent states a plan up front, the plan is checked
+   against the sealed goal before any of it runs.
+3. **Content.** Checks that a declared write matches the goal, and inspects the
+   payload of a write that has an effect. Produces a step-up, never a denial.
+4. **Session state.** Running totals, which values came from untrusted text,
+   and any rules written against them.
+5. **Provenance.** Where a destination came from. A payee named in the sealed
+   goal is trusted; one that appeared in text the agent read afterwards is not.
+6. **Behavioural.** Watches the shape of the session against the goal. Advisory
+   by default: it escalates, it does not block.
+
+The word **budget** below means a running total the gateway keeps for the whole
+session: money, calls, or anything else countable. It is the only check that can
+see a sequence of individually legal calls adding up to something illegal, and
+the measurements below show it is what decides whether this helps you.
 
 ## What it measures
 
 Two tiers. The deterministic one needs no model, no key and no money, runs in
-seconds, and is the one to read first.
+seconds. Read it first.
 
 ```bash
 python -m benchmarks.bpl_sweep --suite full
@@ -32,9 +197,17 @@ Two columns, because either is trivially winnable alone: refuse everything and
 you win containment, allow everything and you win completion. The column that
 matters is the conjunction.
 
+That command has four parameters, each defaulting to what the table below used,
+and the one that moves the headline most is the verb classifier: `--verbs bpl`
+selects the legacy raw-synonym version and scores 32% instead of 39.4%, buying 6
+points of containment with 57 points of benign completion. The default is the
+classifier the shipped gateway uses. All four deltas are tabulated in
+[REPRODUCE.md](benchmarks/bpl/REPRODUCE.md), because a number that depends on a
+flag should say so where the number is.
+
 **The attack was contained AND its benign twin completed:**
 
-A zero is written as its bound rather than as a bare percentage, here and
+A zero is written with its upper bound, not as a bare percentage, here and
 throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 26.5%.
 
@@ -42,24 +215,31 @@ throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 | --- | ---: | ---: | ---: |
 | undefended | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
 | refuse everything | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
-| per-call authorization, given the policy | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
+| per-call authorization, given the policy | 8.3% (1/12) | 0/24, 97.5% upper bound 14.2% | 0.8% (1/132) |
 | dataflow taint | 0/12, 97.5% upper bound 26.5% | 8.3% (2/24) | 11.4% (15/132) |
 | **Clay Seal** | **75.0% (9/12)** | **41.7% (10/24)** | **39.4% (52/132)** |
 
-Per-call authorization scores nothing on any set. It holds no state between calls,
-so an aggregate constraint has nothing to accumulate against, and handing it the
-ceiling does not give it somewhere to put the running total. That is the
-architectural claim and it is the one that survives every cut of the data.
+Per-call authorization scores 1 of 132, and the one it scores is the one worth
+understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a
+single call's own arguments, needing no history at all, so a stateless gate
+enforces it exactly and completes the benign twin. Every other rule in the suite is a property of a
+trajectory. There a stateless gate holds nothing between calls, so a running
+total has nowhere to accumulate. Handing it the ceiling does not help; it has
+nowhere to put the total. That is the
+architectural claim, and the row is more convincing for not being a flat zero.
+
+It was a flat zero until this release, because the baseline was reading only the
+`scope` rule out of the policy it was handed and dropping the rest. Beating a
+baseline that was given half the rule is not beating it.
 
 Read the three columns, not one. **Core is the chosen leaderboard set, not a
 sample**: 83% of it is labelled as expected-to-be-contained where the suite is
 38%, and it is two thirds aggregate where the suite is one third. On raw
 containment that selection is worth 43 points, and on the joint metric above it
-is worth 37. The full-suite number is the honest one and it is the one quoted
-here.
+is worth 37. The full-suite number is the one quoted here.
 
 Against dataflow taint the difference on the full suite is **28.0 points
-[17.4, 36.4], exact McNemar p=1.2e-07**, surviving Holm correction. Scenarios
+[18.2, 37.9], exact McNemar p=1.2e-07**, surviving Holm correction. Scenarios
 were written in batches at a sitting and are not independent, so the rate to
 quote is cluster-robust over authoring batches: **39.4% [24.3%, 57.9%]** against
 taint's 11.4% [6.1%, 17.7%]. Non-overlapping.
@@ -69,123 +249,74 @@ Composition, selection effects, and the per-scenario detail:
 
 ### When it works, and when it does not
 
-A pooled rate hides the thing you need in order to decide whether this helps
-you. Holding out whole authoring batches, containment ranges from nothing to
-87.5%, sd 0.327. This is not a mechanism with a 38% success rate; it works on
-some kinds of constraint and not on others.
+The 39.4% above is an average over 132 scenarios, and averaging hides the thing
+you need in order to decide whether this helps you. Hold out whole batches of
+scenarios and containment ranges from nothing at all to everything, sd 0.344. It
+is not a mechanism that works 39% of the time; it works on some kinds of rule
+and not on others.
 
-The split that explains most of it is a property of the grant, not of the
-attack, and it is readable from source before anything runs:
+What decides it is the rule, not the attack, and you can tell which case you are
+in by reading your own policy before running anything:
 
-| the grant | n | Clay Seal | dataflow taint |
+| Does the rule state a countable limit? | scenarios | Clay Seal | dataflow taint |
 | --- | ---: | --- | --- |
-| **expresses the constraint as a budget** | 42 | **83.3% [69.4%, 91.7%]** | 2.4% [0.4%, 12.3%] |
-| does not | 90 | 18.9% [12.1%, 28.2%] | 15.6% [9.5%, 24.4%] |
+| **yes** | 42 | **83.3% [69.4%, 91.7%]** | 2.4% [0.4%, 12.3%] |
+| no | 90 | 18.9% [12.1%, 28.2%] | 15.6% [9.5%, 24.4%] |
 
-Fisher exact p = 6.5e-11. So the deployment rule is the finding:
+Fisher exact p = 6.5e-11.
 
-**Write the constraint as a ceiling on something countable or summable and it is
-enforced. Where you cannot, the aggregate rung has nothing to accumulate
-against, and you get whatever the envelope, the path scope and the egress list
-happen to catch.**
+**So write your rules as ceilings on something you can count.** "No more than
+$1,000 in refunds per session" is enforced. "Do not do anything inappropriate"
+is not: there is no running total for the gateway to keep, so such a rule falls
+back on whatever the goal check, the path scope and the egress list happen to
+catch.
 
-`clayseal policy lint` already reports an effectful tool that debits no budget as
-an error. This measures what that error is worth.
+`clayseal policy lint` already flags a tool that can spend but debits no budget.
+This measurement is what that warning is worth.
 
-**And for the deployments that will never write one**, the gateway derives a
-bound from the sealed goal. "Triage the tickets and email a summary" accounts for
-one send; a second is held for approval, with no budget declared anywhere. It
-steps up rather than denying, because the bound came from reading a sentence and
-a retry looks identical to a second send.
+**If you will never write a budget**, the gateway can infer one from the goal
+text. "Triage the tickets and email a summary" implies one email, so a second
+one waits for approval with no budget declared anywhere. It steps up instead of
+denying, because the limit came from reading a sentence, and a retry after a
+failed send looks the same as a second send.
 
-Measured on an external corpus it contains 8 more attack events of 507 and
-interrupts 26 benign actions of 278, about three interruptions per catch, all of
-them step-ups rather than refusals. That is a deployment decision rather than a
-free win, so the numbers travel with it
-([derived_counts_measured.md](benchmarks/results/derived_counts_measured.md)) and
-`derive_counts=False` turns it off. An optional inferrer fills the goals a
-sentence does not state, runs once at seal time on trusted text, and can never
-raise a bound the text supports. See [docs/POLICY.md](docs/POLICY.md).
-
-Two shapes of ceiling exist because most written rules are one of them:
-
-```yaml
-budgets:
-  value:
-    ceilings: {refunds: "5000.00"}
-    windows:  {refunds: 86400}        # rolling 24h, not per session
-    tracked:
-      issue_refund: {arg: amount, budget: refunds, identity: [invoice]}
-```
-
-`windows` makes the ceiling apply over a rolling period rather than for the life
-of the gateway, and `identity` makes the effect once-per-object, so "pay each
-invoice once, under ceiling" is expressible as the two constraints it actually
-is. A ceiling can also be **conditional**, because real authorities are not
-constants:
-
-```yaml
-    when:
-      - if: {rush: true}
-        ceilings: {refunds: "1000.00"}     # a guard may only TIGHTEN
-```
-
-A guard above the base ceiling is refused at compile time, and that is the
-security argument rather than caution: conditions arrive as tool output, so a
-guard that could raise a ceiling would let injected content widen a grant.
-Raising authority is what a signed step-up is for. Facts come only from
-structured fields, never from prose. Both were added after inspecting the residual, and
-[grant_changes_2026_08.md](benchmarks/results/grant_changes_2026_08.md) discloses
-what changing two scenario grants to use them moved, and how to subtract it.
-
-Both analyses read no scenario labels at all, which matters because the suite's
-own labels predict its outcomes with 97.7% accuracy and cannot be used to
-evaluate anything. See [bpl_label_free.md](benchmarks/results/bpl_label_free.md)
-and, for what the evaluation still cannot show,
-[publication_readiness.md](benchmarks/results/publication_readiness.md).
+That inference is **off by default**, and the reason is the cost. On an external
+corpus it caught 8 more attacks out of 507 and interrupted 26 benign actions out
+of 278, roughly three interruptions per catch. Whether that trade is worth it
+depends on your deployment, so you turn it on with `derive_counts=True`
+([the measurement](benchmarks/results/derived_counts_measured.md)).
 
 ### What it costs
 
-Of 132 benign twins, this gate refuses 3. One loses work; two are interrupted on
-a call that was not on the critical path and still reach full progress. Dataflow
-taint refuses 49 and loses work on 43.
+Of 132 benign twins, this gate refuses 2. Neither loses work: both are
+interrupted on a call that was not on the critical path and still reach full
+progress. Dataflow taint refuses 49 and loses work on 43.
 
-That is the tuning result, and it is more durable than the containment one:
-**comparable containment at a thirtieth of the work lost.**
+That is the more durable result: **comparable containment, and no benign task in
+the suite fails to finish.**
 
-### The finding worth more than the ranking
+All 54 contained attacks involve at least one hard denial. None is held by a
+step-up alone, so the number is autonomous and does not
+assume anybody is at the console to answer a question. `--step-up allow` prices
+the other end of it and produces an identical table, because this suite never
+produces a step-up at all.
 
-The two mechanisms are not measuring the same thing. 32 scenarios are contained
-by this layer only, 21 by dataflow taint only, 21 by both. Their union is 74 of
-132, well above either alone.
+### The rest of the evidence
 
-Stacking them would still be a bad trade. On the joint metric the stack scores
-31%, **down** from 38%, because the taint layer refuses 46 benign scripts this one
-completes. The 21 it catches and we do not are a real coverage gap, and the way
-to close it is at this layer's precision rather than by adding that layer's
-recall.
+The two mechanisms catch different things: 32 scenarios are contained by this
+layer only, 20 by dataflow taint only, 22 by both. Stacking them is still a bad
+trade, because the taint layer refuses 46 benign scripts this one completes.
 
-### Live tier
-
-`bpl_shared_policy.md` runs the Core twelve against `gpt-5-mini`, n=20 per cell,
-every condition handed the same declarative rule, and records 0 violations in 240
-runs against 55.0% for per-call enforcement. Read it with the qualifications it
-carries: a zero at n=20 has a 95% Wilson upper bound of 16.1%, three of the twelve
-scenarios do not discriminate because the undefended model complies on its own,
-and progress is scored against policy-optimal rather than undefended progress.
-And read it as the Core set, which is what the table above says that is worth.
-
-On prompt injection, which is a more crowded problem, the deployable path holds
-attack success to 0 of 18 on all four AgentDojo suites against Progent's 11 to
-17%, and pays for it in clean utility on two suites
-([head_to_head_injection.md](benchmarks/results/head_to_head_injection.md)). At
-n=18 a zero has an upper bound of 18.5%, so that table shows we are not worse and
-cannot show more.
+Against a live model, and on prompt injection, the numbers and their
+qualifications are in
+[benchmarks/results/README.md](benchmarks/results/README.md). That index lists
+every headline result with the command that reproduces it, and the limits it
+does not cross.
 
 ## Where the boundary is
 
 Three ways to place the enforcement point. They differ in what an agent has to do
-to get past them, and the difference is worth stating plainly rather than
+to get past them, and the difference is worth stating plainly instead of
 collapsing into one number.
 
 | tier | mediates | got past by | status |
@@ -194,15 +325,15 @@ collapsing into one number.
 | **proxy** | **every tool call on the transport, by construction** | a process that can reach the tool another way | **shipped** |
 | syscall | everything the guest can attempt, unforgeably | nothing at this layer | reference backend is macOS only |
 
-The proxy also runs checks the in-process path cannot: it screens every path a
-call names rather than the one the action carries, refuses a message whose JSON
-has duplicate keys, and holds an effectful call until earlier results have
-arrived so the provenance tier is not asked about a destination before it has
-been told where the destination came from. The table in
+The proxy also runs three checks the in-process path cannot. It screens every
+path a call names, not just the one the action carries. It refuses a message
+whose JSON has duplicate keys. And it holds an effectful call until earlier
+results arrive, so it is never asked where a destination came from before it has
+been told. The table in
 [docs/POLICY.md](docs/POLICY.md) lists the differences, and what an in-process
 integration has to do itself.
 
-The proxy is the one most deployments want. The agent connects to `clayseal
+Most deployments want the proxy. The agent connects to `clayseal
 proxy`, and `clayseal proxy` runs the real MCP server, so a denied call is
 answered with a JSON-RPC error and the server subprocess never receives the
 frame. Tools outside the policy are also removed from the advertised catalog, so
@@ -214,7 +345,7 @@ policy and takes back an unforgeable verdict stream
 drives iVisor, which is macOS only by construction: Hypervisor.framework allows
 one VM per process and applies an irreversible Seatbelt profile to its caller.
 The `agentauth.sandbox_backends` entry point makes the substrate swappable, and a
-Linux seccomp or Landlock backend is open work rather than something we ship.
+Linux seccomp or Landlock backend is open work, not something we ship.
 
 ### The gap this does not close
 
@@ -268,8 +399,8 @@ clayseal policy lint examples/policy.yaml   # what a reviewer should ask about
 ```
 
 `lint` exits non-zero on an error finding, so it works as a pre-merge gate. It
-reports what the gateway would refuse to start on, instead of leaving the author
-to discover it from a traceback:
+reports what the gateway would refuse to start on, so the author does not find
+out from a traceback:
 
 ```
 ERROR   untracked-effectful-tool issue_refund: reachable and in the 'value'
@@ -280,12 +411,12 @@ WARNING session-scoped-ceiling   emails: counted per session, so a second
 
 The compiled policy carries a digest over the document, and the gateway attaches
 it to every decision, so an audit trail says which authority produced a decision
-rather than only what the decision was.
+and not only what the decision was.
 
 ### Pointing it at your own tools
 
 Two declarations do the work, and both exist because the defaults are tuned on
-benchmark catalogs rather than on real ones.
+benchmark catalogs, not on real ones.
 
 `tools.effects` says what each tool does. The verb decides which floor rules
 apply, and guessing it from the name works on names like `send_email` and fails
@@ -295,14 +426,14 @@ servers, 17 are unrecognised by the classifier.
 `paths.arg_names` says which argument carries the path. The gateway looks for
 `file_path`, `path`, `filename` and `file`; a tool that calls it `target_dir` or
 `key` yields no path, and a path scope that cannot find a path does not apply. An
-effectful call whose path cannot be resolved is refused rather than allowed
+effectful call whose path cannot be resolved is refused, not allowed
 unchecked, so the failure is loud instead of silent.
 
 `clayseal policy lint` names every tool that is missing either one. Read
 [docs/POLICY.md](docs/POLICY.md) before you write the first policy for a catalog
 you did not design.
 
-If the person who signs off is a risk function rather than an engineer,
+If the person who signs off works in risk and not engineering,
 [docs/CONTROLS.md](docs/CONTROLS.md) says which obligations this produces
 evidence for, quoting the framework text where the mapping is exact and staying
 at the function level where it is not. It opens by saying what it is not: a
@@ -321,7 +452,7 @@ clayseal policy init -- npx @your-org/mcp-server
 # What the organisation permits, from the document that already says so.
 clayseal policy draft delegation_of_authority.md
 
-# Both halves in one file, which is the one worth running.
+# Both halves in one file. This is the one worth running.
 clayseal policy init --rules delegation_of_authority.md \
     -- npx @your-org/mcp-server > draft.yaml
 clayseal policy lint draft.yaml
@@ -345,7 +476,7 @@ balance" would be writing its own limits. Three properties follow:
   comment. A draft that looks complete is worse than one that admits what it
   dropped, because a rule that vanished in translation is one nobody notices.
 - The catalog may **raise** a tool's effect and never lower one, and a server
-  calling its own effectful tool read-only is reported rather than believed. A
+  calling its own effectful tool read-only is reported, not believed. A
   tool that publishes no schema is not recorded as taking no path: "the server
   did not say" and "the server said no" are different facts.
 
@@ -356,15 +487,19 @@ the wrong one splits a shared limit in two. Both are printed as commented
 suggestions for a person to connect.
 
 Worked end to end on a 30-line delegation-of-authority document and a seven-tool
-AP server: 9 rules extracted, 3 sentences left as TODOs, and after review the
-gateway denies the payment that would take a rolling 24-hour total past
-$50,000, the second payment of an invoice already paid, a write to a `.ledger`
+AP server. It extracted 9 rules and left 3 sentences as TODOs. After review the
+gateway denies four things: a payment taking the rolling 24-hour total past
+$50,000, a second payment of an invoice already paid, a write to a `.ledger`
 file, and a write outside `/finance/ap/`. One of those TODOs is
 "the person who prepares a payment may not approve it", which is a real rule
-this layer does not express, and it is a comment in the output rather than a
+this layer does not express, and it appears as a comment in the output, not a
 silence.
 
-## In Python
+## The lower-level API
+
+`Guardrail` above is the wrapper most integrations want. If you are building
+your own loop and would rather call the gateway directly, the decision API is
+one method:
 
 ```python
 from agentauth.capabilities.monitor.action import Action
@@ -392,30 +527,8 @@ for step, (tool, args) in enumerate(agent_calls):
 
 `examples/01_gateway.py` runs this end to end against a prompt injection planted
 in a ticket the agent was allowed to read. The fourth call is allowed and the
-fifth is refused, because its destination came from the document rather than
+fifth is refused, because its destination came from the document and not
 from the sealed goal.
-
-## What the gateway checks, in order
-
-Cheap and hard first, expensive and soft last. A floor denial never reaches the
-behavioural layer.
-
-1. **Floor.** Grant expiry, delegation depth, tool and capability grant,
-   protected zones, path and resource scope, commit-token argument binding,
-   egress destinations, budget reservation.
-2. **Declaration.** When the agent declares a plan, the plan is checked against
-   the sealed goal before any of it runs.
-3. **Content.** Plan entailment and per-write content checks on consequential
-   writes, as a step-up rather than a denial.
-4. **Session state.** Running totals, taints, and the rules pack that reads them.
-5. **Provenance.** Where a destination argument came from: the sealed goal, a
-   structured field of a trusted read, or free text that arrived after the seal.
-6. **Behavioural.** A goal-conditioned trajectory detector, advisory by default,
-   which escalates rather than blocks.
-
-Hard denial requires positive evidence. A scope miss steps up instead, because a
-step-up halts an autonomous attacker just as hard and does not halt a legitimate
-agent permanently.
 
 ## Security posture
 
@@ -434,13 +547,7 @@ this section accepted all four.
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for what is signed, who signs
 it, and what is out of scope.
 
-## Install
-
-```bash
-pip install agentauth-capabilities
-```
-
-Two runtime dependencies, `cryptography` and `pyyaml`. From a checkout:
+## Build from source
 
 ```bash
 git clone https://github.com/pberlizov/clay-seal-capabilities.git
@@ -478,13 +585,16 @@ session = get_identity_provider("oidc").build_session(
 
 ## Documentation
 
-- [Developer guide](docs/DEV_GUIDE.md)
-- [Threat model and key management](docs/THREAT_MODEL.md)
-- [Policy reference](docs/POLICY.md)
-- [Syscall-level enforcement](docs/ivisor_integration.md)
-- [Privacy and data handling](docs/PRIVACY.md)
-- [Security disclosure](SECURITY.md), [contributing](CONTRIBUTING.md)
-- [Benchmark methodology and results](benchmarks/README.md)
+[docs/README.md](docs/README.md) is the index. The four you are most likely to
+want:
+
+- [Developer guide](docs/DEV_GUIDE.md) to install it and wire it in
+- [Policy reference](docs/POLICY.md) for what a policy file can say
+- [Threat model](docs/THREAT_MODEL.md) for what it defends against and what it does not
+- [Privacy and data handling](docs/PRIVACY.md) for what it stores and what leaves the process
+
+For reporting a vulnerability see [SECURITY.md](SECURITY.md); to contribute see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Naming
 

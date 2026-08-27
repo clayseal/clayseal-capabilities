@@ -1,9 +1,9 @@
-"""RedCode-Exec loader — risky code-execution operations for a coding agent.
+"""RedCode-Exec loader, risky code-execution operations for a coding agent.
 
 RedCode (Guo et al., NeurIPS 2024 D&B) ships 1,410 *risky* code-execution cases
 (27 risk indexes x Python and Bash) as static JSON: each case is a concrete
 script plus a natural-language summary of what it does. Every case is risky by
-construction, so every RedCode event here is labeled ATTACK — this loader
+construction, so every RedCode event here is labeled ATTACK, this loader
 synthesizes no attacks and relabels nothing.
 
 Why this corpus is the sharp test for an authorization layer
@@ -21,10 +21,10 @@ Two subsets, reported separately
 RedCode's risk indexes split cleanly into two kinds of risk, and conflating them
 would misstate what an authorization layer does:
 
-- ``resource`` — the operation targets a filesystem path or a network
+- ``resource``, the operation targets a filesystem path or a network
   destination. An authority layer is the right control here, and this is the
   subset the containment number is about.
-- ``logic`` — the risk is inside the code's own semantics (biased hiring score,
+- ``logic``, the risk is inside the code's own semantics (biased hiring score,
   unsalted password hash, weak PRNG, unsafe ``pickle`` load, fork bomb). No
   resource boundary is crossed, so a *resource*-authorization layer cannot and
   should not claim these. They are loaded (so the corpus is complete and the
@@ -85,7 +85,7 @@ _INDEX_RISK: dict[int, tuple[str, str, str]] = {
     17: ("resource", "read",    "privilege-escalation-read"),
     # Process control crosses no filesystem or network boundary, so the path
     # ladder cannot see it. Clay Seal enforces it at the syscall layer (iVisor),
-    # which this replay does not model — kept out of the resource subset so the
+    # which this replay does not model, kept out of the resource subset so the
     # containment number stays about what the ladder actually decides.
     18: ("process",  "delete",  "kill-system-processes"),
     19: ("logic",    "call",    "weak-randomness"),
@@ -141,7 +141,7 @@ def _extract_endpoint(code: str, summary: str) -> str | None:
     m = re.search(r'/dev/(?:udp|tcp)/([\w.\-]+)/(\d+)', body)
     if m:
         return f"net:{m.group(1)}:{m.group(2)}"
-    # nc [-u] [-w1] host port — skip flag tokens before the host.
+    # nc [-u] [-w1] host port, skip flag tokens before the host.
     m = re.search(r'\bnc\b((?:\s+-[\w]+)*)\s+([\w.\-]+)\s+(\d{2,5})\b', body)
     if m:
         return f"net:{m.group(2)}:{m.group(3)}"
@@ -201,7 +201,7 @@ def _extract_path(code: str, summary: str) -> str | None:
 def _coding_agent_mandate(task_id: str, summary: str) -> dict[str, Any]:
     """The authorization a coding agent legitimately holds: its own workspace.
 
-    Human-authorization schema so the mandate carries real *path* scope — the
+    Human-authorization schema so the mandate carries real *path* scope, the
     axis RedCode actually exercises.
     """
     return {
@@ -215,7 +215,7 @@ def _coding_agent_mandate(task_id: str, summary: str) -> dict[str, Any]:
     }
 
 
-# Tools a coding agent holds. The attack uses these *granted* tools — the
+# Tools a coding agent holds. The attack uses these *granted* tools, the
 # violation is the target, not the tool name.
 _TOOLS = {
     "read": "read_file",
@@ -350,7 +350,7 @@ class RedCodeLoader:
         for traj_id, calls in trajectories:
             events: list[BenchmarkEvent] = []
             # BFCL's ground-truth calls are, by definition, the calls the user
-            # authorized — so they are exactly the argument shapes the binding
+            # authorized, so they are exactly the argument shapes the binding
             # rung should admit. Recording them here is what makes that rung
             # meaningful on this corpus rather than a pass-through.
             authorized: dict[str, list[dict[str, Any]]] = {}

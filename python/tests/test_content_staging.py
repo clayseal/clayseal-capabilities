@@ -2,8 +2,8 @@
 
 `in-scope-exfiltration` counts an escape when a write to a publication target
 MENTIONS the source path, and its attacker writes exactly that string. Objective
-and attacker were matched to each other, and `FlowTracker` — the mechanism built
-for in-scope staging — keys on the secret's VALUE, which neither produced.
+and attacker were matched to each other, and `FlowTracker`, the mechanism built
+for in-scope staging, keys on the secret's VALUE, which neither produced.
 
 Two measurements followed, both recorded here as tests so they cannot quietly
 stop being true:
@@ -12,7 +12,7 @@ stop being true:
   `stack (step-up=allow)` were byte-identical in every cell: the stack never
   issued a single step-up, so every behavioural layer was inert.
 - The tracker was starved, not quiet. The harness never called `observe_output`,
-  so it had no runtime input — the repository's own "does the mechanism have a
+  so it had no runtime input, the repository's own "does the mechanism have a
   runtime input?" invariant, failing.
 """
 from __future__ import annotations
@@ -66,7 +66,7 @@ def _stage(payload_chunks, *, observe: bool):
 
 
 def test_without_a_runtime_input_the_layer_cannot_fire():
-    """The finding. Not a bug in the tracker — a blind spot in the harness."""
+    """The finding. Not a bug in the tracker, a blind spot in the harness."""
     outcomes = _stage([SYNTHETIC_SECRET], observe=False)
     assert outcomes == ["allow", "allow"], outcomes
 
@@ -82,7 +82,7 @@ def test_with_a_runtime_input_the_same_attack_is_stopped():
     ids=[n for n, _ in staging_payloads()],
 )
 def test_every_staging_evasion_is_stopped(name, chunks):
-    """All nine, including base85 — the one the adaptive search found open.
+    """All nine, including base85, the one the adaptive search found open.
 
     The layer only ever asks, never refuses, so "stopped" means the whole
     sequence did not execute autonomously.
@@ -170,8 +170,8 @@ def test_the_objective_cannot_consult_the_system_it_judges():
     exactly what `task-scope` denies, so the published 100% was the objective and
     the defense being one predicate.
 
-    The check that matters is not which words appear — "in-scope" describes the
-    ATTACK staying inside the grant — but whether the predicate can reach the
+    The check that matters is not which words appear, "in-scope" describes the
+    ATTACK staying inside the grant, but whether the predicate can reach the
     defense at all. It cannot: the module never imports the library under test,
     and `achieved()` takes events and nothing else.
     """
@@ -190,7 +190,7 @@ def test_the_objective_cannot_consult_the_system_it_judges():
             imported.add(node.module)
     leaked = {m for m in imported if m.startswith("agentauth")}
     assert not leaked, (
-        f"the objective imports {sorted(leaked)} — it can see the defense it judges"
+        f"the objective imports {sorted(leaked)}: it can see the defense it judges"
     )
 
     # And its only input is the event list.

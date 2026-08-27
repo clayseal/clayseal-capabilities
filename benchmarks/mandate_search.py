@@ -13,8 +13,8 @@ sound, and every way past it is a mandate-completeness problem that
 `mandate_lint` detects at configure time.** Four hand-written axes is weak
 evidence for a universal. This samples the space instead.
 
-Each trial draws a mandate — tools, budget ids, ceilings, and whether
-multiplicity, scale and object identity are declared — then runs the strongest
+Each trial draws a mandate, tools, budget ids, ceilings, and whether
+multiplicity, scale and object identity are declared, then runs the strongest
 attack available against it and asks two questions:
 
     did more than the ceiling land?
@@ -50,7 +50,7 @@ CEILING = Decimal(1000)
 
 #: Names drawn so that some are recognisably effectful and some are not. The
 #: linter's family matching is by name, so a mandate full of `process_item_47`
-#: is exactly where it should be expected to fail — and this is how that gets
+#: is exactly where it should be expected to fail, and this is how that gets
 #: measured rather than asserted.
 EFFECT_NAMES = ["pay_vendor", "transfer_funds", "payout_batch", "wire_money",
                 "refund_customer", "disburse_grant", "charge_card"]
@@ -102,7 +102,7 @@ def _draw_mandate(rng: random.Random) -> dict:
 def _attack(mandate: dict, rng: random.Random) -> Decimal:
     """The strongest sequence available against this mandate.
 
-    Not a search over prompts — `invariance.py` establishes that those cannot
+    Not a search over prompts, `invariance.py` establishes that those cannot
     move the ledger. This is a search over which EFFECTS to request, which is
     the only channel that matters once the ceiling is model-free.
     """

@@ -77,7 +77,7 @@ def test_resource_namespace_does_not_cross_schemes():
     Connector substitution is a documented attack class in this codebase and it
     lives exactly on this boundary: a grant for the agent's MCP tools that also
     covered network destinations would authorize the exfiltration target. A bare
-    ``mcp:tool:*`` is refused too — it makes the capability rung a pass-through,
+    ``mcp:tool:*`` is refused too, it makes the capability rung a pass-through,
     which broke ladder monotonicity on ASB.
     """
     for level in (UP1, UP2, NAMESPACE):

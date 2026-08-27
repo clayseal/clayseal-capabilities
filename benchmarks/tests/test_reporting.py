@@ -52,7 +52,7 @@ def test_exact_rather_than_normal_approximate():
 # Model identity.
 # --------------------------------------------------------------------------- #
 def test_a_deployment_alias_is_flagged_and_relabelled():
-    """Live: `<azure-openai-resource>`'s deployment is named `gpt-4o-mini-2024-07-18` and
+    """Live: `<aoai-resource>` is named `gpt-4o-mini-2024-07-18` and
     serves `gpt-5-mini-2025-08-07`. A model-strength trend is the central claim
     of `improvements.md`, and one mislabelled cell inverts it."""
     m = ModelIdentity(requested="gpt-4o-mini-2024-07-18",

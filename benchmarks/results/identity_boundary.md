@@ -60,8 +60,8 @@ outage branch.
 | oidc, auth0, azure_ad, aws_sts, gcp | **same `subject_id`** |
 | spiffe_jwt | cannot collide; see below |
 
-The adapters are not wrong. `sub` is unique only within an issuer — OIDC Core
-says so — and reporting it unqualified is correct. The defect is a *ledger* keyed
+The adapters are not wrong. `sub` is unique only within an issuer, OIDC Core
+says so, and reporting it unqualified is correct. The defect is a *ledger* keyed
 on it, and that is exactly what this repository just built:
 `principal_ledger.py` is the fix for the session-restart escape in
 [aggregation_residual.md](aggregation_residual.md), so its key is now the thing
@@ -79,7 +79,7 @@ rather than delimiter-joined:
 20:https://evil.example5:alice
 ```
 
-A plain `f"{iss}|{sub}"` is forgeable — `sub` is attacker-chosen at their own
+A plain `f"{iss}|{sub}"` is forgeable, `sub` is attacker-chosen at their own
 issuer, so `sub="|https://good.example|alice"` spells another principal's key.
 Length prefixes make the encoding injective. Verified: a `sub` crafted to spell
 the good principal's key does not collide with it.
@@ -93,8 +93,8 @@ subject is issuer-qualified by construction.
 
 - **Authority inflation elsewhere: 0 of 20 probes.** The first version of this
   probe reported 7, all of them the adapters' own default `trust_tier`. Rewritten
-  as a differential — build the binding with and without the injected claim, count
-  only a difference — it drops to the 2 real ones, both closed above. A fuzzer
+  as a differential, build the binding with and without the injected claim, count
+  only a difference, it drops to the 2 real ones, both closed above. A fuzzer
   with a false-positive rate is one whose true positives get waved off.
 - **Separator injection into `sub`**: no adapter builds a composite id, so
   nothing to forge at that layer.
@@ -114,7 +114,7 @@ KeyError: 'verified credential requires subject_id, spiffe_id, agent_id, or sub'
 
 Refusing to build a binding for an unidentified principal is correct and
 fail-closed. Raising a bare `KeyError` out of an authorization path is not the
-right way to do it — a caller cannot distinguish it from a genuine bug, and the
+right way to do it, a caller cannot distinguish it from a genuine bug, and the
 message is the only thing carrying the intent. This should be a typed error.
 Left open deliberately: it is a hygiene issue with no security consequence, and
 changing an exception type touches every caller.

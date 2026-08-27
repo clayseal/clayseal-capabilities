@@ -1,8 +1,8 @@
-"""CaMeL-style privileged planner — now a thin alias over the shipped one.
+"""CaMeL-style privileged planner, now a thin alias over the shipped one.
 
 The implementation moved to ``agentauth.capabilities.monitor.planner``. It had
 been living here, in the harness, while every live AgentDojo result in
-``benchmarks/results/`` was produced by it — so the thing that built the primary
+``benchmarks/results/`` was produced by it, so the thing that built the primary
 behavioural tier was the one piece a deployment could not install. A package
 user got either a hand-authored ``structured_intent`` or no envelope at all, and
 no envelope is a materially different posture from the one that was measured.

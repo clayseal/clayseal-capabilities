@@ -1,4 +1,4 @@
-"""SessionBroker — the one gateway the memo describes.
+"""SessionBroker, the one gateway the memo describes.
 
 The library had two strong but separate halves: the per-action enforcement floor
 (scope, protected zones, egress, budgets, argument binding) and the behavioral
@@ -54,6 +54,7 @@ from agentauth.capabilities.monitor import (
     Trajectory,
     TrajectoryDetector,
     is_consequential,
+    is_effectful,
 )
 from agentauth.capabilities.monitor.intent_envelope import Deviation
 from agentauth.capabilities.replan import verb_class
@@ -167,12 +168,14 @@ class SessionBroker:
     # destination is not in the sealed goal, so it never clears the binding floor
     # and never reaches this gate. Deferring here therefore gives up nothing the
     # floor was not already catching, which is a claim to verify by measurement
-    # rather than assert — see benchmarks/results/deferred_envelope.md.
+    # rather than assert. That measurement has NOT been written: the nearest
+    # evidence is `denial_diagnosis.md` and `utility_experiment_void.md`, and
+    # neither isolates this flag. Left off by default for that reason.
     defer_to_binding: bool = False
     # The stronger form: for an action whose destination the floor positively
     # validated, allow rather than step up.
     #
-    # MEASURED NEGATIVE RESULT — do not enable. The motivating argument was that
+    # MEASURED NEGATIVE RESULT, do not enable. The motivating argument was that
     # an injected step's destination never clears the binding floor, so this gate
     # catches nothing the floor missed. That holds on banking (ASR 0.0% with and
     # without) and is FALSE on travel, where enabling it took ASR from 5.6% to
@@ -191,8 +194,8 @@ class SessionBroker:
     # per task and be reported as a win: nobody was charged for the 0.72.
     #
     # It is also a security property, not only a UX one. A step-up policy is
-    # attackable by exhaustion — issue enough benign-looking confirmations and
-    # the human stops reading — so an unbounded step-up count is an unbounded
+    # attackable by exhaustion, issue enough benign-looking confirmations and
+    # the human stops reading, so an unbounded step-up count is an unbounded
     # attack surface. With a budget, exceeding it is a decision the system has
     # to make explicitly rather than a slope it slides down.
     #
@@ -313,9 +316,9 @@ class SessionBroker:
     audits_spent: int = 0
     #: Serialises the whole mutating surface of a session.
     #:
-    #: Every field this class mutates — the trajectory, `_pending`,
+    #: Every field this class mutates, the trajectory, `_pending`,
     #: `_consumed`, `audits_spent`, `grants`, `session`, `_extended_pairs`, the
-    #: decision chain — was unsynchronised, and an agent gateway is concurrent by
+    #: decision chain, was unsynchronised, and an agent gateway is concurrent by
     #: construction: one session issues several tool calls at once. Two of those
     #: races lose a control rather than a value.
     #:
@@ -362,14 +365,14 @@ class SessionBroker:
     # only in offline twin helpers.
     _sealed_plan: Any | None = field(default=None, init=False)
     # Cross-turn product memory (symlink/CSV/line-map/sealed-violation taints).
-    # One object for scoreboard / CTR / live — not per-corpus caches.
+    # One object for scoreboard / CTR / live, not per-corpus caches.
     session: Any = field(default=None)
     #: Run the corpus-derived session rule pack (`session_rules.py`).
     #:
     #: OFF here and ON in `DeployableStack.from_goal`, and the split is the
     #: point. Those five rules are pattern matches written against specific
-    #: benchmark sabotage scenarios — one of them carries a corpus's project name
-    #: as a literal — so they belong to the measured profile, not to the library
+    #: benchmark sabotage scenarios, one of them carries a corpus's project name
+    #: as a literal, so they belong to the measured profile, not to the library
     #: primitive. Every published containment number was produced with them on,
     #: which is why the profile keeps them on and says so rather than quietly
     #: changing what the scoreboard reproduces.
@@ -390,7 +393,7 @@ class SessionBroker:
     # tool -> set of authorized argument hashes (commit-token binding).
     authorized_arg_hashes: dict[str, set[str]] | None = None
     # Soft: require a prior commit_plan before egress verbs (STEP_UP if missing).
-    # Off by default — coding corpora see high friction; opt in for mail/MCP.
+    # Off by default, coding corpora see high friction; opt in for mail/MCP.
     require_declaration_for_egress: bool = False
 
     def __post_init__(self) -> None:
@@ -459,7 +462,7 @@ class SessionBroker:
         """Record destinations named in the sealed goal as structured observations.
 
         Without this, a TRUSTED_READ slot fails even for ``bob@corp.example``
-        when the prompt itself named him — the allow-list admits the send and
+        when the prompt itself named him, the allow-list admits the send and
         the slot check then denies for "no observation". The sealed goal is the
         one pre-contamination source that is always admissible.
         """
@@ -478,7 +481,7 @@ class SessionBroker:
             # `__post_init__`: a goal summary that defeats the address extractor
             # must not prevent the broker from being constructed, and the only
             # consequence of the miss is that a goal-named recipient earns a
-            # STEP_UP instead of an ALLOW — the safe direction.
+            # STEP_UP instead of an ALLOW, the safe direction.
             pass
         import re
         for i, m in enumerate(re.findall(r"\b[A-Z]{2}[0-9A-Z]{10,30}\b", summary)):
@@ -501,11 +504,11 @@ class SessionBroker:
 
         When ``entailment_judge`` is set, also runs a soft plan-level entailment
         check (content/meaning). Conflicts become ``_declaration_advisories`` and
-        step up on the first consequential authorize — they never hard-deny.
+        step up on the first consequential authorize, they never hard-deny.
 
         An accepted plan is compiled into ``_sealed_plan`` so later authorize
         calls can STEP_UP on argv/digest/callee drift vs the declaration
-        (deployable twin corridor — no gifted clean twin required).
+        (deployable twin corridor, no gifted clean twin required).
         """
         from agentauth.capabilities.monitor.declaration import (
             check_declaration_against_goal,
@@ -627,7 +630,7 @@ class SessionBroker:
 
         Call after a tool returns, before the next ``authorize``. Without this,
         ``check_with_provenance`` has nothing to ground destinations against and
-        every novel recipient hard-denies — the banking utility cliff.
+        every novel recipient hard-denies, the banking utility cliff.
 
         When ``source_path`` is a CSV and ``payload``'s first line looks like a
         header, also bind column names for later awk ``$N`` checks. Read
@@ -644,7 +647,7 @@ class SessionBroker:
                     break
             if not path:
                 cmd = str(source_args.get("command") or "")
-                # head/cat/tail of a concrete file — bind that path for CSV/lines.
+                # head/cat/tail of a concrete file, bind that path for CSV/lines.
                 import re as _re
                 m = _re.search(
                     r"\b(?:head|cat|tail)\b[^\n]*?\s(/[^\s;|&]+|"
@@ -791,7 +794,7 @@ class SessionBroker:
             if not verdict.allowed:
                 return (False, f"{verdict.rule}: {verdict.reason}",
                         {"delegation": True}, True)
-        # Tool / capability / arg-hash binding — same primitives as the ladder
+        # Tool / capability / arg-hash binding, same primitives as the ladder
         # engines, so scoreboard and SessionBroker share one floor.
         if self.tool_patterns is not None:
             import fnmatch
@@ -849,18 +852,18 @@ class SessionBroker:
         # Credential-shaped VALUES in the payload. No provenance in this
         # predicate at all, which is the point: `FlowTracker` correlates a
         # secret READ with a later write, and BPL's `integration-invoice-cover`
-        # never reads one — the elevation tool is refused and the agent simply
+        # never reads one, the elevation tool is refused and the agent simply
         # types `API_KEY=sk-live-...` into an invoice attachment bound for an
         # allow-listed internal address. Allow-listed tool, allow-listed
         # recipient, nothing to derive from, every other layer satisfied.
         #
         # Measured on BPL's own benign corpus before being wired here: 0 of 761
         # benign string arguments flagged, 97.5% upper bound 0.5%. PII detection
-        # is deliberately NOT included — its one false positive is a payroll
+        # is deliberately NOT included, its one false positive is a payroll
         # extract sent to the payroll mailbox, which is a question about the
         # destination rather than the content, and the egress recipient check
         # owns that half.
-        if self.refuse_credential_payloads and is_consequential(action):
+        if self.refuse_credential_payloads and is_effectful(action):
             from agentauth.capabilities.hardening.secret_content import (
                 credential_findings,
             )
@@ -1095,7 +1098,7 @@ class SessionBroker:
         # Corpus-derived session rules (opt-in). Extracted to
         # `session_rules.py`: 160 lines of scenario-specific regex used to sit
         # here, invisible in the field list and unswitchable by a caller. Same
-        # predicates, same reason strings, same order — now named, documented and
+        # predicates, same reason strings, same order, now named, documented and
         # off unless asked for. See that module for what each rule is and is not.
         if self.session_rules:
             from agentauth.capabilities import session_rules as _rules
@@ -1226,14 +1229,14 @@ class SessionBroker:
         if self.intent_envelope is not None:
             # Provenance-typed slots (AuthGraph-shaped). A matching template with
             # TRUSTED_READ/GOAL constraints fails closed on consequential effects
-            # when the value is ungrounded — independent of plan membership.
+            # when the value is ungrounded, independent of plan membership.
             slot = self.intent_envelope.check_slots(
                 action,
                 provenance=self.provenance,
                 goal_text=self.goal.summary or "",
                 goal_named_objects=self.goal_named_objects or None,
             )
-            if slot is not None and is_consequential(action):
+            if slot is not None and is_effectful(action):
                 self._rollback(action, v_res, c_res)
                 self._record_triggers([f"intent-slot: {slot.reason}"])
                 return self._finalize(
@@ -1374,6 +1377,29 @@ class SessionBroker:
                             (reason, "count derived from the goal, not declared"),
                             None, is_write, start, step_up=request,
                             step_up_flag=True)
+                    # A DISCLOSURE is flagged but never hard-denied on its own.
+                    #
+                    # Reclassifying an off-plan read as consequential is what
+                    # lets it reach this branch at all, and that is worth +44
+                    # contained events on AgentHarm at no false-positive cost.
+                    # Letting it DENY here would be a different and worse
+                    # change: it breaks the two-signal rule this file documents,
+                    # where a departing read earns a human look and a departing
+                    # WRITE earns a refusal, and it makes the refusal
+                    # unrecoverable, so an envelope with imperfect recall
+                    # permanently blocks a legitimate read rather than asking.
+                    if not is_effectful(action):
+                        self._rollback(action, v_res, c_res)
+                        request = build_step_up_request(
+                            request_id=str(uuid4()), query_id=self.goal.query_id,
+                            resource_ref=action.resource, operation=action.verb,
+                            violations=[reason])
+                        return self._finalize(
+                            action, Outcome.STEP_UP, "intent-envelope",
+                            (reason, "off-plan disclosure: read content the "
+                                     "sealed goal did not ask for"),
+                            None, is_write, start, step_up=request,
+                            step_up_flag=True)
                     self._rollback(action, v_res, c_res)
                     return self._finalize(action, Outcome.DENY, "intent-envelope",
                                           (reason, "off-plan and consequential"), None,
@@ -1483,7 +1509,7 @@ class SessionBroker:
         try:
             ok, reason = verify_step_up_approval(approval, request_commitment=commitment)
         except Exception as exc:  # noqa: BLE001
-            # Total by contract, like every other gate audited this session. The
+            # Total by contract, like every other gate on this path. The
             # approval object crosses a trust boundary, so a malformed one is a
             # denial with a reason, never an AttributeError out of the broker.
             return False, f"approval malformed: {type(exc).__name__}"

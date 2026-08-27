@@ -87,7 +87,7 @@ CAVEATS = {
     "advbench_agent": ("normalized fixture: target/arg binding; binding rung "
                        "100% / 0% FB; content-only twins are not the score path"),
     "agentharm": ("CONTENT ceiling: hard ~27% from destination pins; soft cues lift "
-                  "union — see agentharm[stack] / cross_stack (never quote soft as hard)"),
+                  "union, see agentharm[stack] / cross_stack (never quote soft as hard)"),
     "agentharm[stack]": ("DeployableStack product row: hard/soft/union split; "
                          "sealed goal = benign twin prompt"),
     "atif": "benign only; a false-block measurement",
@@ -321,7 +321,7 @@ def _sleight_detector(board: Scoreboard) -> None:
 
 
 def _deployable_stack(board: Scoreboard, quick: bool) -> None:
-    """PRODUCT gateway first — same SessionBroker as CTR / live AgentDojo."""
+    """PRODUCT gateway first, same SessionBroker as CTR / live AgentDojo."""
     from benchmarks.core.broker_eval import run_broker_benchmark
 
     corpora = ["redcode", "agentharm", "sleight", "ipi_coding", "mcp_attack"]
@@ -368,7 +368,7 @@ def _deployable_stack(board: Scoreboard, quick: bool) -> None:
     board.add(
         tier="── LADDER ABLATION ──",
         measures="build_engines() monotone floor",
-        caveat="not the product claim — construction check only",
+        caveat="not the product claim, construction check only",
     )
 
 
@@ -395,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     # 18 benign trajectories being refused. The headline therefore carries the
     # operating-point view beside it, where a control that blocks everything
     # scores zero by construction. See benchmarks/core/opmetrics.py.
-    print("\nOPERATING POINT — detection at a false-alarm rate the operator "
+    print("\nOPERATING POINT, detection at a false-alarm rate the operator "
           "chose.")
     print("  Containment above is measured at whatever threshold each engine "
           "picked for itself.")

@@ -5,10 +5,39 @@ build-backend = "hatchling.build"
 [project]
 name = "agentauth-capabilities"
 version = "0.5.0"
-description = "Clay Seal layer 2 — dynamic capability tokens, leases, commit tokens, mandates"
+description = "Clay Seal: an MCP gateway that authorizes each agent action against the whole session, not one call at a time"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10,<3.14"
+keywords = ["agent", "authorization", "llm", "security", "mcp", "guardrails",
+            "policy", "sandbox", "audit"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  # `Typing :: Typed` is NOT claimed and `py.typed` is NOT shipped. 98% of the
+  # library's functions carry annotations, but mypy has never gated them and
+  # reports 92 findings across 32 files, a sample of which are narrowing false
+  # positives and none of which have been triaged. Shipping the marker would
+  # make those annotations authoritative for every downstream type-checker on
+  # the strength of a claim nobody here has checked.
+]
+# The CORE library and CLI are stdlib plus two packages and run anywhere in this
+# range: 2,156 tests pass on 3.14 with no failures and no library deprecation.
+# The ceiling that used to sit here at <3.14 came from `agentdojo`, which caps at
+# 3.12 and is a dependency of the OPTIONAL `benchmarks` extra. Pinning the whole
+# distribution to an optional extra's constraint locked every user of the gateway
+# out of current Python for a package they were never going to install.
+requires-python = ">=3.10,<3.15"
 # The whole runtime, in two third-party packages. `cryptography` signs and
 # verifies; `pyyaml` parses the policy document. Everything else the gateway
 # needs is stdlib or lives in this repo: `agentauth.core` used to be a separate
@@ -34,7 +63,7 @@ Changelog = "https://github.com/pberlizov/clay-seal-capabilities/blob/main/CHANG
 
 # Execution-sandbox backends, resolved by name via agentauth.core.plugins. The
 # built-in iVisor backend needs no dependency here (it drives an external
-# binary); registering it makes the substrate swappable — a Linux deployment can
+# binary); registering it makes the substrate swappable, a Linux deployment can
 # ship a gVisor/seccomp backend under the same Protocol without touching callers.
 [project.entry-points."agentauth.sandbox_backends"]
 ivisor = "agentauth.capabilities.sandbox.backend:IVisorBackend"
@@ -101,17 +130,17 @@ line-length = 100
 # more than it returns.
 select = [
   "E7", "E9",        # pycodestyle: the errors, not the whitespace opinions
-  "F",               # pyflakes — undefined names, unused imports, dead locals
+  "F",               # pyflakes, undefined names, unused imports, dead locals
   "I",               # import order
   "UP",              # pyupgrade
-  "B",               # bugbear — mutable defaults, bare raise, zip strictness
+  "B",               # bugbear, mutable defaults, bare raise, zip strictness
   "C4",              # comprehensions
   "PLE",             # pylint errors, incl. Trojan-Source character checks
   "PLW1510",         # subprocess.run without an explicit check=
   "PLR0402",
   "FURB",
   "TRY004",
-  "BLE",             # blind except — a security gate must not silently swallow
+  "BLE",             # blind except, a security gate must not silently swallow
   "S",               # bandit
   "RUF",
 ]
@@ -133,7 +162,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # S105 is a NAME heuristic: it flags any constant whose identifier contains
 # TOKEN or SECRET. In these three files the flagged values are a schema id and a
-# set of environment-variable NAMES — the things you read a credential from, not
+# set of environment-variable NAMES, the things you read a credential from, not
 # a credential. Suppressed per file rather than globally so a genuine hardcoded
 # secret elsewhere in the package still fails the build.
 "agentauth/capabilities/commit.py" = ["S105"]

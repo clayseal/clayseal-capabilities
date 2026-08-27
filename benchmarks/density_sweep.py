@@ -11,7 +11,7 @@ fixed and wildcarding the PATH grant by one segment:
     agent_threat_bench  100.00% ->  0.00%
 
 while generalizing the TOOL dimension costs nothing. So the flagship containment
-is a single mechanism — the attack path is outside a literally enumerated set —
+is a single mechanism, the attack path is outside a literally enumerated set
 and it does not survive the grant being written the way an operator writes one.
 
 The thesis is that a goal-conditioned density over resource identity is a second,
@@ -24,7 +24,7 @@ What would falsify it: containment at `up1`/`up2` staying flat when the rung is
 added, or rising only by paying a false-block rate far above the rung's declared
 `alpha`. Both columns are printed side by side for exactly that reason. A rung
 that buys containment with friction has not solved the problem, it has moved
-along the same frontier — which is what every rung below it already does.
+along the same frontier, which is what every rung below it already does.
 """
 from __future__ import annotations
 

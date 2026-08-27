@@ -1,4 +1,4 @@
-"""The demo against the real sentry — the only test that validates iVisor's
+"""The demo against the real sentry, the only test that validates iVisor's
 semantics rather than our handling of them.
 
     cp <iVisor>/target/release/ivisor /tmp/ivisor-signed

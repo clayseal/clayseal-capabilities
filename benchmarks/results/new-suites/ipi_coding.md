@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, ipi_coding (45 tasks, 45 benign / 50 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/ipi_coding.json
-# Clay Seal enforcement benchmark — ipi_coding (45 tasks, 45 benign / 50 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset ipi_coding --mode ladder --ci --json benchmarks/results/new-suites/ipi_coding.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

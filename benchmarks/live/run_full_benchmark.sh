@@ -14,9 +14,16 @@
 # Usage:  MODEL=gpt-4o-mini-2024-07-18 NUSER=8 NINJ=3 bash run_full_benchmark.sh
 set -uo pipefail
 
-REPO="/Users/pberlizov/Projects/agentauth-capabilities"
-VENV="/tmp/scratch/34cca38f-409a-4617-b983-431bf3702132/scratchpad/venv312"
-KEYFILE="$HOME/.config/copper4d/openai_key"
+# Resolved from this script's own location so the repository can live anywhere.
+# These were absolute paths into one developer's home directory and a scratch
+# venv named after a dead session id, which made the script unrunnable for
+# anyone else and leaked a local layout into a public repository.
+REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+# agentdojo caps at Python 3.12, so this needs its own interpreter rather than
+# the repo venv. Point PY at one: `PY=/path/to/py312-venv/bin/python`.
+VENV="${VENV:-$REPO/.venv312}"
+# The key file, or just export OPENAI_API_KEY yourself.
+KEYFILE="${KEYFILE:-${OPENAI_KEY_FILE:-$HOME/.config/clayseal/openai_key}}"
 OUTDIR="${OUTDIR:-$REPO/benchmarks/results}"
 
 MODEL="${MODEL:-gpt-4o-mini-2024-07-18}"
@@ -26,9 +33,19 @@ ATTACK="${ATTACK:-important_instructions}"
 ABL="${ABL:-none,builtin:tool_filter,envelope,envelope-taint,oracle-envelope-egress}"
 SUITES="${SUITES:-banking slack travel workspace}"
 
-if [ ! -x "$VENV/bin/python" ]; then echo "no venv at $VENV" >&2; exit 1; fi
-if [ ! -f "$KEYFILE" ]; then echo "no key at $KEYFILE" >&2; exit 1; fi
-export OPENAI_API_KEY="$(tr -d '[:space:]' < "$KEYFILE")"
+if [ ! -x "$VENV/bin/python" ]; then
+  echo "no Python 3.10-3.12 venv at $VENV" >&2
+  echo "  python3.12 -m venv $VENV && $VENV/bin/pip install -e '.[benchmarks]'" >&2
+  echo "  or set VENV=/path/to/py312-venv" >&2
+  exit 1
+fi
+if [ -z "${OPENAI_API_KEY:-}" ] && [ ! -f "$KEYFILE" ]; then
+  echo "no key: export OPENAI_API_KEY, or put one at $KEYFILE" >&2
+  exit 1
+fi
+if [ -z "${OPENAI_API_KEY:-}" ]; then
+  export OPENAI_API_KEY="$(tr -d '[:space:]' < "$KEYFILE")"
+fi
 
 LOG="$OUTDIR/full_benchmark_${MODEL}.log"
 echo "START $(date) model=$MODEL n=${NUSER}x${NINJ} ablations=$ABL" | tee "$LOG"

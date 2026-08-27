@@ -1,4 +1,10 @@
-# Adversarial leaderboard — asb (51 benign tasks x 8 attack classes)
+# Adversarial leaderboard, asb (51 benign tasks x 8 attack classes)
+
+STATUS: current
+
+```bash
+python -m benchmarks.leaderboard --dataset asb
+```
 
 | Engine | Overall | False-block | argument‑tampering | path‑exfiltration | unauthorized‑tool | action‑escalation | connector‑substitution | fragmented‑overspend | goal‑drift | in‑scope‑burst |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

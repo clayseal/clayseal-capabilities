@@ -3,8 +3,8 @@
 Every external benchmark (AgentDojo, InjecAgent, ToolEmu, ...) is normalized to
 the same shape: a task carries the authorization a legitimate user granted
 (``mandate`` / ``capabilities``), plus a stream of attempted tool calls, each
-labeled ``BENIGN`` (the user's own task steps — should be allowed) or ``ATTACK``
-(steps induced by a prompt injection / compromised tool — should be blocked).
+labeled ``BENIGN`` (the user's own task steps, should be allowed) or ``ATTACK``
+(steps induced by a prompt injection / compromised tool, should be blocked).
 
 An enforcement engine then decides allow/deny per event, and we score it on the
 two axes that actually matter for an authorization layer:
@@ -48,8 +48,8 @@ class EventLabel(str, Enum):
 
     UNLABELED = "unlabeled"
 
-    BENIGN = "benign"  # a legitimate step of the user's own task — expect ALLOW
-    ATTACK = "attack"  # an injected / out-of-scope step — expect DENY
+    BENIGN = "benign"  # a legitimate step of the user's own task, expect ALLOW
+    ATTACK = "attack"  # an injected / out-of-scope step, expect DENY
 
 
 @dataclass(frozen=True)
@@ -105,8 +105,8 @@ class BenchmarkTask:
     resource_patterns: list[str] | None = None
     # Per-CALL argument binding: for each tool, the list of argument shapes that
     # were legitimately authorized (one commit token per real call). A tool
-    # present here is bound — a call whose args match none of its authorized
-    # shapes is rejected — so a tool called many times with different valid args
+    # present here is bound, a call whose args match none of its authorized
+    # shapes is rejected, so a tool called many times with different valid args
     # is fully supported, while a mutated payload matches nothing. Absent tools
     # are unbound.
     authorized_args: dict[str, list[dict[str, Any]]] = field(default_factory=dict)

@@ -59,7 +59,7 @@ against aggregate utility undefended, and charged the entire difference to the
 defense: banking 50% to 16.7%, a 33-point cost.
 
 Pairing per task shows most of that gap was never ours. Of 8 clean tasks on
-gpt-4o-mini, **3 fail with no defense present at all** — the agent simply cannot
+gpt-4o-mini, **3 fail with no defense present at all**, the agent simply cannot
 do them. Charging those to the enforcement layer is a measurement error, and it
 is item 2 of the methodology audit.
 
@@ -193,7 +193,7 @@ post_webpage         egress to 'www.our-company.com' not on allow-list
 ```
 
 These are all legitimate. In slack, the destinations a benign task needs are
-*discovered from message content* — the user asks the agent to message whoever
+*discovered from message content*, the user asks the agent to message whoever
 posted in a channel, or to read the restaurant page someone linked. They never
 appear as literals in the sealed goal, so the goal-seeded trusted set does not
 contain them, and taint's widening rule deliberately refuses to look at free
@@ -352,7 +352,7 @@ published number rather than an error:
   AgentDojo's default `max_tokens` is consumed entirely by reasoning tokens,
   returning `finish_reason=length` with zero completion tokens and an empty
   message. That reads as the agent failing the task.
-- **The `<azure-openai-resource>` Azure deployment is named `gpt-4o-mini-2024-07-18` and
+- **The `<aoai-resource>` Azure deployment is named `gpt-4o-mini-2024-07-18` and
   serves `gpt-5-mini`.** The ladder driver unsets the Azure variables so the
   gpt-4o-mini rung is genuinely gpt-4o-mini. Any earlier result that ran through
   Azure under that name should be re-checked before it is quoted.

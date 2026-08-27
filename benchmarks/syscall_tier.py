@@ -1,11 +1,11 @@
-"""Tier 4 — syscall-boundary harness over Clay Seal × iVisor sample traces.
+"""Tier 4, syscall-boundary harness over Clay Seal × iVisor sample traces.
 
 Replays captured fd-3 policy traces from ``demo/clayseal-ivisor/sample_traces``
 through the *same* Clay Seal capability evaluator the arena uses (envelope,
 egress, task-scope, behavioral connect budget). This is the scientific Tier-4
 harness the benchmark program called ``not yet built``.
 
-It does **not** claim a live sandbox run — only that the capability layer, given
+It does **not** claim a live sandbox run, only that the capability layer, given
 the unforgeable stream, produces the expected containment decisions.
 
     python -m benchmarks.syscall_tier
@@ -21,7 +21,7 @@ _DEMO = Path(__file__).resolve().parents[1] / "demo" / "clayseal-ivisor"
 if str(_DEMO) not in sys.path:
     sys.path.insert(0, str(_DEMO))
 
-from engine import (  # noqa: E402  — demo path on sys.path
+from engine import (  # noqa: E402, demo path on sys.path
     build_pin_map,
     evaluate,
     parse_trace,
@@ -126,7 +126,7 @@ def evaluate_all(trace_dir: Path) -> dict:
 
 def render_md(result: dict) -> str:
     lines = [
-        "# Tier 4 — syscall boundary (iVisor trace replay)",
+        "# Tier 4, syscall boundary (iVisor trace replay)",
         "",
         result["caveat"],
         "",

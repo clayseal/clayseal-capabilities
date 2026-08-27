@@ -8,7 +8,7 @@ its input is absurd, while reporting that it passed.** All four are fixed; all
 four are pinned by tests.
 
 This matters more than the behavioural-layer work that preceded it. The budget
-rungs are not experimental — they ship, they are what `SEND_PACKET.md` cites for
+rungs are not experimental, they ship, they are what `SEND_PACKET.md` cites for
 "Volume / burst containment 100%", and they are the only rungs carrying state
 across a session, so a bug compounds instead of being confined to one decision.
 
@@ -20,11 +20,11 @@ release-is-free, no-double-settle and remaining-consistency after every operatio
 
 **The sequence fuzzing found nothing.** All properties held across 200,000
 operations, which is a genuine positive result for the ledger's locking and
-settlement logic. Every defect below was in *input handling* — the half a
-sequence fuzzer never reaches — and surfaced only when the amount and ceiling
+settlement logic. Every defect below was in *input handling*, the half a
+sequence fuzzer never reaches, and surfaced only when the amount and ceiling
 fields were fuzzed with values an attacker or a malformed mandate would supply.
 
-## Defect 1 — an unparseable amount was treated as untracked (critical)
+## Defect 1, an unparseable amount was treated as untracked (critical)
 
 `SessionValueBudget._amount` returned `None` for two different situations: "this
 tool has no money spec" and "the amount is garbage". Callers read the single
@@ -39,29 +39,29 @@ nothing:
 None      [5]          {'a': 1}      True
 ```
 
-`1e999` is not an exotic input — it is what an injected agent writes for
+`1e999` is not an exotic input: it is what an injected agent writes for
 "transfer everything". `10**30` is an ordinary Python int that merely overflows
 cent-quantization. The mechanism: `_money` calls
 `Decimal(str(v)).quantize(Decimal('0.01'))`, which raises `InvalidOperation` (an
 `ArithmeticError`) for non-finite or over-long values; `_amount` caught
 `ArithmeticError` and returned `None`.
 
-**Fixed** by making `_amount` tri-state — `None` for genuinely untracked,
-`(budget_id, None)` for tracked-but-unusable, `(budget_id, Decimal)` for usable —
+**Fixed** by making `_amount` tri-state, `None` for genuinely untracked,
+`(budget_id, None)` for tracked-but-unusable, `(budget_id, Decimal)` for usable
 and denying the middle state as `value_budget_unparseable_amount` in `reserve`,
 `would_allow` and `commit`.
 
-## Defect 2 — `NaN` raised out of the authorization gate
+## Defect 2, `NaN` raised out of the authorization gate
 
 `Decimal('NaN')` quantizes without complaint, so `_money` returned it happily.
-The next line, `if amount < 0:`, raises `InvalidOperation` on a NaN comparison —
+The next line, `if amount < 0:`, raises `InvalidOperation` on a NaN comparison
 which escaped `reserve()` unhandled and would take the whole `authorize()` call
 with it. An authorization gate may deny; it may not crash.
 
 **Fixed** by rejecting non-finite amounts explicitly in `_amount` rather than
 letting them reach a comparison.
 
-## Defect 3 — a non-finite *ceiling* silently disabled the compute budget
+## Defect 3, a non-finite *ceiling* silently disabled the compute budget
 
 `ComputeBudgetConfig.ceiling_for` coerced with a bare `float(raw)`:
 
@@ -71,12 +71,12 @@ letting them reach a comparison.
 | `'NaN'` | `nan` | **every** `projected > ceiling` is False, so nothing is ever refused |
 
 Measured: with a NaN ceiling, a **1,000,000-second** request returned
-`allowed=True`, reason `'ok'` — not even `ok_clamped`. With a valid ceiling of 10
+`allowed=True`, reason `'ok'`, not even `ok_clamped`. With a valid ceiling of 10
 the same request is correctly clamped to 0 remaining. A NaN ceiling is the worst
 case of the three because it defeats the comparison rather than merely widening
 it.
 
-## Defect 4 — malformed ceilings raised from the hot path
+## Defect 4, malformed ceilings raised from the hot path
 
 `ValueBudgetConfig.ceiling_for` raised `InvalidOperation` out of `reserve()` for
 every one of `'Infinity'`, `'NaN'`, `'1e999'`, `'abc'`, `[1]`.
@@ -87,14 +87,14 @@ triggered by configuration rather than by traffic.
 **Fixed** for all three rungs by validating in `__post_init__`: a ceiling that is
 not finite, not numeric, or negative raises `ValueError` at construction with a
 message naming the budget. Note that returning `None` ("no ceiling") would itself
-be fail-open, so refusing to build the config is the only honest option — **a
+be fail-open, so refusing to build the config is the only honest option, **a
 budget that cannot be enforced must not be constructible.**
 
 ## Why the whole class is worth naming
 
 Each defect is the same decision made four times: *when input is unusable,
 proceed*. For a parser that is often right. For an authorization control it is
-always wrong, and it is invisible from above — the broker records that the budget
+always wrong, and it is invisible from above, the broker records that the budget
 rung passed, the scoreboard counts it as enforced, and the ladder reports
 containment it did not perform.
 
@@ -106,8 +106,8 @@ alongside the benchmarks rather than choosing between them.
 ## Residual, stated
 
 - **An absent amount argument on a tracked tool is still untracked-allowed.**
-  This is deliberate — genuinely absent differs from present-and-garbage, and
-  denying the first would refuse legitimate calls — but it remains a way to reach
+  This is deliberate, genuinely absent differs from present-and-garbage, and
+  denying the first would refuse legitimate calls, but it remains a way to reach
   a money tool without a ceiling check if a downstream tool defaults the amount.
   Closing it requires knowing which arguments are mandatory, which the mandate
   does not currently express.
@@ -135,14 +135,14 @@ to. `benchmarks/tests/test_gate_totality.py` runs it in CI.
 Two more defects were fixed getting there, both public API and both unreachable
 through the shipped broker (`broker._action_path` filters with
 `isinstance(v, str)`) but reachable by the integration path the README actually
-sells — "bring verified claims from your IdP and build your own gateway":
+sells, "bring verified claims from your IdP and build your own gateway":
 
 - **`is_protected_path`** raised `AttributeError` on a `list`, `dict` or `bool`.
   It now treats a non-string path as protected. A deny-list is allow-by-default,
   which makes an unreadable path the dangerous direction: "I cannot parse this,
   therefore it is not protected" is the fail-open in its purest form.
 - **`SessionComputeBudget.reserve`** raised `TypeError` from the `< 0` comparison
-  for any string estimate, and *granted* `float('nan')` as `ok_clamped` — which
+  for any string estimate, and *granted* `float('nan')` as `ok_clamped`, which
   then poisons every later comparison on the ledger, since NaN compares False
   against everything. Both now deny as `compute_budget_unusable_estimate`.
   `bool` is excluded explicitly, because `True` is an `int` and would otherwise
@@ -165,7 +165,7 @@ three runs reported 16 egress "fail-opens", 5 task-scope "fail-opens" and 19
 compute "raises" that were all correct behaviour:
 
 - `''`, `net:`, `@`, `None`, `0` yield **no extractable destination**, so
-  "within policy" is right — there is nothing to egress to.
+  "within policy" is right: there is nothing to egress to.
 - `/app//data` and `/app/./data` normalise to `/app/data`, which is in scope.
 - `evil.test.trusted.test` is a genuine **subdomain** of the allow-listed domain.
   The matcher was verified sound separately: `trusted.test.evil.com`,

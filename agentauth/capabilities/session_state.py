@@ -9,7 +9,7 @@ That is not a durability nicety. Three of those fields ARE controls, and losing
 them fails open:
 
 **Outstanding step-ups.** `resolve_step_up` refuses any approval whose
-commitment "this session never issued" — correct, and fatal behind a load
+commitment "this session never issued", correct, and fatal behind a load
 balancer, because the worker that receives the human's approval is usually not
 the worker that asked. The step-up protocol simply does not complete on a
 multi-worker deployment. This is the single most consequential one.
@@ -26,7 +26,7 @@ WHAT THIS IS AND IS NOT
 -----------------------
 This is the SERIALISATION, not a distributed store. `snapshot()` returns plain
 JSON-able data and `restore()` puts it back, so a deployment can put it in
-whatever it already runs — Redis, Postgres, a session row. `RedisUsedTokenStore`
+whatever it already runs, Redis, Postgres, a session row. `RedisUsedTokenStore`
 is the existing precedent for that shape and this deliberately mirrors it: the
 seam ships, the backend is the integrator's.
 
@@ -110,7 +110,7 @@ def snapshot(broker: Any) -> dict[str, Any]:
                 "actions": [_action_to_dict(a) for a in broker._trajectory.actions],
                 "context": [_context_to_dict(c) for c in broker._trajectory.context],
             },
-            # The controls. Losing any of these fails open — see the module docstring.
+            # The controls. Losing any of these fails open, see the module docstring.
             "pending_step_ups": {
                 commitment: request.to_dict()
                 for commitment, request in broker._pending.items()
@@ -143,8 +143,8 @@ def snapshot(broker: Any) -> dict[str, Any]:
 def restore(broker: Any, state: dict[str, Any]) -> None:
     """Put a snapshot back onto a broker built from the same mandate.
 
-    The caller rebuilds the broker from configuration first — goal, scope,
-    egress, budgets — and then restores what the session accumulated. Splitting
+    The caller rebuilds the broker from configuration first, goal, scope,
+    egress, budgets, and then restores what the session accumulated. Splitting
     it that way is what stops a snapshot from being a channel for widening
     authority: nothing here can grant a permission the fresh broker did not
     already have.

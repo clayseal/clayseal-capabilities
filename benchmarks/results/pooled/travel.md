@@ -1,4 +1,4 @@
-# Safety/usefulness frontier — travel, gpt-4o-mini-2024-07-18, 6x3 runs per config
+# Safety/usefulness frontier, travel, gpt-4o-mini-2024-07-18, 6x3 runs per config
 
   sweep 1/3 done
   sweep 2/3 done

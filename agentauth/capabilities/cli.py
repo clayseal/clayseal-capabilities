@@ -206,6 +206,25 @@ def _cmd_proxy(args: argparse.Namespace) -> int:
     return run_stdio_proxy(proxy, list(args.command))
 
 
+def _is_loopback(host: str) -> bool:
+    """Is this bind address reachable only from the same host?
+
+    An empty host and `0.0.0.0` / `::` mean every interface. Anything that does
+    not parse as an address is a name, and a name is not assumed to be local.
+    """
+    import ipaddress
+
+    host = (host or "").strip().strip("[]")
+    if not host:
+        return False
+    if host in {"localhost", "localhost.localdomain"}:
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
 def _cmd_serve(args: argparse.Namespace) -> int:
     """Run the policy in front of a Streamable HTTP MCP server.
 
@@ -234,6 +253,16 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         upstream=urllib_upstream(args.upstream) if args.upstream else None,
         require_headers=not args.allow_missing_headers,
     )
+    # The gateway carries no authentication of its own: it authorizes the CALLS
+    # it is handed, and trusts whoever hands them over. On loopback that is the
+    # agent process on the same host. Bound anywhere else, anyone who can reach
+    # the port can push tool calls through it under this policy's authority, so
+    # a non-loopback bind needs an authenticating proxy in front of it.
+    if not _is_loopback(args.host):
+        print(f"clayseal: WARNING {args.host} is not a loopback address. This "
+              f"gateway does not authenticate its callers; put an "
+              f"authenticating proxy in front of it or bind 127.0.0.1.",
+              file=sys.stderr)
     server = serve(gateway, host=args.host, port=args.port, path=args.path,
                    log=lambda line: print(f"clayseal: {line}", file=sys.stderr))
     print(f"clayseal: enforcing {policy.source} ({policy.digest()[:19]}) on "

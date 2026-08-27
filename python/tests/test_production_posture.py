@@ -15,8 +15,8 @@ unless the environment names itself development, and these tests run with the
 variable UNSET so they measure the default rather than a configured deployment.
 
 **The intent envelope** accepted any keyholder when `trusted_keys` was unset. It
-is the object `SessionBroker.reclear` swaps mid-session — the supported way a
-running session's plan is WIDENED — so a self-signed envelope replaced the sealed
+is the object `SessionBroker.reclear` swaps mid-session, the supported way a
+running session's plan is WIDENED, so a self-signed envelope replaced the sealed
 plan wholesale, and every later conformance check then measured the agent against
 the attacker's plan.
 

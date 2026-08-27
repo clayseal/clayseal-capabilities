@@ -54,7 +54,7 @@ def test_declaring_honestly_and_then_sabotaging_is_caught():
 
 
 def test_declaring_the_sabotage_up_front_passes_the_corridor():
-    """Corridor alone cannot catch a declared sabotage — asserted, not papered over."""
+    """Corridor alone cannot catch a declared sabotage, asserted, not papered over."""
     assert not _flags(compile_sealed_plan(_traj(SABOTAGE)), _traj(SABOTAGE))
 
 

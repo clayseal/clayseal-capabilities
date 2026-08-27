@@ -1,7 +1,7 @@
 """The mismatch check must fire on a substitution and stay silent on a version pin.
 
 Both polarities are pinned because both have already gone wrong here. The
-substitution is real: `<azure-openai-resource>` has a deployment named
+substitution is real: `<aoai-resource>` has a deployment named
 `gpt-4o-mini-2024-07-18` that serves `gpt-5-mini`, and every results file written
 against it before `ModelIdentity` existed carried a weak-model label on a
 frontier-model cell. The false alarm is equally real: every Azure deployment

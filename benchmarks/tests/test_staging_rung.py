@@ -109,7 +109,7 @@ def test_the_friction_of_this_rung_is_unmeasured_not_zero():
                     saw_pub = True
             triggered += saw_secret and saw_pub
     assert triggered == 0, (
-        f"{triggered} benign tasks now exercise the staging rung — its "
+        f"{triggered} benign tasks now exercise the staging rung, its "
         "false-block rate is measurable, so measure it before shipping DENY")
 
 

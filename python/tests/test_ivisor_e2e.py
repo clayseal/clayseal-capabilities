@@ -146,7 +146,7 @@ def test_run_artifact_is_re_runnable_by_hand(tmp_path):
     text = config.read_text()
     assert f"rootfs = {IVISOR_ROOTFS}" in text
     assert str(outcome.staged.workspace) in text
-    # Exactly the knobs iVisor accepts — an unknown key would abort the run.
+    # Exactly the knobs iVisor accepts, an unknown key would abort the run.
     keys = {line.split(" = ")[0] for line in text.splitlines()
             if not line.startswith("#")}
     assert keys <= {"ram_mb", "rootfs", "workspace", "compute",
@@ -156,7 +156,7 @@ def test_run_artifact_is_re_runnable_by_hand(tmp_path):
 def test_trace_fd_contract_holds_with_pass_fds(tmp_path):
     """`pass_fds` alone satisfies IVISOR_TRACE_FD (any fd >= 3), so the driver
     needs no dup2-onto-3 dance. If that ever regressed, the sentry would warn
-    and reroute verdicts to stderr — which is what trace_degraded detects."""
+    and reroute verdicts to stderr, which is what trace_degraded detects."""
     outcome = _run(tmp_path, "open('/work/out/x.txt', 'w').write('x')")
     assert outcome.result.trace_degraded is False
     assert outcome.result.events, "no verdicts arrived on the trace fd"

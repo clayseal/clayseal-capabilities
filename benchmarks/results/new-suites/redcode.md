@@ -1,6 +1,6 @@
 
 Wrote JSON results to benchmarks/results/new-suites/redcode.json
-# Clay Seal enforcement benchmark — redcode (768 tasks, 344 benign / 718 attack events)
+# Clay Seal enforcement benchmark, redcode (768 tasks, 344 benign / 718 attack events)
 
 STATUS: current
 

@@ -8,7 +8,7 @@ from agentauth.capabilities.scoping.models import CapabilityLease
 def _path_glob_match(path: str, pattern: str) -> bool:
     """Segment-aware glob match: ``*``/``?``/``[...]`` are bounded to a single
     path segment (they do NOT cross ``/``), while a ``**`` segment spans zero or
-    more segments. This stops ``src/*`` matching ``src/deep/secret.py`` — plain
+    more segments. This stops ``src/*`` matching ``src/deep/secret.py``, plain
     :func:`fnmatch.fnmatch` lets ``*`` swallow ``/`` and over-grants. Inputs are
     already normalized (repo-relative, no ``.``/``..``) by ``normalize_repo_path``.
     """

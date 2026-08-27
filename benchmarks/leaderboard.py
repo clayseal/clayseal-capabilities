@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
 
     engines = build_engines([n.strip() for n in args.engines.split(",")]) if args.engines else None
     classes = [c.strip() for c in args.classes.split(",")] if args.classes else list(ATTACK_CLASSES)
-    print(f"# Adversarial leaderboard — {args.dataset} "
+    print(f"# Adversarial leaderboard, {args.dataset} "
           f"({len(tasks)} benign tasks x {len(classes)} attack classes)\n")
 
     if args.seeds:

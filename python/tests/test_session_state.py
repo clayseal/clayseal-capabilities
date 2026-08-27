@@ -7,8 +7,8 @@ right check and means the protocol cannot complete when the worker that receives
 the human's answer is not the worker that asked. On a single instance that is
 invisible; behind a load balancer it is the whole feature.
 
-These tests exercise the round trip through JSON — not through pickle or a live
-object — because that is what a store actually holds.
+These tests exercise the round trip through JSON, not through pickle or a live
+object, because that is what a store actually holds.
 """
 from __future__ import annotations
 

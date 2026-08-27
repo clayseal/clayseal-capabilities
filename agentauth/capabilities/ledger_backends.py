@@ -1,7 +1,7 @@
 """A principal ledger whose ceiling holds across MACHINES, not just processes.
 
 `SharedPrincipalLedger` closed the cross-process hole with `fcntl` and a sidecar
-file — four workers against a ceiling of 100 went from 400 landed to 100. Its own
+file, four workers against a ceiling of 100 went from 400 landed to 100. Its own
 docstring names the remaining limit: *"POSIX only, single host. For multiple
 hosts the same `_transaction` seam takes a Redis or Postgres lock instead."* A
 file lock is invisible to a second machine, so a two-node deployment is back to
@@ -31,7 +31,7 @@ other's, so both pass the ceiling check and both commit later.
 
 WHY THE LOCK IS FENCED
 ----------------------
-A distributed lock with a TTL can expire while its holder is still working — a
+A distributed lock with a TTL can expire while its holder is still working, a
 GC pause, a slow disk, a paused container. If unlock then deletes the key
 unconditionally, it deletes a lock a DIFFERENT node has since acquired, and two
 writers proceed believing they are alone. So each acquisition writes a unique
@@ -41,7 +41,7 @@ its own lock, and a lock that expired under it is simply not deleted by it.
 That is the standard single-instance Redis lock. It is NOT Redlock, and it does
 not claim Redlock's multi-master guarantees: against a Redis failover that loses
 the lock key, two holders are possible. For a spend ceiling that is the right
-trade — the failure needs a failover inside one transaction window — but it is
+trade, the failure needs a failover inside one transaction window, but it is
 stated rather than implied, because `on_unavailable` exists precisely so an
 operator can decide what a degraded backend means.
 """
@@ -75,7 +75,7 @@ class RedisPrincipalLedger(PrincipalLedger):
 
     ``client`` is anything speaking the `redis-py` subset used here: ``set`` with
     ``nx``/``px``, ``transaction``, ``rpush``, ``lrange``, ``llen``, ``get``,
-    ``delete``. The package does not import ``redis`` — pass a client in, the way
+    ``delete``. The package does not import ``redis``, pass a client in, the way
     ``RedisUsedTokenStore`` does.
     """
 
@@ -107,7 +107,7 @@ class RedisPrincipalLedger(PrincipalLedger):
         # Deliberately NOT `super().__post_init__()`, for the same reason
         # `SharedPrincipalLedger` skips it: the load must happen under the lock,
         # inside the first transaction, or entries appended between the read and
-        # the offset calculation are skipped forever — spend this node cannot
+        # the offset calculation are skipped forever, spend this node cannot
         # see, and therefore headroom it would grant twice.
         self._offset = 0
 
@@ -202,7 +202,7 @@ class RedisPrincipalLedger(PrincipalLedger):
         if self.on_unavailable == "allow":
             # Explicitly chosen: proceed on this node's view, which is a ceiling
             # per node rather than none at all. `_in_txn` is set for the same
-            # reason as on the success path — `reserve` calls `spent`, which
+            # reason as on the success path, `reserve` calls `spent`, which
             # opens its own transaction, and without it one refused action would
             # be reported as two backend outages.
             self._in_txn = True
@@ -221,8 +221,8 @@ class RedisPrincipalLedger(PrincipalLedger):
         """Merge entries appended by other nodes since the last look.
 
         A LIST index replaces the file backend's byte offset. There is no torn
-        write to guard against — `RPUSH` is atomic and an element is whole or
-        absent — so the partial-line handling has no analogue here. A malformed
+        write to guard against, `RPUSH` is atomic and an element is whole or
+        absent, so the partial-line handling has no analogue here. A malformed
         element is skipped rather than aborting the sync, matching the file
         backend: under-counting is the direction that lets an attack through, so
         a skip is logged by its absence rather than by dropping the rest.
@@ -283,7 +283,7 @@ class RedisPrincipalLedger(PrincipalLedger):
                 continue
             holds.setdefault((hold.principal, hold.budget_id), []).append(hold)
         # The store is the ONLY source of truth for holds. Merging this node's
-        # own `_holds` on top resurrects holds their owners already released —
+        # own `_holds` on top resurrects holds their owners already released
         # measured on the file backend as 5 phantom holds pinning 50 of a 100
         # ceiling. Nothing needs preserving: a hold created in this transaction
         # is written before the transaction ends, and `release` matches on
@@ -313,7 +313,7 @@ class RedisPrincipalLedger(PrincipalLedger):
         self.client.set(self._holds_key, json.dumps(payload))
 
     def release(self, hold: Hold | None) -> None:
-        """Match by hold_id, not identity — see `SharedPrincipalLedger.release`.
+        """Match by hold_id, not identity, see `SharedPrincipalLedger.release`.
 
         After a sync the list holds RECONSTRUCTED `Hold` objects for the same
         reservation, so the base class's `is` comparison fails and the headroom

@@ -4,8 +4,8 @@
     python -m demo replay demo/sessions/ticket-triage-mock.jsonl --plain
     python -m demo config --level contained
 
-`rich` is imported lazily and only for the live TUI, so every other path — and
-the whole test suite — works with it absent.
+`rich` is imported lazily and only for the live TUI, so every other path, and
+the whole test suite, works with it absent.
 """
 from __future__ import annotations
 
@@ -74,7 +74,7 @@ def _cmd_config(args) -> int:
     run_root = Path(args.run_root) if args.run_root else _default_run_root()
     epoch = open_epoch(caps, level=level, index=int(level), run_root=run_root,
                        rootfs=args.rootfs, scenario=scen, prev=None)
-    print(f"# level {level.name} — digest {epoch.digest}")
+    print(f"# level {level.name}, digest {epoch.digest}")
     print(f"# {caps.summary()}")
     print(f"# staged into the guest namespace: {len(epoch.base_files)} file(s)")
     for name, where in sorted(caps.enforced_at.items()):
@@ -107,7 +107,7 @@ def _cmd_run(args) -> int:
     if args.fake_guest:
         # --fake-guest FORCES the fake, overriding IVISOR_BIN. Deferring to the
         # environment here would silently hand the real sentry a JSON script as
-        # its ELF whenever IVISOR_BIN happened to be exported — which is exactly
+        # its ELF whenever IVISOR_BIN happened to be exported, which is exactly
         # what happens when the e2e tests and the CLI tests share a shell.
         ivisor_bin = str(Path(__file__).resolve().parents[1]
                          / "python" / "tests" / "fakes" / "fake_ivisor.py")
@@ -151,7 +151,7 @@ def _cmd_run(args) -> int:
     try:
         from demo.render.tui import run_tui
     except ImportError:
-        print("error: the live TUI needs rich — pip install -e '.[demo]', "
+        print("error: the live TUI needs rich, pip install -e '.[demo]', "
               "or pass --plain", file=sys.stderr)
         return 2
     return run_tui(config, state, recorder=recorder)

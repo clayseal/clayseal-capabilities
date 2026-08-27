@@ -1,8 +1,8 @@
 """Lower a Clay Seal envelope to iVisor launch policy.
 
 THE TWO-POINT CONTRACT. Only what a syscall boundary can express lowers here:
-network egress and filesystem paths. The semantic bindings — recipients, spend
-and call budgets, tool scope, argument hashes — stay in the SessionBroker at the
+network egress and filesystem paths. The semantic bindings, recipients, spend
+and call budgets, tool scope, argument hashes, stay in the SessionBroker at the
 tool-call level, because a syscall boundary has no vocabulary for "this payment
 may go to IBAN GB123" or "no more than $15,000 today". One goal-derived policy,
 two enforcement points; this module is the lower one.
@@ -12,7 +12,7 @@ is recorded in LoweringReport.caveats rather than left implicit:
 
 * EgressPolicy matches a domain suffix (`example.com` permits
   `api.example.com`), iVisor matches exactly. The lowered policy is therefore
-  strictly TIGHTER on subdomains — safe, but a workload that relied on the
+  strictly TIGHTER on subdomains, safe, but a workload that relied on the
   suffix will see denials.
 * iVisor parses `domain:port` but does not enforce the port (ADR-0021 known
   limitations), so a port in an allow entry would imply precision that is not
@@ -176,7 +176,7 @@ def _direct_workspace(scope) -> Path:
             f"{len(paths)}; use the default 'stage' mode to combine several")
     if getattr(scope, "denied_paths", None):
         raise LoweringError(
-            "workspace_mode='direct' cannot honor denied_paths — mounting the "
+            "workspace_mode='direct' cannot honor denied_paths, mounting the "
             "directory puts every file beneath it in the guest namespace. Use "
             "'stage' mode, which omits denied files entirely.")
     return Path(paths[0])

@@ -132,7 +132,7 @@ ladder of models rather than one. Results in
 
 What it now does, and what each fixed:
 
-- **paired attribution** — only a task that succeeded undefended and failed
+- **paired attribution**, only a task that succeeded undefended and failed
   defended counts against the defense. On banking, 3 of 8 clean tasks fail with
   no defense present, so the true false-block is 12.5% rather than the ~33-point
   loss we were publishing;

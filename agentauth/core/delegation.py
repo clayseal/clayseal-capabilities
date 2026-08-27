@@ -305,7 +305,7 @@ def verify_delegation_chain(
     ):
         violations.append(f"delegation capabilities do not allow {operation.label()}")
 
-    # Walk parent chain — scope must only shrink (parent bodies come from verified envelopes).
+    # Walk parent chain, scope must only shrink (parent bodies come from verified envelopes).
     current = token
     while current.parent is not None:
         violations.extend(

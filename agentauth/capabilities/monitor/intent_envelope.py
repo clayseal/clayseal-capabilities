@@ -1,4 +1,4 @@
-"""The Intent Envelope — a goal-derived, history-free safety envelope.
+"""The Intent Envelope, a goal-derived, history-free safety envelope.
 
 This is the specification-based, RSS-style core of the behavioral layer. It is
 compiled from the *sealed goal* (never from a corpus of past runs), so it works
@@ -205,8 +205,8 @@ class IntentEnvelope:
     # Partial order over ``phases`` (indices into ``phases``): ``(i, j)`` means
     # phase i must precede phase j. ``None`` ⇒ legacy total order (each phase must
     # follow every lower-indexed phase). An explicit set (possibly empty) enforces
-    # ONLY the listed edges — the causal / precondition / danger edges that carry
-    # security signal — while permitting any interleaving of independent phases.
+    # ONLY the listed edges, the causal / precondition / danger edges that carry
+    # security signal, while permitting any interleaving of independent phases.
     # Empty set ⇒ membership only, no ordering constraint.
     phase_order: frozenset[tuple[int, int]] | None = None
     # Multi-modal plan: alternative mode paths (each an ordered phase sequence).
@@ -229,7 +229,7 @@ class IntentEnvelope:
     def with_shape(self, tool: str, verb: str) -> IntentEnvelope:
         """Admit a tool/verb shape after trusted-input replan (ATC re-clearance).
 
-        Does not read arguments or tool output — only the shape the plan
+        Does not read arguments or tool output, only the shape the plan
         extender already judged against the sealed goal + catalog. Phases and
         modes are left intact; membership grows via ``allowed_tools`` /
         ``allowed_verbs``.
@@ -264,7 +264,7 @@ class IntentEnvelope:
         # The verb an action carries is produced by the shipped classifier
         # before the broker sees it, and that classifier emits a canonical set:
         # {read, write, transfer, send, call}. A mandate is written by a human
-        # in the vocabulary of the domain — `pay`, `create`, `update`, `list` —
+        # in the vocabulary of the domain, `pay`, `create`, `update`, `list`
         # and NONE of those four is a verb the classifier can emit. So an
         # envelope compiled from `verbs: ["pay"]` refuses every payment, because
         # the payment arrives as `transfer`.
@@ -272,7 +272,7 @@ class IntentEnvelope:
         # This is the same defect the BPL verb audit already found and fixed on
         # the OTHER side: "BPL's [classifier] emitted a vocabulary no mandate is
         # written against." Fixing the classifier left the DECLARATION half
-        # untouched, so the two still disagreed — just in the opposite
+        # untouched, so the two still disagreed, just in the opposite
         # direction. Measured on the escape family, it is 23 of 59 scenarios
         # where the benign twin is refused at the first consequential step,
         # every one of them by `verb '<canonical>' not expected for the goal`.
@@ -280,7 +280,7 @@ class IntentEnvelope:
         # Both forms are kept. Dropping the raw verb would break any caller that
         # declares and matches in the same vocabulary, and admitting the
         # canonical form does not widen authority beyond what the declaration
-        # already asked for — `pay` and `transfer` are the same permission
+        # already asked for, `pay` and `transfer` are the same permission
         # spelled twice.
         declared = {str(v).lower() for v in (intent.get("verbs") or [])}
         verbs = set(declared)
@@ -609,7 +609,7 @@ class IntentEnvelope:
         return True, "satisfiable"
 
     def missing_landmarks(self, traj: Trajectory) -> list[int]:
-        """Required phases (min>0) not yet satisfied — the plan's landmarks."""
+        """Required phases (min>0) not yet satisfied, the plan's landmarks."""
         satisfied = [0] * len(self.phases)
         for action in traj.actions:
             if self._membership(action) is not None:
@@ -697,7 +697,7 @@ def verify_intent_envelope(signed: dict, *, trusted_keys=None) -> tuple[bool, st
         # production; a sealed ENVELOPE was accepted from any keyholder at all.
         #
         # That asymmetry mattered more than it looks, because the envelope is
-        # the object `SessionBroker.reclear` swaps mid-session — it is how a
+        # the object `SessionBroker.reclear` swaps mid-session: it is how a
         # running session's plan is legitimately WIDENED. An attacker who could
         # reach that entry point with a self-signed envelope replaced the sealed
         # plan wholesale, and every later conformance check then measured the

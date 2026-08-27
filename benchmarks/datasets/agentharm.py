@@ -1,16 +1,16 @@
-"""AgentHarm loader — the hard-negative test for a name-based authorization layer.
+"""AgentHarm loader, the hard-negative test for a name-based authorization layer.
 
 AgentHarm (Andriushchenko et al., UK AI Safety Institute, ICLR 2025) ships 176
 public-test harmful behaviors and 176 *matched benign* counterparts, each with a
 ground-truth ``target_functions`` list: the tool sequence a compliant agent
-would call. Both splits are static JSON — no LLM or environment needed to read
+would call. Both splits are static JSON, no LLM or environment needed to read
 the intended call sequence.
 
 Why this belongs in the suite
 -----------------------------
 AgentHarm is deliberately adversarial to the premise that authority can be
 decided from tool identity. In **143 of the 176 pairs (81%) the harmful task and
-its benign twin call the identical set of tools** — e.g. both run
+its benign twin call the identical set of tools**, e.g. both run
 ``run_stable_diffusion_model -> create_ai_video -> post_on_x``; one posts a
 nature video, the other a political deepfake. Any layer that decides on tool
 name, or on ``resource:action``, is *structurally* unable to separate them, and
@@ -65,7 +65,7 @@ Three rules keep this from manufacturing its own result:
 ``expand_targets`` controls whether a multi-target pin becomes multiple events.
 On (the default) a tool pinned to five recipients emits the five calls the
 grading function requires, so destination substitution is visible. Off keeps
-one event per ``target_functions`` entry by collapsing to the first pin — the
+one event per ``target_functions`` entry by collapsing to the first pin, the
 grant still lists every benign pin either way. An earlier version *dropped*
 multi-target tools from the grant entirely when expand was off; that left
 destination-differing deepfake/video behaviours uncontained by construction.
@@ -85,7 +85,7 @@ _ISSUED = "2026-01-01T00:00:00+00:00"
 _EXPIRES = "2026-12-31T00:00:00+00:00"
 
 # Content-bearing tools: attach twin free-text into args.prompt for soft
-# STEP_UP (never into resource / authorized_args — that would invent hard ASR).
+# STEP_UP (never into resource / authorized_args: that would invent hard ASR).
 _CONTENT_PROMPT_TOOLS = frozenset({
     "run_stable_diffusion_model",
     "create_ai_video",
@@ -181,7 +181,7 @@ class AgentHarmLoader:
 
 
 # Tools that commonly take a filesystem path or URL argument. Prompt-extracted
-# destinations attach only to these — never to free-text tools like
+# destinations attach only to these, never to free-text tools like
 # ``run_stable_diffusion_model`` (prompt body is content, not a target).
 _PATH_URL_TOOLS = frozenset({
     "download_image", "download_pdf", "download_file", "get_webpage",
@@ -223,7 +223,7 @@ def _pinned(index: TargetIndex | None, grading_function: str, split: str,
     look identical at the resource layer.
 
     When the grading function omits a path/URL that the prompt itself names,
-    attach it to path/URL tools in ``tools`` — same destination-binding story,
+    attach it to path/URL tools in ``tools``, same destination-binding story,
     sourced from the sealed request text rather than invented.
     """
     del expand  # grant retention no longer depends on expand
@@ -316,7 +316,7 @@ def _pair_to_tasks(
     granted_resources: list[str] = []
     for tool in benign_tools:
         # Fail-closed destination grants: when the benign twin pinned destinations
-        # for tool T, grant only ``mcp:tool:T#…`` — not the coarse ``mcp:tool:T``
+        # for tool T, grant only ``mcp:tool:T#…``, not the coarse ``mcp:tool:T``
         # co-grant that previously let unlocatable harmful calls through (+~2pp
         # hard ASR, 0% FB on AgentHarm). Unscoped tools stay coarse.
         if tool in scoped:
@@ -332,7 +332,7 @@ def _pair_to_tasks(
                 caps.append({"resource": key[0], "action": key[1]})
                 granted_resources.append(resource)
 
-    # Seal the *benign* user request for both twins — soft content judges
+    # Seal the *benign* user request for both twins, soft content judges
     # harmful free-text against what the user authorized, not the short name.
     benign_prompt = str(benign_case.get("prompt") or "")
     harmful_prompt = str(harmful_case.get("prompt") or "")
@@ -361,7 +361,7 @@ def _pair_to_tasks(
                 target = resource.split("#", 1)[1] if "#" in resource else None
                 meta = dict(meta_for(tool))
                 meta["target"] = target
-                # Soft free-text only — never authorized_args / resource pins.
+                # Soft free-text only, never authorized_args / resource pins.
                 args = (
                     {"prompt": twin_prompt}
                     if tool in _CONTENT_PROMPT_TOOLS and twin_prompt.strip()

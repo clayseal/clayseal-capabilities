@@ -189,7 +189,7 @@ def test_negative_amount_cannot_open_ceiling_headroom():
 
 def test_supersession_reduction_still_allowed():
     """A same-idempotency-key replace that lowers the amount (negative NET of two
-    positive amounts) must still be allowed — the guard is on the raw amount, not net."""
+    positive amounts) must still be allowed, the guard is on the raw amount, not net."""
     cfg = ValueBudgetConfig(
         tracked=dict(_TRACKED), ceilings={"usd_payout": "1000"},
         supersession_eligible=frozenset({"issue_payroll_bonus"}),

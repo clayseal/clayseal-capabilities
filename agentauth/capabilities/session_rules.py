@@ -4,7 +4,7 @@ WHAT THIS IS, PLAINLY
 ---------------------
 Five pattern rules, each written against a specific covert-sabotage scenario
 observed in a benchmark corpus. They are not general policy. They match on shell
-command text — ``ln -s``, ``zip``, ``awk $N``, ``sed -i`` — and one of them
+command text, ``ln -s``, ``zip``, ``awk $N``, ``sed -i``, and one of them
 contains a corpus-specific literal (``ocelot``).
 
 They lived inside ``SessionBroker.authorize`` between the sealed-plan corridor

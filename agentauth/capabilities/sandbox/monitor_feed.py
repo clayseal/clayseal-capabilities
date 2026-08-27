@@ -7,10 +7,10 @@ corpus tooling consume syscall-level ground truth with no changes of their own.
 
 TWO DEFAULTS THAT MATTER:
 
-* `verified_only` — a policy-shaped line the guest printed to its own stdout is
+* `verified_only`, a policy-shaped line the guest printed to its own stdout is
   a claim, not an observation. Feeding claims to a detector trains it on
   attacker-controlled input.
-* `include_miss=False` — a MISS means the path was not in the guest namespace,
+* `include_miss=False`, a MISS means the path was not in the guest namespace,
   which is not a refusal and not an attempt the agent chose; `fsmiss` runs emit
   hundreds per trivial program and would swamp the signal.
 

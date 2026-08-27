@@ -3,8 +3,8 @@ of action paths for its goal?
 
 A self-driving stack asks whether a trajectory stays inside a drivable corridor.
 The agent analogue: from benign trajectories of the same goal, learn the corridor
-of plausible action paths — which action can follow which, how many times an
-action plausibly repeats, how long a path plausibly runs — and flag a trace that
+of plausible action paths, which action can follow which, how many times an
+action plausibly repeats, how long a path plausibly runs, and flag a trace that
 leaves it. This catches the in-scope shapes a per-action check cannot: a scanning
 burst (repetition past the corridor), an escalation (a transition never seen in
 benign), a fan-out or structuring run (count past the ceiling).

@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, bfcl (1927 tasks, 3232 benign / 0 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/bfcl.json
-# Clay Seal enforcement benchmark — bfcl (1927 tasks, 3232 benign / 0 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset bfcl --mode ladder --ci --json benchmarks/results/new-suites/bfcl.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

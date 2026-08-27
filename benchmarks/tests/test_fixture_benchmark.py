@@ -43,7 +43,7 @@ def test_real_engines_never_false_block_benign():
     for name in ("tool-allowlist", "capability-token", "task-scope",
                  "task-scope+binding", "task-scope+binding+budget"):
         assert results[name].false_block_rate == 0.0, name
-    # deny-all blocks everything, including benign — the friction ceiling.
+    # deny-all blocks everything, including benign, the friction ceiling.
     assert results["deny-all"].false_block_rate == 1.0
 
 

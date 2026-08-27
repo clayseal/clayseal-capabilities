@@ -1,5 +1,13 @@
 # Head-to-head matrix (ASR / utility-under-attack / friction)
 
+STATUS: current
+
+```bash
+python -m benchmarks.live.run_matrix --config oai-4omini
+```
+
+The configuration `table_audit.md` checks its published claim against.
+
 Mean across repeats; +-sd. Deployable Clay Seal path is provenance-seeded, not oracle.
 
 | model | suite | attack | defense | ASR | util-under-attack | friction/task |

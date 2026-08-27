@@ -4,8 +4,8 @@ Three mechanisms currently widen a session's authority after it starts: a human
 answering a STEP_UP, the plan extender admitting a new shape, and the floor's
 resource-scope extension. Each kept its own bookkeeping (`PlanExtender._granted`,
 `SessionBroker._extended_pairs`, and for the human, nothing at all), so the
-question an operator actually asks — *how much authority did this session pick up
-after it started, and from whom* — had no answer.
+question an operator actually asks, *how much authority did this session pick up
+after it started, and from whom*, had no answer.
 
 This is that ledger.
 
@@ -26,7 +26,7 @@ broker consults this overlay; nothing mutates the grant it was given.
 
 A human approving one action is answering one question. If a step-up cited
 `egress.destination` and the human said yes, the action may proceed *past that
-objection* — it must not proceed past a budget ceiling or a protected-zone hit
+objection*, it must not proceed past a budget ceiling or a protected-zone hit
 that nobody was shown. `one_shot` grants therefore carry `waived_codes`, and
 `waives()` is a set membership test rather than a boolean.
 

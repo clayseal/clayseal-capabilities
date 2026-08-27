@@ -2,7 +2,7 @@
 
 One system, every corpus: SessionBroker via ``DeployableStack`` (same profile
 as CTR ``shared_stack`` arms and live AgentDojo). Ladder engines remain an
-ablation / monotone construction check — not the headline product number.
+ablation / monotone construction check, not the headline product number.
 
     python -m benchmarks.cross_stack
     python -m benchmarks.cross_stack --quick
@@ -51,7 +51,7 @@ CORPUS_TAG = {
 LADDER_TOP = "task-scope+binding+budget"
 
 # Corpora that enable surprise-egress declaration (goal must not already
-# request send/post/upload — see SessionBroker.require_declaration_for_egress).
+# request send/post/upload, see SessionBroker.require_declaration_for_egress).
 EGRESS_DECLARATION_CORPORA = frozenset({
     "agentharm",
     "mcp_attack",
@@ -135,7 +135,7 @@ def _youden(row: dict) -> str:
 
     Both columns are already in this table and each is trivially winnable
     alone: refuse everything for Union, allow everything for FB. J is 0 for
-    both — refuse-all gives 1 + 0 - 1, allow-all gives 0 + 1 - 1 — so a row
+    both, refuse-all gives 1 + 0 - 1, allow-all gives 0 + 1 - 1, so a row
     near zero achieved nothing however good either half looks.
 
     Folded in here rather than computed by a second harness. It was briefly a
@@ -145,7 +145,7 @@ def _youden(row: dict) -> str:
     is scoring a copy of the system.
     """
     if not row.get("n_attack"):
-        return "—"      # no attacks: containment undefined, so J is too
+        return ", "      # no attacks: containment undefined, so J is too
     contained = row["stack_union"]
     completed = 1.0 - row["stack_hard_fb"] - row["stack_soft_fb"]
     return f"{contained + completed - 1:.2f}"
@@ -164,7 +164,7 @@ def render(payload: dict) -> str:
         tag = r.get("tag") or ""
         if "error" in r:
             lines.append(
-                f"| {r['corpus']} | {tag} | — | — | — | — | — | — | "
+                f"| {r['corpus']} | {tag} |, |, |, |, |, |, | "
                 f"{r['error'][:40]} |"
             )
             continue

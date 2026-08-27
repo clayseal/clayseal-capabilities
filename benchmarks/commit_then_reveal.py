@@ -1,4 +1,4 @@
-"""Commit-then-reveal on SLEIGHT — the deployable twin-corridor protocol.
+"""Commit-then-reveal on SLEIGHT, the deployable twin-corridor protocol.
 
 The twin corridor contains covert sabotage when given a clean reference. A
 benchmark ships one; a deployment never does. Commit-then-reveal replaces that
@@ -6,13 +6,13 @@ gift with a declaration the agent produces before acting.
 
 Three measured arms:
 
-1. **honest_declare_then_sabotage** — seal from the benign twin (what an honest
+1. **honest_declare_then_sabotage**, seal from the benign twin (what an honest
    agent would declare), execute the attack. Same mechanism as the twin corridor;
    this arm confirms the wiring, not a new score.
-2. **declare_sabotage** — treat the attack transcript as the declaration and
+2. **declare_sabotage**, treat the attack transcript as the declaration and
    check it against the sealed goal (benign surface in ``allow_resources``).
    Catches agents that put the exfil destination in the plan up front.
-3. **no_declaration** — attack assessed with no reference. The corridor is off;
+3. **no_declaration**, attack assessed with no reference. The corridor is off;
    this is the production default when the agent declares nothing.
 
     python -m benchmarks.commit_then_reveal
@@ -146,7 +146,7 @@ def run() -> dict:
     # Shared product stack (same SessionBroker profile as scoreboard / live).
     stack_honest = _stack_arm(
         tasks, "honest_declare", judge,
-        "DeployableStack: commit benign twin, authorize attack — "
+        "DeployableStack: commit benign twin, authorize attack, "
         "same gateway as live AgentDojo",
     )
     stack_declare = _stack_arm(
@@ -155,7 +155,7 @@ def run() -> dict:
     )
     stack_none = _stack_arm(
         tasks, "no_declaration", judge,
-        "DeployableStack: no declaration — floor + soft content/entailment",
+        "DeployableStack: no declaration, floor + soft content/entailment",
     )
 
     return {
@@ -171,23 +171,23 @@ def run() -> dict:
             ),
         },
         "honest_declare_then_sabotage": arm(
-            arm1, "ABLATION — offline twin structural (not SessionBroker)"),
+            arm1, "ABLATION, offline twin structural (not SessionBroker)"),
         "declare_sabotage": {
             **arm(
                 arm2,
-                "ABLATION — offline check_declaration_against_goal helper",
+                "ABLATION, offline check_declaration_against_goal helper",
             ),
             "examples": arm2_examples,
         },
         "no_declaration": arm(
-            arm3, "ABLATION — population detector only (corridor off)"),
+            arm3, "ABLATION, population detector only (corridor off)"),
         "no_declaration_plus_entailment": arm(
             arm3_ent,
-            "ABLATION — detector ∪ soft plan entailment helpers",
+            "ABLATION, detector ∪ soft plan entailment helpers",
         ),
         "combined_ctr": arm(
             union,
-            "ABLATION — union of offline honest_declare ∪ declare_sabotage",
+            "ABLATION, union of offline honest_declare ∪ declare_sabotage",
         ),
         "intent_advisory_dig_delta": {
             "escalate_attack": adv_atk,
@@ -204,7 +204,7 @@ def run() -> dict:
             "escalate_benign_rate": round(oracle_ben / n, 4) if n else 0.0,
             "misses_caught": oracle_miss,
             "misses_total": miss_n,
-            "note": "CEILING only — needs clean twin; not deployable. "
+            "note": "CEILING only, needs clean twin; not deployable. "
                     "Upper bound for content/entailment on declare_sabotage misses.",
         },
         "entailment_llm": {
@@ -221,7 +221,7 @@ def run() -> dict:
                 "soft plan-level entailment (deterministic ∪ optional LLM) vs "
                 "sealed user request; STEP_UP via SessionBroker "
                 "(commit_plan + online authorize)"
-                + ("" if judge is not None else " [LLM unavailable — det only]")
+                + ("" if judge is not None else " [LLM unavailable, det only]")
             ),
             "union_with_goal_check": union_decl,
             "union_with_goal_check_rate": (
@@ -305,7 +305,7 @@ def main(argv: list[str] | None = None) -> int:
         f"covers {ora['misses_caught']}/{ora['misses_total']} declare_sabotage misses.",
         f"- **Plan entailment** (deterministic ∪ LLM): "
         + (
-            f"enabled (`{ent['model']}` + det) — attack "
+            f"enabled (`{ent['model']}` + det), attack "
             f"{100 * (ent['escalate_attack_rate'] or 0):.1f}%, benign FB "
             f"{100 * (ent['escalate_benign_rate'] or 0):.1f}%; "
             f"covers {ent['misses_caught']}/{ent['misses_total']} "

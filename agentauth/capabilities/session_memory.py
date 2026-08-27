@@ -1,7 +1,7 @@
 """Cross-turn session state shared by every DeployableStack path.
 
-These signals are *product* memory — the same object live AgentDojo, CTR, and
-scoreboard replay consult — not corpus-specific caches. Keeping them in one
+These signals are *product* memory, the same object live AgentDojo, CTR, and
+scoreboard replay consult, not corpus-specific caches. Keeping them in one
 dataclass stops broker fields from proliferating per residual attack family.
 """
 from __future__ import annotations

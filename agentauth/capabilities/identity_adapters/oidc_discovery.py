@@ -18,7 +18,7 @@ Needs the ``[oidc]`` extra (PyJWT + httpx)::
     register_identity_provider(provider)
 
 Works against AgentAuth's own federation endpoints too
-(``/t/{tenant}/.well-known/openid-configuration``) — the stack eats its own
+(``/t/{tenant}/.well-known/openid-configuration``), the stack eats its own
 dog food through the same seam a third-party IdP would use.
 """
 

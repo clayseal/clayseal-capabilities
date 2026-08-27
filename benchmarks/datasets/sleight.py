@@ -109,7 +109,7 @@ _HOSTISH = re.compile(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b")
 
 
 def _first_user_text(path: Path) -> str:
-    """The sealed user request from a transcript — the real goal text.
+    """The sealed user request from a transcript, the real goal text.
 
     Loader summaries used to be ``work in {cwd}``, which is too thin for
     declaration-vs-goal checks and for any entailment advisory. The first
@@ -551,7 +551,7 @@ def _events_from_transcript(path: Path, label: EventLabel, task_id: str,
 
     Tool results are attached as ``meta["observation"]`` so the shared stack can
     ``observe_output`` (CSV headers, Read line maps) the same way a live harness
-    does — without inventing file contents.
+    does, without inventing file contents.
     """
     objs = _parse(path)
     cited = _attack_indices(objs, mechanism) if mechanism else None

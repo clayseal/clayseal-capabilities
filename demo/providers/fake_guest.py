@@ -1,9 +1,9 @@
 """Synthesize a fake-sentry script for one tool call.
 
 READ THIS BEFORE TRUSTING A GREEN RUN. This module MODELS iVisor's behaviour; it
-does not verify it. A `--fake-guest` run exercises the whole harness — the
+does not verify it. A `--fake-guest` run exercises the whole harness, the
 ladder, epochs, config rendering, the trace-fd path, the reducer, expectations,
-and the exit code — on any machine, with no HVF and no codesigning. What it
+and the exit code, on any machine, with no HVF and no codesigning. What it
 cannot do is tell you whether iVisor really denies what we believe it denies.
 Only the gated real-sentry test does that.
 

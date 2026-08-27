@@ -3,7 +3,7 @@
 Where :mod:`spiffe_jwt` maps claims the *caller* already verified, this
 provider talks to a running SPIFFE agent (SPIRE, or anything speaking the
 Workload API) over its Unix domain socket and fetches a fresh JWT-SVID
-itself — the workload never handles long-lived credentials at all.
+itself, the workload never handles long-lived credentials at all.
 
 Needs the ``[spiffe]`` extra (py-spiffe, which brings grpcio)::
 
@@ -14,7 +14,7 @@ Needs the ``[spiffe]`` extra (py-spiffe, which brings grpcio)::
 
 The socket path resolves from ``SPIFFE_ENDPOINT_SOCKET`` (the SPIFFE-standard
 variable) when not passed explicitly. The Workload API connection is the trust
-boundary — the agent only issues SVIDs to workloads it has attested — so the
+boundary, the agent only issues SVIDs to workloads it has attested, so the
 returned claims are ``evidence_verified``.
 """
 
@@ -37,7 +37,7 @@ class SpiffeWorkloadProvider:
     ``workload_client`` is injectable (anything with
     ``fetch_jwt_svid(audience: set) -> svid``); when omitted, a single
     ``spiffe.WorkloadApiClient`` is created lazily against ``socket_path`` (or
-    ``SPIFFE_ENDPOINT_SOCKET``) and REUSED across fetches — a client per fetch
+    ``SPIFFE_ENDPOINT_SOCKET``) and REUSED across fetches, a client per fetch
     leaks a gRPC channel every call. Use as a context manager, or call
     :meth:`close`, to release the owned client's channel.
     """

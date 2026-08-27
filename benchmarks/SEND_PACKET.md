@@ -1,4 +1,4 @@
-# Clay Seal Capabilities — security-buyer send packet
+# Clay Seal Capabilities, security-buyer send packet
 
 Status enum: `ready` · `partial` · `blocked`. A claim is only citable when its
 status is `ready` and its caveat is attached. This is the MITRE-style honesty
@@ -17,7 +17,7 @@ benchmarks/run_all.sh                 # or --quick for smoke
 Live keystones (API $, separate):
 
 ```bash
-# AgentDojo H2H / model ladder / BPL — see benchmarks/live/ and
+# AgentDojo H2H / model ladder / BPL, see benchmarks/live/ and
 # results/head_to_head_injection.md, results/bpl_head_to_head.md,
 # results/live_ladder.md. Freeze model + seed before quoting.
 ```
@@ -90,10 +90,10 @@ switches change it materially and both are now explicit rather than implied.
 15. Quoting the 0-of-48 defended figure without the friction column. Containing
     this class costs up to 0.83 step-ups per task, and a supervised deployment's
     real containment is bounded by the approver's judgement on exactly the
-    question the model got wrong — which this run does not measure.
+    question the model got wrong, which this run does not measure.
 16. Quoting any live AgentDojo ASR without naming the model. The attack does not
-    land on a 2026 frontier model — undefended ASR is 0 of 18 on `gpt-5-mini` across
-    four attacks — so "we hold ASR at zero" is a claim about
+    land on a 2026 frontier model, undefended ASR is 0 of 18 on `gpt-5-mini` across
+    four attacks, so "we hold ASR at zero" is a claim about
     `gpt-4o-mini-2024-07-18` specifically. See `results/utility_experiment_void.md`.
 
 ## Packet contents (zip / folder)
@@ -103,7 +103,7 @@ switches change it materially and both are now explicit rather than implied.
 - `results/head_to_head_injection.md`, `bpl_head_to_head.md`, `live_ladder.md`
 - `results/four_axes.md`, `why_we_fail.md`, `agentdyn.md`
 - `results/syscall_tier.md`
-- `docs/a business memo` or `clayseal_benchmarks.tex` with Reproduce block
+- `a business memo` (kept outside this repository) or `clayseal_benchmarks.tex` with Reproduce block
 - git SHA + `corpus_manifest.json` hashes
 
 Optional companion (evidence plane, not ASR):  

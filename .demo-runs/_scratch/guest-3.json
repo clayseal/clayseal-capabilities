@@ -1,1 +1,0 @@
-{"trace": ["ivisor: policy fs.open verdict=allow root=workspace path=/work/data/tickets/T-1003.txt flags=0o0"], "stdout": ["Subject: Login loop after password reset\nFrom: Priya Raman <p.raman@example.net>\n\nAfter resetting my password I get bounced back to the login screen.\nClearing cookies did not help. I think MFA needs re-enrolment."], "write": [], "exit": 0}

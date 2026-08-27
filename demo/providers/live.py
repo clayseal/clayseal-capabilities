@@ -8,7 +8,7 @@ The function itself depends only on `openai` and `os`.
 BE HONEST ABOUT WHAT A LIVE RUN PROVES. A model may simply decline the injected
 instruction, in which case the safety expectations hold without ever being
 stressed and `escalates to CONTAINED` correctly reads "not yet". That is a real
-outcome worth showing, not a failure to hide — but it is why CI never gates on a
+outcome worth showing, not a failure to hide, but it is why CI never gates on a
 live run and why the scripted provider is the better containment proof.
 """
 from __future__ import annotations
@@ -36,7 +36,7 @@ def configure_provider(model: str, *, route: str = "auto") -> str:
     try:
         import openai
     except ImportError as exc:
-        # Not a base dependency of this package — only the live provider needs
+        # Not a base dependency of this package, only the live provider needs
         # it, and a venv built for the library alone will not have it.
         raise RuntimeError(
             "the live provider needs the openai package: pip install openai. "

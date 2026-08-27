@@ -1,7 +1,7 @@
 """Recording and replaying a run, as JSONL.
 
-LLM APIs fail at exactly the wrong moment — on stage, on a plane, behind a
-conference network — and a demo that cannot run offline is not a demo. A
+LLM APIs fail at exactly the wrong moment, on stage, on a plane, behind a
+conference network, and a demo that cannot run offline is not a demo. A
 recording is a header line plus one serialized event per line, so replay feeds
 the same reducer the same events in the same order and reaches the same state.
 
@@ -12,7 +12,7 @@ which provider originally produced the events, and the renderers display
 `provider=replay(mock)` so a viewer is never shown a recording as if it were
 live containment.
 
-Timing is preserved, divided by `speed`, with any single gap capped — a
+Timing is preserved, divided by `speed`, with any single gap capped, a
 recording that contains a 40-second model stall should not make the replay stall
 for 40 seconds.
 """
@@ -71,7 +71,7 @@ class Recorder:
 
 def load(path: Path | str) -> tuple[Header, list[Event]]:
     """Read a recording. Unparseable lines are skipped, so a truncated file
-    still replays as far as it got — which is the common case when a recording
+    still replays as far as it got, which is the common case when a recording
     was interrupted."""
     lines = Path(path).read_text().splitlines()
     header: Header | None = None

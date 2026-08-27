@@ -41,7 +41,7 @@ can evaluate a provenance layer at all.
 
 ## The three findings that motivated the module
 
-**1. Four corpora carry zero attack events.** tau2, BFCL, ToolEmu and ATIF —
+**1. Four corpora carry zero attack events.** tau2, BFCL, ToolEmu and ATIF
 including the two largest and the only set of real agent sessions. Their "attack"
 trajectory is the benign one unchanged, so every scorer including a perfect one
 returns AUC 0.500. `run_detector_benchmark` reports that as containment 0.00% on
@@ -69,7 +69,7 @@ detector would be confidently wrong rather than trivially right.
 
 ## Why this is the blocker, not a modelling problem
 
-The per-action authorization layer is genuinely well covered — 7 corpora, and
+The per-action authorization layer is genuinely well covered, 7 corpora, and
 that is the layer the shipped product enforces. Everything above it is thin:
 
 - the **behavioural** claims rest on 5 corpora, of which 2 are saturated;

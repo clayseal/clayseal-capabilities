@@ -31,7 +31,7 @@ ALL = PASSTHROUGH + [("azure_ad", azure_ad.provider),
 #: its favour rather than an exemption: a SPIFFE ID is
 #: `spiffe://<trust-domain>/<path>`, so the trust domain is inside the subject
 #: and two domains cannot produce the same one. It is the only adapter here whose
-#: subject is issuer-qualified by construction, and it enforces that — it refuses
+#: subject is issuer-qualified by construction, and it enforces that, it refuses
 #: a bare `sub` outright. Every other adapter takes an opaque `sub` that is
 #: unique only within its issuer.
 CROSS_ISSUER = [(n, p) for n, p in ALL if n != "spiffe_jwt"]

@@ -5,7 +5,7 @@ and CTR use, scored with the same EngineResult schema as the ladder scoreboard.
 
 Hard vs soft: ``attack_prevention_rate`` is the autonomous union (DENY ∪ STEP_UP).
 ``hard_attack_prevention_rate`` / ``soft_attack_prevention_rate`` split floor
-DENYs from content/sealed-plan STEP_UPs — never fold soft into a hard-ASR cell.
+DENYs from content/sealed-plan STEP_UPs, never fold soft into a hard-ASR cell.
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def _harvest_symlink_taints(actions: list[Action], into: set[tuple[str, str]]) -
 
 def _event_action(event, step: int) -> Action:
     # Keep args byte-identical to the loader (arg-hash binding). Path scope
-    # uses meta["path"] / _action_path — do not inject path into args.
+    # uses meta["path"] / _action_path, do not inject path into args.
     return Action(
         step=step,
         tool=event.tool_name,
@@ -163,10 +163,10 @@ def run_broker_benchmark(
 
     Modes
     -----
-    * ``no_declaration`` — authorize each labeled event (scoreboard default).
-    * ``declare_attack`` — commit the attack trajectory as declaration first
+    * ``no_declaration``, authorize each labeled event (scoreboard default).
+    * ``declare_attack``, commit the attack trajectory as declaration first
       (CTR declare_sabotage), then authorize attack actions.
-    * ``honest_declare`` — commit the benign twin, then authorize attack actions
+    * ``honest_declare``, commit the benign twin, then authorize attack actions
       (CTR honest_declare_then_sabotage / twin corridor via sealed plan).
     """
     result = EngineResult(engine=name)
@@ -230,7 +230,7 @@ def run_broker_benchmark(
             # Replay the attack transcript in order (UNLABELED cover + ATTACK)
             # so session observe/line-map/CSV bind match a live gateway. Only
             # ATTACK labels are scored. Benign utility always uses a fresh
-            # stack with no declaration — judging benign writes against an
+            # stack with no declaration, judging benign writes against an
             # attack sealed-plan invents FB (digest/digΔ vs sabotage body).
             atk_events = [
                 e for e in task.events

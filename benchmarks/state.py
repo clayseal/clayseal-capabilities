@@ -13,8 +13,8 @@ corner of the sequence axis, and the benchmark is built so it can be checked
 rather than argued. In the `contents moved` pair, the attack action and the
 control action are **byte-identical**: same tool, same resource, same verb, same
 arguments, same position in the session. Any decision procedure that is a
-function of the action alone — scope, capability, path, argument binding,
-budgets, velocity, confidentiality flow — returns the same verdict for both, so
+function of the action alone, scope, capability, path, argument binding,
+budgets, velocity, confidentiality flow, returns the same verdict for both, so
 it either contains neither or false-blocks both. The benchmark prints the check.
 
 ## Construction
@@ -41,8 +41,8 @@ change, so only a re-read can catch it, and a re-read costs a tool call.
 
 **A carried value moved.** The action carries a field it copied out of the
 record, and that field is now different. `book(flight=X, price=200)` at 2,000.
-When the session itself observed the change — it re-read, or it wrote to the
-object — this is caught for free.
+When the session itself observed the change, it re-read, or it wrote to the
+object: this is caught for free.
 
 ## Arms
 
@@ -89,7 +89,7 @@ from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
 
 # The object namespace. The corpora encode `resource` as the tool name, so object
-# identity has to come from the argument that names the object — which is exactly
+# identity has to come from the argument that names the object, which is exactly
 # the token the read and the write share.
 OBJECT_NS = "record:"
 
@@ -494,7 +494,7 @@ def _ladder_check(scenarios: list[Scenario], rng: random.Random) -> tuple[int, i
     unchanged, so scope, capability, path, binding, budget and velocity authorized
     it before this benchmark existed. Only the `value/revalidated` CONTROL arm
     carries a field the commit token did not cover, and its shape is added to the
-    task's authorized shapes — which can only make a control arm easier to allow
+    task's authorized shapes, which can only make a control arm easier to allow
     and can never inflate containment.
     """
     ladder = [e for e in build_engines()
@@ -642,8 +642,8 @@ def _real_traffic(mode: str, tasks: list[BenchmarkTask]) -> RealTraffic:
 def _cross_axis(scenarios: list[Scenario], rng: random.Random) -> dict:
     """Can confidentiality flow separate the stale action from the fresh one?
 
-    Run with the policy an operator would actually write for these sessions — the
-    read's object sensitive, the sink the goal named declassified — and then with
+    Run with the policy an operator would actually write for these sessions, the
+    read's object sensitive, the sink the goal named declassified, and then with
     declassification withheld, which is the strictest setting available.
     """
     from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy

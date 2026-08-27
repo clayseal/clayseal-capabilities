@@ -37,9 +37,9 @@ learned nothing about principals.
 
 Containment against an honest sub-agent measures very little: an attacker chooses
 what credential to present. So every arm is re-run under eleven presentation
-strategies — no token, the parent's token, a sibling sub-agent's token, a
+strategies, no token, the parent's token, a sibling sub-agent's token, a
 self-minted token, a second authority's token, an onward re-delegation, a widened
-re-delegation, a wildcard, a stripped chain, an expired token, a revoked token —
+re-delegation, a wildcard, a stripped chain, an expired token, a revoked token
 and the number that matters is containment when the attacker picks the best one.
 """
 from __future__ import annotations
@@ -140,7 +140,7 @@ def _expired(token: DelegationToken) -> DelegationToken:
 
 def _forge(parent: DelegationToken, delegate: UUID,
            capabilities: list[dict[str, str]]) -> DelegationToken:
-    """A token minted outside ``issue_delegation`` — no attenuation check runs."""
+    """A token minted outside ``issue_delegation``, no attenuation check runs."""
     now = datetime.now(timezone.utc)
     return DelegationToken(
         delegation_id=uuid4(),
@@ -191,7 +191,7 @@ def build_sessions(corpus: str, *, split: str = "verb", count: int = 200,
         child_token = delegation_from_envelope(child_env)
 
         # A second sub-agent the parent legitimately delegated the other half to.
-        # Valid, operator-signed, rooted here — issued to somebody else.
+        # Valid, operator-signed, rooted here, issued to somebody else.
         sibling = issue_delegation(None, parent_envelope=root_env,
                                    delegate_agent_id=sibling_uuid,
                                    capabilities=parent_only_caps)
@@ -318,7 +318,7 @@ class DeputyResult:
     heldout_blocked: int = 0
     heldout_ladder_blocked: int = 0
     # The overreached action, performed by the principal entitled to it. Same
-    # event, same trace position, same mandate — this is what stops the rung
+    # event, same trace position, same mandate: this is what stops the rung
     # from being a task-level scope check under another name.
     rightful_total: int = 0
     rightful_blocked: int = 0
@@ -759,8 +759,8 @@ def _score_chain_evasions(result: DeputyResult, session: DeputySession,
 
     Every arm here is presented for an action the sub-scope genuinely covers, so
     no capability rule can refuse it, and each arm is built to clear every other
-    rule of the boundary — pinned signer, actor binding, root authority,
-    revocation — so a refusal can only come from the rule under test. That is the
+    rule of the boundary, pinned signer, actor binding, root authority,
+    revocation, so a refusal can only come from the rule under test. That is the
     same discipline the ladder-below check applies one level up.
     """
     def record(arm: str, *, shipped: bool, boundary: bool) -> None:

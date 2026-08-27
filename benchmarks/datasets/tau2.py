@@ -1,9 +1,9 @@
-"""tau2-bench loader — domain-bucketed benign tool-policy trajectories.
+"""tau2-bench loader, domain-bucketed benign tool-policy trajectories.
 
 Each tau2 task carries ``evaluation_criteria.actions``: the ground-truth
 tool-call sequence a correct agent makes. Tasks are grouped by domain (airline,
 retail, telecom, mock, banking_knowledge), and every task in a domain shares the
-same tool surface, so a domain is a well-sampled goal bucket — exactly the
+same tool surface, so a domain is a well-sampled goal bucket, exactly the
 per-goal calibration data the detector's corridor and peer group need (telecom
 alone has ~2,285 tasks). Real, structured, deterministic: no LLM required.
 """

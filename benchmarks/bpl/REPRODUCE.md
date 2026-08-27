@@ -9,7 +9,7 @@ checks.
 
 ---
 
-## Tier 1 — scripted (no LLM, seconds)
+## Tier 1, scripted (no LLM, seconds)
 
 Reproduces: scenario validity, policy/oracle agreement, the architectural claim
 that a per-call gate cannot enforce an aggregate ceiling.
@@ -27,9 +27,26 @@ python -m benchmarks.live.bpl_live --policy-coverage
 
 Fully deterministic. No seeds, no sampling, no network.
 
+### The four parameters the headline depends on
+
+Each defaults to what the published table used. Each is a choice, so each is a
+flag rather than a constant, and the deltas are reported rather than left to be
+discovered.
+
+| flag | default | what changes if you move it |
+| --- | --- | --- |
+| `--verbs` | `system` | `bpl` is the legacy raw-synonym classifier: containment 47% and completion 41% against the shipped classifier's 41% and 98%, moving the joint metric 39.4% to 32%. The default is the classifier the product ships. |
+| `--step-up` | `block` | `allow` rubber-stamps every step-up, pricing the pessimal supervised deployment. Identical table, because this suite produces **zero** step-ups: every containment is a hard denial. |
+| `--observe-results` | off | Feeds tool returns back into the gateway, which is what the provenance, taint and flow tiers read. Changes nothing on its own. |
+| `--confidentiality` | `off` | `derived` declares confidentiality classes from the sealed goal, since no scenario declares any. Worth +1 containment and −1 completion, and zero on the joint metric. |
+
+The last two are measured in
+[declaration_determines_enforcement.md](../results/declaration_determines_enforcement.md),
+with the placebo control that says the derivation is not encoding answers.
+
 ---
 
-## Tier 2 — live leaderboard
+## Tier 2, live leaderboard
 
 Reproduces the head-to-head table in `../results/bpl_head_to_head.md`.
 
@@ -111,6 +128,6 @@ table that does not say which cannot be compared with one that does.
 
 See [`EVALUATE.md`](EVALUATE.md). In short: implement a gate with the same
 signature as the conditions in `benchmarks/live/bpl_live.py::apply_call`, add it
-to `--conditions`, and report the triple — violation rate, progress, and blocks —
+to `--conditions`, and report the triple, violation rate, progress, and blocks
 never violation rate alone. A gate that refuses everything scores perfect
 containment, which is why `deny-all` is a permanent row.

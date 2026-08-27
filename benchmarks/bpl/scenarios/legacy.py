@@ -1,4 +1,4 @@
-"""Legacy BPL scenarios — unchanged behavior for gold H2H numbers."""
+"""Legacy BPL scenarios, unchanged behavior for gold H2H numbers."""
 from __future__ import annotations
 
 from agentauth.capabilities.broker import SessionBroker

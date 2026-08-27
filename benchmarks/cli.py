@@ -69,7 +69,7 @@ def _run_detector(args, tasks) -> int:
         scorer = NGramScorer()
     detector = TrajectoryDetector(scorer=scorer, alpha=args.alpha)
     result = run_detector_benchmark(tasks, detector=detector)
-    print(f"# Trajectory detector — {args.dataset} (scorer={result.scorer}, alpha={result.alpha})")
+    print(f"# Trajectory detector, {args.dataset} (scorer={result.scorer}, alpha={result.alpha})")
     print(f"containment {result.containment_rate:.1%} | "
           f"false-block {result.false_block_rate:.1%} | "
           f"train {result.n_train} / test {result.n_test} / attacks {result.attack_trajectories}")
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     n_benign = sum(t.counts()[0] for t in tasks)
     n_attack = sum(t.counts()[1] for t in tasks)
     title = (
-        f"{args.title} — {args.dataset} ladder ablation "
+        f"{args.title}, {args.dataset} ladder ablation "
         f"({len(tasks)} tasks, {n_benign} benign / {n_attack} attack events)"
     )
     print(render_markdown(results, title=title, ci=args.ci, level=args.level))
@@ -151,7 +151,7 @@ def _run_stack(args, tasks) -> int:
     n_benign = sum(t.counts()[0] for t in tasks)
     n_attack = sum(t.counts()[1] for t in tasks)
     print(
-        f"# DeployableStack — {args.dataset} "
+        f"# DeployableStack, {args.dataset} "
         f"({len(tasks)} tasks, {n_benign} benign / {n_attack} attack events)"
     )
     print(

@@ -3,7 +3,7 @@
 Claim-mapping adapters (trust the caller's verification): ``agentauth``,
 ``spiffe_jwt``, ``oidc``, ``auth0``, ``aws_sts``. Because these do NOT verify
 the credential themselves, ``spiffe_jwt``/``oidc``/``auth0``/``aws_sts`` default
-``evidence_verified=False`` — a caller that has already verified the credential
+``evidence_verified=False``, a caller that has already verified the credential
 out-of-band must opt in explicitly. Verifying adapters (do the
 cryptography themselves): ``VerifyingOidcProvider`` (any OIDC discovery/JWKS
 issuer, ``[oidc]`` extra), ``EntraAgentIdProvider`` (Entra Agent ID tokens,
@@ -12,7 +12,7 @@ AgentCards, ``[a2a]``). Live-fetch: ``SpiffeWorkloadProvider`` pulls fresh
 JWT-SVIDs from a SPIFFE agent's Workload API (``[spiffe]``).
 
 Third parties add providers via the ``agentauth.identity_providers``
-entry-point group or ``register_identity_provider`` — see
+entry-point group or ``register_identity_provider``, see
 ``agentauth.core.plugins``.
 """
 from __future__ import annotations

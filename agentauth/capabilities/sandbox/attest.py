@@ -2,8 +2,8 @@
 
 The payload answers, for one run: which policy governed it, which binary
 enforced that policy, what the enforcer observed, and how it ended. It lands in
-``ExecutionContext.sandboxing`` — a field that has existed in the core schema
-with no producer — so the evidence rides along with the commit token and into
+``ExecutionContext.sandboxing``, a field that has existed in the core schema
+with no producer, so the evidence rides along with the commit token and into
 receipts without any schema change.
 
 FAIL CLOSED ON DEGRADED EVIDENCE. If iVisor could not use the trace fd it warns
@@ -30,21 +30,38 @@ from agentauth.core.hash_util import hash_canonical_json
 SANDBOX_SCHEMA = "agentauth.capabilities.sandbox.attestation.v1"
 
 
-@lru_cache(maxsize=32)
 def ivisor_binary_identity(path: str) -> dict[str, Any]:
     """Identify the enforcing binary by content hash.
 
     Deliberately not a codesign query: the entitlement matters to macOS, but for
     attestation the question is "which build ran", and a hash answers that
-    without shelling out. Cached — the binary does not change mid-session.
+    without shelling out.
+
+    The cache is keyed on the file's size and modification time, not on its path
+    alone. Keyed on the path it was justified by "the binary does not change
+    mid-session", which is true of a session and not of the process: this is a
+    module-level cache in a gateway that serves many sessions, so a binary
+    replaced between two of them kept attesting under the old hash, and the
+    reported SIZE was wrong too. Re-stat is a syscall; re-hashing only happens
+    when the file has actually moved.
     """
     target = Path(path)
     try:
-        raw = target.read_bytes()
+        stat = target.stat()
     except OSError:
         return {"path": str(target), "sha256": None, "size": None,
                 "error": "unreadable"}
-    return {"path": str(target),
+    return _ivisor_binary_identity(str(target), stat.st_size, stat.st_mtime_ns)
+
+
+@lru_cache(maxsize=32)
+def _ivisor_binary_identity(path: str, size: int, mtime_ns: int) -> dict[str, Any]:
+    try:
+        raw = Path(path).read_bytes()
+    except OSError:
+        return {"path": path, "sha256": None, "size": None,
+                "error": "unreadable"}
+    return {"path": path,
             "sha256": hashlib.sha256(raw).hexdigest(),
             "size": len(raw)}
 

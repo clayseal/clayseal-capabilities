@@ -303,3 +303,130 @@ def test_a_refusal_cites_the_line_it_came_from():
     tools = ["list_orders", "cancel_order"]
     document = to_yaml(extract(RETAIL, tools=tools), tools=tools)
     assert "reason: \"line " in document
+
+
+# --- Section scope -----------------------------------------------------------
+#
+# Operational policy states the operation once, in a heading, and then states
+# the rules for it as bullets that never name it again. Reading a line at a time
+# saw the bullets and not the heading, so every one of them was left for a
+# person: tau2's own airline document produced ZERO enforceable rules before
+# this and four after, at no cost to the 13,907 ground-truth actions it ships.
+
+SECTIONED = """
+# Airline Agent Policy
+
+## Domain Basic
+
+### Reservation
+
+Each reservation specifies the following:
+- reservation id, must be provided by the user
+
+## Book flight
+
+The agent must first obtain the user id from the user.
+
+## Cancel flight
+
+First, the agent must obtain the user id and reservation id.
+The agent must also obtain the reason for cancellation (change of plan, flight
+delay, or other reasons)
+"""
+
+AIRLINE_CATALOG = ["get_user", "get_reservation", "book_reservation",
+           "cancel_reservation", "list_reservations"]
+
+
+def _by_line(document, catalog):
+    return {r.line_no: r for r in extract(document, tools=catalog).rules}
+
+
+def test_a_bullet_inherits_the_operation_its_heading_names():
+    rules = _by_line(SECTIONED, AIRLINE_CATALOG)
+    booking = next(r for r in rules.values()
+                   if r.payload.get("deny") == ["book_reservation"])
+    assert booking.payload["requires"] == ["get_user"]
+    # The reader inferred the subject, so a person reviewing the draft has to be
+    # able to see that and disagree with it.
+    assert booking.origin == "inferred"
+    assert booking.payload["section"] == "Book flight"
+
+
+def test_a_heading_naming_a_thing_rather_than_an_act_scopes_nothing():
+    """`### Reservation` opens a data dictionary, not a section of rules.
+
+    Scoping it would bind every attribute definition beneath it to the four
+    reservation tools as though the document had stated a rule about them.
+    """
+    from agentauth.capabilities.policy_draft import _scope_tools
+
+    assert _scope_tools("Reservation", AIRLINE_CATALOG) == []
+    assert _scope_tools("Cancel flight", AIRLINE_CATALOG) == ["cancel_reservation"]
+
+
+def test_a_parenthetical_does_not_name_the_object_of_the_verb():
+    """"obtain the reason for cancellation (... flight delay ...)".
+
+    The parenthetical lists reason values. Reading `flight` out of it bound a
+    flight-search tool as a precondition of cancelling, and that single rule
+    produced every false block this extractor cost tau2's airline ground truth.
+    """
+    rules = _by_line(SECTIONED, [*AIRLINE_CATALOG, "search_direct_flight"])
+    assert not any("search_direct_flight" in (r.payload.get("requires") or ())
+                   for r in rules.values())
+
+
+def test_a_deeper_heading_narrows_its_parent_rather_than_replacing_it():
+    from agentauth.capabilities.policy_draft import _ScopeStack
+
+    catalog = ["modify_order", "modify_address", "modify_payment"]
+    stack = _ScopeStack()
+    stack.read("## Modify pending order", catalog)
+    stack.read("### Modify items", catalog)
+    # `Modify items` alone admits all three; inside `Modify pending order` it
+    # is a refinement of that section and not a new one.
+    assert stack.current()[0] == ["modify_order"]
+
+
+def test_a_heading_that_names_no_operation_clears_the_one_before_it():
+    from agentauth.capabilities.policy_draft import _ScopeStack
+
+    catalog = ["pay_bill", "get_line"]
+    stack = _ScopeStack()
+    stack.read("### Payment Method", catalog)
+    assert stack.current()[0] == ["pay_bill"]
+    stack.read("### Line", catalog)
+    # `Line` names a thing, so it scopes nothing. Leaving `pay_bill` standing
+    # would attach every rule about lines to bill payment.
+    assert stack.current()[0] == []
+
+
+def test_a_prerequisite_has_to_share_the_verb_the_rule_used():
+    """"confirm the order id and the LIST of items to be returned"."""
+    from agentauth.capabilities.policy_draft import _prerequisites
+
+    catalog = ["list_orders", "return_order", "get_order"]
+    assert _prerequisites("confirm",
+                          "confirm the order id and the list of items to be "
+                          "returned", catalog) == []
+    assert _prerequisites("list", "list the action details", catalog) == \
+        ["list_orders"]
+
+
+def test_a_light_verb_moves_the_act_onto_the_noun_after_it():
+    """`make_payment` is a payment tool. `send_payment_request` is a send.
+
+    Reading the leading word as the act makes a section headed "Overdue Bill
+    Payment" match nothing, because no heading says "make". Calling a verb light
+    when it is not does the opposite damage, so the list is short and literal.
+
+    This buys nothing measurable on tau2 today: the scope is right and the
+    sentences under that heading state neither an ordering nor a state
+    condition, so nothing downstream consumes it yet.
+    """
+    from agentauth.capabilities.policy_draft import _scope_tools
+
+    catalog = ["make_payment", "send_payment_request", "get_bill"]
+    assert _scope_tools("Overdue Bill Payment", catalog) == ["make_payment"]
+    assert _scope_tools("Send request", catalog) == ["send_payment_request"]

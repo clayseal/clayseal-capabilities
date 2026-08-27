@@ -2,7 +2,7 @@
 
 Backed by the shared plugin registry (``agentauth.core.plugins``,
 entry-point group ``agentauth.identity_providers``): third-party packages add
-providers by declaring an entry point — no edits to this package needed. The
+providers by declaring an entry point, no edits to this package needed. The
 five built-in adapters are registered lazily on first use. Optional verifying
 adapters (``entra_agent_id``, ``VerifyingOidcProvider``) register when their
 extras are installed.

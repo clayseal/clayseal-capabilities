@@ -1,9 +1,9 @@
-# Apex BPL scenarios — stump Progent, CaMeL, and today’s ClaySeal
+# Apex BPL scenarios, stump Progent, CaMeL, and today’s ClaySeal
 
 These are **difficulty 7–8** composite traps. Every violating tool call remains
 schema-allowed (Progent-blind). Arguments are prompt/policy-derivable
 (CaMeL-untainted). The breach is in **graphs, amendments, identity merges,
-gross-vs-net, recursive exceptions, and deferred obligations** — places where
+gross-vs-net, recursive exceptions, and deferred obligations**, places where
 even stateful value budgets need provenance / world-model rungs they may not
 have yet (`clayseal_expected` is usually `open` or `partial`).
 

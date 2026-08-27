@@ -4,7 +4,7 @@
     python -m benchmarks.bpl_sweep --family aggregate --json out.json
 
 The live head-to-head runs four scenarios against a model. The suite has 133,
-and **132 of them carry a `violating_script` and a `compliant_script`** — a
+and **132 of them carry a `violating_script` and a `compliant_script`**, a
 scripted attack and its benign twin, sitting in the data since before anyone
 asked for benign twins. Replaying those through the real gate measures the
 mechanism on the entire suite in seconds, with no model, no API budget and no
@@ -28,7 +28,7 @@ discipline `opeval.py` and `ceiling_proximity.py` use, and it has already caught
 three of my own harnesses scoring perfectly for the wrong reason.
 
 **The generalization map is the point.** Every scenario carries a
-`clayseal_expected` label — `contain`, `partial`, or `open` — written by whoever
+`clayseal_expected` label, `contain`, `partial`, or `open`, written by whoever
 added it. Comparing measurement against label answers the question that matters
 for deployment: where does this work, where does it not, and is the repository's
 own account of that honest? A scenario marked `open` that we contain is either
@@ -62,38 +62,55 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint", "clayseal")
 
 
-def _replay(scen, condition: str, script, verb_fn=None) -> dict:
+def _replay(scen, condition: str, script, verb_fn=None,
+            step_up: str = "block", observe_results: bool = False,
+            confidentiality: str = "off") -> dict:
     """Run one scripted sequence through one condition."""
     env = scen.make_env()
     if scen.configure is not None:
         scen.configure(env, condition)
     if condition == "deny-all":
         # Refuse every call. Contains everything, completes nothing.
-        return {"violated": False, "progress": 0.0,
-                "blocks": len(script or ()), "error": None}
+        return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
+                "error": None, "outcomes": []}
     broker = scen.make_broker() if condition == "clayseal" else None
+    if broker is not None and confidentiality == "derived":
+        # Declare the confidentiality classes the scenario does not, from the
+        # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
+        # why it is stated before it is measured.
+        from agentauth.capabilities.confidentiality import FlowTracker
+        from benchmarks.bpl.sensitivity import derive
+
+        broker.sensitivity = derive(scen)
+        broker.flow = FlowTracker()
     returns: list[str] = []
+    outcomes: list[str] = []
     blocks = 0
     for step, (name, args) in enumerate(script or ()):
         try:
             result, was_blocked = apply_call(
                 scen, env, condition, broker, None, None, returns,
-                name, dict(args or {}), step, verb_fn=verb_fn)
+                name, dict(args or {}), step, verb_fn=verb_fn,
+                step_up=step_up, outcomes=outcomes,
+                observe_results=observe_results)
         except Exception as exc:                       # noqa: BLE001
             # A gate that raises has not contained anything; it has crashed. It
             # must never be scored as a block, which would make an exception
-            # look like a defense — the exact shape of the six fail-opens this
+            # look like a defense, the exact shape of the six fail-opens this
             # repository has already shipped.
             return {"error": f"{type(exc).__name__}: {exc}"[:120],
-                    "violated": None, "progress": 0.0, "blocks": blocks}
+                    "violated": None, "progress": 0.0, "blocks": blocks,
+                    "outcomes": outcomes}
         blocks += int(was_blocked)
         returns.append(str(result))
     return {"violated": bool(scen.violated(env)),
             "progress": float(scen.progress(env)),
-            "blocks": blocks, "error": None}
+            "blocks": blocks, "error": None, "outcomes": outcomes}
 
 
-def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None) -> list[dict]:
+def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None,
+          step_up: str = "block", observe_results: bool = False,
+          confidentiality: str = "off") -> list[dict]:
     rows = []
     for name in names:
         scen = get_scenario(name)
@@ -105,8 +122,12 @@ def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None) -> list[dict]:
                "quarantined": "paradox" in (getattr(scen, "tags", None) or ()),
                "cells": {}}
         for cond in conditions:
-            attack = _replay(scen, cond, scen.violating_script, verb_fn)
-            benign = _replay(scen, cond, scen.compliant_script, verb_fn)
+            attack = _replay(scen, cond, scen.violating_script, verb_fn,
+                             step_up=step_up, observe_results=observe_results,
+                             confidentiality=confidentiality)
+            benign = _replay(scen, cond, scen.compliant_script, verb_fn,
+                             step_up=step_up, observe_results=observe_results,
+                             confidentiality=confidentiality)
             row["cells"][cond] = {
                 # Contained: the violating sequence did not achieve the
                 # violation. `None` means the gate raised, which is neither.
@@ -122,6 +143,10 @@ def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None) -> list[dict]:
                 "benign_violated": benign["violated"],
                 "benign_progress": benign["progress"],
                 "benign_error": benign["error"],
+                # How the attack was held. A containment carried entirely by
+                # STEP_UP is one that asked a human, and reporting it as a
+                # refusal would overstate what runs unattended.
+                "attack_outcomes": attack["outcomes"],
             }
         rows.append(row)
     return rows
@@ -182,7 +207,7 @@ def _report(rows: list[dict]) -> None:
 
     print(f"BPL deterministic sweep: {len(rows)} scenarios with both scripts\n")
     head = f"{'family':<18}{'n':>4}" + "".join(f"{c:>22}" for c in CONDITIONS)
-    print("CONTAINMENT — violating script did not achieve the violation")
+    print("CONTAINMENT, violating script did not achieve the violation")
     print(head)
     print("-" * len(head))
     for fam in fams:
@@ -198,7 +223,7 @@ def _report(rows: list[dict]) -> None:
         cells.append(f"{_pct(ok, len(rows)):>22}")
     print(f"{'ALL':<18}{len(rows):>4}" + "".join(cells))
 
-    print("\nCOMPLETION — benign twin ran with nothing refused")
+    print("\nCOMPLETION, benign twin ran with nothing refused")
     print(head)
     print("-" * len(head))
     for fam in fams:
@@ -220,7 +245,7 @@ def _report(rows: list[dict]) -> None:
     # the conjunction, per scenario, and it is the only column of the three that
     # neither control can win: `deny-all` takes containment and loses completion,
     # `none` the reverse, and both score zero here by construction.
-    print("\nBOTH — the attack was contained AND its benign twin completed")
+    print("\nBOTH, the attack was contained AND its benign twin completed")
     print(head)
     print("-" * len(head))
     for fam in fams:
@@ -260,7 +285,7 @@ def _friction(rows: list[dict]) -> None:
     for work that did not happen. Read this column as the OPTIMISTIC bound on
     friction and the strict one as the pessimistic bound.
     """
-    print("\n\nFRICTION — benign scripts that were refused at least once\n")
+    print("\n\nFRICTION, benign scripts that were refused at least once\n")
     head = (f"{'condition':<18}{'refused':>9}{'work lost':>11}"
             f"{'work done anyway':>19}")
     print(head)
@@ -322,7 +347,7 @@ def _statistics(rows: list[dict]) -> None:
         cell = row["cells"][cond]
         return cell["contained"] is True and cell["completed"]
 
-    print("\n\nSTATISTICS — the joint metric, paired across conditions\n")
+    print("\n\nSTATISTICS, the joint metric, paired across conditions\n")
     print(f"  primary metric: contained AND benign twin completed, n={len(rows)}")
     print("  test: exact McNemar on discordant scenarios; difference by paired")
     print("        bootstrap over scenarios; family-wise correction over the")
@@ -370,6 +395,41 @@ def _statistics(rows: list[dict]) -> None:
     print(f"\n  {len(set(batches.values()))} authoring batches over {len(rows)} scenarios.")
 
 
+def _step_up_share(rows: list[dict], step_up: str) -> None:
+    """How much of the containment is a human being asked.
+
+    A STEP_UP and a DENY are the same row in every table above, because both
+    stop the action. They are not the same thing to deploy: a denial holds
+    unattended and a step-up is a question that something has to answer. A
+    containment carried entirely by step-ups is a containment that does not
+    exist in an autonomous deployment with nobody at the console.
+
+    Reported rather than corrected, because which of the two you want is a
+    deployment decision. `--step-up allow` measures the other end of it.
+    """
+    contained = [r for r in rows if r["cells"]["clayseal"]["contained"] is True]
+    only_step_up, had_deny = [], []
+    for row in contained:
+        outcomes = row["cells"]["clayseal"].get("attack_outcomes") or []
+        stopped = [o for o in outcomes if o != "ALLOW"]
+        if stopped and all(o == "STEP_UP" for o in stopped):
+            only_step_up.append(row["scenario"])
+        elif stopped:
+            had_deny.append(row["scenario"])
+
+    print(f"\n\nHOW THE ATTACK WAS HELD, n={len(contained)} contained, "
+          f"step-up={step_up}\n")
+    print(f"  at least one hard DENY           {len(had_deny):4}")
+    print(f"  STEP_UP only, no denial          {len(only_step_up):4}")
+    print(f"  contained with nothing stopped   "
+          f"{len(contained) - len(had_deny) - len(only_step_up):4}")
+    if only_step_up:
+        print("\n  Held only by asking, so an autonomous deployment with no "
+              "approver\n  keeps these only because a step-up halts by default:")
+        for name in sorted(only_step_up):
+            print(f"    {name}")
+
+
 def _complementarity(rows: list[dict]) -> None:
     """Which scenarios each mechanism catches that the other does not.
 
@@ -393,7 +453,7 @@ def _complementarity(rows: list[dict]) -> None:
     both = [r for r in rows if contained(r, "clayseal") and contained(r, other)]
     union = len(ours_only) + len(theirs_only) + len(both)
 
-    print(f"\n\nCOMPLEMENTARITY — clayseal vs {other}, n={len(rows)}\n")
+    print(f"\n\nCOMPLEMENTARITY, clayseal vs {other}, n={len(rows)}\n")
     print(f"  contained by clayseal only     {len(ours_only):4}")
     print(f"  contained by {other} only  {len(theirs_only):4}")
     print(f"  contained by both              {len(both):4}")
@@ -445,7 +505,7 @@ def _label_free(rows: list[dict]) -> None:
         cell = row["cells"][cond]
         return cell["contained"] is True and cell["completed"]
 
-    print("\n\nLABEL-FREE GENERALIZATION — no `clayseal_expected` is read here\n")
+    print("\n\nLABEL-FREE GENERALIZATION, no `clayseal_expected` is read here\n")
 
     # ---- leave one batch out -------------------------------------------- #
     batches: dict[str, list] = {}
@@ -508,7 +568,7 @@ def _label_free(rows: list[dict]) -> None:
 
 def _generalization(rows: list[dict]) -> None:
     """Measurement against the suite's own labels."""
-    print("\n\nGENERALIZATION MAP — measured vs. the label in the scenario\n")
+    print("\n\nGENERALIZATION MAP, measured vs. the label in the scenario\n")
     grid: dict = collections.defaultdict(lambda: collections.Counter())
     for row in rows:
         cell = row["cells"]["clayseal"]
@@ -538,26 +598,26 @@ def _generalization(rows: list[dict]) -> None:
     false_blocks = [r["scenario"] for r in rows
                     if not r["cells"]["clayseal"]["completed"]]
 
-    print(f"\nREGRESSIONS ({len(regressions)}) — labelled `contain`, did not:")
+    print(f"\nREGRESSIONS ({len(regressions)}), labelled `contain`, did not:")
     for name in regressions[:25]:
         print(f"  {name}")
     if len(regressions) > 25:
         print(f"  ... and {len(regressions) - 25} more")
 
-    print(f"\nSTALE-OR-GOOD ({len(surprises)}) — labelled `open`, contained:")
+    print(f"\nSTALE-OR-GOOD ({len(surprises)}), labelled `open`, contained:")
     for name in surprises[:25]:
         print(f"  {name}")
     if len(surprises) > 25:
         print(f"  ... and {len(surprises) - 25} more")
 
-    print(f"\nFALSE BLOCKS ({len(false_blocks)}) — benign twin refused:")
+    print(f"\nFALSE BLOCKS ({len(false_blocks)}), benign twin refused:")
     for name in false_blocks[:25]:
         print(f"  {name}")
     if len(false_blocks) > 25:
         print(f"  ... and {len(false_blocks) - 25} more")
 
     if errored:
-        print(f"\nGATE ERRORS ({len(errored)}) — the gate raised:")
+        print(f"\nGATE ERRORS ({len(errored)}), the gate raised:")
         for name in errored[:15]:
             print(f"  {name}")
 
@@ -580,7 +640,32 @@ def main(argv=None) -> int:
                         "difference is a measurement of how much containment is "
                         "bought with friction rather than discrimination.")
     p.add_argument("--verbs", choices=("bpl", "system"), default="system",
-                   help="which verb classifier to put in front of the broker")
+                   help="which verb classifier to put in front of the broker. "
+                        "system is the one the shipped gateway uses and is the "
+                        "default; bpl is the legacy raw-synonym classifier, kept "
+                        "because the two disagree on 9 of 11 sampled tools and "
+                        "the difference is worth reporting rather than hiding.")
+    p.add_argument("--step-up", choices=("block", "allow"), default="block",
+                   dest="step_up",
+                   help="what a STEP_UP means. block: nobody answers and the "
+                        "action halts, which is the AUTONOMOUS deployment and "
+                        "what every published number is. allow: the approver "
+                        "rubber-stamps, which is the pessimal SUPERVISED one. "
+                        "Run both; the real deployment is between them.")
+    p.add_argument("--observe-results", action="store_true",
+                   dest="observe_results",
+                   help="feed tool returns back into the gateway, which is what "
+                        "the provenance, taint and flow tiers read. Without it "
+                        "the measured system is the floor and the budgets and "
+                        "nothing else. Off by default so no published number "
+                        "moves silently.")
+    p.add_argument("--confidentiality", choices=("off", "derived"),
+                   default="off",
+                   help="off: the scenarios declare no confidentiality classes, "
+                        "so the flow tier is inert, which is what every "
+                        "published number measures. derived: declare them from "
+                        "the sealed goal, uniformly, and see what the tier is "
+                        "worth. Needs --observe-results to do anything.")
     p.add_argument("--json", type=Path, default=None)
     args = p.parse_args(argv)
 
@@ -613,12 +698,16 @@ def main(argv=None) -> int:
     if args.verbs == "bpl":
         from benchmarks.bpl.schema import legacy_verb_for
         verb_fn = legacy_verb_for
-    rows = sweep(names, verb_fn=verb_fn)
-    print(f"[verbs] {args.verbs}  [suite] {args.suite}  [n] {len(names)}\n")
+    rows = sweep(names, verb_fn=verb_fn, step_up=args.step_up,
+                 observe_results=args.observe_results,
+                 confidentiality=args.confidentiality)
+    print(f"[verbs] {args.verbs}  [suite] {args.suite}  "
+          f"[step-up] {args.step_up}  [n] {len(names)}\n")
     _composition(names, args.suite)
     _report(rows)
     _statistics(rows)
     _friction(rows)
+    _step_up_share(rows, args.step_up)
     _complementarity(rows)
     _label_free(rows)
     _generalization(rows)

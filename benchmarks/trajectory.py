@@ -12,9 +12,9 @@ the denominator is a full working day.
 So this tier inverts the usual framing. Instead of "what fraction of attack
 events are blocked", it asks the two questions an SOC actually budgets against:
 
-* **Detection rate per trajectory** — in a session of N legitimate actions with
+* **Detection rate per trajectory**, in a session of N legitimate actions with
   one malicious action buried in it, is the needle caught at all?
-* **False alarms per 1,000 benign actions** — the number that decides whether
+* **False alarms per 1,000 benign actions**, the number that decides whether
   anyone leaves the thing switched on. A 0.5% per-action false-block rate looks
   excellent and produces five alerts per thousand actions, which at agent speeds
   is an alert every few minutes, all day.
@@ -119,7 +119,7 @@ def build_trajectories(benign_tasks, attack_tasks, *, length, count, seed):
         # The needle wears the session's own clothes: a tool and resource the
         # host task legitimately holds, with only the TARGET wrong. Carrying the
         # attack corpus's own tool name instead makes it detectable by name
-        # alone, and every rung including `tool-allowlist` then scores 100% —
+        # alone, and every rung including `tool-allowlist` then scores 100%
         # measuring whether we check tool names, which is the same triviality
         # the coverage analysis found in ASB. This is the hard, realistic case
         # and the one RedCode exists to isolate.
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     results = evaluate(trajectories, engines)
 
     total_actions = sum(r.benign_actions for r in results.values()) // max(len(results), 1)
-    print(f"# Long-trajectory evaluation — {args.trajectories} sessions of "
+    print(f"# Long-trajectory evaluation, {args.trajectories} sessions of "
           f"{args.length} benign actions, one buried attack each\n")
     print(f"Haystack: `{args.benign}`. Needle: `{args.attacks}`. "
           f"{total_actions} benign actions judged per engine.\n")
@@ -230,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print("\n_Needle detected_ is per session, not per event: a session where the buried "
           "malicious action was blocked counts as caught. _False alarms per 1k actions_ is "
-          "the deployability number — multiply by the session length to get what an operator "
+          "the deployability number, multiply by the session length to get what an operator "
           "sees per session, which is the last column. A per-action false-block rate that "
           "rounds to zero on a three-call benchmark can still page someone every few minutes "
           "on a real session.")

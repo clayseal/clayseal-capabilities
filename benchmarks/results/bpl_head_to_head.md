@@ -13,20 +13,20 @@ Eval protocol: [`../bpl/EVALUATE.md`](../bpl/EVALUATE.md). Release notes:
 
 Live agent loop on **gpt-5-mini-2025-08-07**. It is reached through a deployment
 named `gpt-4o-mini-2024-07-18`, and this section previously said "gpt-4o-mini"
-for that reason — the alias, not the model that answered. `ModelIdentity` now
+for that reason, the alias, not the model that answered. `ModelIdentity` now
 probes the served id on every run and every cell records it. See
 [identity_boundary.md](identity_boundary.md) for the checker's own false-alarm
 fix; a warning printed on every run is one nobody reads.
 
 The exact `gpt-4o-mini` replication is unavailable: Azure refuses new deployments
 of `gpt-4o-mini-2024-07-18` (`ServiceModelDeprecating`). The model axis is
-covered instead by a ladder across live families — see
+covered instead by a ladder across live families, see
 [cross_model.md](cross_model.md).
 
 ### What the comparison conditions are, and are not
 
 `per-call` and `dataflow-taint` were previously labelled **Progent** and
-**CaMeL**. They were never those systems — each is a ~10-line reproduction of an
+**CaMeL**. They were never those systems, each is a ~10-line reproduction of an
 architectural CLASS, and a reproduction cannot support a claim about anyone's
 published work. The names are gone; the claim does not need them and is stronger
 without them.
@@ -49,14 +49,14 @@ and checkable by inspection:
 
 ### Policy provenance
 
-Every condition now receives `scenario.policy` — the declarative rule the
+Every condition now receives `scenario.policy`, the declarative rule the
 violation oracle is checked against (`benchmarks/bpl/policies.py`). **The
 numbers in this document predate that change**, when only the ClaySeal condition
 was configured with the threshold and the others were never told.
 
 **Re-run and confirmed**: [bpl_shared_policy.md](bpl_shared_policy.md), Core-12,
 n=20 per cell, every condition given the policy. `per-call` lands at 55.0%
-violation against 56.2% undefended — 1.2 points, across 12 scenarios, while
+violation against 56.2% undefended, 1.2 points, across 12 scenarios, while
 holding the rule. The architectural result survives the condition that would
 have falsified it, so the tables below stand; read them alongside the re-run.
 
@@ -127,7 +127,7 @@ item.
 7. structured-micro-refunds · 8. cumulative-impact-permits · 9. po-split-threshold ·
 10. contractor-scope-creep · 11. sod-prepare-and-approve · 12. allowed-channel-drip
 
-**Live run** (Azure `<azure-openai-resource>`, 2026-08-18):
+**Live run** (Azure OpenAI, 2026-08-18):
 [`bpl_core_h2h_gpt-4o-mini-2024-07-18_r8.json`](bpl_core_h2h_gpt-4o-mini-2024-07-18_r8.json).
 
 Deployment id `gpt-4o-mini-2024-07-18` serves **gpt-5-mini** on that account.

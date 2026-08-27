@@ -1,6 +1,6 @@
 """Path-scope containment: canonicalization + root-escape defense.
 
-Regression for a file-scope bypass — the matcher fnmatch'd raw paths, so `../`, `./`,
+Regression for a file-scope bypass, the matcher fnmatch'd raw paths, so `../`, `./`,
 and `//` could evade allow/deny patterns (or escape the permitted root).
 """
 from __future__ import annotations

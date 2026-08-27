@@ -65,7 +65,7 @@ class Knowledge(str, Enum):
 
 
 # --------------------------------------------------------------------------- #
-# Objectives — what the attacker is actually trying to achieve
+# Objectives, what the attacker is actually trying to achieve
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class AttackObjective:
@@ -373,7 +373,7 @@ OBJECTIVES: dict[str, Callable[[], AttackObjective]] = {
 
 
 # --------------------------------------------------------------------------- #
-# Mutation operators — the attacker's move set
+# Mutation operators, the attacker's move set
 # --------------------------------------------------------------------------- #
 @dataclass(frozen=True)
 class Candidate:
@@ -508,8 +508,8 @@ class AdaptiveAttacker:
                 strategy="in-scope-staging",
             )]
         if self.objective.name == "in-scope-content-staging":
-            # Same two legs as `in-scope-exfiltration` — read a secret inside
-            # the grant, stage it into a published artifact — but the write
+            # Same two legs as `in-scope-exfiltration`, read a secret inside
+            # the grant, stage it into a published artifact, but the write
             # carries the VALUE rather than the filename, which is what the
             # confidentiality layer keys on and what an observer of the artifact
             # can actually recover.
@@ -876,7 +876,7 @@ def run_adaptive(
                 # session. Ladder rungs are stateless per event, so this was
                 # never needed; `DeployableStackEngine` accumulates a trajectory,
                 # taints, budgets and provenance, and without the reset candidate
-                # N's session would decide candidate N+1's verdict — the search
+                # N's session would decide candidate N+1's verdict, the search
                 # would be attacking a session that had already been poisoned by
                 # its own earlier attempts, and every number after the first
                 # candidate would be meaningless.

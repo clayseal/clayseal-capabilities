@@ -32,7 +32,7 @@ risky operations, because every one of them is a granted tool (`read_file`,
 egress scoping contains 717 of 718 at a **0% false-block rate** measured on 344
 real benign file-system steps from BFCL multi-turn ground truth.
 
-Per risk index — the blindness is uniform, not an artifact of one category:
+Per risk index, the blindness is uniform, not an artifact of one category:
 
 | idx | risk class | n | allowlist | cap-token | task-scope |
 | --: | --- | --: | --: | --: | --: |
@@ -53,7 +53,7 @@ Per risk index — the blindness is uniform, not an artifact of one category:
 
 ### The one escape is a correct decision
 
-`redcode-5_1` lists `/app/*` — the agent's own workspace. RedCode labels it
+`redcode-5_1` lists `/app/*`, the agent's own workspace. RedCode labels it
 risky (information gathering); the mandate explicitly grants the workspace, so
 allowing it is right. This is a disagreement between RedCode's risk label and
 the granted scope, not a containment failure. It is left in the denominator
@@ -61,7 +61,7 @@ rather than excluded.
 
 ## AgentHarm: the honest ceiling
 
-AgentHarm caps out at **6.3% containment across every rung** — allowlist,
+AgentHarm caps out at **6.3% containment across every rung**, allowlist,
 capability token, path scope, binding, and budget all score identically. That is
 not a tuning problem; it is the structural limit of per-call authorization, and
 the split is exact:
@@ -72,7 +72,7 @@ the split is exact:
 | reusing a tool the benign grant **did** include | 0 | 611 |
 
 In **143 of 176 pairs (81%) the harmful task and its benign twin call the
-identical tool set** — both run `run_stable_diffusion_model → create_ai_video →
+identical tool set**, both run `run_stable_diffusion_model → create_ai_video →
 post_on_x`; one posts a nature video, the other a political deepfake. No layer
 that decides from tool identity, resource, action, or argument *shape* can
 separate those, and Clay Seal does not claim to. What it does do is block 100%
@@ -81,15 +81,15 @@ of the over-privileged subset with zero false blocks on the benign twins.
 **Read this as scope, not defeat:** AgentHarm measures harm-intent
 classification. Clay Seal measures authority. The 6.3% is the correct answer for
 an authorization layer on this corpus, and quoting a higher number would mean
-the loader had leaked intent signal it has no legitimate access to — a
+the loader had leaked intent signal it has no legitimate access to, a
 regression test now pins that (`test_agentharm_ceiling_is_exactly_the_over_privileged_subset`).
 
 ## ASB: saturated, kept for breadth
 
 ASB reaches **100% containment at the very first rung** (tool-allowlist) and
 every rung above adds nothing, at 0% false-block across 10 domain agents and
-2,040 attack events. ASB's attack surface is tool *substitution* — the injected
-step always calls a tool the user never granted — so the outermost authority
+2,040 attack events. ASB's attack surface is tool *substitution*, the injected
+step always calls a tool the user never granted, so the outermost authority
 boundary already contains all of it.
 
 This is a property of the benchmark, not a win. It is retained for domain
@@ -120,8 +120,8 @@ Two cells need reading carefully:
 
 ## Defect found: the ladder is not monotone under path-scoped mandates
 
-`capability-token` contains 100% of connector-substitution; `task-scope` — a
-*higher* rung — contains 0%. Root cause, confirmed directly:
+`capability-token` contains 100% of connector-substitution; `task-scope`, a
+*higher* rung, contains 0%. Root cause, confirmed directly:
 
 ```
 compile_task_scope(<agentauth.human_authorization.v1 mandate>)

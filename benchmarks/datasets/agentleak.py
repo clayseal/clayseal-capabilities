@@ -1,4 +1,4 @@
-"""AgentLeak loader — privacy leakage across seven agent channels.
+"""AgentLeak loader, privacy leakage across seven agent channels.
 
 AgentLeak (El Yagoubi, Badu-Marfo & Al Mallah, IEEE Access 2026;
 arXiv:2602.11510) ships 1,000 scenarios across healthcare, finance, legal and

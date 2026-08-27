@@ -135,6 +135,18 @@ class Guardrail:
             **overrides,
         )
 
+    @classmethod
+    def from_policy_file(cls, path: Any, **overrides: Any):
+        """Build a guardrail straight from a policy file.
+
+        The one-import way in. `from_policy` takes a loaded policy because a
+        caller who already has one should not reload it; most callers have a
+        path and had to discover `load_policy` to use it.
+        """
+        from agentauth.capabilities.policy import load_policy
+
+        return cls.from_policy(load_policy(str(path)), **overrides)
+
     # -- the decision ------------------------------------------------------ #
     def trace(self, traceparent: Any, tracestate: Any = None) -> None:
         """Join this session's receipts to the caller's trace.

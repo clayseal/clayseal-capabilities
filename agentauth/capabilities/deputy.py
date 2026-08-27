@@ -87,7 +87,7 @@ authorized by a chain rooted at this session's authority, so a specialist
 sub-agent carrying its own independent grant is refused by default. That is a
 real position and not a free one: cross-authority work has to be declared. The
 mandate names the other authorities it accepts (`accepted_roots`), which is the
-same shape as declassification in `confidentiality.py` — a sealed, pre-execution
+same shape as declassification in `confidentiality.py`, a sealed, pre-execution
 declaration that an injected instruction cannot add to.
 
 Absent a policy there is no check, so a deployment that does not delegate behaves
@@ -132,7 +132,7 @@ class DelegationPolicy:
 
     ``trusted_signers`` are the hex public keys permitted to mint a delegation in
     this deployment. Empty means no trust policy is configured, and this boundary
-    then refuses everything rather than accepting self-signed tokens — the same
+    then refuses everything rather than accepting self-signed tokens, the same
     stance `signing.verify_bundle_signatures` takes.
     """
 

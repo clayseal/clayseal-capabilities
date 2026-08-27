@@ -54,15 +54,15 @@ Encoding evasions remain open independently of width: `base85`, `caesar+1`,
 `base64` is 88/100 at k=2. Keyed transforms are marked `KEYED` in the harness and
 are out of scope by construction, but the unkeyed encodings are not.
 
-> **UPDATE 2026-08-19 — the single-write unkeyed encodings are now closed.**
+> **UPDATE 2026-08-19, the single-write unkeyed encodings are now closed.**
 > The adaptive search against the shipped gateway
 > ([adaptive_stack.md](adaptive_stack.md)) found `base85` as the one staging
 > evasion of nine that got through, and the cause was a decoder-ordering defect
 > rather than a missing decoder: `_decode_layer` stopped at the first attempt
 > that did not RAISE, and `urlsafe_b64decode` does not validate, so it "succeeded"
 > on a base85 token and the base85 decoder two lines below was never reached.
-> Judging whether a decode plausibly succeeded — strictly, so a lossy
-> `errors="ignore"` cannot launder noise into printable text — closes five at
+> Judging whether a decode plausibly succeeded, strictly, so a lossy
+> `errors="ignore"` cannot launder noise into printable text, closes five at
 > once:
 >
 > | transform | before | after |
@@ -75,7 +75,7 @@ are out of scope by construction, but the unkeyed encodings are not.
 >
 > False blocks on real traffic did not move: **0 of 1,242** benign tau2 events,
 > the same as before the fix. The keyed transforms (`caesar+1`,
-> `digit-arithmetic+1`) are still open and still out of scope by construction —
+> `digit-arithmetic+1`) are still open and still out of scope by construction
 > a keyed transform is not a decoding.
 >
 > **The COMPOSED arms are unchanged.** Split crossed with a per-fragment
@@ -112,7 +112,7 @@ high-entropy content implies STEP_UP.
 - **Unkeyed encodings.** base85, base64-of-hex, base32, decimal byte codes and
   double-base64 are open at every width. These are a decode-layer problem rather
   than a window problem and are not addressed by anything in this change.
-  **Closed 2026-08-19** — see the update above. It was indeed a decode-layer
+  **Closed 2026-08-19**, see the update above. It was indeed a decode-layer
   problem, and specifically a decoder-ORDERING problem: the decoders were all
   present and one was shadowing another.
 - **`python/tests/test_flow_order_independence.py`** carries a `strict=False`

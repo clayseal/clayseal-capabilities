@@ -1,6 +1,6 @@
 """Ensemble scorer: combine complementary sequence scorers.
 
-The n-gram and transformer scorers have opposite strengths — the sharp n-gram is
+The n-gram and transformer scorers have opposite strengths, the sharp n-gram is
 sensitive to repetition and rare transitions, the transformer generalizes across
 unseen tokens. Combining them recovers both. Each member's surprise is
 standardized against its own benign distribution (so incomparable scales become

@@ -9,7 +9,7 @@ trusted input. C1 is the smallest real version of the pipeline from
 ``plan`` is produced by a :class:`Planner`. C1 ships the deterministic
 ``StructuredIntentPlanner`` (the plan is authored in the goal's
 ``structured_intent``); C2 will drop an LLM planner into the same seam. Whatever
-the planner, it sees ONLY the sealed goal, never untrusted content — the CaMeL
+the planner, it sees ONLY the sealed goal, never untrusted content, the CaMeL
 privilege split and the Ulysses pre-commitment. ``verify`` rejects an incoherent
 plan (a goal the tools cannot reach) so a hallucinated plan never gets sealed;
 this is the neuro-symbolic discipline (the planner proposes, the ontology

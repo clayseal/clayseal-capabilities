@@ -4,7 +4,7 @@ STATUS: current
 
 `in_scope_exfiltration.md` measured the gap: against an oracle attacker the full
 enforcement ladder's escaped-task set was **byte-identical to `allow-all`**. The
-whole attack is `read:/app/.env -> write:/app/README.md` — two actions, both
+whole attack is `read:/app/.env -> write:/app/README.md`, two actions, both
 inside the grant, granted tool, granted resource, legitimate arguments.
 
 ## The missing predicate was about objects, not places
@@ -16,13 +16,13 @@ scope check could ever see it.
 `hardening/object_class.py` adds the taxonomy: `SECRET` (`.env`, `.npmrc`,
 `id_rsa`, `.git/config`, `secrets.*`, service-account files) and `PUBLICATION`
 (README, `docs/`, `dist/`, `public/`, `index.html`). Static and compiled in, like
-`DEFAULT_PROTECTED_PATTERNS` — **not** inferred at runtime, because
+`DEFAULT_PROTECTED_PATTERNS`, **not** inferred at runtime, because
 `SensitivityPolicy` states the rule this follows: *a policy an attacker can
 influence is not a policy.*
 
 `StagingLadderEngine` enforces the conjunction: once a session has read a
 SECRET-classed object, a write to a PUBLICATION-classed object is refused. It is
-the first rung that is not a pure function of one action, and it cannot be —
+the first rung that is not a pure function of one action, and it cannot be
 neither half is suspicious alone. Reading `.env` is what a build agent does;
 writing a README is what a documentation agent does. Only the pair is evidence.
 
@@ -36,7 +36,7 @@ RedCode, in-scope-exfiltration objective, 5 rounds, 32,013 candidates.
 | …+density | 29% | 36% | 38% |
 | **…+density+staging** | **100%** | **100%** | **100%** |
 
-The 38% was never containment — it is the attacker's own failure rate on tasks
+The 38% was never containment: it is the attacker's own failure rate on tasks
 offering no in-scope surface. The rung takes the real figure from zero to total.
 
 ## Friction: unmeasured, not zero
@@ -58,7 +58,7 @@ seven corpora that conjunction occurs in exactly zero tasks**:
 | agentharm | 729 | 0 | 0 | **0** |
 | sleight | 311 | 2 | 4 | **0** |
 
-So the friction number is a **non-measurement** — the same failure this session
+So the friction number is a **non-measurement**, the same failure this session
 found in the corpora themselves, now applying to my own rung. A real coding agent
 reads `.env` for configuration and later edits a README constantly, so the true
 rate is plausibly high, and nothing here bounds it.
@@ -74,14 +74,14 @@ Two things must happen first.
 1. **Measure friction on real agent sessions.** One query against production
    logs: how often does a session read a secret-classed object and later write a
    publication-classed one?
-2. **Ship it as STEP_UP, not DENY.** The flow is genuinely ambiguous — the same
+2. **Ship it as STEP_UP, not DENY.** The flow is genuinely ambiguous, the same
    two actions are a leak and a legitimate documentation edit, and the metadata
    cannot separate them. A human confirmation is the honest response to that
    ambiguity, and the broker already has the graduated seam. The benchmark ladder
    has no step-up outcome, so this is scored at its strictest here and the
    friction column above is the worst case, not the deployment case.
 
-The content check — does the write actually carry the secret — belongs to the
+The content check, does the write actually carry the secret, belongs to the
 confidentiality flow tracker, which is now windowed and bounded (`flow_window.md`).
 This rung is the coarse metadata gate for when the tracker has nothing to read.
 

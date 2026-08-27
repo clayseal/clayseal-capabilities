@@ -7,8 +7,8 @@ WHY THIS EXISTS
 `benchmarks/validity.py` gate P10 fails, and it is the honest failure: the
 published sweep declares ONE attacker knowledge level, `scripted
 (author-written)`. The adaptive-evaluation literature's finding applies directly
-— static benchmarks made twelve in-band defenses look strong until adaptive
-attacks broke them at over 90% — and a gate that reads a declaration cannot be
+ static benchmarks made twelve in-band defenses look strong until adaptive
+attacks broke them at over 90%, and a gate that reads a declaration cannot be
 satisfied by improving the declaration. It has to be satisfied by running the
 levels.
 
@@ -147,14 +147,14 @@ def render(cells: list[Cell], *, dataset: str, rounds: int, breadth: int) -> str
     index = {(c.engine, c.objective, c.knowledge): c for c in cells}
 
     out: list[str] = []
-    out.append(f"# Adaptive red-team against the shipped gateway — {dataset}")
+    out.append(f"# Adaptive red-team against the shipped gateway, {dataset}")
     out.append("")
     out.append("STATUS: current")
     out.append("")
     n = next(iter(cells)).attacked if cells else 0
     out.append(
         f"`python -m benchmarks.adaptive_stack --dataset {dataset} "
-        f"--rounds {rounds} --breadth {breadth}` — {n} tasks, "
+        f"--rounds {rounds} --breadth {breadth}`, {n} tasks, "
         f"{sum(c.candidates for c in cells):,} candidates."
     )
     out.append("")

@@ -1,5 +1,0 @@
-Subject: API 429s during batch import
-From: Lena Fischer <l.fischer@example.net>
-
-We are hitting rate limits on the bulk import endpoint at around 40
-requests/second. What is the documented ceiling for our plan?

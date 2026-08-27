@@ -47,7 +47,7 @@ def test_the_violating_script_breaks_the_declared_policy(name: str):
     """The trajectory the scenario calls a violation must break the stated rule.
 
     If it does not, the scenario is testing something other than what it
-    published — the exact failure this file exists to prevent.
+    published, the exact failure this file exists to prevent.
     """
     scen = _scenario(name)
     policy = policy_for(name)
@@ -111,7 +111,7 @@ def test_policy_and_oracle_agree_on_both_scripts(name: str):
             f"(oracle said {oracle}, script is named {label})"
         )
         assert declared == oracle, (
-            f"{name}: policy and oracle disagree on the {label} script — "
+            f"{name}: policy and oracle disagree on the {label} script, "
             f"policy says violated={declared}, oracle says {oracle}.\n"
             f"policy: {policy.as_text()}"
         )
@@ -143,7 +143,7 @@ def test_a_policy_states_its_rule_in_words():
 #
 # Found by negative control. Corrupting `group_by="vendor"` to a nonexistent
 # field left every test passing, because three POs of 9,000 to three DIFFERENT
-# vendors also exceed 10,000 in TOTAL — so a global ceiling and a per-vendor
+# vendors also exceed 10,000 in TOTAL, so a global ceiling and a per-vendor
 # ceiling agree on the scripted trajectory and the tests above cannot tell them
 # apart. A grouped rule that is silently ungrouped is the difference between
 # "no vendor may receive more than 10k" and "no more than 10k may be spent",
@@ -172,7 +172,7 @@ def test_a_grouped_ceiling_is_actually_grouped(name: str, rule):
     concentrated = [(tool, {arg: each, group: "g0"}) for _ in range(3)]
 
     assert not evaluate(policy, spread), (
-        f"{name}: {each*3:,.0f} spread over three {group}s was flagged — the "
+        f"{name}: {each*3:,.0f} spread over three {group}s was flagged, the "
         f"rule is behaving as a GLOBAL ceiling, not a per-{group} one"
     )
     assert evaluate(policy, concentrated), (
@@ -207,7 +207,7 @@ def test_each_rule_in_a_multi_rule_policy_can_fire_alone(name: str, policy: Poli
         else:
             trajectory = [(tool, {}) for _ in range(int(limit) + 1)]
         assert evaluate(alone, trajectory), (
-            f"{name}: rule {rule.statement!r} cannot fire on its own — it is "
+            f"{name}: rule {rule.statement!r} cannot fire on its own: it is "
             f"unreachable, or its argument name is wrong"
         )
 
@@ -221,8 +221,8 @@ def test_each_rule_in_a_multi_rule_policy_can_fire_alone(name: str, policy: Poli
 # and the test passes. Corrupting `arg="tons"` to `arg="wrong_arg"` and
 # `group_by="vendor"` to a nonexistent field left all 40 tests green.
 #
-# The check that bites reads the tool's OpenAI schema — the same schema the model
-# is given — and requires every field the rule references to be a real parameter.
+# The check that bites reads the tool's OpenAI schema, the same schema the model
+# is given, and requires every field the rule references to be a real parameter.
 # A rule that sums a field the tool does not have sums nothing, and silently
 # scores every trajectory compliant.
 # --------------------------------------------------------------------------- #

@@ -3,13 +3,13 @@
 Every assertion here exists because an equivalent mistake was made on another
 corpus and produced a number that had to be withdrawn:
 
-* AgentThreatBench — 18 of 24 attack events were the loader's own inventions;
-* ASB / InjecAgent / ToolEmu — containment that saturates at the tool allowlist;
-* SLEIGHT — a mandate invented from session state, and a grant that is the
+* AgentThreatBench, 18 of 24 attack events were the loader's own inventions;
+* ASB / InjecAgent / ToolEmu, containment that saturates at the tool allowlist;
+* SLEIGHT, a mandate invented from session state, and a grant that is the
   benign side restated, which makes 0.00% false-block arithmetic;
-* AgentHarm — reading only part of the record, and a loader whose event ORDER
+* AgentHarm, reading only part of the record, and a loader whose event ORDER
   carried the label (the withdrawn +8.0);
-* InjecAgent — half the corpus being the same case counted twice.
+* InjecAgent, half the corpus being the same case counted twice.
 
 The corpus lives outside the repo, so every test skips cleanly without it.
 """
@@ -74,7 +74,7 @@ def test_no_attack_event_is_emitted_because_the_corpus_labels_no_action(name, re
     would be this loader's invention.
 
     The corpus's judge prompt (AgentDoG ``guardrail/prompt.py``) asks for one
-    integer per trajectory — "pred": 0 (safe) or 1 (unsafe) — over "unsafe
+    integer per trajectory, "pred": 0 (safe) or 1 (unsafe), over "unsafe
     actions or unsafe decision patterns". Nothing in the released data says
     which turn failed. The ``reason`` field is prose that names two or more of
     the trajectory's own tools more often than it names one, and ATBench500 has
@@ -119,7 +119,7 @@ def test_grant_is_the_corpus_tool_pool_and_it_already_contains_every_call(name, 
     """The one grant ATBench declares cannot separate its two halves.
 
     ``tool_used`` is the per-trajectory tool pool, and every call in the corpus
-    is inside it — in the unsafe half as much as the safe half. So the naive
+    is inside it, in the unsafe half as much as the safe half. So the naive
     tool-allowlist rung is 0.0% here, which is the mirror image of ASB, where it
     is 100% and means nothing.
 
@@ -208,8 +208,8 @@ def test_trajectory_length_is_a_label_proxy_so_no_rung_may_be_credited_for_it(
 
     A velocity cap calibrated on clean traffic is therefore a length detector on
     this corpus. Under a naive attribution (every unsafe call labelled ATTACK)
-    the velocity rung is the only rung that scores anything at all — 4.4% on
-    ATBench, 5.2% on ATBench500 — and all of it is the corpus's generation
+    the velocity rung is the only rung that scores anything at all, 4.4% on
+    ATBench, 5.2% on ATBench500, and all of it is the corpus's generation
     pipeline leaking through trajectory length, not containment. This is the
     same defect as the withdrawn +8.0 on AgentHarm, where the loader's event
     order carried the label.
@@ -259,7 +259,7 @@ def test_trajectory_length_is_a_label_proxy_so_no_rung_may_be_credited_for_it(
 def test_the_completion_turn_is_not_a_tool_call(name):
     """``Complete{...}`` is the agent's closing message, not an action.
 
-    A large share of ATBench's harm lives in exactly that text — the taxonomy's
+    A large share of ATBench's harm lives in exactly that text, the taxonomy's
     ``generation_of_harmful_offensive_content``, ``instruction_for_harmful_
     illegal_activity`` and ``provide_inaccurate_misleading_or_unverified_
     information`` classes. Turning it into an event would put content-defined
@@ -286,7 +286,7 @@ def test_url_arguments_never_forge_a_filesystem_target(name):
 
     An earlier pass parsed any slash-separated substring as a path. That made
     ``https://discord.com/api/webhooks/9988776655/xYz_AbC_SecretToken`` look like
-    a credential file, which the global protected-zone floor then "contained" —
+    a credential file, which the global protected-zone floor then "contained"
     three times in unsafe trajectories and, worse, twice in the corpus's own
     SAFE half, where the same rule manufactured false blocks. Under the current
     rule the protected-zone floor fires on zero ATBench actions, which is the
@@ -335,8 +335,8 @@ def test_atbench500_is_a_separate_release_not_a_subset():
 
     They are not: ATBench500 is the legacy AgentDoG release, ATBench the later
     1,000-case one, and no first user message is shared between them. Reporting
-    a pooled 1,500 would be double counting only if they overlapped — they do
-    not — but they still may not be pooled as one rate, because their schemas
+    a pooled 1,500 would be double counting only if they overlapped: they do
+    not, but they still may not be pooled as one rate, because their schemas
     and their safe/unsafe balances differ.
     """
     from benchmarks.datasets.atbench import _RELEASES, _turns

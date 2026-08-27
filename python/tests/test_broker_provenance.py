@@ -49,7 +49,7 @@ def test_ungrounded_destination_hard_denies():
 
 
 def test_structured_grounded_destination_steps_up_not_allows():
-    """Provenance never grants autonomy — only supervision (measured inversion)."""
+    """Provenance never grants autonomy, only supervision (measured inversion)."""
     p = ParameterProvenance()
     p.record_observation(
         "read_payees", "",
@@ -69,7 +69,7 @@ def test_observe_output_feeds_the_floor():
         structured_fields={"account": "GB33BUKB20201555555555"},
         goal_named=True, containing_object="payees.json",
     )
-    # Opaque recipient path (no @) — egress.bind_recipients.
+    # Opaque recipient path (no @), egress.bind_recipients.
     action = Action(
         step=0, tool="transfer", resource="mcp:tool:transfer",
         verb="transfer",

@@ -1,4 +1,4 @@
-"""Delegation-token contract — canonical home: ``agentauth.core.delegation``.
+"""Delegation-token contract, canonical home: ``agentauth.core.delegation``.
 
 Re-export so ``agentauth.capabilities.delegation`` remains a valid import path.
 """

@@ -55,7 +55,7 @@ def test_envelope_replan_extends_bound_off_plan_step():
         summary="read the calendar and send_email a summary to bob@corp.example",
         structured_intent={"verbs": ["read", "send"], "tools": ["Calendar", "send_email"]},
     )
-    # Minimal envelope that only listed Calendar — send is off-plan.
+    # Minimal envelope that only listed Calendar, send is off-plan.
     env = IntentEnvelope.from_goal(goal)
     # Strip send from plan if present so the step is a deviation.
     if hasattr(env, "allowed_tools"):
@@ -88,7 +88,7 @@ def test_envelope_replan_extends_bound_off_plan_step():
         0, "send_email", "mcp:tool:send_email", "send",
         args={"to": "bob@corp.example", "body": "summary"},
     ))
-    # Extended allow, or STEP_UP if envelope treats differently — never silent
+    # Extended allow, or STEP_UP if envelope treats differently, never silent
     # hard deny when destination is goal-bound and shape is goal-implied.
     assert d.outcome in ("allow", "step_up")
     if d.outcome == "deny":

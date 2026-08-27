@@ -1,1 +1,0 @@
-{"trace": ["ivisor: policy dns.query verdict=deny name=acme-internal.com qtype=1 reason=not-allowlisted rcode=NXDOMAIN"], "stdout": ["send to ops-archive@acme-internal.com failed: name not resolved (gaierror)"], "write": [], "exit": 0}

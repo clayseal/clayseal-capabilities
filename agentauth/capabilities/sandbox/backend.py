@@ -2,7 +2,7 @@
 
 iVisor is the first substrate that can enforce a Clay Seal envelope at the
 syscall boundary, but it is macOS/Apple-Silicon-only. Resolving the backend by
-name — the same shape ``default_biscuit_backend`` uses for capability tokens —
+name, the same shape ``default_biscuit_backend`` uses for capability tokens
 keeps that a deployment choice rather than a hard-coded dependency: a Linux
 deployment can register a gVisor or seccomp backend under the same Protocol and
 every caller above this line is unchanged.
