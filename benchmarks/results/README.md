@@ -74,7 +74,41 @@ extracted rule naming the wrong tool is worse than a TODO: a TODO asks a
 reviewer a question and a wrong binding answers it.
 ## Provenance
 
-`python -m benchmarks.check_claims` is a CI gate. Every result file carries a
-`STATUS:` line and the command that regenerates it, and the gate gives a
-containment figure no standing without the cost beside it. `SEND_PACKET.md` is a
+`python -m benchmarks.check_claims` is a CI gate. It gives a containment figure
+no standing without the cost beside it, and `SEND_PACKET.md` is a
 forbidden-claims list checked literally.
+
+### What is NOT reproducible from a command
+
+This section used to say every result file carries a `STATUS:` line and the
+command that regenerates it. That is not true, and the gate has been counting
+the exceptions the whole time:
+
+```
+$ python -m benchmarks.check_claims
+results files          105
+stamped with STATUS     66
+neither cmd nor status  23   baseline 23
+bare zeros (total)     354   baseline 354
+```
+
+**23 of the 105 files carry numbers with neither a reproduction command nor a
+status stamp.** They are working records of runs that happened, kept because
+deleting a measurement because it is inconvenient to re-derive is worse than
+publishing it with a caveat. But they are not evidence you can check, and they
+should not be read as though they were. `why_we_fail.md` is the one to know
+about, because THREAT_MODEL.md cites it for the 6.3% content-defined-harm
+figure.
+
+The **five headline results at the top of this file are not in that set.** Each
+lists the command beside it, and those commands were re-run against this commit.
+
+The `baseline` numbers are a ratchet: `check_claims` fails if either count goes
+up, so the debt can shrink and cannot grow. That is the mechanism, and it is
+weaker than "everything reproduces". Read the gate's output rather than this
+paragraph if the two ever disagree again.
+
+**354 bare zeros** are zeros printed without the upper bound that belongs beside
+them. A zero over 12 trials and a zero over 132 are different evidence, and the
+headline tables write both (`0/132, 97.5% upper bound 2.8%`). The 354 are in
+files that do not.
