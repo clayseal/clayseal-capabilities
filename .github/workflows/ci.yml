@@ -52,6 +52,13 @@ jobs:
       - name: Run tests
         run: pytest python/tests -q
 
+      # `demo/` is the first thing a new reader runs, and its 39 tests were in no
+      # gate at all. They take twelve seconds. The demo's pure modules must also
+      # import with `rich` absent, which installing only [dev] is what enforces,
+      # so running them here rather than under [demo] is deliberate.
+      - name: Run the demo tests
+        run: pytest demo/tests -q
+
   # The wheel has to work as a wheel. `deployable_stack.py` imported
   # `benchmarks.core.detector_eval` from inside a method, fine in the checkout,
   # ModuleNotFoundError in every real install, and invisible to the layering step
