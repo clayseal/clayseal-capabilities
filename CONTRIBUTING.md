@@ -7,7 +7,7 @@ git clone https://github.com/pberlizov/clayseal.git
 cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest python/tests -q          # ~1,650 tests, under 20 seconds
+pytest python/tests -q          # 2,300+ tests, under a minute
 ruff check clayseal
 ```
 
