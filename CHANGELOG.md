@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Audit: credentials, and the ignore rule that let a virtualenv in
+
+**No credential is committed anywhere, in the working tree or in any history.**
+Seven credential-shaped strings exist and all seven are synthetic: two are the
+vendors' own documented examples (`AKIAIOSFODNN7EXAMPLE`,
+`ghp_16C7e42F292c6912E7710c838347Ae178B4a`), the rest are sequential or
+placeholder test fixtures. No PEM block with key material appears in any commit
+reachable from any ref. No `.env`, `.netrc`, `.pem` or credential-shaped
+filename is tracked.
+
+The personal-looking email addresses in `benchmarks/` are third-party corpus
+fixtures: AgentDojo's `bluesparrowtech.com` personas and AgentHarm's targets,
+synthetic by construction. Every non-reserved IP address traces to a benchmark
+result or a recorded trace.
+
+**`.gitignore` would not have stopped the accident it just cost 1.5 million
+lines to undo.** `venv/` matched `venv` and not `venv312`, and `env`, `ENV`,
+`.virtualenv` and `node_modules` were not covered at all. They are now. The
+exact directory that was committed, `.venv-h2h`, was already caught by
+`.venv*/`; the names around it were not.
+
+
 ### Public-benchmark coverage
 
 - **A control for event ORDER, because four corpora could be beaten by

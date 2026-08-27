@@ -123,6 +123,12 @@ class Policy:
     value_budget: SessionValueBudget | None = None
     call_budget: SessionCallBudget | None = None
     allowed_tools: set[str] | None = None
+    #: `tools.patterns`: an opt-in glob surface over tool names, UNIONed with
+    #: `allowed_tools`. `SessionBroker.tool_patterns` has enforced this since
+    #: the pattern work landed and only the benchmark harness could set it, so
+    #: the held-out friction result in `generalisation.md` was measured against
+    #: a mechanism no policy document could reach. This is the reach.
+    tool_patterns: list[str] | None = None
     #: Compiled `tools.when`: conditional withdrawals from `allowed_tools`.
     conditional_tools: Any = None
     #: Tools the author asserts have no side effect worth counting. The mandate
@@ -188,6 +194,7 @@ class Policy:
             "value_budget": self.value_budget,
             "call_budget": self.call_budget,
             "allowed_tools": self.allowed_tools,
+            "tool_patterns": self.tool_patterns,
             "conditional_tools": self.conditional_tools,
             "declared_harmless": set(self.harmless_tools) or None,
         }
@@ -536,11 +543,14 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
 
     tools_raw = raw.get("tools")
     allowed_tools: set[str] | None = None
+    tool_patterns: list[str] | None = None
     harmless: frozenset[str] = frozenset()
     tool_verbs: dict[str, str] = {}
     if isinstance(tools_raw, dict):
         if tools_raw.get("allow") is not None:
             allowed_tools = {str(t) for t in _as_list(tools_raw["allow"], "tools.allow")}
+        if tools_raw.get("patterns") is not None:
+            tool_patterns = _tool_patterns_from(tools_raw["patterns"])
         harmless = frozenset(
             str(t) for t in _as_list(tools_raw.get("harmless"), "tools.harmless")
         )
@@ -551,7 +561,8 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
                 f"Declaring a tool harmless that the agent cannot reach hides a "
                 f"typo as an assertion."
             )
-        tool_verbs = _verbs_from(tools_raw.get("effects"), allowed_tools)
+        tool_verbs = _verbs_from(tools_raw.get("effects"), allowed_tools,
+                                 patterns=tool_patterns)
     elif isinstance(tools_raw, list):
         allowed_tools = {str(t) for t in tools_raw}
 
@@ -573,6 +584,7 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
         value_budget=value_budget,
         call_budget=call_budget,
         allowed_tools=allowed_tools,
+        tool_patterns=tool_patterns,
         conditional_tools=_tool_guards_from(tools_raw, allowed_tools),
         harmless_tools=harmless,
         tool_verbs=tool_verbs,
@@ -599,7 +611,8 @@ _PUBLIC_SUFFIXES = frozenset({
 })
 
 
-def _verbs_from(raw: Any, allowed_tools: set[str] | None) -> dict[str, str]:
+def _verbs_from(raw: Any, allowed_tools: set[str] | None, *,
+                patterns: list[str] | None = None) -> dict[str, str]:
     if raw is None:
         return {}
     if not isinstance(raw, dict):
@@ -616,12 +629,74 @@ def _verbs_from(raw: Any, allowed_tools: set[str] | None) -> dict[str, str]:
                 f"{sorted(KNOWN_VERBS)}"
             )
         out[str(tool)] = verb
-    stray = sorted(set(out) - (allowed_tools or set(out)))
+    covered = set(allowed_tools or set(out))
+    if patterns:
+        import fnmatch
+
+        covered |= {t for t in out
+                    if any(fnmatch.fnmatch(t, p) for p in patterns)}
+    stray = sorted(set(out) - covered)
     if stray:
         raise PolicyError(
-            f"tools.effects names tools that are not in tools.allow: {stray}"
+            f"tools.effects names tools that are not in tools.allow "
+            f"or matched by tools.patterns: {stray}"
         )
     return out
+
+
+#: A pattern this broad grants the whole catalog and makes the section
+#: decorative, the same failure `path-scope-universal` exists to stop one
+#: dimension over. Refused at compile time rather than warned about, because a
+#: grant nobody can read is not reviewable and this is the field whose entire
+#: purpose is to be read in a pull request.
+_UNIVERSAL_TOOL_PATTERNS = {"*", "**", "?*", "*?"}
+
+
+def _tool_patterns_from(value: Any) -> list[str]:
+    """Parse `tools.patterns`, an OPT-IN glob surface over tool names.
+
+    ## Why this exists, and why it is a separate field
+
+    `SessionBroker.tool_patterns` has been enforced since the pattern work
+    landed (`broker.py`, fnmatch against the granted set) and was reachable only
+    from the benchmark harness: `benchmarks/core/patterns.py` built it,
+    `stack_factory` passed it, and no policy document could say it. So the
+    largest friction result in the project, held-out false blocks falling from
+    47.91% to 0.05% on tau2 once a grant is written as patterns rather than as
+    the instance list a logger produces, was measured against a mechanism a user
+    could not deploy. See `benchmarks/results/generalisation.md`.
+
+    It is `tools.patterns` and not a glob inside `tools.allow` for two reasons.
+    A name in `allow` stays a literal, so no existing document changes meaning,
+    and a tool genuinely called `get_*` is still grantable. And a reviewer
+    reading a diff sees the field whose contents need scrutiny, rather than
+    having to notice a metacharacter inside a list of names.
+
+    Patterns UNION with `allow`; they widen, never narrow. That is the correct
+    semantics for a grant and it is exactly why the universal forms are refused
+    here and why `policy lint` reports what a pattern admits against a catalog
+    when it knows one.
+    """
+    patterns = [str(p).strip() for p in _as_list(value, "tools.patterns")]
+    empty = [p for p in patterns if not p]
+    if empty:
+        raise PolicyError("tools.patterns contains an empty pattern")
+    universal = sorted(p for p in patterns if p in _UNIVERSAL_TOOL_PATTERNS)
+    if universal:
+        raise PolicyError(
+            f"tools.patterns contains a universal pattern {universal}, which "
+            f"grants every tool the agent can reach and makes tools.allow "
+            f"decorative. Name the surface, or drop the tools section and let "
+            f"`no-tool-allowlist` say plainly that nothing is scoped."
+        )
+    literal = sorted(p for p in patterns if not any(c in p for c in "*?["))
+    if literal:
+        raise PolicyError(
+            f"tools.patterns contains entries with no wildcard: {literal}. "
+            f"A literal name belongs in tools.allow, where a reader can see it "
+            f"is one tool and not a family."
+        )
+    return patterns
 
 
 def _as_list(value: Any, where: str) -> list[Any]:
