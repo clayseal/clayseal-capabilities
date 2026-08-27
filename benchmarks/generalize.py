@@ -94,6 +94,33 @@ def _fmt(x, pct=True):
     return f"{100 * x:.2f}%" if pct else f"{x}"
 
 
+def resource_dimension_is_independent(tasks) -> bool:
+    """Does this corpus name resources as something other than its tools?
+
+    `patterns.generalize_task` routes BOTH the tool and the resource dimension
+    off `tool_level`, justified in its docstring by "they are 1:1 in every
+    loader that names resources `mcp:tool:<tool>`". That condition is stated and
+    never checked, and it is false for 8 of the 18 corpora in the registry:
+    agent_threat_bench, agentharm, agentleak, b3, ipi_coding, mind2web_sc,
+    redcode and sleight all name resources on an axis of their own.
+
+    Where it is false, `--typed tool` silently varies the resource dimension too,
+    so a result read off that column as a fact about TOOL patterns may be a fact
+    about resource patterns instead.
+
+    Mind2Web-SC is the case that proves it matters. Its tools are `click`,
+    `select` and `type`, granted identically in every task, so the tool dimension
+    cannot carry any signal at all; its containment is entirely `web:car` vs
+    `web:media`. It reads as 98% to 0% under a `tool+verb` sweep. Generalise the
+    tools and verbs while pinning resources and it is **98.0%, unchanged**.
+    """
+    events = [e for t in tasks for e in t.events][:400]
+    if not events:
+        return False
+    matched = sum(1 for e in events if e.resource == f"mcp:tool:{e.tool_name}")
+    return matched / len(events) < 0.99
+
+
 def sweep(corpora, levels, *, seed: int = 0, paths_from_traffic: bool = False,
           typed: str | None = None, check_ladder: bool = False) -> dict:
     """``typed`` = 'tool' | 'path' | 'verb' varies one dimension, pinning the rest."""
@@ -106,6 +133,8 @@ def sweep(corpora, levels, *, seed: int = 0, paths_from_traffic: bool = False,
             out[name] = {"error": str(exc)[:120]}
             continue
         rows = {}
+        confounded = (typed in ("tool", "tool+verb")
+                      and resource_dimension_is_independent(cache[name]))
         for lvl in levels:
             tl = lvl if typed in (None, "tool", "tool+verb", "all") else 0
             pl = lvl if typed in (None, "path", "all") else 0
@@ -115,6 +144,8 @@ def sweep(corpora, levels, *, seed: int = 0, paths_from_traffic: bool = False,
                 seed=seed, paths_from_traffic=paths_from_traffic,
                 check_ladder=check_ladder)
         out[name] = rows
+        if confounded:
+            out[name]["_confounded"] = True
     return out
 
 
@@ -134,6 +165,12 @@ def render(results: dict, levels, title: str) -> str:
                 f"{_fmt(r['contained']):>11}{_fmt(r['fb_granted']):>13}"
                 f"{_fmt(r['fb_heldout']):>14}"
             )
+        if rows.get("_confounded"):
+            lines.append(
+                f"{'':<20}^ CONFOUNDED: this corpus names resources on an axis of "
+                f"its own, and\n{'':<20}  tool_level drives the resource dimension "
+                f"too, so these rows are\n{'':<20}  NOT a tool-dimension result. "
+                f"See resource_dimension_is_independent.")
         lines.append("")
     return "\n".join(lines)
 

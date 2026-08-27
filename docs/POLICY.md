@@ -137,21 +137,32 @@ session used, from the same catalog, that landed in the unobserved half. Writing
 the grant as patterns takes that to **0.05%**. See
 [generalisation.md](../benchmarks/results/generalisation.md).
 
-**When not to use it.** This is a real trade and one corpus makes it vivid.
-Generalising the tool grant to a namespace:
+**What it costs.** Generalising the tool grant to a namespace:
 
 | corpus | held-out false-block | containment |
 | --- | --- | --- |
 | AgentHarm | 55.56% → **0.82%** | 27.16% → 25.86% |
 | RedCode | unchanged | 99.86% → 99.86% |
-| **Mind2Web-SC** | — | **98.00% → 0.00%** |
 
-Mind2Web-SC collapses because its containment *is* the exact resource, minted
-from the principal's attested attributes: generalising the grant admits
-everything. If your containment rests on naming exact instances, patterns will
-take it away. If your friction comes from a grant that could not enumerate
-tomorrow's legitimate call, they will fix it. Know which you have before you
-write one.
+A point and a third of containment for fifty-five points of friction, on the
+corpus where the grant could not enumerate tomorrow's legitimate call. On
+RedCode, where containment comes from the path a call touches rather than from
+which tool it is, the tool dimension moves nothing in either direction.
+
+**When not to use it.** When your containment rests on *which specific tool*
+was called rather than on what it touches. A pattern cannot tell
+`get_reservation` from `get_all_reservations`; if that distinction is what
+stands between the agent and the data, name the tools.
+
+The sharper version of that risk lives on the **resource** dimension, and it is
+why `resources` takes no patterns. Mind2Web-SC's containment is entirely
+`web:car` versus `web:media`, an exact-resource grant: generalise the resource
+dimension to the surface its peers touched and containment goes 98.00% to
+0.00%, because some other legitimate session used the category this one is
+attacking. Its tools are `click`, `select` and `type`, granted identically
+everywhere, so generalising *tools* on that corpus costs exactly nothing
+(measured: 98.0%, unchanged). Tool patterns are safe there; resource patterns
+would be catastrophic, which is the reason only one of the two is offered.
 
 **Guards.** A universal pattern (`*`, `**`) is refused at compile time, the same
 rule `paths.allow` carries: a grant of everything is not reviewable. An entry

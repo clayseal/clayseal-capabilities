@@ -164,3 +164,57 @@ def test_the_control_does_not_win_where_the_grant_actually_discriminates():
     results = run_benchmark(tasks, engines)
     assert results["position-only-control"].attack_prevention_rate == 0.0
     assert results["task-scope"].attack_prevention_rate > 0.9
+
+
+# --------------------------------------------------------------------------- #
+# The other axis a sweep can silently vary: which DIMENSION moved.
+# --------------------------------------------------------------------------- #
+def test_the_tool_sweep_declares_when_it_is_really_moving_resources():
+    """`tool_level` drives the resource dimension too, on a stated assumption.
+
+    `patterns.generalize_task` says the two are "1:1 in every loader that names
+    resources `mcp:tool:<tool>`". Nothing checked it and it is false for 8 of
+    the 18 registered corpora, so `--typed tool` varied resources on those and
+    the result read as a tool-dimension finding.
+    """
+    from benchmarks.generalize import resource_dimension_is_independent
+
+    assert resource_dimension_is_independent(_load("mind2web_sc")) is True
+    assert resource_dimension_is_independent(_load("agentdojo")) is False
+
+
+def test_generalising_mind2web_tools_costs_nothing():
+    """The correction, pinned.
+
+    Mind2Web-SC reads as 98.00% to 0.00% under a `tool+verb` sweep and was cited
+    as the decisive counterexample for TOOL generalisation. Its tools are
+    `click`, `select` and `type`, granted identically in every task, so the tool
+    dimension cannot carry signal. Pin resources and the collapse disappears
+    entirely, which relocates the counterexample to the resource dimension,
+    where it is the reason `resources` in a policy document takes no patterns.
+    """
+    import dataclasses
+
+    import benchmarks.core.patterns as P
+    from benchmarks.core.engines import build_engines
+    from benchmarks.core.runner import run_benchmark
+
+    tasks = _load("mind2web_sc")
+    calib, _ = P.calibration_indices(tasks, 0)
+    ns = P.namespace_from(tasks, calib)
+
+    pinned = []
+    for t in tasks:
+        g = P.generalize_task(t, tool_level=P.NAMESPACE, path_level=P.EXACT,
+                              verb_level=P.NAMESPACE, namespaces=ns)
+        # Restore the exact resource grant; tools and verbs stay generalised.
+        pinned.append(dataclasses.replace(g, resource_patterns=None,
+                                          mandate=t.mandate))
+
+    rung = "task-scope+binding+budget"
+    def contained(ts):
+        engines = [e for e in build_engines() if e.name == rung]
+        return run_benchmark(ts, engines)[rung].attack_prevention_rate
+
+    assert contained(tasks) == pytest.approx(0.98)
+    assert contained(pinned) == pytest.approx(0.98)
