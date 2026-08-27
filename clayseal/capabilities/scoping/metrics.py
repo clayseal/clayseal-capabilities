@@ -22,8 +22,17 @@ Performance metrics:
 from __future__ import annotations
 
 import statistics
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
+
+#: How many recent overhead samples the percentiles are taken over.
+#:
+#: 2,048 floats is about 16 KB per session and one `sorted()` of it is well under
+#: a millisecond, off the decision path. The bound matters more than the exact
+#: number: before it, a gateway running for a day held one float per
+#: authorization forever and re-sorted all of them on every read.
+OVERHEAD_SAMPLE_WINDOW = 2048
 
 
 @dataclass
@@ -59,7 +68,31 @@ class ScopingMetrics:
     novelty_triggers: int = 0
     first_edit_action: int | None = None
     first_block_action: int | None = None
-    _overhead_samples: list[float] = field(default_factory=list)
+    #: The recent overhead samples the percentiles are taken over.
+    #:
+    #: This was an unbounded `list`, appended once per authorization and sorted
+    #: in full on every read of `broker_overhead_p95_ms` — which `summary()`
+    #: reads alongside the median, so a summary sorted the whole session twice.
+    #: In a long-lived gateway that is a leak in the module whose job is
+    #: measuring cost, and an O(n log n) read that grows with the session.
+    #:
+    #: A `deque` with `maxlen` bounds it in the same shape `DecisionLog` uses for
+    #: its records. The percentiles become "over the last
+    #: `OVERHEAD_SAMPLE_WINDOW` decisions" rather than over the session, which is
+    #: the honest trade and is why the exact counters below exist: a slow first
+    #: minute of a ten-hour session leaves the percentiles but stays visible in
+    #: `broker_overhead_max_ms` and the mean.
+    _overhead_samples: deque[float] = field(
+        default_factory=lambda: deque(maxlen=OVERHEAD_SAMPLE_WINDOW))
+    #: Exact over the whole session, never evicted. `max` is the number that
+    #: actually matters against a p95 ceiling and was not reported at all before.
+    overhead_count: int = 0
+    overhead_sum_ms: float = 0.0
+    overhead_max_ms: float = 0.0
+    #: Samples dropped from the window, so a reader can see that the percentiles
+    #: are over a window without having to infer it. Same purpose as
+    #: `DecisionLog.evicted`.
+    overhead_evicted: int = 0
 
     def record_action(
         self,
@@ -71,7 +104,12 @@ class ScopingMetrics:
     ) -> None:
         self.total_actions += 1
         if overhead_ms > 0:
+            if len(self._overhead_samples) == self._overhead_samples.maxlen:
+                self.overhead_evicted += 1
             self._overhead_samples.append(overhead_ms)
+            self.overhead_count += 1
+            self.overhead_sum_ms += overhead_ms
+            self.overhead_max_ms = max(self.overhead_max_ms, overhead_ms)
 
         if blocked:
             self.blocked_actions += 1
@@ -152,6 +190,13 @@ class ScopingMetrics:
         idx = int(len(sorted_samples) * 0.95)
         return sorted_samples[min(idx, len(sorted_samples) - 1)]
 
+    @property
+    def broker_overhead_mean_ms(self) -> float:
+        """Exact over the whole session, unlike the percentiles above."""
+        if not self.overhead_count:
+            return 0.0
+        return self.overhead_sum_ms / self.overhead_count
+
     def summary(self) -> dict[str, Any]:
         return {
             "goal_id": self.goal_id,
@@ -181,8 +226,16 @@ class ScopingMetrics:
             "actions_before_first_block": (
                 (self.first_block_action - 1) if self.first_block_action else self.total_actions
             ),
+            # The percentiles are over the last `OVERHEAD_SAMPLE_WINDOW`
+            # decisions. `overhead_samples` and `overhead_evicted` say so in the
+            # payload, so a reader does not have to know that to read them, and
+            # the mean and max are exact over the whole session.
             "broker_overhead_p50_ms": round(self.broker_overhead_p50_ms, 2),
             "broker_overhead_p95_ms": round(self.broker_overhead_p95_ms, 2),
+            "broker_overhead_mean_ms": round(self.broker_overhead_mean_ms, 2),
+            "broker_overhead_max_ms": round(self.overhead_max_ms, 2),
+            "overhead_samples": len(self._overhead_samples),
+            "overhead_evicted": self.overhead_evicted,
         }
 
 
