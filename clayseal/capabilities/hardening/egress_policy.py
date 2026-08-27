@@ -13,6 +13,7 @@ refused, so an unbound send tool cannot quietly egress.
 """
 from __future__ import annotations
 
+import ipaddress
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -70,6 +71,106 @@ _LABEL_CHARS = frozenset(
 MAX_SCAN_CHARS = 16_384
 
 
+def _to_ascii_host(host: str) -> str:
+    """A non-ASCII host as the punycode a resolver would actually look up.
+
+    An allow-list holds ASCII. A destination written in another script never
+    equals an entry on it, and the label grammar below rejects it outright, so
+    before this the host was not *denied*, it was not *seen*: `x@аttacker.com`
+    with a Cyrillic first letter yielded no destination at all, and an action
+    carrying no destination passes the egress check by construction.
+
+    Encoding here puts the two spellings in the same alphabet, so a homograph is
+    compared against the allow-list rather than skipping it.
+
+    Returns the input unchanged when it is already ASCII or cannot be encoded;
+    an unencodable host stays visible as itself rather than vanishing.
+    """
+    if host.isascii():
+        return host
+    try:
+        return host.encode("idna").decode("ascii")
+    except (UnicodeError, UnicodeDecodeError):
+        return host
+
+
+def _ip_literal(token: str) -> str | None:
+    """`token` as a canonical IP address, or None if it is not one.
+
+    Accepts the notations an HTTP client accepts and an allow-list does not
+    think about: dotted quad, bracketed IPv6, and the integer and hexadecimal
+    forms of an IPv4 address. `http://3405803781/` and `http://0xCB00710D/` are
+    both fetched by curl and by every library that hands the host to the
+    resolver, so a filter that reads only the dotted form is reading a spelling
+    rather than an address.
+
+    Canonicalising rather than merely detecting is the point: it returns
+    `203.0.113.5` for every spelling of it, so allow-listing that address once
+    covers all of them, and denying it cannot be dodged by changing base.
+    """
+    t = token.strip()
+    if not t:
+        return None
+    if t.startswith("[") and t.endswith("]"):
+        t = t[1:-1]
+    try:
+        return str(ipaddress.ip_address(t))
+    except ValueError:
+        pass
+    return _inet_aton(t)
+
+
+def _inet_aton_part(part: str) -> int | None:
+    """One `inet_aton` component: hex `0x..`, octal `0..`, or decimal.
+
+    `ipaddress` rejects a leading zero as ambiguous, which is the right call for
+    a parser that has to produce one answer. A filter has the opposite problem:
+    the resolver WILL produce an answer, and reading the octet as decimal when
+    the C library reads it as octal is how `0313.0.0161.05` reaches an address
+    the allow-list never saw.
+    """
+    if not part:
+        return None
+    low = part.lower()
+    try:
+        if low.startswith("0x"):
+            return int(low, 16)
+        if low.startswith("0") and len(low) > 1:
+            return int(low, 8)
+        return int(low, 10)
+    except ValueError:
+        return None
+
+
+def _inet_aton(text: str) -> str | None:
+    """`text` as dotted IPv4 under `inet_aton` rules, or None.
+
+    One to four parts, each decimal, octal or hex, with the last absorbing the
+    remaining bytes. This is what `curl http://3405803781/` and
+    `curl http://0313.0.0161.05/` both resolve to, and both are 203.0.113.5.
+    """
+    parts = text.split(".")
+    if not 1 <= len(parts) <= 4:
+        return None
+    values = [_inet_aton_part(p) for p in parts]
+    if any(v is None or v < 0 for v in values):
+        return None
+    # Every part but the last is one byte; the last absorbs what is left.
+    if any(v > 0xFF for v in values[:-1]):
+        return None
+    tail_bytes = 4 - (len(values) - 1)
+    if values[-1] >= (1 << (8 * tail_bytes)):
+        return None
+    packed = 0
+    for v in values[:-1]:
+        packed = (packed << 8) | v
+    packed = (packed << (8 * tail_bytes)) | values[-1]
+    try:
+        return str(ipaddress.ip_address(packed))
+    except (ValueError, OverflowError):
+        return None
+
+
 def _is_hostname(token: str, *, require_bare_tld: bool = False) -> bool:
     """Is this token a hostname? One pass, no backtracking."""
     if not token or len(token) > 253 or ".." in token:
@@ -107,14 +208,30 @@ def _hosts_in(text: str, *, bare: bool) -> set[str]:
             authority = raw.split("://", 1)[1]
             for cut in ("/", "?", "#"):
                 authority = authority.split(cut, 1)[0]
-            host = authority.rsplit("@", 1)[-1].split(":", 1)[0].strip(".")
-            if _is_hostname(host):
+            authority = authority.rsplit("@", 1)[-1]
+            # IPv6 keeps its colons; everything else drops a port.
+            if authority.startswith("["):
+                host, _, _ = authority.partition("]")
+                host = host + "]"
+            else:
+                host = authority.split(":", 1)[0]
+            host = host.strip(".")
+            # A URL authority is unambiguously a destination, so an IP literal
+            # in any notation and a single-label host both count here. Outside a
+            # URL they stay out, where they would be prose or a username.
+            literal = _ip_literal(host)
+            if literal is not None:
+                out.add(literal)
+            elif _is_hostname(_to_ascii_host(host)):
+                out.add(_to_ascii_host(host).lower())
+            elif host and _LABEL_CHARS.issuperset(host):
                 out.add(host.lower())
             continue
         token = raw.strip(".")
         if "@" in token:
             for part in token.split("@")[1:]:
                 host = part.split("/", 1)[0].split(":", 1)[0].strip(".")
+                host = _to_ascii_host(host)
                 if _is_hostname(host):
                     out.add(host.lower())
             continue
@@ -297,12 +414,45 @@ def _hostname_of(value: str) -> str | None:
     hosts. Scheme, path, query, fragment and port are removed here.
     """
     s = value.strip()
-    if not s or " " in s or "@" in s:
+    if not s or " " in s:
         return None
-    if "://" in s:
+
+    # An address resolves to the host after its LAST `@`, which is where a
+    # mailer delivers. Returning None here meant a destination field holding an
+    # address whose host the blob scan could not read (a non-ASCII one) produced
+    # no destination from either path.
+    if "@" in s:
+        s = s.rsplit("@", 1)[-1]
+        if not s:
+            return None
+
+    had_scheme = "://" in s
+    if had_scheme:
         s = s.split("://", 1)[1]
-    s = re.split("[/?#]", s, maxsplit=1)[0].split(":", 1)[0]
+    s = re.split("[/?#]", s, maxsplit=1)[0]
+
+    # Bracketed IPv6 carries colons that are part of the address, so the port
+    # split below has to happen outside the brackets or it truncates the host.
+    if s.startswith("["):
+        host, _, _ = s.partition("]")
+        s = host + "]"
+    else:
+        s = s.split(":", 1)[0]
+    if not s:
+        return None
+
+    literal = _ip_literal(s)
+    if literal is not None:
+        return literal
+
+    s = _to_ascii_host(s)
     if "." in s:
+        return s.lower()
+    # A single-label value is a host only when it was written as a URL.
+    # `http://intranet/x` names a destination; a bare `bob` in a `to` field is a
+    # username, and `extract_recipients` is what binds those. Treating the two
+    # alike would refuse legitimate work rather than close anything.
+    if had_scheme:
         return s.lower()
     return None
 
