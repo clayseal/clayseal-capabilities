@@ -28,11 +28,19 @@ from collections import Counter, defaultdict
 
 from agentdojo.attacks import load_attack
 from agentdojo.benchmark import (
-    get_suite, run_task_with_injection_tasks, run_task_without_injection_tasks)
+    get_suite,
+    run_task_with_injection_tasks,
+    run_task_without_injection_tasks,
+)
 from agentdojo.logging import OutputLogger
 
 from benchmarks.live.run_agentdojo import (
-    LLMPlanner, OraclePlanner, _BENCH_VERSION, _oracle_map, build_pipeline)
+    _BENCH_VERSION,
+    LLMPlanner,
+    OraclePlanner,
+    _oracle_map,
+    build_pipeline,
+)
 
 
 def _gt_map(suite, ids, tasks):

@@ -13,7 +13,7 @@ from benchmarks.core.engines import build_engines
 from benchmarks.core.events import EventLabel
 
 pytest.importorskip("benchmarks.burst")
-from benchmarks.burst import build_sessions, evaluate  # noqa: E402
+from benchmarks.burst import build_sessions, evaluate
 
 
 def _available(corpus: str):

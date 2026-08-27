@@ -30,19 +30,18 @@ import random
 import sys
 from pathlib import Path
 
-from clayseal.capabilities.monitor.action import Trajectory
-from clayseal.capabilities.monitor.scoring.base import ScoredStep
-from clayseal.capabilities.monitor.conformal import (
-    ConformalCalibrator,
-    MondrianConformal,
-)
-from clayseal.capabilities.monitor.scoring.ngram import NGramScorer
-from clayseal.capabilities.monitor.scoring.target import TargetDensityScorer
-
 from benchmarks.core.detector_eval import task_to_trajectories
 from benchmarks.core.events import EventLabel
 from benchmarks.core.opmetrics import ScoreReport, render
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.monitor.action import Trajectory
+from clayseal.capabilities.monitor.conformal import (
+    ConformalCalibrator,
+    MondrianConformal,
+)
+from clayseal.capabilities.monitor.scoring.base import ScoredStep
+from clayseal.capabilities.monitor.scoring.ngram import NGramScorer
+from clayseal.capabilities.monitor.scoring.target import TargetDensityScorer
 
 DEFAULT_CORPORA = ["redcode", "sleight", "atif", "tau2", "bfcl", "toolemu"]
 
@@ -60,7 +59,7 @@ class ConstantScorer:
 
     name = "deny-all"
 
-    def fit(self, trajectories: list[Trajectory]) -> "ConstantScorer":
+    def fit(self, trajectories: list[Trajectory]) -> ConstantScorer:
         return self
 
     def surprise(self, traj: Trajectory) -> list[ScoredStep]:
@@ -87,7 +86,7 @@ class PositionScorer:
 
     name = "position"
 
-    def fit(self, trajectories: list[Trajectory]) -> "PositionScorer":
+    def fit(self, trajectories: list[Trajectory]) -> PositionScorer:
         return self
 
     def surprise(self, traj: Trajectory) -> list[ScoredStep]:
@@ -115,7 +114,7 @@ class LengthScorer:
 
     name = "length"
 
-    def fit(self, trajectories: list[Trajectory]) -> "LengthScorer":
+    def fit(self, trajectories: list[Trajectory]) -> LengthScorer:
         return self
 
     def surprise(self, traj: Trajectory) -> list[ScoredStep]:
@@ -137,7 +136,7 @@ class SumScorer:
         self.seq = NGramScorer()
         self.tgt = TargetDensityScorer()
 
-    def fit(self, trajectories: list[Trajectory]) -> "SumScorer":
+    def fit(self, trajectories: list[Trajectory]) -> SumScorer:
         self.seq.fit(trajectories)
         self.tgt.fit(trajectories)
         return self
@@ -177,7 +176,7 @@ class ConformalCombinedScorer:
         self.channels = {"seq": NGramScorer(), "tgt": TargetDensityScorer()}
         self.calibrators: dict[str, ConformalCalibrator] = {}
 
-    def fit(self, trajectories: list[Trajectory]) -> "ConformalCombinedScorer":
+    def fit(self, trajectories: list[Trajectory]) -> ConformalCombinedScorer:
         n = len(trajectories)
         cut = max(1, int(n * (1 - self.cal_frac))) if n > 1 else n
         fit_set, cal_set = trajectories[:cut], trajectories[cut:] or trajectories[:1]
@@ -241,7 +240,7 @@ class ProvenanceStratifiedScorer:
     def _stratum(action) -> str:
         return "tainted" if action.derived_from else "clean"
 
-    def fit(self, trajectories: list[Trajectory]) -> "ProvenanceStratifiedScorer":
+    def fit(self, trajectories: list[Trajectory]) -> ProvenanceStratifiedScorer:
         n = len(trajectories)
         cut = max(1, int(n * (1 - self.cal_frac))) if n > 1 else n
         fit_set, cal_set = trajectories[:cut], trajectories[cut:] or trajectories[:1]

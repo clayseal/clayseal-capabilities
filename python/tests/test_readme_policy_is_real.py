@@ -19,7 +19,7 @@ def _first_yaml_block() -> str:
     readme = ROOT / "README.md"
     if not readme.exists():
         pytest.skip("README.md not present")
-    blocks = re.findall(r"```yaml\n(.*?)```", readme.read_text(), re.S)
+    blocks = re.findall(r"```yaml\n(.*?)```", readme.read_text(), re.DOTALL)
     if not blocks:
         pytest.skip("no yaml block in README.md")
     return blocks[0]

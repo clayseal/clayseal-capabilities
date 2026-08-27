@@ -11,14 +11,13 @@ import threading
 import time
 from pathlib import Path
 
+import arena
 from rich.align import Align
 from rich.console import Group
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
-
-import arena
 
 # palette (mirrors report.html)
 ACCENT = "#35b6a8"
@@ -190,7 +189,8 @@ def run_live(scen, ivdir: Path) -> None:
     from rich.console import Console
     console = Console()
     # pre-build silently so cargo can never paint over the live layout
-    import subprocess, os
+    import os
+    import subprocess
     subprocess.run(["cargo", "build", "-q", "-p", "ivisor", "--bin", "ivisor"],
                    cwd=ivdir, env=dict(os.environ), check=True, capture_output=True)
 

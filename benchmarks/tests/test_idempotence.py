@@ -10,8 +10,9 @@ from __future__ import annotations
 import pytest
 
 pytest.importorskip("benchmarks.idempotence")
-from benchmarks.idempotence import (  # noqa: E402
-    _velocity_on_duplicates, evaluate,
+from benchmarks.idempotence import (
+    _velocity_on_duplicates,
+    evaluate,
 )
 
 
@@ -102,14 +103,13 @@ def test_verification_refuses_by_default_without_a_replay_store(monkeypatch):
     applied in a deployment that had set CLAYSEAL_ENV. Asserting on behaviour
     with the variable unset is the check that would have failed then.
     """
+    from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
     from clayseal.core.runtime import (
         ActionDescriptor,
         AuthorityContext,
         ExecutionContext,
     )
     from clayseal.core.signing import generate_keypair
-
-    from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
 
     monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)

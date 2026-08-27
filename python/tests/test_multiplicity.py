@@ -227,7 +227,7 @@ def test_the_deviation_is_its_own_kind():
 # --------------------------------------------------------------------------- #
 # The optional inferrer
 # --------------------------------------------------------------------------- #
-from clayseal.capabilities.monitor.multiplicity import (  # noqa: E402
+from clayseal.capabilities.monitor.multiplicity import (
     bounded_multiplicity,
     default_multiplicity_inferrer,
     llm_multiplicity_inferrer,

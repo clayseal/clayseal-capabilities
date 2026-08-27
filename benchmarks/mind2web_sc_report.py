@@ -33,7 +33,11 @@ from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 from benchmarks.datasets.mind2web_sc import (
-    OPERATIONS, RULES, UNREGULATED, VIOLATION_FOR, eligible_categories,
+    OPERATIONS,
+    RULES,
+    UNREGULATED,
+    VIOLATION_FOR,
+    eligible_categories,
 )
 
 LADDER = [
@@ -103,14 +107,14 @@ def _categoriser_audit(tasks) -> None:
     print(f"categoriser recall on the {total} denied rows: "
           f"{hit}/{total} = {100 * hit / total:.1f}%")
     for (rule, found), n in sorted(by_rule.items()):
-        print(f"    {rule:<9} found={str(found):<5} n={n}")
+        print(f"    {rule:<9} found={found!s:<5} n={n}")
     print("  rows the corpus denies that the categoriser filed elsewhere:")
     for want, got, summary in misses:
         print(f"    want={want:<9} got={got:<9} {summary[:74]}")
     print("  allow rows the categoriser placed under a rule "
           "(ok = principal satisfies it):")
     for (rule, ok), n in sorted(overfire.items()):
-        print(f"    {rule:<9} eligible={str(ok):<5} n={n}")
+        print(f"    {rule:<9} eligible={ok!s:<5} n={n}")
 
 
 def _oracle_ceiling(tasks) -> None:

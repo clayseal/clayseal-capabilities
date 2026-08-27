@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import random
 
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from clayseal.capabilities.monitor import Action, NGramScorer, TrajectoryDetector
 from clayseal.capabilities.monitor.training.synth_corpus import generate, workflow_for
 from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _fitted_detector():

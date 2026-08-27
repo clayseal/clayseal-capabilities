@@ -10,9 +10,8 @@ import random
 
 from clayseal.capabilities.monitor import (
     Action,
-    ContextItem,
     ConformalCalibrator,
-    Decision,
+    ContextItem,
     NGramScorer,
     TaintTracker,
     Trajectory,

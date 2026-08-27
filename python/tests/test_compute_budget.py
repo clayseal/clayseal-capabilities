@@ -1,6 +1,5 @@
 """Compute-seconds ledger, and the honesty boundary around data_export_bytes."""
 import pytest
-from clayseal.core.mandate import Mandate
 
 from clayseal.capabilities.budget import BudgetType, CapabilityBudget
 from clayseal.capabilities.compute_budget import (
@@ -12,6 +11,7 @@ from clayseal.capabilities.mandate_budgets import (
     UnsupportedBudgetType,
     session_budgets_from_mandate,
 )
+from clayseal.core.mandate import Mandate
 
 TRACKED = {"run_code": "b-compute"}
 

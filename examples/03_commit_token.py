@@ -1,11 +1,11 @@
 """Standalone commit-token mint and verify (layer 2)."""
-from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
-from clayseal.core.signing import generate_keypair
 from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
+from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
+from clayseal.core.signing import generate_keypair
 
 key = generate_keypair()
 args = {"employee_id": "emp_001", "bonus_amount": 100}

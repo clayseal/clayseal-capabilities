@@ -217,9 +217,8 @@ def test_trajectory_length_is_a_label_proxy_so_no_rung_may_be_credited_for_it(
     The loader's protection is that it emits no attack events, so the rung
     cannot be credited. This test pins the statistic that makes that necessary.
     """
-    from clayseal.capabilities.velocity import EFFECT_VERBS
-
     from benchmarks.datasets._common import classify_verb
+    from clayseal.capabilities.velocity import EFFECT_VERBS
 
     records = _raw(release)
     safe_calls = safe_effects = 0

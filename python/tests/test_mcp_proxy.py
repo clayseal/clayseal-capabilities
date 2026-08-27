@@ -12,7 +12,6 @@ not happen" are different claims, and only the second one is the product.
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 import textwrap
 from pathlib import Path

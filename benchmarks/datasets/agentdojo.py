@@ -132,7 +132,7 @@ def _value_annotation(suite_name: str,
         return {}, []
     money = [e for e in benign if e.tool_name in _MONEY_TOOLS]
     tools = {e.tool_name for e in money} or {"send_money"}
-    value_tracked = {t: ("amount", "usd_payout") for t in tools}
+    value_tracked = dict.fromkeys(tools, ("amount", "usd_payout"))
     benign_sum = sum(
         float(e.args.get("amount") or 0.0)
         for e in money if isinstance(e.args, dict)

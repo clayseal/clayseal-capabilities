@@ -147,7 +147,10 @@ def test_ssh_remote_body_dest_and_digest():
 
 def test_sed_inplace_mode_and_rm_mode_sealed():
     from clayseal.capabilities.monitor.sealed_plan import (
-        compile_sealed_plan, check_sealed_plan, sed_inplace_mode, rm_delete_mode,
+        check_sealed_plan,
+        compile_sealed_plan,
+        rm_delete_mode,
+        sed_inplace_mode,
     )
     g = _goal()
     ref = Trajectory(g, [

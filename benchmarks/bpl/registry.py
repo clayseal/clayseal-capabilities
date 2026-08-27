@@ -1,9 +1,8 @@
 """BPL-v1 scenario registry."""
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
-from benchmarks.bpl.schema import Family, Scenario
 from benchmarks.bpl.scenarios.aggregate import AGGREGATE_BUILDERS
 from benchmarks.bpl.scenarios.aml import AML_BUILDERS
 from benchmarks.bpl.scenarios.apex import APEX_BUILDERS
@@ -22,6 +21,7 @@ from benchmarks.bpl.scenarios.paradox import PARADOX_BUILDERS
 from benchmarks.bpl.scenarios.specialty import SPECIALTY_BUILDERS
 from benchmarks.bpl.scenarios.ultra import ULTRA_BUILDERS
 from benchmarks.bpl.scenarios.unorthodox import UNORTHODOX_BUILDERS
+from benchmarks.bpl.schema import Family, Scenario
 
 # Builder callables, instantiate via SCENARIOS[name]().
 SCENARIO_BUILDERS: dict[str, Callable[[], Scenario]] = {

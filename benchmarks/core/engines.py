@@ -25,25 +25,22 @@ import math
 import random
 from typing import Protocol, runtime_checkable
 
-from clayseal.core.hash_util import hash_canonical_json
-from clayseal.core.operations import capability_allows, normalize_capabilities
-from clayseal.capabilities.hardening.protected_zones import is_protected_path, protected_reason
-from clayseal.core.task_scope import (
-    TaskScope,
-    compile_task_scope,
-    task_scope_allows_path,
-)
-
+from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel
 from clayseal.capabilities.authorizers import (
     cedar_authorizer,
     opa_authorizer,
     openfga_authorizer,
 )
 from clayseal.capabilities.call_budget import session_call_budget_from_mandate
+from clayseal.capabilities.hardening.protected_zones import is_protected_path, protected_reason
 from clayseal.capabilities.value_budget import session_value_budget_from_mandate
-
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel
-
+from clayseal.core.hash_util import hash_canonical_json
+from clayseal.core.operations import capability_allows, normalize_capabilities
+from clayseal.core.task_scope import (
+    TaskScope,
+    compile_task_scope,
+    task_scope_allows_path,
+)
 
 # Verbs that change external state. Deliberately wider than runner._WRITE_ACTIONS,
 # which classifies protected *writes* for metrics: an `execute` or a `send` is an
@@ -490,8 +487,7 @@ class VelocityLadderEngine(BudgetLadderEngine):
         self._velocity.clear()
 
     def _limiter(self, task: BenchmarkTask):
-        from clayseal.capabilities.velocity import (
-            EFFECT_CLASS, SessionVelocity, VelocityConfig)
+        from clayseal.capabilities.velocity import EFFECT_CLASS, SessionVelocity, VelocityConfig
 
         limiter = self._velocity.get(task.task_id)
         if limiter is None:
@@ -984,8 +980,7 @@ class StagingLadderEngine(DensityLadderEngine):
         if not below.allowed:
             return below
 
-        from clayseal.capabilities.hardening.object_class import (
-            ObjectClass, classify)
+        from clayseal.capabilities.hardening.object_class import ObjectClass, classify
 
         target = self._target(event)
         kind = classify(target)

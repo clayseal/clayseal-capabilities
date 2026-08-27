@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from benchmarks.check_claims import BARE_ZERO, HAS_BOUND, main, scan, status_of
+from benchmarks.check_claims import main, scan, status_of
 
 
 def test_it_passes_on_the_current_tree():

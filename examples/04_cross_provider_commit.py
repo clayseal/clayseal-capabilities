@@ -1,11 +1,11 @@
 """Commit-token flow using any of the five built-in identity providers."""
-from clayseal.capabilities.identity_adapters import get_identity_provider, list_identity_providers
-from clayseal.capabilities.integration import execution_context_from_session
 from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
+from clayseal.capabilities.identity_adapters import get_identity_provider, list_identity_providers
+from clayseal.capabilities.integration import execution_context_from_session
 from clayseal.core.signing import generate_keypair
 
 DEMO = {

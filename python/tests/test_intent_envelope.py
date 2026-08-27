@@ -2,7 +2,6 @@
 and demotion of the statistical detector to a sensor."""
 from __future__ import annotations
 
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor import (
     Action,
@@ -13,6 +12,7 @@ from clayseal.capabilities.monitor import (
     is_effectful,
 )
 from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _pay_flow_goal() -> GoalSpec:

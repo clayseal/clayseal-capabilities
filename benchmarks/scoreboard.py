@@ -28,7 +28,6 @@ from pathlib import Path
 
 from benchmarks.core.engines import build_engines
 from benchmarks.core.heldout import circular_unsplittable, hold_out_corpus
-from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 
@@ -299,8 +298,8 @@ def _trajectory(board: Scoreboard) -> None:
 
 def _sleight_detector(board: Scoreboard) -> None:
     """SLEIGHT's honest score: trajectory detector, not the per-action ladder."""
-    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
     from benchmarks.core.detector_eval import run_detector_benchmark
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
 
     try:
         tasks = list(get_loader("sleight").load())

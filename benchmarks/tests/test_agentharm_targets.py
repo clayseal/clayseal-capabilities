@@ -12,7 +12,11 @@ import textwrap
 import pytest
 
 from benchmarks.datasets.agentharm_targets import (
-    TargetIndex, _FunctionScan, _target_kind, extract_file)
+    TargetIndex,
+    _FunctionScan,
+    _target_kind,
+    extract_file,
+)
 
 
 def _targets(src: str):

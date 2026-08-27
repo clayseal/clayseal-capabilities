@@ -23,8 +23,8 @@ arguments and output manipulation), not a phrasing weakness.
 """
 from __future__ import annotations
 
-from agentdojo.attacks.base_attacks import FixedJailbreakAttack
 from agentdojo.attacks.attack_registry import register_attack
+from agentdojo.attacks.base_attacks import FixedJailbreakAttack
 from agentdojo.attacks.important_instructions_attacks import get_model_name_from_pipeline
 
 

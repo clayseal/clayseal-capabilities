@@ -4,7 +4,11 @@ from __future__ import annotations
 import pytest
 
 from benchmarks.core.reporting import (
-    ModelIdentity, PreRegistration, format_rate, one_sided_upper, publishable,
+    ModelIdentity,
+    PreRegistration,
+    format_rate,
+    one_sided_upper,
+    publishable,
 )
 
 

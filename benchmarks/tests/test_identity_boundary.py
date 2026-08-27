@@ -82,7 +82,7 @@ def test_strip_is_total_on_a_non_mapping():
 
 
 def test_every_authority_field_is_actually_stripped():
-    raw = {"subject_id": "a"} | {f: "x" for f in AUTHORITY_FIELDS}
+    raw = {"subject_id": "a"} | dict.fromkeys(AUTHORITY_FIELDS, "x")
     kept = strip_authority_fields(raw)
     assert set(kept) == {"subject_id"}
 

@@ -96,7 +96,7 @@ def run_leaderboard_multiseed(
     engines: list[DecisionEngine] | None = None,
     classes: list[str] | None = None,
     seeds: list[int],
-) -> dict[str, dict[str, "SeedSpread"]]:
+) -> dict[str, dict[str, SeedSpread]]:
     """The leaderboard over several synthesis seeds.
 
     The attack variants are drawn from a seeded RNG, so a one-seed table is a
@@ -126,7 +126,7 @@ def run_leaderboard_multiseed(
 
 
 def render_multiseed_markdown(
-    spreads: dict[str, dict[str, "SeedSpread"]],
+    spreads: dict[str, dict[str, SeedSpread]],
     classes: list[str],
     seeds: list[int],
 ) -> str:

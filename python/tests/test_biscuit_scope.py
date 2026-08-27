@@ -19,10 +19,9 @@ pytest.importorskip(
 )
 pytest.importorskip("agentauth.identity")
 
-from biscuit_auth import BiscuitBuilder, Check, Fact, KeyPair
-
 from agentauth.biscuit_scope import FILE_RESOURCE, evaluate_path_scope
 from agentauth.identity import _capabilities as sdk_caps
+from biscuit_auth import BiscuitBuilder, Check, Fact, KeyPair
 
 
 def _mint_token() -> tuple[str, str]:

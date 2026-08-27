@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
-from clayseal.capabilities.used_token_store import InMemoryUsedTokenStore, set_default_used_token_store
+from clayseal.capabilities.used_token_store import (
+    InMemoryUsedTokenStore,
+    set_default_used_token_store,
+)
 from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
 from clayseal.core.signing import generate_keypair
 

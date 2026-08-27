@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import threading
 
-from clayseal.core.runtime import SideEffectLevel
 from clayseal.capabilities.scoping.tools.models import ToolCapabilityLease
 from clayseal.capabilities.scoping.tools.tool_call_budget import (
     ToolCallBudget,
@@ -17,6 +16,7 @@ from clayseal.capabilities.scoping.tools.tool_lease_enforcement import (
     reserve_tool_call_budget,
     tool_capability_lease_violations,
 )
+from clayseal.core.runtime import SideEffectLevel
 
 
 def _budget(limit: int = 1) -> ToolCallBudget:

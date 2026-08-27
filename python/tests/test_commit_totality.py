@@ -12,12 +12,12 @@ from dataclasses import replace
 
 import pytest
 
+from benchmarks.stress_commit import _pair, _verify, run
 from clayseal.capabilities.commit import (
     CommitToken,
     SignedCommitToken,
     parse_signed_commit_token,
 )
-from benchmarks.stress_commit import _pair, _verify, run
 
 
 def test_no_mutation_of_the_token_or_context_ever_verifies():

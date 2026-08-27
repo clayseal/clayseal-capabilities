@@ -15,12 +15,14 @@ import random
 
 import pytest
 
+from benchmarks.core.events import BenchmarkEvent, EventLabel
 from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 from clayseal.capabilities.reidentification import (
-    PrincipalReidentificationLedger, ReidentificationMonitor,
-    ReidentificationPolicy, identifiability_bits)
-from benchmarks.core.engines import build_engines
-from benchmarks.core.events import BenchmarkEvent, EventLabel
+    PrincipalReidentificationLedger,
+    ReidentificationMonitor,
+    ReidentificationPolicy,
+    identifiability_bits,
+)
 
 CORPORA = ["tau2", "bfcl"]
 
@@ -396,7 +398,12 @@ def test_session_containment_does_not_depend_on_event_order(corpus):
     must not.
     """
     from benchmarks.reidentification import (
-        _STRANGERS, _TRIPLE, _carrier, _person_args, _subject_values)
+        _STRANGERS,
+        _TRIPLE,
+        _carrier,
+        _person_args,
+        _subject_values,
+    )
 
     _, carriers = _load(corpus)
     rnd = random.Random(20260809)

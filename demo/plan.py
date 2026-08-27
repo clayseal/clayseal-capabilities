@@ -17,9 +17,9 @@ it is not injectable.
 """
 from __future__ import annotations
 
-from clayseal.capabilities.monitor import IntentEnvelope, Phase
 from benchmarks.datasets._common import classify_verb
 from benchmarks.live.planner import verb_class_order
+from clayseal.capabilities.monitor import IntentEnvelope, Phase
 
 __all__ = ["classify_verb", "envelope_for_tools", "verb_class_order"]
 

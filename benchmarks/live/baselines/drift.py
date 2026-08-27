@@ -27,11 +27,11 @@ _MONEY = re.compile(r"\$?\d{1,3}(?:,\d{3})+(?:\.\d+)?|\$\d+(?:\.\d+)?|\b\d+(?:\.
 _CRITICAL = re.compile(
     r"(pay|send|transfer|delete|grant|approve|execute|ship|operate|export|"
     r"release|wire|refund|post_message|write_file)",
-    re.I,
+    re.IGNORECASE,
 )
 _OBSERVE = re.compile(
     r"^(list_|read_|get_|search_|load_|fetch_|check_|lookup_|find_|query_)",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -94,7 +94,7 @@ class DriftGate:
     return_tokens: set[str] = field(default_factory=set)
 
     @classmethod
-    def from_scenario(cls, user_prompt: str, tools: list[dict]) -> "DriftGate":
+    def from_scenario(cls, user_prompt: str, tools: list[dict]) -> DriftGate:
         names = _tool_names(tools)
         prompt_l = user_prompt.lower()
         # Secure planner (deterministic): tools whose names appear in the query,

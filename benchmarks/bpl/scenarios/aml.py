@@ -5,13 +5,13 @@ structuring, …) and ``benchmarks/bpl/AML.md``.
 """
 from __future__ import annotations
 
+from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
 from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-from benchmarks.bpl.schema import Env, Scenario, scope_envelope_verbs
 
 
 def _pad(calls: list, *, tool: str, n: int, args: dict | None = None) -> tuple:

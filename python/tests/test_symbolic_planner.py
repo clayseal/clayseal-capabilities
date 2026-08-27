@@ -2,8 +2,6 @@
 landmark analysis, deterministic, sound, non-injectable, multi-modal aware."""
 from __future__ import annotations
 
-from clayseal.core.signing import generate_keypair
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor import (
     Action,
@@ -14,6 +12,8 @@ from clayseal.capabilities.monitor import (
 )
 from clayseal.capabilities.monitor.ontology import ToolOntology
 from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.signing import generate_keypair
+from clayseal.core.task_scope import TaskScope
 
 
 def _goal(ontology, gc=("deployed",), tools=None) -> GoalSpec:

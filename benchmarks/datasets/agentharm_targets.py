@@ -47,9 +47,9 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
 
 # ---------------------------------------------------------------------------
 # What a destination field is called.
@@ -82,7 +82,7 @@ _DEST_SUFFIXES = ("_path", "_url", "_email", "_file", "_dir", "_address")
 # What a concrete target looks like.
 
 _EMAIL = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
-_URL = re.compile(r"^(https?://|www\.)\S+$", re.I)
+_URL = re.compile(r"^(https?://|www\.)\S+$", re.IGNORECASE)
 _BARE_DOMAIN = re.compile(
     r"^[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+(/\S*)?$")
 _PATH = re.compile(r"^(/|~/|\./|\.\./)\S*$")

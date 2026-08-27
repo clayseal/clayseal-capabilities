@@ -13,15 +13,23 @@ from copy import copy
 
 import pytest
 
-from clayseal.capabilities.deputy import (
-    DelegationBoundary, DelegationPolicy, shipped_primitive_allows)
-from benchmarks.core.engines import (
-    DelegationLadderEngine, VelocityLadderEngine, build_engines)
+from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine, build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
+from clayseal.capabilities.deputy import (
+    DelegationBoundary,
+    DelegationPolicy,
+    shipped_primitive_allows,
+)
 
 pytest.importorskip("benchmarks.deputy")
-from benchmarks.deputy import (  # noqa: E402
-    _ATTACK_ARMS, MAX_DEPTH, _attributed, _replay_task, build_sessions, evaluate)
+from benchmarks.deputy import (
+    _ATTACK_ARMS,
+    MAX_DEPTH,
+    _attributed,
+    _replay_task,
+    build_sessions,
+    evaluate,
+)
 
 
 def _available(corpus: str):
@@ -466,8 +474,7 @@ def test_the_depth_bound_reads_the_chain_not_the_number_the_leaf_declares():
     from datetime import datetime, timedelta, timezone
     from uuid import uuid4
 
-    from clayseal.core.delegation import (
-        DelegationToken, delegation_from_envelope, sign_delegation)
+    from clayseal.core.delegation import DelegationToken, delegation_from_envelope, sign_delegation
 
     operator, _caps, _p, _sub, _root_env, _child, child_env, policy = _fixture()
     boundary = DelegationBoundary(policy)
@@ -510,8 +517,7 @@ def test_a_delegation_does_not_outlive_the_authority_it_derives_from():
     from datetime import datetime, timedelta, timezone
     from uuid import uuid4
 
-    from clayseal.core.delegation import (
-        DelegationToken, issue_delegation, sign_delegation)
+    from clayseal.core.delegation import DelegationToken, issue_delegation, sign_delegation
     from clayseal.core.signing import generate_keypair
 
     operator = generate_keypair()

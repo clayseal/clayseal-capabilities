@@ -81,13 +81,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from clayseal.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
-from clayseal.capabilities.staleness import (
-    CONSEQUENTIAL_VERBS, OBSERVING_VERBS, ObservationLedger, StalenessPolicy,
-    content_version)
 from benchmarks.core.engines import VelocityLadderEngine, build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
+from clayseal.capabilities.staleness import (
+    CONSEQUENTIAL_VERBS,
+    OBSERVING_VERBS,
+    ObservationLedger,
+    StalenessPolicy,
+    content_version,
+)
 
 # The object namespace. The corpora encode `resource` as the tool name, so object
 # identity has to come from the argument that names the object, which is exactly

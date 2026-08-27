@@ -30,10 +30,10 @@ is genuine agent behaviour rather than synthetic filler.
 from __future__ import annotations
 
 import argparse
-from copy import copy
 import json
 import random
 import sys
+from copy import copy
 from dataclasses import dataclass, field
 from pathlib import Path
 

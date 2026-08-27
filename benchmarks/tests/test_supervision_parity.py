@@ -24,10 +24,10 @@ from __future__ import annotations
 
 import pytest
 
+from benchmarks.live.approver import NeverApprove
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor.action import Action
 from clayseal.capabilities.scoping.goal import GoalSpec
-from benchmarks.live.approver import NeverApprove
 
 # `broker_defense` imports `agentdojo`, which is an optional benchmark
 # dependency and is not installed in the fast gate. Importing it at module
@@ -36,7 +36,7 @@ from benchmarks.live.approver import NeverApprove
 # `invariants` runs went red on this and nothing else.
 pytest.importorskip("agentdojo", reason="optional benchmark dependency")
 
-from benchmarks.live.broker_defense import (  # noqa: E402 - after the skip
+from benchmarks.live.broker_defense import (
     LiveBrokerHarness,
     classify_verb,
 )

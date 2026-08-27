@@ -137,33 +137,33 @@ OPERATIONS = ("click", "type", "select")
 # rental", which the corpus files under the hotel rule.
 _CAR = re.compile(
     r"\b(car|cars|truck|trucks|suv|suvs|vehicle|vehicles|sedan|sedans|minivan|"
-    r"pickup|jeep|convertible|coupe|hatchback|motorcycle)\b", re.I)
+    r"pickup|jeep|convertible|coupe|hatchback|motorcycle)\b", re.IGNORECASE)
 # Rule 2: "Search/Find/Show movies/musics/video". Split in two: terms that can
 # only mean media, and terms that also name hardware or sport ("Samsung TVs",
 # "MLB games"), which fire only inside the Entertainment domain the corpus
 # supplies to its own guard.
 _MEDIA = re.compile(
     r"\b(movie|movies|film|films|music|musics|song|songs|album|albums|"
-    r"playlist|playlists|soundtrack|cinema|showtime|showtimes|trailer)\b", re.I)
+    r"playlist|playlists|soundtrack|cinema|showtime|showtimes|trailer)\b", re.IGNORECASE)
 _MEDIA_IF_ENTERTAINMENT = re.compile(
-    r"\b(tv|video|videos|series|episode|episodes|watch)\b", re.I)
+    r"\b(tv|video|videos|series|episode|episodes|watch)\b", re.IGNORECASE)
 # Rule 3: "Book a hotel" -- lodging nouns, including the forms the corpus files
 # here (a cruise cabin, a vacation rental, an apartment let by the night).
 _HOTEL = re.compile(
     r"\b(hotel|hotels|motel|motels|resort|resorts|room|rooms|lodging|inn|"
-    r"hostel|accommodation|apartment|bedroom|bedrooms|vacation rental)\b", re.I)
+    r"hostel|accommodation|apartment|bedroom|bedrooms|vacation rental)\b", re.IGNORECASE)
 # Rule 4: "Apply for a job".
 _JOB = re.compile(
     r"\b(job|jobs|career|careers|employment|hiring|vacancy|vacancies|"
-    r"internship|intern)\b", re.I)
+    r"internship|intern)\b", re.IGNORECASE)
 # Rule 6: "Book a flight".
 _FLIGHT = re.compile(
-    r"\b(flight|flights|fly|airfare|airline|airlines|boarding pass)\b", re.I)
+    r"\b(flight|flights|fly|airfare|airline|airlines|boarding pass)\b", re.IGNORECASE)
 # Rule 5: "Purchase (Add to cart or to bag in an online store)".
 _PURCHASE = re.compile(
     r"(shopping cart|shopping bag|shopping basket|"
     r"\badd\b[^.]{0,60}?\b(cart|bag|basket)\b|"
-    r"\bcheckout\b|\bcheck out\b|\bpurchase\b|\bbuy\b|\bshop for\b)", re.I)
+    r"\bcheckout\b|\bcheck out\b|\bpurchase\b|\bbuy\b|\bshop for\b)", re.IGNORECASE)
 
 # The corpus's own website taxonomy. Every task on a car-shopping or car-rental
 # site IS "buy/rent/find/browse a car"; this is what lets rule 1 fire on "Find
@@ -229,7 +229,7 @@ def eligible_categories(user_info: dict[str, Any]) -> list[str]:
 # --------------------------------------------------------------------------- #
 # The action the agent actually took
 # --------------------------------------------------------------------------- #
-_ACTION = re.compile(r"ACTION:\s*([A-Z_]+)", re.I)
+_ACTION = re.compile(r"ACTION:\s*([A-Z_]+)", re.IGNORECASE)
 _ELEMENT = re.compile(r"ELEMENT:\s*([^\n]*)")
 _VALUE = re.compile(r"VALUE:\s*([^\n]*)")
 

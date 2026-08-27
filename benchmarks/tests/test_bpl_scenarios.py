@@ -6,7 +6,6 @@ import pytest
 from benchmarks.bpl.registry import SCENARIOS, get_scenario, list_scenarios, scenarios_by_family
 from benchmarks.bpl.schema import run_script, tool_names
 
-
 # Live arm needs iVisor; skip in default unit tests.
 SIMULATED = [n for n in SCENARIOS if n != "bulk-exfil-live"]
 

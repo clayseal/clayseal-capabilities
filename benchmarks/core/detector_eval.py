@@ -19,9 +19,9 @@ see only benign trajectories, matching the one-class threat model.
 from __future__ import annotations
 
 import random
-
 from dataclasses import dataclass
 
+from benchmarks.core.events import BenchmarkTask, EventLabel
 from clayseal.capabilities.monitor import (
     Action,
     ContextItem,
@@ -30,8 +30,6 @@ from clayseal.capabilities.monitor import (
     TrustLevel,
 )
 from clayseal.capabilities.scoping.goal import GoalSpec
-
-from benchmarks.core.events import BenchmarkTask, EventLabel
 
 
 def _goal_for(task: BenchmarkTask) -> GoalSpec:

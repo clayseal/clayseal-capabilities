@@ -5,8 +5,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from clayseal.capabilities.broker import SessionBroker
 from benchmarks.bpl.policy import Policy
+from clayseal.capabilities.broker import SessionBroker
 
 Family = Literal["aggregate", "escape", "confidentiality"]
 ClaySealExpected = Literal["contain", "partial", "open"]

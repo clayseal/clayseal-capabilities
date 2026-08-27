@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from clayseal.capabilities.replan import (
     ActionShape,
     PlanExtender,
@@ -322,10 +320,10 @@ def test_an_extended_action_still_spends_its_budget():
     """
     from clayseal.capabilities.broker import Outcome, SessionBroker
     from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+    from clayseal.capabilities.monitor import Action
     from clayseal.capabilities.replan import ReplanVerdict
     from clayseal.capabilities.scoping.goal import GoalSpec
     from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-    from clayseal.capabilities.monitor import Action
     from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
@@ -337,7 +335,7 @@ def test_an_extended_action_still_spends_its_budget():
             goal=GoalSpec(query_id="q", summary="pay the invoices"),
             scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
             value_budget=SessionValueBudget(config=ValueBudgetConfig(
-                ceilings={"usd": Decimal("1000")},
+                ceilings={"usd": Decimal(1000)},
                 tracked={"transfer_money": ("amount", "usd")})),
             call_budget=SessionCallBudget(config=CallBudgetConfig(
                 ceilings={"transfers": 10},
@@ -363,10 +361,10 @@ def test_an_extended_action_stays_on_the_trajectory():
     """The other half: a rolled-back action is invisible to the behavioural
     layer, so an attacker whose actions are all extension-approved leaves no
     trace for the detector or for any later feasibility check."""
-    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.broker import SessionBroker
+    from clayseal.capabilities.monitor import Action
     from clayseal.capabilities.replan import ReplanVerdict
     from clayseal.capabilities.scoping.goal import GoalSpec
-    from clayseal.capabilities.monitor import Action
     from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
@@ -394,9 +392,9 @@ def test_replanning_cannot_rescue_an_infeasible_goal():
     the extender is consulted for the first and not the second.
     """
     from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
     from clayseal.capabilities.replan import ReplanVerdict
     from clayseal.capabilities.scoping.goal import GoalSpec
-    from clayseal.capabilities.monitor import Action
     from clayseal.core.task_scope import TaskScope
 
     consulted = []
@@ -441,7 +439,6 @@ def test_scope_extension_does_not_mutate_the_callers_scope():
     from clayseal.capabilities.broker import Outcome, SessionBroker
     from clayseal.capabilities.replan import ReplanVerdict
     from clayseal.capabilities.scoping.goal import GoalSpec
-    from clayseal.capabilities.monitor import Action
     from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
@@ -468,9 +465,9 @@ def test_one_cleared_shape_does_not_admit_unlimited_resources():
     write target in the catalog through.
     """
     from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
     from clayseal.capabilities.replan import ReplanVerdict
     from clayseal.capabilities.scoping.goal import GoalSpec
-    from clayseal.capabilities.monitor import Action
     from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:

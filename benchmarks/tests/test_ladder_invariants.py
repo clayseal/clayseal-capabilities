@@ -21,6 +21,7 @@ from benchmarks.core.engines import LADDER, build_engines
 from benchmarks.core.events import BenchmarkTask, EventLabel
 from benchmarks.core.runner import run_benchmark
 
+
 # Corpora that ship in-repo run always; external ones skip when unfetched.
 # EVERY registered corpus, not a hand-kept list. The list was eight names while
 # the registry held nineteen, and the corpus that violated the order-invariance

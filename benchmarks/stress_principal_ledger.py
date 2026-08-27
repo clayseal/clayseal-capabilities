@@ -222,13 +222,12 @@ def axis_delegation_splitting() -> dict:
     a ceiling of 100 for a parent plus five delegates. A per-delegate ceiling is
     not a ceiling, anyone who can spawn sub-agents mints headroom.
     """
-    from clayseal.core.authority_binding import AuthorityBinding
-
     from clayseal.capabilities.principal_ledger import (
         PrincipalBudgetView,
         principal_chain,
         principal_key,
     )
+    from clayseal.core.authority_binding import AuthorityBinding
 
     led = _fresh()
 

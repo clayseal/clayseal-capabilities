@@ -31,8 +31,8 @@ into a security column, which is the point of pricing attention at all.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from clayseal.capabilities.step_up import (
     SignedStepUpApproval,
@@ -43,8 +43,14 @@ from clayseal.capabilities.step_up import (
 from clayseal.core.signing import generate_keypair
 
 __all__ = [
-    "Approver", "NeverApprove", "AlwaysApprove", "OracleApprover",
-    "FatiguedApprover", "GullibleApprover", "BudgetedApprover", "build_approver",
+    "AlwaysApprove",
+    "Approver",
+    "BudgetedApprover",
+    "FatiguedApprover",
+    "GullibleApprover",
+    "NeverApprove",
+    "OracleApprover",
+    "build_approver",
 ]
 
 

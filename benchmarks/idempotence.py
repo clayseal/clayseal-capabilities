@@ -64,10 +64,10 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from clayseal.capabilities.commit import InMemoryUsedTokenStore
 from benchmarks.core.engines import _EFFECT_ACTIONS, build_engines
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
+from benchmarks.core.events import BenchmarkEvent, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.commit import InMemoryUsedTokenStore
 
 LADDER_BELOW = "task-scope+binding+budget+velocity"
 
