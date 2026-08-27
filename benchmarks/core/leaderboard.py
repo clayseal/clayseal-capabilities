@@ -9,10 +9,17 @@ engine would look perfect.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from benchmarks.adversarial.attacks import ATTACK_CLASSES, AttackVariant, synthesize
 from benchmarks.core.engines import DecisionEngine, build_engines
 from benchmarks.core.events import BenchmarkTask, EventLabel
+
+if TYPE_CHECKING:
+    # Imported for the `"SeedSpread"` annotations below. The runtime import stays
+    # inside `multiseed_leaderboard`, because `benchmarks.core.stats` pulls scipy
+    # and this module is imported by harnesses that never call that function.
+    from benchmarks.core.stats import SeedSpread
 
 
 @dataclass
