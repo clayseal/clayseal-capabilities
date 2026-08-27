@@ -375,12 +375,48 @@ def path_readings(path: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(readings))
 
 
+def _deny_readings(path: str) -> tuple[str, ...]:
+    """Readings that matter only for the DENY side of the decision.
+
+    Two spellings reach the same file on a filesystem this library cannot see:
+
+    - **Case.** macOS and Windows are case-insensitive, so `workspace/SECRETS/k`
+      opens the file `workspace/secrets/**` denies. `fnmatchcase` compares
+      exactly, so the deny-list missed it.
+    - **Trailing dots and spaces.** Win32 strips them, so `workspace/secrets./k`
+      and `workspace/secrets /k` open the same directory.
+
+    These widen the deny check ONLY. They are deliberately not added to
+    `path_readings`, because that would also make the ALLOW check stricter
+    (allowed only if EVERY reading is allowed) and would start refusing paths
+    that are genuinely distinct files on a case-sensitive filesystem. Widening
+    deny costs at most a false denial on Linux for a directory that differs from
+    a denied one only by case; narrowing allow would cost false denials
+    everywhere. Only one of those is worth paying to close a bypass.
+    """
+    out = [path.lower()]
+    stripped = "/".join(seg.rstrip(". ") for seg in path.replace("\\", "/").split("/"))
+    out.append(stripped)
+    out.append(stripped.lower())
+    return tuple(dict.fromkeys(out))
+
+
 def task_scope_allows_path(scope: TaskScope, path: str) -> bool:
     readings = path_readings(path)
     if scope.denied_paths:
         # Denied if ANY reading is denied.
         if any(path_matches_any(r, scope.denied_paths) for r in readings):
             return False
+        # Same rule, over the spellings that reach the same file on a
+        # case-insensitive or Win32 filesystem. Patterns are folded too, so the
+        # comparison is symmetric and a deny-list written in either case works.
+        if isinstance(path, str):
+            folded = [p.lower() for p in scope.denied_paths if isinstance(p, str)]
+            extra = _deny_readings(path)
+            if any(path_matches_any(r, folded) for r in extra):
+                return False
+            if any(path_matches_any(r, list(scope.denied_paths)) for r in extra):
+                return False
     if scope.allowed_paths:
         # Allowed only if EVERY reading is allowed.
         return all(path_matches_any(r, scope.allowed_paths) for r in readings)
