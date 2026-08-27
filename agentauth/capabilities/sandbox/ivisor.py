@@ -2,14 +2,14 @@
 
 PREFER `agentauth.capabilities.sandbox.session.run_sandboxed`. This module is
 the original launch-time sketch and is kept for callers that only want the argv.
-It formats flags and shells out — nothing more. In particular it does NOT:
+It formats flags and shells out, nothing more. In particular it does NOT:
 
 - generate a config file (the supported way to pass policy, and a re-runnable
   artifact),
 - collect iVisor's verdict stream, so a run through here produces no evidence
   and cannot tell a denial from a clean run,
 - stage a workspace, so `scope.allowed_paths[0]` is mounted whole and the rest
-  of the scope — along with `denied_paths` and protected zones — is silently
+  of the scope, along with `denied_paths` and protected zones, is silently
   dropped,
 - validate allow entries, so a malformed domain is silently skipped by iVisor
   and egress ends up narrower than the policy claims.

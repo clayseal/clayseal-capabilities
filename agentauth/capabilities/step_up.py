@@ -1,4 +1,4 @@
-"""DP-30: Step-up protocol — structured request/approval/patch for scope expansion.
+"""DP-30: Step-up protocol, structured request/approval/patch for scope expansion.
 
 When the governor returns STEP_UP, the broker needs a structured way to:
 1. Tell the control plane exactly what is being requested.
@@ -94,7 +94,7 @@ class StepUpRequest:
         step-up protocol simply does not complete on a multi-worker deployment.
 
         Every field `to_dict` writes is read back, and `test_session_state.py`
-        asserts `from_dict(to_dict(r)).commitment() == r.commitment()` — a field
+        asserts `from_dict(to_dict(r)).commitment() == r.commitment()`, a field
         added to one and forgotten in the other would silently change the
         commitment and invalidate every approval in flight.
         """
@@ -194,7 +194,7 @@ def verify_step_up_approval(
     """Verify an approval's signature and its binding to the originating request.
 
     ``request_commitment`` MUST be the ``StepUpRequest.commitment()`` of the
-    request this approval answers — binding the approval to one specific request
+    request this approval answers, binding the approval to one specific request
     stops a signed approval being replayed against a different one.
     """
     if not signature_key_id_matches(signed.signature):
@@ -227,7 +227,7 @@ def _authenticate_approval(
             f"(or set {ALLOW_UNSIGNED_ENV}=1) ONLY in tests/trusted-local contexts."
         )
     # The escape above turns off approval AUTHENTICATION, and an approval widens
-    # authority — it is the one object in this protocol whose whole job is to
+    # authority: it is the one object in this protocol whose whole job is to
     # grant something the floor refused. A deployment that reaches this branch is
     # applying a grant nobody signed.
     #

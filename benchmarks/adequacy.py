@@ -7,7 +7,7 @@ Every benchmark in this repo answers "how did the system score". None of them
 answers the prior question: **is this corpus even capable of exercising the
 mechanism under test?** That question has teeth, because the answer here is
 frequently no, and a corpus that cannot exercise a mechanism does not return a
-low score — it returns a *plausible* one.
+low score, it returns a *plausible* one.
 
 Three findings from this session motivated the module, each of which cost real
 work to discover and each of which is a property of the data rather than of the
@@ -20,7 +20,7 @@ model:
 
 2. **RedCode attack tasks are single-event.** 718 of them, median length 1, and
    **zero** contain any benign event. So a trajectory layer has no sequence to
-   model, and "median steps-to-detect = 1" — which this session reported — is
+   model, and "median steps-to-detect = 1", which this session reported, is
    arithmetic, not early detection.
 
 3. **Provenance is anti-correlated with the label on RedCode**: 83.7% of benign
@@ -34,7 +34,7 @@ benign structure alone, before a single number is quoted.
 
 ## The columns
 
-    sessions        tasks with >1 event — a trajectory layer needs a trajectory
+    sessions        tasks with >1 event, a trajectory layer needs a trajectory
     median len      median events per task
     ctx tasks       tasks holding BOTH benign and attack events; below this the
                     attack has no session context and taint is degenerate
@@ -48,7 +48,7 @@ benign structure alone, before a single number is quoted.
 
 Per layer, a corpus is `ok` when it can exercise the mechanism, `weak` when it
 can but marginally, and `unusable` when a number produced from it would be an
-artifact. `unusable` is not a criticism of the corpus — RedCode is an excellent
+artifact. `unusable` is not a criticism of the corpus, RedCode is an excellent
 per-action authorization benchmark and was never built to evaluate a behavioral
 layer. It is a statement about which claims it can carry.
 """
@@ -75,7 +75,7 @@ LAYERS = ("per-action", "trajectory", "density", "provenance")
 
 def profile(corpus: str, tasks=None) -> dict:
     """``tasks`` may be supplied directly so a synthesized corpus can be
-    checked BEFORE it is registered as a loader — the acceptance test is
+    checked BEFORE it is registered as a loader, the acceptance test is
     meant to run before a corpus is wired, not after."""
     tasks = list(tasks) if tasks is not None else list(get_loader(corpus).load())
     n_tasks = len(tasks)
@@ -117,7 +117,7 @@ def profile(corpus: str, tasks=None) -> dict:
     # A synthesized variant is ``benign_events + attack_events``, so it is
     # strictly longer than the benign trajectory it is scored against, and on a
     # corpus of short sessions that difference is the label. BFCL is median
-    # length 1, so its synthesized form scores AUC 1.000 on length alone — every
+    # length 1, so its synthesized form scores AUC 1.000 on length alone, every
     # other row on such a table is unreadable. This is computable with no model
     # at all and belongs in the acceptance test rather than being discovered by a
     # control row three experiments later.
@@ -217,7 +217,7 @@ def render(rows: list[tuple[dict, dict]]) -> str:
     head = (f"{'corpus':<20}{'tasks':>7}{'sess%':>7}{'med':>5}{'ctx':>6}"
             f"{'obs/tgt':>9}{'taint gap':>11}{'len AUC':>9}  " +
             "".join(f"{layer:>12}" for layer in LAYERS))
-    lines = ["corpus adequacy — what each corpus can evaluate",
+    lines = ["corpus adequacy, what each corpus can evaluate",
              "=" * len(head), "", head, "-" * len(head)]
     for p, v in rows:
         gap = "-" if p["taint_gap"] is None else f"{p['taint_gap']:+.0%}"

@@ -30,6 +30,7 @@ from agentauth.capabilities.monitor.conformal import ConformalCalibrator, Mondri
 from agentauth.capabilities.monitor.consequence import (
     ConsequenceLevel,
     is_consequential,
+    is_effectful,
 )
 from agentauth.capabilities.monitor.consequence import (
     classify as classify_consequence,
@@ -165,6 +166,7 @@ __all__ = [
     "fine_action_token",
     "intent_from_reference",
     "is_consequential",
+    "is_effectful",
     "is_secret_path",
     "leaf",
     "linearize",

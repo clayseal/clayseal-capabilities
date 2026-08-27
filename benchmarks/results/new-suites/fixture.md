@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, fixture (4 tasks, 7 benign / 5 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/fixture.json
-# Clay Seal enforcement benchmark — fixture (4 tasks, 7 benign / 5 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset fixture --mode ladder --ci --json benchmarks/results/new-suites/fixture.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

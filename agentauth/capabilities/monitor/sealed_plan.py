@@ -1,4 +1,4 @@
-"""Deterministic sealed-plan checks — no LLM at enforcement.
+"""Deterministic sealed-plan checks, no LLM at enforcement.
 
 Compiled from a sealed reference trajectory (benign twin / accepted plan):
 
@@ -205,7 +205,7 @@ def content_digest(text: str) -> str:
 
 
 def structural_digest(text: str) -> str:
-    """Digest of calls, literals, and URIs — complements full content digest."""
+    """Digest of calls, literals, and URIs, complements full content digest."""
     import hashlib
     if not text:
         return content_digest("")
@@ -323,7 +323,7 @@ def extract_ssh_remote(command: str) -> str:
 def _is_dangerous_sink(action: Action) -> str | None:
     """Return sink id if this action is an IFC-dangerous *exfil* sink, else None.
 
-    Deletes (``rm``) are cleanup, not exfiltration — they never count.
+    Deletes (``rm``) are cleanup, not exfiltration, they never count.
     """
     hint = path_hint(action)
     head = command_head(action)

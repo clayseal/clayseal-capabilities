@@ -38,7 +38,7 @@ incidents. Scenarios themselves live in `scenarios/literature.py` (tag
 ## Implications for ClaySeal / product
 
 - **Stateful ledgers** still win classic aggregate BPL; literature hard cases need **world-model / provenance** (PhantomPolicy Sentinel-style), **sealed goal that survives handoffs**, and **deny on destructive recovery verbs**.
-- Prompt-level policy (PhantomPolicy ablation) cuts but does not eliminate invisible violations — matches our `load_policy` pattern being necessary but insufficient.
+- Prompt-level policy (PhantomPolicy ablation) cuts but does not eliminate invisible violations, matches our `load_policy` pattern being necessary but insufficient.
 - Multi-agent H2H should score **org ledger / shared mandate**, not per-persona views (see also `sibling-session-collusion` in ultra).
 
 ## Deep tier (less accessible sources → `scenarios/deep.py`, tag `deep`)

@@ -92,20 +92,43 @@ def test_neither_control_can_win_the_joint_metric():
     assert both("clayseal") > 0
 
 
-def test_per_call_scores_zero_on_the_joint_metric_everywhere():
-    """The architectural claim, on the metric that cannot be gamed."""
+def test_per_call_scores_only_where_the_rule_is_a_property_of_one_call():
+    """The architectural claim, on the metric that cannot be gamed.
+
+    This asserted zero everywhere while the baseline was reading only the
+    `scope` rule out of the policy it was handed. `bulk-exfil`'s rule is a
+    recipient allowlist, decidable from a single call's own arguments with no
+    history at all, and withholding it from a per-call gate manufactured the
+    zero this test then pinned.
+
+    The claim does not need the zero and is worse for it. What it needs is that
+    a stateless gate scores ONLY where the rule is a property of one call, and
+    never where it is a property of a trajectory.
+    """
+    from benchmarks.bpl.registry import get_scenario
+
     for suite in ("core", "hard"):
         rows = _rows(suite)
-        scored = sum(1 for r in rows
+        scored = [r["scenario"] for r in rows
+                  if r["cells"]["per-call"]["contained"] is True
+                  and r["cells"]["per-call"]["completed"]]
+        for name in scored:
+            kinds = {rule.kind for rule in get_scenario(name).policy.rules}
+            assert kinds <= {"scope", "recipient_allowlist"}, (
+                f"{name} scored for a per-call gate on {kinds}, which is not "
+                f"decidable from one call")
+        # An aggregate ceiling is never among them, on any suite.
+        aggregate = [r["scenario"] for r in rows
                      if r["cells"]["per-call"]["contained"] is True
-                     and r["cells"]["per-call"]["completed"])
-        assert scored == 0, suite
+                     and any(rule.kind in ("aggregate_ceiling", "call_ceiling")
+                             for rule in get_scenario(r["scenario"]).policy.rules)]
+        assert aggregate == [], (suite, aggregate)
 
 
 def test_the_joint_metric_is_printed(capsys):
     bpl_sweep.main(["--suite", "core"])
     out = capsys.readouterr().out
-    assert "BOTH — the attack was contained AND its benign twin completed" in out
+    assert "BOTH, the attack was contained AND its benign twin completed" in out
 
 
 # --------------------------------------------------------------------------- #

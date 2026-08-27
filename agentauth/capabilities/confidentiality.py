@@ -523,7 +523,7 @@ def _unescape(blob: str) -> str:
     supposed to find it.
 
     And it **warned on ordinary text**: any backslash that is not the start of a
-    real escape — ``\\|`` in a regex, ``\\D`` in a pattern, a Windows path —
+    real escape, ``\\|`` in a regex, ``\\D`` in a pattern, a Windows path
     raised ``DeprecationWarning: invalid escape sequence``, 1,266 of them in one
     benchmark run, on a path that Python has announced will become an error.
 
@@ -552,7 +552,7 @@ def _plausible(raw: bytes) -> str | None:
     The distinction is the whole bug. `urlsafe_b64decode` does not validate, so
     it "succeeds" on almost any token, and the loop below stopped at the first
     non-raising decoder. A base85 payload therefore decoded to 13 bytes of noise
-    and the real decoder two lines further down was never reached — measured
+    and the real decoder two lines further down was never reached, measured
     against the adaptive search as the ONE staging evasion of nine that got
     through, which is what `flow_window.md` records as "base85 open at every
     width".
@@ -573,7 +573,7 @@ def _plausible(raw: bytes) -> str | None:
     # printable" and passed. Judging the survivors of a lossy decode is judging
     # the decoder's own edit of the evidence.
     #
-    # A genuine staged secret is valid UTF-8 by construction — it is text an
+    # A genuine staged secret is valid UTF-8 by construction: it is text an
     # agent copied out of a file.
     try:
         text = raw.decode("utf-8")
@@ -634,7 +634,7 @@ def _decode_layer(blob: str) -> list[str]:
             text = _plausible(raw)
             if text is None:
                 # Decoded without raising, but into noise. Keep going rather than
-                # stopping here — see `_plausible`.
+                # stopping here, see `_plausible`.
                 continue
             out.append(text)
             # Magic bytes rather than try-everything: gzip is 1f 8b and a zlib
@@ -749,7 +749,7 @@ _ACCUMULATOR_WRITES = 64
 #: and 92% at 400 writes.
 #:
 #: Both mechanisms therefore get the same explicit budget of material, and they
-#: must share it or the looser one simply outvotes the tighter — bounding only
+#: must share it or the looser one simply outvotes the tighter, bounding only
 #: the order-free cover left the in-order scan producing the identical 56%.
 #:
 #: Set from the sweep recorded in benchmarks/results/flow_window.md, which varies
@@ -778,7 +778,7 @@ _LOOKBACK_SPREAD = 6
 _COVER_SPREAD = 24
 
 #: Whole writes the cover always retains, whatever their size. Guards the
-#: cheapest split — two verbose writes carrying half the value each.
+#: cheapest split, two verbose writes carrying half the value each.
 _MIN_COVER_BLOCKS = 4
 
 
@@ -788,7 +788,7 @@ def _recent(blocks: list[str], target: str) -> list[str]:
     The order-free cover is the dominant false-positive source and by a long
     way: instrumenting 400 real BFCL benign writes under one tracker, 232 of 239
     refusals came from here and only 7 from the in-order subsequence scan. The
-    reason is the same one that broke that scan — given enough material, a
+    reason is the same one that broke that scan, given enough material, a
     22-character value is assemblable from ordinary prose, because the cover is
     allowed to cherry-pick a character here and a character there from sixty-four
     unrelated paragraphs.
@@ -801,7 +801,7 @@ def _recent(blocks: list[str], target: str) -> list[str]:
 
     This does not weaken the arms the cover exists for. The sharpest split it
     claims to catch is 22 fragments of a 22-character value with filler between
-    them, which occupies about 250 characters against a budget of 704 — every
+    them, which occupies about 250 characters against a budget of 704, every
     fragment stays inside the window. What falls outside is a run of unrelated
     work long enough that assembly stops being evidence of anything.
     """
@@ -946,6 +946,26 @@ class FlowTracker:
         candidate = variants[0] if variants else ""
         sink_key = path or resource
         declassified = policy.is_declassified(resource, path)
+
+        # Nothing sensitive has been read yet, so nothing can be carried. Every
+        # detection path below matches the payload against `_sensitive_tokens`
+        # and returns empty when that is empty, so this skips work whose answer
+        # is already known rather than approximating it.
+        #
+        # It matters because the default sensitivity policy is never empty: it
+        # ships patterns for `.env`, `id_rsa` and the like, so `policy.active`
+        # is true for every deployment and the early return above never fires.
+        # Measured on a session of 2,000 refunds, which reads nothing sensitive
+        # at all, the detection it skips was a fifth of the whole decision path.
+        #
+        # The emission is still RECORDED below. A read that turns a value
+        # sensitive can happen after a write that carried a piece of it, and the
+        # assembly check needs that piece to still be in the history.
+        if not self._sensitive_tokens:
+            carried: set[str] = set()
+            return self._record_and_allow(
+                sink_key, candidate, variants, declassified)
+
         history = self._stream(self._emitted.get(sink_key, ()))
         pooled = self._stream(self._emitted_pooled)
 
@@ -970,25 +990,8 @@ class FlowTracker:
             carried = self._carried_from_blocks([*blocks, _join(variants)])
 
         if not carried:
-            if candidate:
-                # Append-and-trim by WRITE, not by character. An empty payload
-                # is not recorded at all: it carries nothing and would otherwise
-                # spend a window slot that a real fragment needs.
-                bucket = self._emitted.setdefault(sink_key, [])
-                bucket.append(candidate[-self.max_emitted_chars:])
-                del bucket[:-self.max_blocks]
-            if variants:
-                self._blocks.setdefault(sink_key, []).append(_join(variants))
-                del self._blocks[sink_key][:-self.max_blocks]
-            if declassified is None:
-                if candidate:
-                    self._emitted_pooled.append(
-                        candidate[-self.max_emitted_chars:])
-                    del self._emitted_pooled[:-self.max_blocks]
-                if variants:
-                    self._blocks.setdefault(_POOL, []).append(_join(variants))
-                    del self._blocks[_POOL][:-self.max_blocks]
-            return FlowVerdict(True, "carries no value from a sensitive read")
+            return self._record_and_allow(
+                sink_key, candidate, variants, declassified)
 
         # A sink the sealed goal named is authorized to receive this.
         if declassified is not None:
@@ -1005,6 +1008,32 @@ class FlowTracker:
             f"sealed goal did not name as a destination for it",
             tuple(sorted(carried)),
         )
+
+    def _record_and_allow(self, sink_key: str, candidate: str,
+                          variants: Any, declassified: Any) -> FlowVerdict:
+        """Record what this write emitted, then allow it.
+
+        Called on both no-carry paths. A write that IS refused never gets here,
+        so its content does not join the sink's history.
+        """
+        if candidate:
+            # Append-and-trim by WRITE, not by character. An empty payload is
+            # not recorded at all: it carries nothing and would otherwise spend
+            # a window slot that a real fragment needs.
+            bucket = self._emitted.setdefault(sink_key, [])
+            bucket.append(candidate[-self.max_emitted_chars:])
+            del bucket[:-self.max_blocks]
+        if variants:
+            self._blocks.setdefault(sink_key, []).append(_join(variants))
+            del self._blocks[sink_key][:-self.max_blocks]
+        if declassified is None:
+            if candidate:
+                self._emitted_pooled.append(candidate[-self.max_emitted_chars:])
+                del self._emitted_pooled[:-self.max_blocks]
+            if variants:
+                self._blocks.setdefault(_POOL, []).append(_join(variants))
+                del self._blocks[_POOL][:-self.max_blocks]
+        return FlowVerdict(True, "carries no value from a sensitive read")
 
     def _carried(self, args: Any) -> set[str]:
         tokens = ParameterProvenance._tokens(args)
@@ -1089,7 +1118,7 @@ class FlowTracker:
             target = min(len(compact_token), _MAX_NEEDLE)
             # Look back only as far as a legitimate dense split could reach.
             #
-            # The span bound below already says the fragments must be dense —
+            # The span bound below already says the fragments must be dense
             # at most `_MAX_SPREAD` times the value length apart. Scanning a
             # haystack far longer than that budget cannot find a denser match,
             # it can only find MORE chances at a qualifying one, and it does:
@@ -1101,8 +1130,8 @@ class FlowTracker:
             #
             # The budget is the span bound expressed as a length. For a
             # 22-character value that is 704 characters, which comfortably holds
-            # the sharpest split this mechanism claims to catch — 22 fragments
-            # with filler between them occupies about 250 — while denying the
+            # the sharpest split this mechanism claims to catch, 22 fragments
+            # with filler between them occupies about 250, while denying the
             # scan the run of unrelated prose it was spelling values out of.
             lookback = _LOOKBACK_SPREAD * max(
                 len(compact_token), _MIN_RECONSTRUCTED)

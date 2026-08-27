@@ -6,7 +6,7 @@ invention. The live planner currently emits tool membership only. These
 templates close that gap without an LLM: every effect tool that takes a
 destination-shaped argument gets a ``trusted_read`` (or ``goal``) slot.
 
-Enforcement is via ``IntentEnvelope.check_slots`` — OFF_SLOT × consequential
+Enforcement is via ``IntentEnvelope.check_slots``, OFF_SLOT × consequential
 denies. Structured grounding yields ``DestinationTrust.ALLOW``; free-text of a
 goal-named object steps up at the egress floor and fails a TRUSTED_READ slot,
 which is the measured correct response to co-located injection.

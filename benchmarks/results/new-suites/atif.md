@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, atif (38 tasks, 282 benign / 0 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/atif.json
-# Clay Seal enforcement benchmark — atif (38 tasks, 282 benign / 0 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset atif --mode ladder --ci --json benchmarks/results/new-suites/atif.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

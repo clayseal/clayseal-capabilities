@@ -65,9 +65,9 @@ built-in matrix confirms the harness end-to-end; it is scoped, not started.
 
 Provisioned in subscription 44c3f680 (`az` login):
 
-- Resource: `clayseal-aoai` (Cognitive Services, kind OpenAI, S0), RG
-  `clayseal-bench-rg`, region eastus. Endpoint
-  `https://clayseal-aoai.openai.azure.com/`.
+- Resource: `<aoai-resource>` (Cognitive Services, kind OpenAI, S0), RG
+  `<aoai-resource-group>`, region eastus. Endpoint
+  `https://<aoai-resource>.openai.azure.com/`.
 - Deployment `gpt-4o-mini-2024-07-18` -> underlying model **gpt-5-mini
   2025-08-07**. The gpt-4o / gpt-4.1 lines are retired on Azure as of 03/2026, so
   the deployment NAME (a valid AgentDojo ModelsEnum id, for harness routing) is
@@ -83,9 +83,9 @@ AgentDojo already omits temperature (0.0 -> NOT_GIVEN) and sends no max_tokens, 
 gpt-5 deployments accept its requests unmodified. Validated end to end: banking,
 n=4, gpt-5-mini via Azure, clean-utility 25%, utility-under-attack 50%.
 
-    export AZURE_OPENAI_ENDPOINT=https://clayseal-aoai.openai.azure.com/
+    export AZURE_OPENAI_ENDPOINT=https://<aoai-resource>.openai.azure.com/
     export AZURE_OPENAI_KEY=$(az cognitiveservices account keys list \
-        -n clayseal-aoai -g clayseal-bench-rg --query key1 -o tsv)
+        -n `<aoai-resource>` -g <aoai-resource-group> --query key1 -o tsv)
     python -m benchmarks.live.run_matrix --out benchmarks/results/matrix
 
 ## Reporting

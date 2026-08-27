@@ -659,7 +659,7 @@ def test_a_late_commit_past_a_voided_hold_is_recorded_as_a_breach():
     tool timeout is entirely ordinary.
 
     Both amounts are still booked, because the effects landed and a ledger that
-    declines to record them under-counts — which this module's own docstring
+    declines to record them under-counts, which this module's own docstring
     calls "the failure that lets an attack through". What must not happen is
     that it goes unnoticed.
     """
@@ -825,7 +825,7 @@ def test_claims_cannot_assert_their_own_delegation_chain():
     """The chain must come from verified delegation, never from a claims dict.
 
     `delegation_chain` is in `AUTHORITY_FIELDS`, so an adapter strips it. Without
-    that, a token could name any parent it liked — and since a delegate's spend
+    that, a token could name any parent it liked, and since a delegate's spend
     now books against its ancestors, an attacker could charge an unrelated
     principal's ceiling to exhaust it.
     """

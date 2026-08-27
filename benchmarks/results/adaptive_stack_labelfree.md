@@ -25,7 +25,7 @@ and its entire contribution is carried by whether a step-up halts the action. A
 deployment that treats step-up as advisory has, on this class, the floor and
 nothing else.
 
-`python -m benchmarks.adaptive_stack --dataset redcode --rounds 6 --breadth 20` — 250 tasks, 1,014,100 candidates.
+`python -m benchmarks.adaptive_stack --dataset redcode --rounds 6 --breadth 20`, 250 tasks, 1,014,100 candidates.
 
 Each cell is 250 tasks. A zero renders as its bound: 0 of 250 has a 97.5% upper
 bound of 1.5%, which is what an `allow-all` row scoring nothing

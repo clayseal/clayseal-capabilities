@@ -123,7 +123,38 @@ def extract_destinations(resource: str, args: dict, *,
     blob = " ".join(blob_parts)
     domains |= set(_EMAIL.findall(blob)) | set(_URL.findall(blob))
     domains |= set(_BAREHOST.findall(blob))
+    domains |= _routing_hosts(blob)
     return sorted(d.lower() for d in domains)
+
+
+#: One address, split off a list. Mail fields hold several, separated by these.
+_ADDRESS_SEPARATORS = re.compile(r"[,;\s]+")
+
+
+def _routing_hosts(blob: str) -> set[str]:
+    """Hosts a multi-`@` token would actually route to.
+
+    `ops@acme-internal.com@evil.test` is delivered to **evil.test**: RFC 5321
+    routes on the LAST `@`, and so does every mailer. The address regex stops at
+    the second `@` because `@` is not in its host character class, so it
+    extracted `acme-internal.com`, the policy matched an allow-listed domain,
+    and the real destination was never shown to the check at all.
+
+    Splitting on address separators first keeps an ordinary list of recipients
+    working: `a@x.com, b@y.com` is two tokens with one `@` each and is not
+    affected.
+    """
+    out: set[str] = set()
+    for token in _ADDRESS_SEPARATORS.split(blob):
+        if token.count("@") < 2:
+            continue
+        # Every host after the first `@`, so a token that lies about its
+        # destination is refused however the receiving mailer resolves it.
+        for part in token.split("@")[1:]:
+            host = _hostname_of(part)
+            if host:
+                out.add(host)
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -149,7 +180,7 @@ def _strings_of(value, *, _depth: int = 0, _budget: list | None = None):
 
     This used to flatten ONE level of list/tuple and nothing else, so a
     destination inside a dict-valued argument was invisible to the whole egress
-    floor — while this module's own docstring promised the opposite: "we scan
+    floor, while this module's own docstring promised the opposite: "we scan
     *every* string argument for them (not only named destination keys): an exfil
     channel can hide an attacker address in any field."
 

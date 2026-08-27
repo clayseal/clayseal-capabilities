@@ -4,7 +4,7 @@
 ``benchmarks.cli --mode stack``, ``cross_stack``, and live AgentDojo all build
 the gateway through this factory. Ladder engines in ``build_engines()`` remain
 a monotone *ablation* (floor construction), not a second product. Soft STEP_UP
-and hard DENY stay separate metrics — never fold soft into a hard-ASR cell.
+and hard DENY stay separate metrics, never fold soft into a hard-ASR cell.
 
 Profile (``DeployableStack``)
 -----------------------------
@@ -15,14 +15,14 @@ Profile (``DeployableStack``)
 3. Soft content: plan entailment + sealed-plan/digΔ vs declaration + online
    ``deterministic_content_reasons`` on consequential writes (STEP_UP)
 4. Session memory: CSV bind, line maps, packaging/sealed-violation taints
-   (``SessionMemory`` — same object shape live and replay), evaluated by the
+   (``SessionMemory``, same object shape live and replay), evaluated by the
    ``session_rules`` pack. ON by default here because every published number was
    measured with it on; it is corpus-derived and STEP_UP-only, and a deployment
    on unlike traffic should measure with ``session_rules=False`` too. See
    ``agentauth/capabilities/session_rules.py``.
 5. Parameter provenance (default on): containing-object sources for destinations
 6. Runtime replan when an intent envelope is present: ``catalog_shape_judge``
-   (trusted goal+catalog only) or caller-supplied LLM judge — never tool output
+   (trusted goal+catalog only) or caller-supplied LLM judge, never tool output
 7. Optional LLM entailment judge (fail-open if no credentials)
 8. Optional trajectory detector (advisory by default); ``reclear`` for mid-session
    envelope refresh on trusted input
@@ -32,6 +32,7 @@ intent envelopes; deterministic corpora use mandate-rigid scope.
 """
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -71,7 +72,7 @@ def _replay_clock(scope) -> Callable[[], datetime] | None:
     """Pin UTC clock inside the mandate window for corpus replay.
 
     Fixture mandates carry fixed ``expires_at`` dates. Wall-clock expiry would
-    turn every MCP/ASB replay into a false block once that date passes — the
+    turn every MCP/ASB replay into a false block once that date passes, the
     ladder never checked expiry, so the shared stack must pin a valid moment
     for fair cross-benchmark measurement. Live deployments keep wall clock.
     """
@@ -197,7 +198,25 @@ class DeployableStack:
         receipt_sink: Any = ...,
     ) -> DeployableStack:
         if entailment_judge is ...:
-            entailment_judge = default_entailment_judge()
+            # Ambient credentials must never be enough to start sending this
+            # session's data to a third party. The judge's prompt carries the
+            # user's request text and the declared write payloads, which is
+            # exactly the content this gateway exists to keep inside the
+            # deployment, and `make_chat_client` will build a client from
+            # OPENAI_API_KEY, AZURE_OPENAI_*, or a key file in the home
+            # directory. A deployment that happens to hold an OpenAI key for an
+            # unrelated reason would have started calling out with no line in
+            # any policy saying so.
+            #
+            # Egress to the judge is therefore opt-in twice over: pass a judge
+            # explicitly, or set CLAYSEAL_ENTAILMENT=1 to accept the default
+            # one. Credentials alone do nothing.
+            entailment_judge = (
+                default_entailment_judge()
+                if os.environ.get("CLAYSEAL_ENTAILMENT", "").strip().lower()
+                in {"1", "true", "yes", "on"}
+                else None
+            )
         if receipt_sink is ...:
             # Never `None`. "No durable evidence" and "evidence configured and
             # working" must not look the same at runtime, so an unconfigured
@@ -312,8 +331,8 @@ class DeployableStack:
             kwargs["clock"] = clock
 
         # Mandate coverage. `stress_aggregation.py` found five aggregation-key
-        # escapes that are not defects in the ledger — it debited exactly what it
-        # was told to, correctly, on every one — but in the mandate failing to
+        # escapes that are not defects in the ledger, it debited exactly what it
+        # was told to, correctly, on every one, but in the mandate failing to
         # say what should be counted. A linter nobody calls does not close those,
         # so it runs here, on the path every deployment goes through.
         #

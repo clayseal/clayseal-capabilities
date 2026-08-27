@@ -53,7 +53,7 @@ enforces that.
 The first use was against our own headline sweep. It blocked on 8 of 10.
 
 Three of those eight were bugs in the **gates**, and finding them that way is
-the point — a checklist meets its own standard first:
+the point, a checklist meets its own standard first:
 
 - **`partial` labels cannot disagree.** Counting them as mismatches reported 36%
   label disagreement against a real rate of 25%.
@@ -65,7 +65,7 @@ the point — a checklist meets its own standard first:
   silently.
 
 One was a genuine gap the gate was right about: the sweep had no `deny-all`
-row. It has one now, and it scores 132/132 containment at 0/132 completion —
+row. It has one now, and it scores 132/132 containment at 0/132 completion
 which is exactly why it has to be printed.
 
 ### Current verdict: 10 of 10 pass
@@ -79,8 +79,8 @@ python -m benchmarks.validity \
 Both failures closed, and the way each closed matters more than that it did.
 
 **P2 label inaccuracy: 24 of 97 disagreed, now 0 of 85.** The labels were not
-bulk-rewritten to agree. Two harness defects were fixed — a benchmark-local verb
-classifier that disagreed with the shipped one, and two real containment gaps —
+bulk-rewritten to agree. Two harness defects were fixed, a benchmark-local verb
+classifier that disagreed with the shipped one, and two real containment gaps
 and the labels those defects had mis-calibrated moved back. The count of
 *checkable* labels fell from 97 to 85 because eight paradox-tier scenarios are
 quarantined by design and no longer counted, which is a correction to the gate
@@ -92,7 +92,7 @@ The declaration says exactly how much of the agreement is worth anything:
 > were re-derived. Those 24 are a REGRESSION GUARD, not an independent
 > prediction, and agreement on them is not evidence the mechanism works.
 
-One label moved the other way on the same day — `contractor-scope-creep` went
+One label moved the other way on the same day, `contractor-scope-creep` went
 back to `open` after the adaptive attacker showed its fix was fitted to the
 scripted sequence. A relabelling pass that only ever moves labels toward
 agreement is the eval-fitting this programme exists to remove; one moving
@@ -102,7 +102,7 @@ against is the cheapest available evidence that it was not.
 backed for the system it names, which it was not.
 
 P10 reads `attacker_knowledge` from the meta. The meta declares `scripted,
-blind, feedback, oracle` and the gate passes on the declaration — but every
+blind, feedback, oracle` and the gate passes on the declaration, but every
 adaptive artifact in `results/` attacked a **ladder rung**, and the ladder is an
 ablation, not the product. The system the meta names is `DeployableStack`. It had
 never faced an adaptive adversary at all.
@@ -134,7 +134,7 @@ python -m benchmarks.validity \
 scenarios. Nested matters: a better-informed attacker must be able to do
 everything a weaker one can, or a flat row is an artifact of which bag it drew
 from. The first version was not nested and the monotonicity check caught it
-immediately — `feedback` held 37 scenarios where `blind` held 36, which is not a
+immediately, `feedback` held 37 scenarios where `blind` held 36, which is not a
 fact about any defense.
 
 | family | scripted | blind | feedback | oracle |
@@ -153,7 +153,7 @@ and one of them is the important one.
 ### `contractor-scope-creep`: a fix fitted to a script
 
 Earlier the same day, this scenario was closed by declaring
-`identity_args=("person",)` — "grant each person once". It stopped the scripted
+`identity_args=("person",)`, "grant each person once". It stopped the scripted
 attack, which re-grants to the same Mira, and the sweep went green.
 
 The adaptive attacker varied the person and walked through. The scenario's own
@@ -170,7 +170,7 @@ pass. That is benchmark-fitting, in this repository, caught within hours by the
 gate that exists to catch it.
 
 The fix was reverted rather than replaced. The correct mandate constrains the
-`level` **argument**, and this system cannot express that — `authorized_arg_hashes`
+`level` **argument**, and this system cannot express that, `authorized_arg_hashes`
 binds whole argument sets by hash, so "any person, `level=read` only" would mean
 enumerating every person. The scenario is labelled `open` again and the gap is
 recorded in `make_broker`.

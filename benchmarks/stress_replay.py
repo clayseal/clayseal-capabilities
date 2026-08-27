@@ -53,7 +53,7 @@ FUTURE = datetime.now(timezone.utc) + timedelta(hours=1)
 
 
 class FlakyStore:
-    """A store whose backend is down — the outage case, without a live Redis.
+    """A store whose backend is down, the outage case, without a live Redis.
 
     Mirrors what `RedisUsedTokenStore.mark_used` does when `redis` cannot reach
     the server: `self._client.set(...)` raises `ConnectionError`, which is not

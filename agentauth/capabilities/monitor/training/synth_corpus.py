@@ -112,7 +112,7 @@ _BY_KIND = {w.kind: w for w in WORKFLOWS}
 def generate(n: int, *, seed: int = 0) -> list[Trajectory]:
     """Sample ``n`` benign trajectories spread across the workflow templates."""
     # Draws synthetic TRAINING TRAJECTORIES, not key material, and is seeded on
-    # purpose so a corpus is reproducible — the opposite of what a cryptographic
+    # purpose so a corpus is reproducible, the opposite of what a cryptographic
     # generator is for.
     rng = random.Random(seed)  # noqa: S311
     out: list[Trajectory] = []
@@ -187,7 +187,7 @@ def inject_slow_drift(traj: Trajectory, rng: random.Random) -> Trajectory:
     """Gradual subversion: a sustained run of a rarely-repeated in-scope tool.
 
     Each added call is only mildly surprising (a rare self-transition), so no
-    single step trips the point (max-surprise) check — but the sustained
+    single step trips the point (max-surprise) check, but the sustained
     elevation accumulates, which is what the CUSUM drift tier is for."""
     from collections import Counter
 

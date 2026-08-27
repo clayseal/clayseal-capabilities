@@ -9,7 +9,7 @@ comparisons sit inside their own noise band. A reader cannot tell which.
 Two distinct sources of variance, deliberately kept separate because they
 answer different questions:
 
-**Sampling variance** — the corpus is a sample of the attacks that exist, so a
+**Sampling variance**, the corpus is a sample of the attacks that exist, so a
 rate measured on it is an estimate. Events are *not* independent: RedCode's 60
 `exfiltrate-file-over-network` cases share a template, and an engine that
 handles one handles all 60. Treating them as 60 independent trials shrinks the
@@ -18,7 +18,7 @@ resampling unit is the **task**, not the event (a cluster bootstrap), and the
 interval it produces is honestly wide where the corpus is really a handful of
 templates.
 
-**Synthesis variance** — the adversarial leaderboard generates attack variants
+**Synthesis variance**, the adversarial leaderboard generates attack variants
 from a seeded RNG, so a single seed reports one draw from the attack
 distribution. Multi-seed runs report the spread across draws.
 
@@ -78,7 +78,7 @@ class Interval:
 
 
 def proportion_ci(successes: int, n: int, level: float = 0.95) -> Interval:
-    """Wilson score interval — for independent Bernoulli trials only.
+    """Wilson score interval, for independent Bernoulli trials only.
 
     Preferred over the normal approximation because it stays inside [0, 1] and
     does not collapse to zero width at 0% or 100%, which is exactly where our

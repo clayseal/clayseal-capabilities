@@ -70,7 +70,7 @@ class ConstantScorer:
 class PositionScorer:
     """A control that reads only *where* an action sits in the session.
 
-    It knows nothing about tools, targets, arguments or goals — the surprise of
+    It knows nothing about tools, targets, arguments or goals, the surprise of
     an action is its index. On an honest corpus it must score chance, because
     when an attack happens carries no information about whether it is an attack.
 
@@ -93,7 +93,7 @@ class PositionScorer:
     def surprise(self, traj: Trajectory) -> list[ScoredStep]:
         # RELATIVE position, not the index. Using the raw index makes the
         # trajectory-level max equal to the length, so the control measures how
-        # long a session is rather than where the attack sits — it scored AUC
+        # long a session is rather than where the attack sits, it scored AUC
         # 0.624 that way, which is a real length confound (an attack variant is
         # its benign prefix PLUS injected events, so it is strictly longer) but
         # not the leak this row is meant to detect. Normalising isolates
@@ -161,7 +161,7 @@ class ConformalCombinedScorer:
     The fix stated in the design and tested here: convert each channel's raw
     surprise to a conformal p-value against ITS OWN benign calibration slice,
     which puts every channel on the one scale that means the same thing
-    everywhere — probability of being this odd under benign traffic — then
+    everywhere, probability of being this odd under benign traffic, then
     combine with Fisher's method, ``-2 * sum(ln p)``.
 
     Calibration uses a slice disjoint from the one the sub-scorers were fit on.
@@ -208,7 +208,7 @@ class ProvenanceStratifiedScorer:
 
     The conjunction argument: a novel target is common (agents legitimately open
     new files), and a taint-derived action is common (almost everything after the
-    first read is), but *both at once* is rare — and it is the signature of an
+    first read is), but *both at once* is rare, and it is the signature of an
     agent acting on content that entered after the goal was sealed. A fixed
     false-alarm budget therefore buys much more detection when it is spent
     conditionally rather than uniformly.
@@ -319,7 +319,7 @@ def has_attack(task) -> bool:
 #: Corpora whose benign side is too thin to resolve a deployment FPR on its own,
 #: mapped to the benign population they are *designed* to be scored against.
 #: RedCode ships 718 risky ops and only ~50 tasks carrying benign events, so its
-#: own benign side cannot resolve 1% — the suite pairs it with BFCL trajectories
+#: own benign side cannot resolve 1%, the suite pairs it with BFCL trajectories
 #: and the README says so. Naming the pairing here keeps it visible rather than
 #: letting a 20-sample false-alarm estimate stand in for a rate.
 BENIGN_POOL = {"redcode": "bfcl", "agent_threat_bench": "bfcl",
@@ -341,9 +341,9 @@ def evaluate(corpus: str, scorer, tasks, *, train_frac: float = 0.6,
     *trajectory length* a perfect label. ``deny-all`` scored AUC 1.000 on that
     shortcut. Both sides must carry at least one action.
 
-    **Tasks with no attack event** are still used for *training* — they are
+    **Tasks with no attack event** are still used for *training*: they are
     legitimate benign traffic and starving the density of them is what made the
-    first corrected run collapse to chance — but contribute no attack row.
+    first corrected run collapse to chance, but contribute no attack row.
     """
     pairs = []
     for task in tasks:

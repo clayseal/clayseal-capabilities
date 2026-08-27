@@ -40,7 +40,7 @@ def _env() -> dict:
     'Missing credentials', wasting three full runs before reporting it. A
     harness whose job is repetition should not depend on how it was invoked.
     Azure is explicitly cleared for the same reason the ladder driver clears it:
-    the clayseal-aoai deployment is named gpt-4o-mini but serves gpt-5-mini.
+    `<aoai-resource>` is named gpt-4o-mini but serves gpt-5-mini.
     """
     import os
 
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     ablations = list(runs[0])
-    print(f"# Repeated live runs — {args.suite}, {args.model}, "
+    print(f"# Repeated live runs, {args.suite}, {args.model}, "
           f"n={args.n_user} x {len(runs)} repeats\n")
     print("| Ablation | autonomous (pooled) | per-run | spread | hard DENYs | step-ups |")
     print("| --- | --- | --- | --: | --: | --: |")

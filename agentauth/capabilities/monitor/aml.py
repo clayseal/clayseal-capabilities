@@ -4,8 +4,8 @@ Anti-money-laundering does not read the memo field of a wire; it scores the
 *shape* of activity: velocity, fan-out, structuring (many just-under-threshold
 transfers), and deviation from a peer group. The memo asks for the same posture
 over agent actions ("more like fraud detection or AML than a normal sandbox").
-Each detector here is a pure function of action metadata — verbs, amounts,
-targets, counts, order — so it is injection-resistant: an attacker can cause a
+Each detector here is a pure function of action metadata, verbs, amounts,
+targets, counts, order, so it is injection-resistant: an attacker can cause a
 suspicious pattern but cannot write text that explains it away.
 
 Typologies are interpretable hard signals; peer-group deviation is a learned
@@ -14,6 +14,7 @@ the Waymo path envelope and the learned scorer.
 """
 from __future__ import annotations
 
+import re
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -35,10 +36,23 @@ _SECURITY_SURFACE = ("auth", "permission", "role", "acl", "iam", "credential",
                      "sudo", "admin", "firewall", "access")
 
 
+_SECURITY_SURFACE_WORDS = frozenset(_SECURITY_SURFACE)
+#: Split on anything that is not a letter or digit, so `access_key` and
+#: `iam-role` yield the words they are made of.
+_WORDS = re.compile(r"[^a-z0-9]+")
+
+
 def _touches_security_surface(action) -> bool:
+    """Does this action name part of the authorization surface?
+
+    Matched on WORDS, not substrings, for the same reason as the twin check in
+    `consequence.py`: `acl` is inside "oracle", `iam` inside "William Diamond",
+    `access` inside "accessory". Ordinary arguments were reading as a change to
+    the authorization surface, which is what this detector escalates on.
+    """
     hay = " ".join([action.tool, action.resource,
                     " ".join(str(v) for v in action.args.values())]).lower()
-    return any(term in hay for term in _SECURITY_SURFACE)
+    return not _SECURITY_SURFACE_WORDS.isdisjoint(_WORDS.split(hay))
 
 
 def peer_z_score(feats: dict[str, float], mean: dict[str, float],
@@ -154,7 +168,7 @@ class AmlAnalytics:
 
         # Delegated-trust laundering: an action that touches the security surface
         # and is justified by untrusted, post-seal cross-boundary context (a
-        # sidekick summary). Structural — provenance labels plus target surface,
+        # sidekick summary). Structural, provenance labels plus target surface,
         # no content read. This is the Devin/Fusion main/sidekick threat.
         untrusted = {
             c.item_id for c in traj.context

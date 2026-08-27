@@ -2,7 +2,7 @@
 
 Runs inside iVisor. When the ladder reaches QUARANTINED the ticket directory is
 simply not staged, so this prints nothing and the host sees a verified
-`fs.open verdict=miss root=workspace` — absence, not a refusal.
+`fs.open verdict=miss root=workspace`, absence, not a refusal.
 """
 import os
 

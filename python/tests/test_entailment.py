@@ -175,7 +175,7 @@ def test_broker_entailment_steps_up_not_denies():
 
 
 def test_broker_online_content_entailment_without_declaration():
-    """No commit_plan — det patterns still STEP_UP on the write itself."""
+    """No commit_plan, det patterns still STEP_UP on the write itself."""
     broker = SessionBroker(
         goal=GoalSpec(
             query_id="t",

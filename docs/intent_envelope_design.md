@@ -1,6 +1,10 @@
-# The Intent Envelope: goal-derived, history-free runtime safety for agents
+# The intent envelope
 
-Research synthesis and design for the core of the Clay Seal behavioral layer.
+When a session starts, Clay Seal turns the stated goal into a set of checks it
+can apply to every later action: which tools that goal implies, in what order,
+against what targets, how many times. That set is the intent envelope. This
+document explains how it is derived and why it is built from the goal alone,
+never from what the agent has done since.
 
 ## Thesis
 
@@ -149,7 +153,7 @@ fitness and typed deviations:
 - **off-plan**: no node the action maps to (behavior in the trace not in the model).
 - **out-of-order**: a node reached before its predecessors.
 - **out-of-parameter**: right tool, wrong bound value (a payee the goal never named).
-- **no-feasible-completion**: the MPC test — after this action, is a valid path to
+- **no-feasible-completion**: the MPC test, after this action, is a valid path to
   the goal still possible? If not, the action steered off-mission.
 - **missing landmark**: a required step skipped (behavior in the model not the trace).
 

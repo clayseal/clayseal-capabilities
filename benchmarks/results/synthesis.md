@@ -17,7 +17,7 @@ both halves and they had never been combined:
 
 `benchmarks/adversarial` already synthesizes attack variants from benign tasks.
 Pointed at the second group it produces exactly the shape the adequacy spec asks
-for — an injection landing inside a session that also contains legitimate work.
+for, an injection landing inside a session that also contains legitimate work.
 
 ## Adequacy of the synthesized corpora
 
@@ -48,8 +48,8 @@ attack_events`, so an attack trajectory is strictly longer than the benign
 trajectory it is scored against. On a corpus of long sessions that difference is
 noise; on BFCL, whose median task is 1 event, it *is* the label.
 
-`adequacy.py` now computes the length shortcut directly — the AUC of trajectory
-length as a classifier, which needs no model at all — and a corpus scoring ≥0.75
+`adequacy.py` now computes the length shortcut directly, the AUC of trajectory
+length as a classifier, which needs no model at all, and a corpus scoring ≥0.75
 is marked unusable on **every** layer at once, because there is no point asking
 whether a density can be evaluated where counting actions already scores 1.000.
 tau2, ATIF and ToolEmu sit at 0.63–0.68 and pass.
@@ -83,7 +83,7 @@ scorer.
 
 **Fusion helps here and hurt on RedCode.** `ngram+target` is the best row at a 5%
 budget (82.5%). The earlier finding that summing channels hurts was true and
-specific — it holds when one channel carries negative information, not in
+specific, it holds when one channel carries negative information, not in
 general. Neither result generalizes without the other.
 
 **Steps-to-detect is finally a real measurement**: 5–6 actions into the
@@ -101,7 +101,7 @@ It scores **48.7%** at a 1% budget against the plain target channel's **68.5%**.
 The conjunction did not pay.
 
 The reason is visible in the taint gap itself. At +17%, tainted benign actions
-are numerous, so the tainted stratum's benign reference is broad — and scoring a
+are numerous, so the tainted stratum's benign reference is broad, and scoring a
 tainted attack against broad tainted-benign traffic *absorbs* the signal rather
 than sharpening it. Stratification helps when the stratum is rare and the
 reference is tight; here it is neither.
@@ -115,8 +115,8 @@ be exactly the eval-fitting this programme exists to remove.
 
 - **These attacks are ours.** Flaw 5 in `docs/methodology_audit.md` applies in
   full. The synthesis is mechanism-derived and reasonable, and it is not a wild
-  attack. It is a better *substrate* than what existed — it can exercise layers
-  nothing else could — and it is not evidence about real adversaries.
+  attack. It is a better *substrate* than what existed: it can exercise layers
+  nothing else could, and it is not evidence about real adversaries.
 - **One length shortcut is measured and bounded, not eliminated.** 0.63–0.68 AUC
   from length alone survives on the passing corpora. Every number above is
   partly that, and the `length` row quantifies how much: 0.8% detection at a 1%

@@ -1,4 +1,4 @@
-# Enforcement latency — redcode (250 tasks, 10880 decisions per engine)
+# Enforcement latency, redcode (250 tasks, 10880 decisions per engine)
 
 | Engine | p50 (us) | p95 (us) | p99 (us) | max (us) | added over previous |
 | --- | --- | --- | --- | --- | --- |

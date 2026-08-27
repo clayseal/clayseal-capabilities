@@ -10,7 +10,7 @@ adaptive tables actually show, and it is the more consequential of the two.
 
 `run_benchmark` gives a calibrated engine one look at clean traffic through
 `observe_corpus`, using a split where attack-bearing tasks never calibrate
-anything. The adaptive path did not call it at all — `observe_corpus` appears
+anything. The adaptive path did not call it at all, `observe_corpus` appears
 only in `benchmarks/core/runner.py`.
 
 The omission was invisible because an uncalibrated engine does not fail, it
@@ -23,7 +23,7 @@ defaults:
 
 So every adaptive result for the velocity rung was produced with a cap **6.4×
 tighter** than the one an operator would set from their own logs, which biases
-containment upward — the direction that flatters the system. The density rung was
+containment upward, the direction that flatters the system. The density rung was
 worse off: with no baseline it abstains on every event, so its row is a verbatim
 copy of its parent's, and a row that cannot differ from the one above it is not a
 measurement.
@@ -55,7 +55,7 @@ headline that the stack holds 100% against an attacker who reads the compiled
 policy is true, and it is a `task-scope` result. Binding, budget, velocity and
 the new density rung are indistinguishable from it and from each other.
 
-The same step function appears in all three already-published tables —
+The same step function appears in all three already-published tables
 `adaptive_exfiltration.md`, `adaptive_persistence.md`, `adaptive_destruction.md`.
 So the calibration defect above never changed a published number: those tables
 were saturated, and a 6.4×-too-tight velocity cap lands on the same 100% as a
@@ -69,7 +69,7 @@ a credential-bearing file *and* sending it to an external host; `task-scope`
 denies the path by definition, and every mutation that stays in scope stops
 achieving the objective and is discarded as a failed attack rather than counted
 as an escape. There is no in-scope route to an out-of-scope outcome, so the
-result is a tautology in the good sense — the mechanism is sound and the test
+result is a tautology in the good sense, the mechanism is sound and the test
 confirms it can't be talked around.
 
 But it means this test cannot rank the ladder, and the ladder is what the

@@ -33,7 +33,7 @@ def calibrate(engines, tasks, seed: int = 0):
     the omission is not cosmetic. Uncalibrated, ``VelocityLadderEngine`` falls
     back to ``default_cap = 5`` while calibration on RedCode yields **32**, so
     every adaptive result for that rung was produced with a cap 6.4x tighter than
-    the one an operator would set — which inflates containment. The density rung
+    the one an operator would set, which inflates containment. The density rung
     is worse off: with no baseline it abstains entirely, so its row was a copy of
     its parent's.
 
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
                 rounds=args.rounds, seed=args.seed, breadth=args.breadth,
             ))
 
-    print(f"# Adaptive red-team — {args.dataset} ({len(tasks)} tasks, "
+    print(f"# Adaptive red-team, {args.dataset} ({len(tasks)} tasks, "
           f"objective={objective.name}, {args.rounds} rounds)\n")
     print(f"_Objective: {objective.description}_ (ATT&CK {objective.attack_id})\n")
     print(render_markdown(results))

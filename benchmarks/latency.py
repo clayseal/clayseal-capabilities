@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
             for engine in build_engines([n.strip() for n in args.engines.split(",") if n.strip()])]
 
     n = rows[0]["decisions"] if rows else 0
-    print(f"# Enforcement latency — {args.dataset} ({len(tasks)} tasks, {n} decisions per engine)\n")
+    print(f"# Enforcement latency, {args.dataset} ({len(tasks)} tasks, {n} decisions per engine)\n")
     header = ["Engine", "p50 (us)", "p95 (us)", "p99 (us)", "max (us)", "added over previous"]
     print("| " + " | ".join(header) + " |")
     print("| " + " | ".join("---" for _ in header) + " |")

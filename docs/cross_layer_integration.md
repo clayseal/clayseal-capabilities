@@ -1,6 +1,10 @@
-# Cross-layer provider integration
+# Working with the identity and receipts layers
 
-Layer 2 and Layer 3 share a **provider-neutral authority contract** so you can swap identity stacks without rewriting capability or receipt logic.
+Clay Seal is one of three layers. Identity establishes who the agent is acting
+for, this layer decides what each action may do, and receipts record what
+happened. The three agree on one contract for passing authority between them, so
+you can change identity providers without touching policy or audit code. This
+document is that contract.
 
 ## Shared contract (L2 core)
 

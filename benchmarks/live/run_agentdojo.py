@@ -80,7 +80,7 @@ def _configure_provider(model: str) -> str:
                 # Reasoning models spend the completion budget on reasoning
                 # tokens before emitting anything. grok-4 with AgentDojo's
                 # default max_tokens returns finish_reason=length,
-                # completion_tokens=0, and an empty message — which AgentDojo
+                # completion_tokens=0, and an empty message, which AgentDojo
                 # surfaces as a failed turn. Left alone that reads as the model
                 # being bad at the task, and would be published as such. Raise
                 # the floor so the visible answer has room after the thinking.
@@ -121,7 +121,7 @@ def _configure_provider(model: str) -> str:
                 # returning 424/503, plus occasional 200s carrying zero
                 # choices (which AgentDojo hits as an IndexError and scores as
                 # a failed turn). That is backend flakiness, not agent
-                # behaviour, so retrying is legitimate — but silently retrying
+                # behaviour, so retrying is legitimate, but silently retrying
                 # would hide a condition that could bias results if failures
                 # correlate with particular prompts. Every retry is counted and
                 # the total is printed at the end of the run.
@@ -326,7 +326,7 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name, inj_ids_arg=No
     #
     # So every run that takes the first three is measuring the goals a model is
     # most likely to balk at on CONTENT grounds, independently of how the
-    # injection is framed — and that ceiling is invisible in the ASR number.
+    # injection is framed, and that ceiling is invisible in the ASR number.
     # `--inj-ids` makes the choice explicit; the default is unchanged.
     if inj_ids_arg:
         known = list(suite.injection_tasks)
@@ -390,7 +390,7 @@ def run(suite_name, model, n_user, n_inj, ablations, attack_name, inj_ids_arg=No
                     suite, pipe, suite.user_tasks[uid], attack, None, True, injection_tasks=inj_ids)
                 util += list(u_res.values())
                 sec += list(s_res.values())
-        # Friction: STEP_UP decisions (graduated response — halts autonomously but
+        # Friction: STEP_UP decisions (graduated response, halts autonomously but
         # is human-recoverable), reported as step-ups per user task so the metric
         # triple is (security=ASR, utility, friction), not security alone.
         step_ups = sum(1 for d in harness.decisions if d.get("outcome") == "STEP_UP") if harness else 0
@@ -422,7 +422,7 @@ def main(argv=None):
     p.add_argument("--inj-ids", default="",
                    help="comma-separated injection task ids or indices; "
                         "overrides --n-inj. The default [:n] is not a "
-                        "neutral sample — see run().")
+                        "neutral sample, see run().")
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
     print("=== Live AgentDojo: ASR + utility with Clay Seal ablations ===")
     inj_ids_arg = [x.strip() for x in args.inj_ids.split(',') if x.strip()]

@@ -327,14 +327,19 @@ no bound at all, which is the correct answer for them.
 **What it costs, measured.** On AgentHarm's in-surface attack population it
 contains 8 more events of 507, and it interrupts 26 benign actions of 278, so
 roughly three interruptions per additional catch. On `sleight` it contributes
-nothing, because the envelope alone already reaches 82.8% there. Every one of
+nothing. The 82.8% this paragraph used to cite as the reason was an artifact:
+that column was the envelope refusing every consequential action because it was
+comparing two vocabularies that never intersect, and the corrected figure is
+23.0% in-surface containment at zero benign cost. Every one of
 those interruptions is a step-up and not a refusal, verified by re-running the
 same corpus with step-ups treated as allows, so the cost is a person's attention
 rather than a lost task
 ([derived_counts_measured.md](../benchmarks/results/derived_counts_measured.md)).
 
-Whether that trade is worth it is a deployment decision. Switch it off with
-`compile_envelope(goal, derive_counts=False)`.
+Whether that trade is worth it is a deployment decision, and it is **off by
+default** because three interruptions per catch is not a default anyone should
+be given silently. Turn it on with
+`compile_envelope(goal, derive_counts=True)`.
 
 #### Inferring the ones a sentence does not state
 

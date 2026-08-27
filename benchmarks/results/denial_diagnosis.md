@@ -96,8 +96,8 @@ budget rather than against step-ups. **The intent envelope's
 off-plan gate was doing real containment work on travel that the binding floor
 does not do.**
 
-So the reasoning that motivated the change — "an injected step's destination
-never clears the binding floor, so this gate catches nothing new" — is false in
+So the reasoning that motivated the change, "an injected step's destination
+never clears the binding floor, so this gate catches nothing new", is false in
 general. It happens to hold on banking, where the attack is a transfer to an
 attacker IBAN that egress binding rejects. It fails on travel, where the
 injected action reaches a destination the floor considers acceptable and only
@@ -189,7 +189,7 @@ Both would have published a fabricated improvement, and neither raised an error.
 **The ablation ran with no defense at all.** `diagnose_methodology` resolved
 planners from an exact-name dict. A new ablation name missed every key, got
 `planner=None`, and therefore built no intent envelope. The run reported
-**8/8 tasks, zero denials, a 50-point improvement** — a perfect score for a
+**8/8 tasks, zero denials, a 50-point improvement**, a perfect score for a
 defense that was not running. Planner selection now matches on shape and the
 script refuses to start if any requested ablation resolves to no planner, so the
 failure mode is a wrong planner (loud) rather than no planner (silent and

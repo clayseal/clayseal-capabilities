@@ -2,7 +2,7 @@
 
 `_decode_layer` tries encodings strictest-first and stopped at the first attempt
 that returned bytes. Two of those attempts do not validate their input, so they
-"succeed" on almost anything — `urlsafe_b64decode` accepts a base85 payload,
+"succeed" on almost anything, `urlsafe_b64decode` accepts a base85 payload,
 returns thirteen bytes of noise, and the loop breaks before the base85 decoder
 two lines below is ever reached.
 
@@ -49,7 +49,7 @@ def test_every_standard_encoding_is_recovered(token):
 def test_the_shadowing_decoder_no_longer_shadows():
     """The specific mechanism, pinned.
 
-    `urlsafe_b64decode` still "succeeds" on a base85 token — that is a property
+    `urlsafe_b64decode` still "succeeds" on a base85 token: that is a property
     of the codec, not something to fix. What must not happen is the loop
     stopping there.
     """
@@ -98,7 +98,7 @@ def test_the_fix_costs_no_false_blocks_on_benign_traffic():
 
     Full run: `python -m benchmarks.flow --corpus tau2` reports 0 of 1,242
     benign events blocked, unchanged from before the fix. This is the cheap
-    version — the shapes that would break first if the decoder became greedy.
+    version, the shapes that would break first if the decoder became greedy.
     """
     from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 

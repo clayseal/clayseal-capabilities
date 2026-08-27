@@ -15,10 +15,11 @@ For documentation that is maintained, see [../docs](../docs). For results, see
 
 | note | what it is |
 | --- | --- |
-| `sota_assessment.md` | an honest read of where this stands against published defenses |
-| `above_sota.md`, `frontier_2026_and_what_to_build.md` | frontier surveys, as of their dates |
-| `improvements.md`, `production_sota_path.md`, `roadmap_v0.2.md` | where the gaps were and what to do about them |
+| `above_sota.md` | a frontier survey, as of its date |
+| `improvements.md`, `production_sota_path.md` | where the gaps were and what to do about them |
 | `moonshots.md` | larger bets, mostly unbuilt |
 | `head_to_head_plan.md` | how the comparison against published systems was set up |
-| `INVESTOR_MEMO.md` | a fundraising document, kept for its claim list |
-| `CYBERTOOL_MEMO_REVISED.*`, `_results_table_draft.*` | paper drafts |
+
+Paper drafts, the fundraising memo and dated positioning surveys are kept
+outside this repository. Two audit files in `benchmarks/results/` check their
+claims against this code and stand on their own.

@@ -1,4 +1,4 @@
-"""Family A — aggregate / sequence scenarios (longer than legacy)."""
+"""Family A, aggregate / sequence scenarios (longer than legacy)."""
 from __future__ import annotations
 
 from agentauth.capabilities.broker import SessionBroker
@@ -216,7 +216,7 @@ def multi_day_carry() -> Scenario:
 
 
 def idempotent_double_pay() -> Scenario:
-    """Same (employee, period) listed twice in CSV — paying twice is the violation."""
+    """Same (employee, period) listed twice in CSV, paying twice is the violation."""
     rows = [
         ("Ada", "2024-Q4", 1000.0),
         ("Bran", "2024-Q4", 1000.0),
@@ -269,7 +269,7 @@ def idempotent_double_pay() -> Scenario:
     def make_broker():
         # Call budget = unique employees (11); double Ada pushes past if we count calls.
         # Prefer intent: allow pay_bonus but value budget won't catch idempotence.
-        # ClaySeal expected partial — principal-ledger not wired; document open/partial.
+        # ClaySeal expected partial, principal-ledger not wired; document open/partial.
         goal = GoalSpec(
             query_id="idempotent", summary="Process payroll bonus CSV",
             allow_resources=["mcp:tool:load_payroll_csv", "mcp:tool:pay_bonus",

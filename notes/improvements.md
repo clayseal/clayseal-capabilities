@@ -204,11 +204,11 @@ the defense, and makes the utility comparison against CaMeL like-for-like.
 
 ## Sources
 
-- Adaptive Evaluation of Out-of-Band Defenses (arXiv 2606.26479) — the three
+- Adaptive Evaluation of Out-of-Band Defenses (arXiv 2606.26479), the three
   gaps, the four metrics, and the finding that out-of-band defenses like ours
   hold up under adaptive attack while in-band defenses collapse to 90%+ ASR.
-- PAuth (arXiv 2603.17170) — operand-level symbolic provenance.
-- CaMeL (arXiv 2503.18813) — the 77% vs 84% utility bar.
-- FIDES / Microsoft Research — confidentiality and integrity labels.
-- AgentDyn (arXiv 2602.03117), safety-benchmark taxonomy (arXiv 2605.16282) —
+- PAuth (arXiv 2603.17170), operand-level symbolic provenance.
+- CaMeL (arXiv 2503.18813), the 77% vs 84% utility bar.
+- FIDES / Microsoft Research, confidentiality and integrity labels.
+- AgentDyn (arXiv 2602.03117), safety-benchmark taxonomy (arXiv 2605.16282)
   trajectory length and benchmark realism critiques.

@@ -50,8 +50,8 @@ def test_the_policy_is_a_pure_function_of_the_mandate():
 
     The velocity cap was withdrawn once for being derived from the label. There
     is no threshold to derive here: which objects are volatile and whether to
-    re-read are declared, not learned, so no amount of traffic — attack or clean
-    — can move them. Asserted rather than assumed, because "there is no
+    re-read are declared, not learned, so no amount of traffic, attack or clean
+, can move them. Asserted rather than assumed, because "there is no
     parameter" is exactly the claim an added parameter would silently break.
     """
     mandate = {"freshness": {"volatile": ["record:*"], "revalidate": True}}

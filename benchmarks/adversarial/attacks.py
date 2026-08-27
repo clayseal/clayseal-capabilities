@@ -43,7 +43,7 @@ corpora:
 
 Tail substitution trades the length tell for a position tell, which is why the
 position is drawn rather than fixed at the end. The taint gap closes because the
-attack action inherits its place in the data flow rather than beginning cold —
+attack action inherits its place in the data flow rather than beginning cold
 that gap was **anti-correlated** on RedCode (83.7% of benign actions taint-derived
 against 0.0% of attack actions), a corpus that rewards an inverted detector.
 
@@ -253,8 +253,8 @@ def in_scope_burst(task: BenchmarkTask, rng: random.Random) -> list[AttackVarian
 
     Repeat an authorized read many times with its own authorized arguments: every
     call passes tool allowlist, capability, path scope, and per-call binding, so
-    the enforcement floor allows all of it. The attack is the *aggregate* — an
-    anomalous scanning/exfil-staging burst — which only the behavioral trajectory
+    the enforcement floor allows all of it. The attack is the *aggregate*, an
+    anomalous scanning/exfil-staging burst, which only the behavioral trajectory
     detector can flag. This is the residual class AgentDojo/InjecAgent/ToolEmu do
     not exercise, and the reason the detector layer exists.
     """
@@ -299,7 +299,7 @@ def synthesize(
     position instead of appending them, so the variant has the same trajectory
     length as its source. Default False, because every published number in this
     repository was produced by appending and silently changing that would make
-    old and new results incomparable — see the module docstring for what
+    old and new results incomparable, see the module docstring for what
     appending costs and what it is measured at.
 
     Variants whose source session is too short to host the attack

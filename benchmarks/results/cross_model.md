@@ -8,8 +8,8 @@ neither was about the mechanism. `python -m benchmarks.live.ladder_sweep`.
 ## Why `gpt-4o-mini` is not in this table
 
 The published head-to-head was labelled gpt-4o-mini and was not: the deployment
-`gpt-4o-mini-2024-07-18` on `clayseal-aoai` serves **gpt-5-mini-2025-08-07**.
-Deploying a genuine one is no longer possible —
+`gpt-4o-mini-2024-07-18` on `<aoai-resource>` serves **gpt-5-mini-2025-08-07**.
+Deploying a genuine one is no longer possible
 
 ```
 ERROR: (ServiceModelDeprecating) The model 'Format:OpenAI,Name:gpt-4o-mini,
@@ -44,14 +44,14 @@ The spread says whether another sweep would have found the same thing.
 Zero spread on every condition, and it is worth being precise about why, because
 "no variance" is the kind of result that should attract suspicion.
 
-It is not that the agent behaves identically across seeds — it does not, and the
+It is not that the agent behaves identically across seeds: it does not, and the
 friction column moves. It is that **the quantity being measured is not a function
 of the agent's choices.** The ledger decides the aggregate class deterministically
 from the multiset of committed effects: whatever order or phrasing the model
 picks, the ceiling is crossed or it is not, and crossing it is refused. In the
-other direction, Progent and CaMeL violate on every run for a structural reason —
+other direction, Progent and CaMeL violate on every run for a structural reason
 per-call policy has no cross-call state, and a task the trusted prompt fully
-specifies never trips a dataflow gate — so their 100% is not a sampling outcome
+specifies never trips a dataflow gate, so their 100% is not a sampling outcome
 either.
 
 Zero spread is therefore evidence *for* the class claim rather than a suspiciously
@@ -89,7 +89,7 @@ axis was for: `gpt-4.1-mini` and `gpt-4.1` are a different family from
 `gpt-5-mini`, and neither the baselines' 100% nor the ledger's zero moves.
 
 Read the two columns differently. Each baseline violating on 200 of 200 is a
-**structural** result and the one that carries the claim — per-call policy has no cross-call
+**structural** result and the one that carries the claim, per-call policy has no cross-call
 state, and a task the trusted prompt fully specifies never trips a dataflow
 gate, so there is no model on which either would do better. The ledger's zero is
 a **bound**: 0 of 100 per family is an upper bound of 3.6%, and at the 25-run

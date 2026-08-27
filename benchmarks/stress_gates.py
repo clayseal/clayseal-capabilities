@@ -6,7 +6,7 @@
 `stress_budget.py` found four defects in the budget rungs and all four were the
 same decision made in four places: **when the input is unusable, proceed.** For a
 parser that is often right. For an authorization control it is always wrong, and
-it is invisible from above — the broker records that the rung passed, the
+it is invisible from above, the broker records that the rung passed, the
 scoreboard counts it as enforced, and the ladder reports containment it never
 performed.
 
@@ -18,9 +18,9 @@ someone adds is audited by construction rather than by remembering.
 
 ``NEVER_RAISES``     A gate may deny. It may not throw *unexpectedly*. A gate
                      is allowed to declare a typed validation error as its
-                     denial mechanism — ``ComputeBudget.reserve`` raises
+                     denial mechanism, ``ComputeBudget.reserve`` raises
                      ``ValueError`` on a negative estimate, deliberately and in
-                     its docstring — and those are recorded, not counted. What
+                     its docstring, and those are recorded, not counted. What
                      is counted is an exception nobody chose: a ``TypeError``
                      from comparing a str to an int, an ``AttributeError`` from
                      calling ``.strip()`` on a list. An exception in the
@@ -37,7 +37,7 @@ someone adds is audited by construction rather than by remembering.
                      exactly when the amount was absurd.
 
 The second property needs care, and the care is the whole design. "Allowed" is
-not automatically a failure — most gates are allow-by-default for inputs outside
+not automatically a failure, most gates are allow-by-default for inputs outside
 their remit, and that is correct. The property is narrower: **for an input the
 gate is supposed to police, an unusable value must not be allowed.** Each gate
 therefore declares its own `in_remit` predicate, and only inputs inside the remit
@@ -110,7 +110,7 @@ class GateResult:
 
 
 # --------------------------------------------------------------------------- #
-# Gate adapters — each declares what it polices and how to call it
+# Gate adapters, each declares what it polices and how to call it
 # --------------------------------------------------------------------------- #
 def gate_value_budget():
     from agentauth.capabilities.value_budget import (
@@ -156,7 +156,7 @@ def gate_compute_budget():
     import math as _math
 
     def unusable(v):
-        # `10**30` clamped to the ceiling is CORRECT — the run gets the grant's
+        # `10**30` clamped to the ceiling is CORRECT, the run gets the grant's
         # worth and no more, which is the rung working. Only values that cannot
         # be metered at all are the gate's problem.
         if isinstance(v, bool) or not isinstance(v, (int, float)):
@@ -180,7 +180,7 @@ def gate_task_scope():
     # Only paths that should be OUT of scope count. `/app//data` and
     # `/app/./data` normalise to `/app/data`, which is in scope, and admitting
     # them is correct; flagging those was the harness being wrong, not the gate.
-    # `%2e%2e` and the RTL override are literal directory names inside /app —
+    # `%2e%2e` and the RTL override are literal directory names inside /app
     # in scope unless something downstream URL-decodes, which is a real but
     # conditional risk recorded in the writeup rather than asserted here.
     def should_be_out_of_scope(v):
@@ -216,7 +216,7 @@ def gate_egress_policy():
 
     # in_remit is deliberately narrow, and getting it wrong is how a harness
     # cries wolf. `''`, `net:`, `@`, None and 0 yield NO extractable destination,
-    # so "within policy" is correct — there is nothing to egress to. Only inputs
+    # so "within policy" is correct: there is nothing to egress to. Only inputs
     # that DO name a host are the policy's business. Verified separately that the
     # matcher is sound: `trusted.test.evil.com`, `nottrusted.test` and
     # `xtrusted.test` are all denied against an allow-list of `trusted.test`,

@@ -2,7 +2,7 @@
 
 `receipt_sink` defaulted to `None`, which at runtime is indistinguishable from a
 sink that is configured and working. For a layer whose pitch is offline-verifiable
-decisions, the default was that nothing was written anywhere — and once the log
+decisions, the default was that nothing was written anywhere, and once the log
 became bounded, records stopped merely being lost at exit and started being lost
 during the run.
 

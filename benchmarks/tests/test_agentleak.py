@@ -415,7 +415,7 @@ def test_agentleak_confidentiality_is_blind_to_leaks_in_read_arguments():
     outbound payload as a sink regardless of verb takes containment to 100%.
 
     This test pins the defect so a fix is visible as a change here rather than
-    as a silently better number — and that is what it did. It was written at
+    as a silently better number, and that is what it did. It was written at
     **6 of 22 contained (27.3%), 16 missed as not-a-sink**, and now reads 11 and
     11 (50.0%). The difference is the sensitivity-polarity fix in
     ``confidentiality.py``: ``_matches`` served both ``is_sensitive`` and

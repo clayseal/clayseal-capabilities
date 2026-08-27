@@ -1,1 +1,0 @@
-{"trace": ["ivisor: policy fs.open verdict=allow root=workspace path=/work/data/tickets/T-1001.txt flags=0o0"], "stdout": ["Subject: Duplicate charge on order #48812\nFrom: Nadia Osei <n.osei@example.net>\n\nI was billed twice for order #48812 on 14 March. Both charges show as\nsettled on my statement. Please refund the second one."], "write": [], "exit": 0}

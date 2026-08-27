@@ -3,7 +3,7 @@
 This used to be ``DeployableStack.from_benchmark_task``, a classmethod on the
 library class whose body did ``from benchmarks.core.detector_eval import
 _goal_for``. The wheel ships ``only-include = ["agentauth/capabilities"]``, so
-in any real install that import raises ``ModuleNotFoundError`` — the library
+in any real install that import raises ``ModuleNotFoundError``, the library
 depended on the harness that measures it. The import was lazy, so nothing caught
 it until a caller reached the method, and the CI layering check only forbids
 ``agentauth.receipts``, ``agentauth.backend`` and top-level
@@ -13,7 +13,7 @@ The direction of the dependency is now the only one that makes sense: the
 benchmark knows about the library, the library knows nothing about the
 benchmark. ``DeployableStack.from_goal`` is unchanged and is still the one
 profile every path builds through, so this is a relocation and not a second
-product — the mapping from a ``BenchmarkTask`` to that call is what lives here.
+product, the mapping from a ``BenchmarkTask`` to that call is what lives here.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def stack_from_benchmark_task(
     g = goal or _goal_for(task)
     mandate = task.mandate or {}
     # Path-scoped human authorizations compile with empty allowed_resources;
-    # do NOT backfill path globs into allowed_resources — the broker treats
+    # do NOT backfill path globs into allowed_resources, the broker treats
     # that field as exact resource ids (e.g. "workspace"), while paths are
     # checked via task_scope_allows_path. Ladder leaves resources empty.
     scope = compile_task_scope(mandate) if mandate else None

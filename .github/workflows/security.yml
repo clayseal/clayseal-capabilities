@@ -44,7 +44,7 @@ jobs:
       - name: Trivy filesystem scan (vulns + misconfig + secrets)
         # v-prefixed: the bare `0.28.0` tag this used to name does not exist in the
         # action's repo, so every scheduled run failed at 'unable to resolve action'
-        # rather than on a finding — a security scan that was reliably red for a
+        # rather than on a finding, a security scan that was reliably red for a
         # reason unrelated to security.
         uses: aquasecurity/trivy-action@v0.36.0
         with:

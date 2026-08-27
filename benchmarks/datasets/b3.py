@@ -1,4 +1,4 @@
-"""b3 (Breaking Agent Backbones) loader — Lakera / UK AISI, arXiv 2510.22620.
+"""b3 (Breaking Agent Backbones) loader, Lakera / UK AISI, arXiv 2510.22620.
 
 b3 is crowd-sourced from the *Gandalf: Agent Breaker* game. It ships 30 "threat
 snapshots": a realistic app (system prompt, user turn, MCP tool set) plus the
@@ -16,8 +16,8 @@ matters for an authorization layer is exactly one bit wide:
 * ``[TI]`` (tool invocation) targets name a **tool call and its argument
   values**. `tool_invocation_metric` delegates to `structured_output_metric`,
   which extracts a named field and compares it to a literal. These are actions.
-* every other metric — RECALL, EXACT, LIST, PROFANITY, POOH, SEXUAL_CONTENT,
-  and STRUCTURED targets that are not wrapped in ``[TI]`` — scores **prose the
+* every other metric, RECALL, EXACT, LIST, PROFANITY, POOH, SEXUAL_CONTENT,
+  and STRUCTURED targets that are not wrapped in ``[TI]``, scores **prose the
   model wrote**. A system prompt disclosed, a phishing line inserted in an
   itinerary, profanity, Winnie-the-Pooh content, a `proposed_fix` string
   containing `curl ... | sh`, a refusal message. No tool call is consulted.
@@ -40,9 +40,9 @@ Three caveats about the ``[TI]`` nine, stated because they bound the claim
    prose scores the same as one that calls the tool. b3 measures a model's
    susceptibility, not an executed effect.
 3. b3 ships **no recorded trajectories**. Every event below is constructed. The
-   attack event is a transcription of ``expected_output`` — the corpus's own
+   attack event is a transcription of ``expected_output``, the corpus's own
    literal statement of which tool, which field and which value constitute the
-   win — and the benign event is only emitted when the snapshot's
+   win, and the benign event is only emitted when the snapshot's
    ``prompt_template`` names the tool itself.
 
 The HuggingFace half, and why it is not replayed
@@ -58,7 +58,7 @@ the API metadata and the CSV download over plain HTTPS with **no token**
 interpolated into the snapshot's ``attacker_template`` and changes only whether
 the *model* is fooled. Every one of the 630 rows resolves to one of 10 snapshot
 families, so per-action the corpus is 210 unique attack strings x 3 levels
-against 10 decisions — and level 2 is level 0 plus an LLM judge
+against 10 decisions, and level 2 is level 0 plus an LLM judge
 (``_JUDGE_LEVEL``), so it is not a distinct snapshot at all. Replaying the CSV
 would report 630 attack events that are 9 decisions repeated up to 70 times
 each. That is the InjecAgent defect (half the corpus is the same case twice) at
@@ -518,8 +518,8 @@ class B3Loader:
         ``TS9_..._1``), and the level changes the system prompt, not the attack.
         For ``email_tool_invocation`` and ``mcp_chat_poisoning`` the two levels
         assert a byte-identical target, so the per-action decision is the same
-        decision twice. They are kept — dropping a corpus item is its own
-        distortion — but flagged, so a containment rate can be read per event
+        decision twice. They are kept, dropping a corpus item is its own
+        distortion, but flagged, so a containment rate can be read per event
         and per DISTINCT action. Half of InjecAgent turned out to be the same
         case twice and nothing in that loader said so.
         """

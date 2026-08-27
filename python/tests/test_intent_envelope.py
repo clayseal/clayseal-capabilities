@@ -10,6 +10,7 @@ from agentauth.capabilities.monitor import (
     IntentEnvelope,
     Trajectory,
     is_consequential,
+    is_effectful,
 )
 from agentauth.capabilities.scoping.goal import GoalSpec
 
@@ -154,6 +155,14 @@ def test_two_signal_escalates_offplan_read_but_denies_offplan_write():
 
 
 def test_consequence_classifier():
-    assert not is_consequential(_read(0))
-    assert is_consequential(_pay(0))
-    assert is_consequential(Action(0, "del", "mcp:tool:del", "delete"))
+    # A read that names something is a disclosure: content it puts into the
+    # session cannot be un-read. That makes it consequential enough to escalate
+    # and never enough to refuse outright, which is the distinction between the
+    # two predicates and the reason both exist.
+    assert is_consequential(_read(0))
+    assert not is_effectful(_read(0))
+    # A read that names nothing has disclosed nothing.
+    assert not is_consequential(Action(0, "noop", "", "read"))
+    for effectful in (_pay(0), Action(0, "del", "mcp:tool:del", "delete")):
+        assert is_consequential(effectful)
+        assert is_effectful(effectful)

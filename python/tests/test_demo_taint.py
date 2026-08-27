@@ -1,4 +1,4 @@
-"""Taint links destinations, not payloads — and why that distinction matters."""
+"""Taint links destinations, not payloads, and why that distinction matters."""
 from agentauth.capabilities.monitor.action import Action
 from agentauth.capabilities.monitor.provenance import TaintTracker
 from demo.taint import derive_sources, destinations_in_args, untrusted_return
@@ -27,7 +27,7 @@ def test_a_destination_that_only_exists_in_a_ticket_is_tainted():
 
 def test_a_destination_named_in_the_sealed_goal_is_not_tainted():
     # The user asked for it, so it is not something the agent learned from a
-    # document — even though the address also appears in tool output.
+    # document, even though the address also appears in tool output.
     sources = derive_sources({"to": "ops@acme-internal.com"},
                              _returns(TICKET_TEXT + " ops@acme-internal.com"),
                              SEALED)

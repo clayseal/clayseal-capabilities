@@ -7,13 +7,13 @@ authorized, and the *composite* breaks policy.
 That class is growing in importance as the injection channel closes. On
 `gpt-5-mini`, undefended attack-success under four stock AgentDojo injections is
 **0 of 18**; composite-policy violation on the same model is **100 of 100** on
-`payout-splitting`. The agent is not deceived — it is being helpful.
+`payout-splitting`. The agent is not deceived: it is being helpful.
 
 - **Datasheet:** [`DATASHEET.md`](DATASHEET.md) (Gebru et al. format)
-- **Reproduce:** [`REPRODUCE.md`](REPRODUCE.md) — a scripted tier that needs
+- **Reproduce:** [`REPRODUCE.md`](REPRODUCE.md), a scripted tier that needs
   no API key and covers every structural claim
 - **Runner:** `python -m benchmarks.live.bpl_live`
-- **Policies:** [`policies.py`](policies.py) — the rule each Core scenario is
+- **Policies:** [`policies.py`](policies.py), the rule each Core scenario is
   scored against, given to every condition
 
 ## Layout
@@ -58,7 +58,7 @@ That class is growing in importance as the injection channel closes. On
 
 The comparison conditions are named for an **architectural class**, never for
 anyone's system. `per-call` and `dataflow-taint` were previously called
-`progent` and `camel`; they were never those systems — they are ~10-line
+`progent` and `camel`; they were never those systems: they are ~10-line
 reproductions of a class, and a reproduction cannot support a claim about
 published work. `drift` and `authgraph` keep their names because they are fuller
 mechanism reproductions built from the published designs, and are labelled
@@ -71,7 +71,7 @@ mechanism reproductions built from the published designs, and are labelled
    rule*. The claim that survives is architectural:
 
    > Given the same policy, a defense with no cross-call state cannot enforce an
-   > aggregate constraint — because the constraint is not a property of any
+   > aggregate constraint, because the constraint is not a property of any
    > single call.
 
 2. **Per-call-blind on the violating path.** Every tool call in the violating

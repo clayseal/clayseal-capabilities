@@ -121,7 +121,7 @@ class StalenessPolicy:
     # Treat the session's own effects on an object as superseding earlier views
     # of it. Free, and it is the third definition of staleness: an object this
     # agent just wrote to is not the object it read. Separable from the rest
-    # because it is the one rule with a plausible cost on ordinary traffic — an
+    # because it is the one rule with a plausible cost on ordinary traffic, an
     # agent that edits a record and then uses a field it read beforehand is
     # doing something a strict reading calls stale, and `benchmarks/state.py`
     # measures what that reading costs instead of assuming it is free.
@@ -277,7 +277,7 @@ class ObservationLedger:
     edge-trimming and the observation record are the ones already wired into the
     live path, and every observation recorded here is also recorded there, so the
     egress and envelope layers see exactly what they saw before. What this adds
-    is the version dimension that provenance does not carry — provenance answers
+    is the version dimension that provenance does not carry, provenance answers
     *which tool supplied this value*, and staleness needs *which version of which
     object supplied it, and is that version still current*.
     """
@@ -295,8 +295,8 @@ class ObservationLedger:
     # field: `city='New York'`, `address2='Suite 394'`, `address1='445 Maple
     # Drive'`. No run of six characters, so `parameter_provenance` has nothing to
     # index and a stale delivery address is invisible. Lowering the attribution
-    # floor is not the fix — it is 6 precisely because shorter strings appear
-    # everywhere — but a value that arrives in a NAMED field carries the name as
+    # floor is not the fix: it is 6 precisely because shorter strings appear
+    # everywhere, but a value that arrives in a NAMED field carries the name as
     # extra evidence, and `city` plus `New York` is specific where `New York`
     # alone is not.
     #

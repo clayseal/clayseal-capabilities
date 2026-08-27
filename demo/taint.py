@@ -3,7 +3,7 @@
 THE DESIGN DECISION THAT MAKES THIS WORK: taint links DESTINATIONS, not
 payloads.
 
-In a summarization task the payload is derived from tool output *by design* —
+In a summarization task the payload is derived from tool output *by design*
 that is the whole job. If `derived_from` were computed over the full argument
 blob, every legitimate summary email would come out "tainted x consequential"
 and the ladder would fire on correct behaviour, which is the classic way a
@@ -17,7 +17,7 @@ reasoning `benchmarks/live/broker_defense.py::observe_output` arrived at from th
 opposite direction (which destinations may be *trusted*).
 
 Consequence: a run where the model dutifully pastes harvested data into a
-legitimately-addressed email is NOT caught here — the broker's argument scan
+legitimately-addressed email is NOT caught here, the broker's argument scan
 catches that instead (`extract_destinations` reads every string argument). Two
 mechanisms, two threat shapes; neither is asked to do the other's job.
 """
@@ -60,7 +60,7 @@ def untrusted_return(step: int, tool: str) -> ContextItem:
 
     Untrusted by PROVENANCE, not by inspection. `context_item_from_content`
     defaults to TRUSTED and only downgrades when input-hardening finds delivery
-    markers (zero-width, bidi, homoglyphs) — a clean ASCII instruction in a
+    markers (zero-width, bidi, homoglyphs), a clean ASCII instruction in a
     ticket would sail through it. The honest rule is simpler: it came out of a
     tool, so the agent did not author it and the user did not sanction it.
     """

@@ -107,7 +107,7 @@ Modules (`agentauth/capabilities/sandbox/`):
 
 iVisor writes verdicts to the fd named by `IVISOR_TRACE_FD`. Guest fds are
 virtualized and only 0/1/2 exist, so a host fd ≥ 3 is structurally unreachable
-from inside the guest — that is what makes those lines evidence.
+from inside the guest: that is what makes those lines evidence.
 
 - Only trace-fd lines are `verified=True` and count.
 - Policy-shaped lines on stdout/stderr are collected as `unverified_claims` and
@@ -140,7 +140,7 @@ Every run leaves a self-contained, re-runnable artifact:
   **strictly tighter** on subdomains.
 - iVisor parses `domain:port` but does not enforce the port (ADR-0021 known
   limitations), so bare hosts are lowered and the broker remains the authority
-  on ports — the sandbox is **looser** here.
+  on ports, the sandbox is **looser** here.
 - `EgressPolicy.allow_all` has no iVisor expression (there is no wildcard rule)
   and is **refused** rather than silently lowered to deny-all, which would break
   the workload with no explanation.
@@ -171,7 +171,7 @@ inode, and a writable `/work` would let the guest mutate the original host file.
 `bulk-exfil-live` (`benchmarks/live/bpl_live.py`) is the first BPL scenario whose
 tool calls really execute: reads touch real files, and "send" really resolves and
 connects to the recipient's domain. Conditions differ only in the policy compiled
-into the sandbox — `ivisor` gets the envelope's egress set, everything else gets
+into the sandbox, `ivisor` gets the envelope's egress set, everything else gets
 a permissive substrate so its own per-call gate is what is measured.
 
 Containment is graded from **verified verdicts**, on the policy decision rather
@@ -208,8 +208,8 @@ a guest, so a sandbox "engine" there would measure nothing.
 `demo/` turns the launch-time model into a dynamic one without changing any of
 the above: because a run costs ~50 ms and a policy is a file, the policy can be
 **recompiled for every tool call** from the agent's evolving trajectory. Each
-recompile is a new epoch — a new run directory, a new immutable config, a new
-digest — so every verdict still attributes to exactly one policy version, which
+recompile is a new epoch, a new run directory, a new immutable config, a new
+digest, so every verdict still attributes to exactly one policy version, which
 is the property a mid-run mutation channel would have destroyed.
 
 ```bash
@@ -225,14 +225,14 @@ by that step.
 The run isolates the two claims rather than conflating them:
 
 - the direct exfil is refused by the **sealed envelope**, at the tool level,
-  while the baseline policy is still in force — a static guarantee;
+  while the baseline policy is still in force, a static guarantee;
 - the internal-relay fallback is **allowed by the broker** (nothing external
   appears in its arguments) and **denied by the sandbox**, because egress was
   revoked in response to the trajectory. Same domain, allowed at epoch 1 and
   denied at epoch 2.
 
-Mere exposure to untrusted content deliberately costs nothing — the `SUSPECT`
-epoch reports `digest unchanged` — which is what lets the legitimate internal
+Mere exposure to untrusted content deliberately costs nothing, the `SUSPECT`
+epoch reports `digest unchanged`, which is what lets the legitimate internal
 summary email succeed one step after the poisoned ticket is read. The benign
 control asserts that property.
 
@@ -247,7 +247,7 @@ Runtime-mutable policy in iVisor, if per-spawn relaunch ever proves material:
 1. `EgressPolicy` rules behind `arc_swap`/`RwLock`.
 2. An inbound control fd (`IVISOR_CTRL_FD`), mirroring `IVISOR_TRACE_FD`.
 3. **Epoch markers in the verdict stream**, so each verdict attributes to the
-   policy version that produced it — without these, mid-run mutation destroys
+   policy version that produced it, without these, mid-run mutation destroys
    the attribution that makes the attestation meaningful.
 
 Python side: `update_allow(domains, epoch)` behind the existing `SandboxBackend`
@@ -269,7 +269,7 @@ Two smaller upstream asks, both currently worked around:
 ## Running it
 
 ```bash
-# Sign a COPY — signing a binary another process is executing can kill it.
+# Sign a COPY, signing a binary another process is executing can kill it.
 cp <iVisor>/target/release/ivisor /tmp/ivisor-signed
 codesign --force --sign - --entitlements <iVisor>/entitlements.plist \
     /tmp/ivisor-signed

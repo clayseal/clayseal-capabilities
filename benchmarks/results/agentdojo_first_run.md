@@ -1,4 +1,4 @@
-# External evaluation — AgentDojo + InjecAgent (with Phase 3 hardening)
+# External evaluation, AgentDojo + InjecAgent (with Phase 3 hardening)
 
 Deterministic replay of ground-truth tool calls through the real decision path;
 no LLM. Run locally on Python 3.12 (agentdojo needs 3.10–3.12). Numbers reflect
@@ -19,7 +19,7 @@ the per-call argument-binding fix and Phase 3 protected zones.
 **Per-call binding fix.** Binding previously showed 18.1% false-block because a
 single authorized arg-shape per tool rejected benign multi-call workflows.
 Binding **per call** (the set of authorized argument-hashes, one per real call)
-drops false-block to **0%** while keeping full argument-tampering containment —
+drops false-block to **0%** while keeping full argument-tampering containment
 the deployment lesson being that commit tokens bind a call, not a tool.
 
 At scale the full stack contains **95.6% at 0% false-block**; the 4.4% that slip
@@ -70,7 +70,7 @@ protected path), which per-action enforcement is built to catch.
 
 The floor is blind by construction to attacks that stay entirely in scope. The
 synthetic `in-scope-burst` class (repeat an authorized read 8× with its own
-authorized args — an aggregate scanning/exfil-staging anomaly) makes this
+authorized args, an aggregate scanning/exfil-staging anomaly) makes this
 measurable on AgentDojo:
 
 | Layer | Containment of in-scope-burst | Benign false-block |
@@ -100,7 +100,7 @@ and is unusable. Validates the learned-scorer architecture. Small test sample
 ## 6. Memo-faithful behavioral layer on long trajectories
 
 The detector was re-grounded in the memo's two framings (AML analytics and the
-Waymo safe-envelope) and the LLM adjudicator was removed — a content-reading
+Waymo safe-envelope) and the LLM adjudicator was removed, a content-reading
 judge is the one prompt-injectable component. Every tier is now a pure function
 of action metadata. Trained on a 4,000-trajectory synthetic corpus of multi-step
 workflows (avg length 8):
@@ -120,7 +120,7 @@ work and the scorer is secondary.
 
 Wired the ATIF-v1.2 MCP agent-trajectory corpus already in the codebase
 (`agentauth-receipts/benchmarks/corpus`): 38 real benign sessions, 282 tool-calls
-(median 6, up to 32) — the longest real benign trajectories available.
+(median 6, up to 32), the longest real benign trajectories available.
 
 Enforcement floor on real ATIF trajectories (attacks synthesized): full stack
 **82% containment, 1% false-block**; `in-scope-burst` 3% (the detector's
@@ -131,15 +131,15 @@ trajectories catches every in-scope shape:
 |-----------------------------|-------|-------------|---------|------------|-----------------|
 | detector recall | 100% | 100% | 100% | 100% | 100% |
 
-In-sample benign false-block is 10.5% — higher than on the synthetic corpus
+In-sample benign false-block is 10.5%, higher than on the synthetic corpus
 because 38 heterogeneous real sessions lumped in one goal bucket give a noisier
 corridor. The direct argument for more real per-goal data.
 
 New capabilities:
-- **delegated-trust-laundering typology** (`aml.py`) — a security-surface write
+- **delegated-trust-laundering typology** (`aml.py`), a security-surface write
   justified by untrusted cross-boundary (main/sidekick) context, the Devin/Fusion
   threat, caught structurally (provenance labels + target surface, no content).
-- **ensemble scorer** (`scoring/ensemble.py`) — z-standardized `max`/`mean` of
+- **ensemble scorer** (`scoring/ensemble.py`), z-standardized `max`/`mean` of
   n-gram + transformer, recovering both scorers' complementary strengths.
 
 ## 8. More real corpora (tau2, BFCL) + two conformal fixes
@@ -157,10 +157,10 @@ Loaders set `meta["goal_kind"]` so the detector calibrates **per goal type**
 tau2 enforcement leaderboard (400 tasks): full stack **95% / 0% false-block**.
 
 Detector on real held-out trajectories exposed two statistical bugs, now fixed:
-- **Calibration leakage** — calibrating the conformal on the scorer's own
+- **Calibration leakage**, calibrating the conformal on the scorer's own
   training data made the threshold too tight; fixed with **split-conformal** (a
   disjoint calibration slice).
-- **Multiple comparisons** — blocking a trajectory when *any* step trips a
+- **Multiple comparisons**, blocking a trajectory when *any* step trips a
   per-step p ≤ α inflates trajectory false-block to ~1−(1−α)^length; fixed with a
   **trajectory-level conformal** on the max-surprise statistic.
 
@@ -174,7 +174,7 @@ Effect on real tau2 held-out benign false-block:
 with 100% recall on the in-scope attacks retained. ATIF (1 session/app) now
 degrades gracefully to **0% false-block** by abstaining where per-goal data is
 too thin, still catching the absolute-threshold typologies (escalation,
-delegated-trust) but not corridor-dependent ones — the concrete argument for
+delegated-trust) but not corridor-dependent ones, the concrete argument for
 well-sampled per-goal corpora like tau2.
 
 ## 9. Cohesion pass: one gateway, CUSUM drift, capability reuse
@@ -182,14 +182,14 @@ well-sampled per-goal corpora like tau2.
 Two subsystems (per-action floor, behavioral detector) were unified and the
 system's own unused capabilities wired in:
 
-- **SessionBroker** (`capabilities/broker.py`) — the single online gateway the
+- **SessionBroker** (`capabilities/broker.py`), the single online gateway the
   memo describes: per action it runs the hard floor (scope, protected zones,
   egress, budgets) then, only for floor-allowed actions, the trajectory
   detector; a soft escalation raises a `step_up` request; every outcome updates
   `ScopingMetrics` (prevented violations, scan/drift/novelty triggers, overhead).
   End-to-end tests confirm floor-deny (out-of-scope, protected path), behavioral
   deny (in-scope burst the floor allows), and step-up plumbing.
-- **CUSUM drift tier** (`monitor/drift.py`) — statistical-process-control
+- **CUSUM drift tier** (`monitor/drift.py`), statistical-process-control
   inspiration for slow subversion: accumulates small per-step surprise
   deviations and fires on a sustained shift a point check misses ("refactor in
   one commit, weaken auth in the next"). Calibrated by conformal like every tier.
@@ -200,10 +200,10 @@ system's own unused capabilities wired in:
 
 ## Phase 3 hardening modules (`agentauth/capabilities/hardening/`)
 
-- **protected_zones** — global sensitive-path deny-list (wired; path-exfil 100%).
-- **egress_policy** — destination allow-list for send/post tools (default-deny
+- **protected_zones**, global sensitive-path deny-list (wired; path-exfil 100%).
+- **egress_policy**, destination allow-list for send/post tools (default-deny
   external egress); library + tests.
-- **input_hardening** — detects/strips zero-width, bidi-override, unicode-tag,
+- **input_hardening**, detects/strips zero-width, bidi-override, unicode-tag,
   and homoglyph delivery tricks; feeds the monitor taint layer so poisoned
   content becomes untrusted context. Library + tests.
 

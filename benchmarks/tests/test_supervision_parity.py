@@ -3,7 +3,7 @@
 `gate_with_supervision` was added so a STEP_UP could be a question rather than a
 halt, which is what turns "supervised utility" from arithmetic into a
 measurement. That is only worth anything if the new path is *identical* to the
-old one when nobody answers — otherwise every published autonomous number was
+old one when nobody answers, otherwise every published autonomous number was
 produced by different code from the one now shipping, and the comparison between
 supervised and autonomous is between two things that differ in more than
 supervision.
@@ -16,17 +16,30 @@ differently:
     NeverApprove        the loop is entered, `review` returns None, the step-up
                         stands
 
-The second is the one that matters. It exercises the whole path — building the
-action, authorizing, entering the while loop, asking, being declined, breaking —
+The second is the one that matters. It exercises the whole path, building the
+action, authorizing, entering the while loop, asking, being declined, breaking
 and must still land on the same verdict.
 """
 from __future__ import annotations
+
+import pytest
 
 from agentauth.capabilities.broker import Outcome, SessionBroker
 from agentauth.capabilities.monitor.action import Action
 from agentauth.capabilities.scoping.goal import GoalSpec
 from benchmarks.live.approver import NeverApprove
-from benchmarks.live.broker_defense import LiveBrokerHarness, classify_verb
+
+# `broker_defense` imports `agentdojo`, which is an optional benchmark
+# dependency and is not installed in the fast gate. Importing it at module
+# scope turned a missing optional dependency into a COLLECTION error, which
+# fails the whole job rather than skipping one file: five consecutive nightly
+# `invariants` runs went red on this and nothing else.
+pytest.importorskip("agentdojo", reason="optional benchmark dependency")
+
+from benchmarks.live.broker_defense import (  # noqa: E402 - after the skip
+    LiveBrokerHarness,
+    classify_verb,
+)
 
 #: A spread of tools chosen to land on all three outcomes: in-scope reads,
 #: an out-of-scope write, and an egress with a destination nothing granted.
@@ -69,8 +82,8 @@ def test_supervision_with_no_approver_matches_the_autonomous_gate():
 def test_supervision_with_never_approve_matches_the_autonomous_gate():
     """The regression the plan asks for, and the stronger of the two.
 
-    This one walks the entire supervision path — action built, authorized, loop
-    entered, approver asked, declined, loop broken — and still has to agree with
+    This one walks the entire supervision path, action built, authorized, loop
+    entered, approver asked, declined, loop broken, and still has to agree with
     the gate that never had a loop.
     """
     assert _verdicts_via_supervision(NeverApprove()) == _verdicts_via_gate()

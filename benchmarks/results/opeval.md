@@ -24,8 +24,8 @@ layer is being asked to separate two distributions that are, in its own
 representation, the same distribution.
 
 Prediction: adding a second channel that models *which* resource an action
-reached for — a backoff density over the resource tree, fit only on benign
-traffic, with no grant and no enumerated paths — recovers the discrimination,
+reached for, a backoff density over the resource tree, fit only on benign
+traffic, with no grant and no enumerated paths, recovers the discrimination,
 and does so without the operator writing anything.
 
 ## Result
@@ -49,7 +49,7 @@ is designed to be scored against BFCL and `BENIGN_POOL` names the pairing).
 | sleight | target | 18/18 | 0.511 | n/r | n/r | n/r | – |
 
 Across seeds 0–4, RedCode `target` det@1% is 100.0 / 100.0 / 100.0 / 100.0 /
-99.7 and `ngram` is 0.0 at every seed with AUC 0.380–0.457 — consistently *below*
+99.7 and `ngram` is 0.0 at every seed with AUC 0.380–0.457, consistently *below*
 chance. The effect is not a seed artifact.
 
 **The prediction holds on the target-defined corpora and fails on the
@@ -67,7 +67,7 @@ and the density both key on path location. The difference is where the boundary
 comes from: the ACL needs an operator to enumerate exact paths and loses 2/3 of
 its containment when that enumeration is generalized one segment
 (99.86% → 33.29%). The density was fit from benign traffic with no grant at all.
-That is the claim — the discrimination survives without configuration — not that
+That is the claim, the discrimination survives without configuration, not that
 path location is a new signal.
 
 **Not yet wired into the enforcement path.** This is a scorer measured offline.
@@ -77,8 +77,8 @@ step, and until that lands no deployment claim follows from these numbers.
 **Combination: the prediction held, and it was not enough.** `ngram+target`
 sums raw surprises measured on different scales and the noisier channel drags the
 signal. Replacing the sum with per-channel conformal p-values combined by
-Fisher's method (`conformal-combo`) does what was predicted — detection at a 1%
-budget on RedCode goes **42.4% -> 73.7%** — and still loses badly to the target
+Fisher's method (`conformal-combo`) does what was predicted, detection at a 1%
+budget on RedCode goes **42.4% -> 73.7%**, and still loses badly to the target
 channel alone at **100.0%**.
 
 That is the more useful result. On RedCode the n-gram channel has AUC 0.425,
@@ -90,7 +90,7 @@ And selection has a hard constraint worth stating plainly: a channel's
 *calibration* validity is checkable on benign traffic alone (are its p-values
 uniform on held-out clean data?), but its *discriminative skill* is not. The
 n-gram channel here is perfectly well calibrated and still useless. Deciding
-which channels to include therefore requires some labelled attacks — it cannot be
+which channels to include therefore requires some labelled attacks, it cannot be
 done from clean traffic the way the density's readiness check can. That is a real
 limit on how far a purely one-class design can be pushed.
 
@@ -112,7 +112,7 @@ place twice during this work:
 2. **A length leak in the harness.** RedCode's benign and attack events live in
    largely disjoint tasks, so a task's benign side is frequently empty. An empty
    trajectory scores 0 under every scorer while a non-empty attack scores above
-   it, making trajectory length a perfect label — `deny-all` scored **AUC 1.000**
+   it, making trajectory length a perfect label, `deny-all` scored **AUC 1.000**
    on it. Both sides now require at least one action.
 
 Neither was anticipated. Both were caught by a control row that costs nothing to

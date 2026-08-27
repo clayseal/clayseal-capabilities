@@ -198,7 +198,7 @@ def test_the_free_mode_costs_nothing_on_real_traffic(corpus):
 def test_confidentiality_flow_cannot_separate_the_pair(corpus):
     """Measured, not argued. With declassification as an operator would write it,
     flow control refuses neither. Without it, flow control refuses both at the
-    same rate — it is refusing the action, not the staleness."""
+    same rate: it is refusing the action, not the staleness."""
     _available(corpus)
     r = evaluate(corpus, count=200, seed=0, real_count=200)
     lax = r.cross_axis["declassified"]

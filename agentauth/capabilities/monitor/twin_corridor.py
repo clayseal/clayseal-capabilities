@@ -4,13 +4,13 @@ The per-action ladder and population n-gram see almost no signal when sabotage
 reuses the benign twin's tools and workspace. Given the *sealed reference*
 trajectory (the benign twin / compiled plan), these metadata-only checks run:
 
-1. **Fine PathEnvelope** — corridor over ``fine_action_token`` fitted on the
+1. **Fine PathEnvelope**, corridor over ``fine_action_token`` fitted on the
    reference alone (``min_samples=1``).
-2. **Typed IntentEnvelope** — membership, phases, and ``CallTemplate`` slots
+2. **Typed IntentEnvelope**, membership, phases, and ``CallTemplate`` slots
    compiled from the reference; deviations × consequence (two-signal).
-3. **Surface / egress gate** — state-mutating writes and cloud destinations
+3. **Surface / egress gate**, state-mutating writes and cloud destinations
    (``s3://``, ``gs://``, URL) outside what the reference sealed.
-4. **Sealed plan** — argv constraints, Write-body callee/dest allowlists,
+4. **Sealed plan**, argv constraints, Write-body callee/dest allowlists,
    content digests on sealed paths, and SECRET→sink IFC (still no LLM).
 
 Empty sealed verbs are not used.
@@ -109,7 +109,7 @@ def _templates_from_reference(reference: Trajectory) -> tuple[CallTemplate, ...]
         slots: list[ParameterSlot] = []
         hint = path_hint(action)
         if hint:
-            # Bind concrete destinations the sealed twin named — not full Bash
+            # Bind concrete destinations the sealed twin named, not full Bash
             # command strings (those vary harmlessly in cover work).
             if "file_path" in action.args:
                 slots.append(ParameterSlot(name="file_path", source=SlotSource.GOAL))

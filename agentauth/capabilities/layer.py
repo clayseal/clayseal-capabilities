@@ -11,7 +11,7 @@ from agentauth.core.identity_protocol import CapabilityLayer
 # `CapabilityLayer` is the L3-facing Protocol and was referenced by three
 # annotations here without ever being imported. `from __future__ import
 # annotations` made every annotation a string, so the module imported fine and
-# the name simply did not resolve — `get_type_hints`, any type checker and any
+# the name simply did not resolve, `get_type_hints`, any type checker and any
 # reader following the annotation all hit a NameError instead.
 
 

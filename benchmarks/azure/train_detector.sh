@@ -4,7 +4,7 @@
 #
 # This is the one GPU-bound step (transformer training); route it to a GPU VM
 # (e.g. the T4), not the laptop. The enforcement ladder and the n-gram detector
-# stay CPU-only. Nothing here launches a VM — run it ON the VM after syncing the
+# stay CPU-only. Nothing here launches a VM, run it ON the VM after syncing the
 # repo, same delivery path as run_benchmark.sh.
 #
 #   DATASET=agentdojo LIMIT=3000 EPOCHS=20 benchmarks/azure/train_detector.sh

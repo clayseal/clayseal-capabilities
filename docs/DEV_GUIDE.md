@@ -285,9 +285,9 @@ Issue with `issue_commit_token`, verify with `verify_commit_token`. Tokens are m
 
 Higher-level constructs (see module docstrings and examples):
 
-- **Mandates** — signed task descriptions that bound what an agent session may do.
-- **Leases** — time- and scope-bounded capability containers for sandboxes.
-- **Value budgets** — numeric limits (e.g. dollar amount, token count) enforced across a session.
+- **Mandates**, signed task descriptions that bound what an agent session may do.
+- **Leases**, time- and scope-bounded capability containers for sandboxes.
+- **Value budgets**, numeric limits (e.g. dollar amount, token count) enforced across a session.
 
 Layer 3’s sandbox builder consumes these; layer 2 owns the primitives.
 
@@ -348,7 +348,7 @@ attacker-reachable input, so the boundary is total by contract. It re-derives
 `tool_name`, `resource_ref` and `arguments_hash` from the `ctx` you pass, which
 is what makes a mutated argument invalidate the authorization.
 
-`issue_commit_token` is the opposite contract — there is no "no" to return, so a
+`issue_commit_token` is the opposite contract: there is no "no" to return, so a
 malformed context raises `ValueError`.
 
 Run the full script: `python examples/03_commit_token.py`.
@@ -467,7 +467,7 @@ For frameworks that want a single “capability layer” object (used by receipt
 from agentauth.capabilities.layer import AgentAuthCapabilityLayer
 
 layer = AgentAuthCapabilityLayer()
-# Implements CapabilityLayer protocol — issue/verify hooks for L3
+# Implements CapabilityLayer protocol, issue/verify hooks for L3
 ```
 
 Use this when building custom gateways rather than when writing a one-off script.
@@ -482,7 +482,7 @@ pytest python/tests -q
 
 Notable test modules:
 
-- `test_identity_adapters.py` — all five providers × commit token path
+- `test_identity_adapters.py`, all five providers × commit token path
 - Other tests cover mandates, attenuation, and integration helpers
 
 CI checks out **agentauth-identity** from GitHub alongside this repo and installs both before pytest.
@@ -493,8 +493,8 @@ CI checks out **agentauth-identity** from GitHub alongside this repo and install
 
 `agentauth.capabilities.sandbox` compiles an envelope's **egress and path scope**
 into iVisor sandbox policy, runs the work inside the guest, and returns iVisor's
-unforgeable verdict stream as attested evidence. Everything else — recipients,
-budgets, tool scope, argument binding — stays in the `SessionBroker`. The
+unforgeable verdict stream as attested evidence. Everything else, recipients,
+budgets, tool scope, argument binding, stays in the `SessionBroker`. The
 sandbox is a peer of the broker, invoked *after* it allows:
 
 ```python
@@ -520,7 +520,7 @@ stdout/stderr land in `unverified_claims` and are never scored; if iVisor cannot
 use the trace fd, `trace_degraded` makes attestation fail closed
 (`evidence_ok: false`, outcome `indeterminate`).
 
-Real runs need Apple Silicon and a signed sentry — **sign a copy**, since
+Real runs need Apple Silicon and a signed sentry, **sign a copy**, since
 signing a binary another process is executing can kill it:
 
 ```bash
@@ -577,10 +577,10 @@ why `data_export_bytes` still fails closed).
 
 ## Security practices
 
-1. **Verify before trust** — adapters are not a substitute for IdP signature validation.
+1. **Verify before trust**, adapters are not a substitute for IdP signature validation.
 2. **Short TTLs** on commit tokens (minutes, not hours).
-3. **Bind inputs** — include action input hash in the execution context when the action is parameterized.
-4. **Attenuate sub-agents** — never widen scope when delegating; use Biscuit attenuation APIs.
+3. **Bind inputs**, include action input hash in the execution context when the action is parameterized.
+4. **Attenuate sub-agents**, never widen scope when delegating; use Biscuit attenuation APIs.
 5. **Pin the minting key.** A signature proves integrity, not authority. Set
    `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`, or pass `trusted_minting_keys`. The
    same applies to the intent envelope, which is the object `reclear` swaps

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clay Seal × iVisor Arena — a live containment console.
+"""Clay Seal × iVisor Arena, a live containment console.
 
 Runs untrusted agent scenarios inside iVisor's HVF sandbox and shows, live, the
 agent's actions beside iVisor's unforgeable policy verdicts, with breakout and
@@ -271,7 +271,7 @@ def summary(run: LiveRun) -> None:
     if run.scen.id == "06-audit-evasion":
         forged = any("6.6.6.6" in ln for ln in run.raw)
         print(f"  unforgeability          : "
-              + (RED("FAILED — forged verdict entered the stream") if forged
+              + (RED("FAILED, forged verdict entered the stream") if forged
                  else GRN("HELD") + DIM("  (guest fd 3 = OSError; forged verdict absent from the channel)")))
     if c["clayseal_only"]:
         print(f"  behavioral catches      : {YEL(str(c['clayseal_only']))}  "
@@ -366,7 +366,7 @@ def export( scenarios_, ivdir: Path, out: Path) -> None:
 
 
 def list_roster() -> None:
-    print(BOLD("\n  Clay Seal × iVisor Arena — scenario roster\n"))
+    print(BOLD("\n  Clay Seal × iVisor Arena, scenario roster\n"))
     for s in S.ROSTER:
         print(f"  {BOLD(s.id):<28} {s.name}")
         print(f"  {'':<20} {DIM(' · '.join(s.attack))}")
@@ -424,7 +424,7 @@ def main() -> None:
         if not store.exists():
             store = Path(__file__).parent / "report_data.json"
         if not store.exists():
-            sys.exit("no saved results yet — run `arena.py live all` or `arena.py export all` first")
+            sys.exit("no saved results yet, run `arena.py live all` or `arena.py export all` first")
         records = json.loads(store.read_text())
         if len(a) > 1 and a[1] != "all":
             records = [r for r in records if r["id"] == a[1]]

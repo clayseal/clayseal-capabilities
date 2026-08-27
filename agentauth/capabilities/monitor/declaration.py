@@ -7,7 +7,7 @@ Corridor + declaration closes the honest-declare-then-sabotage case.
 An agent that declares the sabotage up front still passes the corridor. This
 module is the complementary check: destinations and tools in the declaration
 must be named by the sealed goal. That puts the attacker's destination in
-static text available before anything runs — a far easier object to judge than
+static text available before anything runs, a far easier object to judge than
 a live trajectory.
 
 No LLM is in this path.
@@ -75,7 +75,7 @@ def check_declaration_against_goal(
 
     Empty list ⇒ the declaration is within the goal's named tools and egress
     affordances and has no high-precision content-sabotage patterns. Subtle
-    meaning harm without those patterns still passes — soft entailment / digΔ
+    meaning harm without those patterns still passes, soft entailment / digΔ
     cover that residue.
     """
     reasons: list[str] = []
@@ -105,7 +105,7 @@ def check_declaration_against_goal(
                     f"(allowed={sorted(afford)[:8]})"
                 )
         elif goal.allow_resources:
-            # Goal scoped resources/paths but named no egress — any net: in the
+            # Goal scoped resources/paths but named no egress, any net: in the
             # declaration is an expansion of authority.
             reasons.append(
                 f"declaration: introduces egress {sorted(decl_dests)} but sealed "
@@ -113,7 +113,7 @@ def check_declaration_against_goal(
             )
 
     # Suspect callees in declared write/script bodies (reverse shells, etc.).
-    # Match as whole tokens — bare ``c in summary`` false-clears ``nc`` inside
+    # Match as whole tokens, bare ``c in summary`` false-clears ``nc`` inside
     # words like ``inference`` once the sealed goal carries a real user request.
     # Skip alphabetized pip-freeze dumps: package names like ``aa-inactivity``
     # falsely trip ``nc`` via substring tokenization (measured benign FB).

@@ -58,8 +58,8 @@ class DestinationTrust(str, Enum):
     """Policy verdict for a destination under containing-object provenance.
 
     Structured fields of a *trusted* observation (goal-named / named object) may
-    ALLOW at this layer (slot checks). Free text — even from a goal-named
-    containing object — never auto-allows: the measured limit is that the legit
+    ALLOW at this layer (slot checks). Free text, even from a goal-named
+    containing object, never auto-allows: the measured limit is that the legit
     recipient and an injected attacker IBAN can sit side by side in one trusted
     file. That case steps up. Ungrounded or foreign-object destinations deny.
 
@@ -128,7 +128,7 @@ class ParameterProvenance:
         Structured fields are recorded separately from the free-text body,
         because a value that appears only in prose carries much weaker evidence
         than one that appears in a named field. ``containing_object`` records
-        which channel/file/resource the observation was taken from — the axis
+        which channel/file/resource the observation was taken from, the axis
         that separates the slack case from an unrelated webpage fetch.
         """
         with self._lock:
@@ -327,7 +327,7 @@ class ParameterProvenance:
                     reasons.append(f"{group[0]!r} structured via {best.describe()}")
                     continue
                 if any(s.structured for s in candidates):
-                    # Structured but foreign containing object — not slot-ALLOW.
+                    # Structured but foreign containing object, not slot-ALLOW.
                     return (
                         DestinationTrust.DENY,
                         f"{group[0]!r} structured field of an untrusted "
@@ -359,7 +359,7 @@ class ParameterProvenance:
         ARGUS's utility win is largely this: when a call is blocked, hand back
         the trusted candidates from the provenance graph so the retry uses a
         grounded recipient instead of inventing another. The retry still goes
-        through the full authorize path — nothing is bypassed.
+        through the full authorize path, nothing is bypassed.
         """
         out: list[str] = []
         seen: set[str] = set()

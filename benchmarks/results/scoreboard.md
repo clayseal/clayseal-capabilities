@@ -16,7 +16,7 @@ FB(held out) friction when the grant was built from half the benign events and
 caveats, without which none of the above is reportable:
   redcode             path escapes from a fixed workspace boundary; the real result on this axis
   agentharm           6.3% is a LOADER limit: we read only the JSON (tool names), while the corpus grading functions assert targets for 63% of behaviours
-  sleight             mechanism-cited sabotage only; ladder ~5% on binding+budget — velocity false-alarms coding agents; not an intent win
+  sleight             mechanism-cited sabotage only; ladder ~5% on binding+budget, velocity false-alarms coding agents; not an intent win
   agent_threat_bench  data_exfil only; memory_poison and autonomy_hijack are content-defined and declared
   mcp_attack          product-shaped MCP poisoned-tool / confused-deputy / arg-mutation; destination binding and scope are the discriminators
   sleight[detector]   twin corridor + intent two-signal + surface gate on sealed benign reference; population ngram alone ~6%

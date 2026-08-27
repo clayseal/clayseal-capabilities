@@ -1,12 +1,12 @@
 """Microsoft Entra Agent ID adapter: accept Entra-issued AGENT tokens.
 
-Entra Agent ID (GA 2026) issues tokens for agent identities — special service
+Entra Agent ID (GA 2026) issues tokens for agent identities, special service
 principals created from an "agent identity blueprint". The documented agent
 markers are the **facet claims**:
 
-- ``xms_act_fct`` / ``xms_sub_fct`` — value ``11`` = AgentIdentity,
+- ``xms_act_fct`` / ``xms_sub_fct``, value ``11`` = AgentIdentity,
   ``13`` = the agent's user account. THESE gate "is this caller an agent".
-- ``xms_par_app_azp`` — the parent blueprint's app id. Microsoft explicitly
+- ``xms_par_app_azp``, the parent blueprint's app id. Microsoft explicitly
   advises against authorization decisions on it; we record it for
   attribution/audit only (it lands in ``selectors``).
 
@@ -112,7 +112,7 @@ class EntraAgentIdProvider(VerifyingOidcProvider):
             issuer=str(claims.get("iss") or self._issuer or "unknown"),
             evidence_verified=evidence_verified,
         )
-        # Attribution only — never authorize on the parent blueprint id.
+        # Attribution only, never authorize on the parent blueprint id.
         blueprint = claims.get("xms_par_app_azp")
         if blueprint:
             binding.selectors.append(f"entra:blueprint:{blueprint}")

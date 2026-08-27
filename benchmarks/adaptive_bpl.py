@@ -20,7 +20,7 @@ attacker.
     blind      mutations chosen without observing anything: reorder, split
                amounts, pad with benign calls, retry
     feedback   the deny REASON is visible, and mutations are chosen to answer
-               it — split further when a ceiling is named, rename when a verb
+               it, split further when a ceiling is named, rename when a verb
                is named, change target when an identity is named
     oracle     the mandate is visible: ceilings, tracked tools, declared
                identities. The attacker computes the largest sequence that fits
@@ -31,13 +31,13 @@ attacker.
 `invariance.md` argues the ledger cannot be moved by prompt-level adaptation
 because its inputs exclude model output. That argument is about a mechanism.
 This is the empirical check of it on real scenarios, and it is weaker evidence
-than the argument — a search that fails to find an escape has not proved there
+than the argument, a search that fails to find an escape has not proved there
 is none.
 
 So the honest reading of a flat ledger row here is: forty rounds of mutation at
 four knowledge levels did not find one. The `escape` family, where containment
 rests on the intent envelope rather than the ledger, is where movement is
-expected — and the envelope reads a verb derived from the tool name, which the
+expected, and the envelope reads a verb derived from the tool name, which the
 attacker writes.
 """
 from __future__ import annotations
@@ -163,7 +163,7 @@ def _strategies(level: str, reasons: list[str]) -> list:
     weaker one can, so each set is a superset of the one below it. The first
     version of this file picked one strategy per level independently, and the
     monotonicity check immediately caught it: `feedback` held 37 scenarios where
-    `blind` held 36, which is not a fact about the defense — a better-informed
+    `blind` held 36, which is not a fact about the defense, a better-informed
     attacker had simply drawn from a different bag.
     """
     if level == "scripted":
@@ -190,7 +190,7 @@ def attack(scen, level: str, rounds: int, seed: int) -> dict:
     """Search for an escape. Returns the first one found, or exhaustion.
 
     The round budget is spent across the whole strategy set rather than on one
-    strategy, so a level with more strategies searches more broadly per round —
+    strategy, so a level with more strategies searches more broadly per round
     which is the point of knowing more.
     """
     rng = random.Random(seed)

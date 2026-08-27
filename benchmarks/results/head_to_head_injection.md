@@ -30,7 +30,7 @@ note travel is only weakly injectable for this model (undefended 27.8%), and the
 the built-in tool_filter (5.6%) actually edges Progent (11.1%), while ours is still
 zero.
 
-## Clean utility (higher is better) — the honest tradeoff
+## Clean utility (higher is better), the honest tradeoff
 
 | suite | undefended | Progent | ours |
 |---|--:|--:|--:|
@@ -40,11 +40,16 @@ zero.
 | workspace | 100.0% | 100.0% | 83.3% |
 
 This is the real cost. We drive ASR to zero but sacrifice benign utility, most
-sharply on banking (both Progent and we fall to ~17%). On slack and workspace
-Progent keeps more utility than we do (83% and 100% vs our 50% and 83%). So the
-head-to-head is not a clean sweep: we win security outright, Progent wins utility
-on two suites. Reducing our utility cost while holding ASR at zero is the priority
-this table makes concrete.
+sharply on banking (both Progent and we fall to ~17%). Progent keeps more clean
+utility than we do on **three of the four suites**, slack 83.3% vs our 50.0%,
+travel 83.3% vs our 66.7%, workspace 100% vs our 83.3%, and banking is a tie at
+16.7%. So the head-to-head is not a clean sweep: we win security outright,
+Progent wins utility everywhere it is not tied. Reducing our utility cost while
+holding ASR at zero is the priority this table makes concrete.
+
+This paragraph read "Progent wins utility on two suites" until 2026-08-26, which
+undercounted by leaving out travel. The table above was right and the sentence
+under it was wrong, in our favour, about a named published system.
 
 ## Latency: model-free vs model-in-the-loop
 

@@ -54,6 +54,35 @@ def test_the_gateway_example_actually_refuses_something():
     assert "collector-metrics.example" in result.stdout
 
 
+def test_the_proxy_example_holds_the_ceiling_and_the_tool_never_runs():
+    """The README's opening claim, asserted rather than narrated.
+
+    `02_the_proxy.py` issues eleven $900 refunds against a $1,000 ceiling. Two
+    things have to be true and they are different claims: the agent was refused
+    (the JSON-RPC errors) and the money did not move (the server's own ledger,
+    which the example prints back). A demo that asserted only the first would
+    pass with a proxy that denied the client and forwarded the call anyway.
+    """
+    result = subprocess.run(
+        [sys.executable, str(REPO / "examples" / "02_the_proxy.py")],
+        cwd=REPO, capture_output=True, text=True, timeout=120, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    out = result.stdout
+
+    # Refused, ten times, at the ceiling rather than for some other reason.
+    assert out.count("value_budget_exceeded") == 10, out
+
+    # A tool outside the grant is never advertised, and is still refused if the
+    # client calls it without being told.
+    assert "withheld from the catalog: wire_funds" in out, out
+    assert "tool 'wire_funds' is not in this session's policy" in out, out
+
+    # The claim that matters: exactly one refund reached the server.
+    assert "the server executed 2 call(s)" in out, out
+    assert out.count("issue_refund {") == 1, out
+
+
 def test_the_example_policy_is_the_one_the_docs_name():
     """README and DEV_GUIDE both point at `examples/policy.yaml`."""
     from agentauth.capabilities.policy import load_policy

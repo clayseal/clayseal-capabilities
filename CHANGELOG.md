@@ -6,6 +6,499 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed: an address that lied about where it routes cleared the allow-list
+
+`ops@acme-internal.com@evil.test` was **allowed** against an allow-list holding
+`acme-internal.com`. RFC 5321 routes on the last `@`, and so does every mailer,
+so that address delivers to `evil.test`. The address regex stops at the second
+`@` because `@` is not in its host character class, so it extracted
+`acme-internal.com`, matched the allow-list, and the real destination was never
+shown to the check: `extract_destinations` returned `['acme-internal.com']` and
+nothing else.
+
+Every host after the first `@` is now extracted, so the token is refused however
+the receiving mailer resolves it. Recipient lists are unaffected, because they
+are split on address separators first: `a@x.com, b@y.com` is two tokens with one
+`@` each. `test_egress_address_evasion.py` covers both directions.
+
+Twelve other evasions were probed and were already handled correctly: uppercase,
+trailing dot, subdomain, attacker suffix and prefix, substring host, userinfo
+(`acme-internal.com@evil.test`), homoglyph, trailing whitespace, embedded
+newline, and a URL carrying the allowed domain in a query parameter.
+
+### Investigated and rejected: widening verb inference
+
+`classify_verb` returns `call` for a name it does not recognise, and `call` is
+DISCLOSURE, below WRITE, so an undeclared `wire_funds` or `terraform_destroy` is
+not `is_effectful`: the floor's write and egress rules do not engage and no rung
+may refuse it. Ten of twelve dangerous names tested this way, and over 34 tool
+names taken from widely used MCP servers, 13 fell through to `call`.
+
+Widening the table to recognise `destroy`, `purge`, `wire`, `grant`, `upload`
+and the rest was built and measured. It is **not shipped**, because the BPL
+suite is the only benchmark with realistic tool names AND benign twins, and
+there it moved containment from 54 to 61 of 132 while moving FALSE BLOCKS from
+**2 to 14**, dropping the joint metric from 52 to 49. Narrowing to the
+unambiguous stems recovered the joint metric to 52 and still left 8 false
+blocks against 2. `granted_read` inferred to a write.
+
+That is the utility leak the classifier's own comment warns about, and the
+external corpora cannot see it because they normalise tool verbs into four
+values. Guessing harder is the wrong lever.
+
+The right one already exists and costs nothing at runtime: `clayseal policy
+lint` reports an undeclared effectful tool as an **error**, names each tool
+whose verb it had to guess, and exits non-zero. On a policy allowing
+`wire_funds`, `terraform_destroy` and `purge_bucket` with no `tools.effects`, it
+reports three errors and the `verb-not-declared` warning naming all three.
+`test_verb_inference_covers_danger.py` holds that line, and records the measured
+trade so the experiment is not repeated.
+
+### Fixed: an address that lied about where it routes cleared the allow-list
+
+`ops@acme-internal.com@evil.test` was **allowed** against an allow-list holding
+`acme-internal.com`. RFC 5321 routes on the last `@`, and so does every mailer,
+so that address delivers to `evil.test`. The address regex stops at the second
+`@` because `@` is not in its host character class, so it extracted
+`acme-internal.com`, matched the allow-list, and the real destination was never
+shown to the check: `extract_destinations` returned `['acme-internal.com']` and
+nothing else.
+
+Every host after the first `@` is now extracted, so the token is refused however
+the receiving mailer resolves it. Recipient lists are unaffected, because they
+are split on address separators first: `a@x.com, b@y.com` is two tokens with one
+`@` each. `test_egress_address_evasion.py` covers both directions.
+
+Twelve other evasions were probed and were already handled correctly: uppercase,
+trailing dot, subdomain, attacker suffix and prefix, substring host, userinfo
+(`acme-internal.com@evil.test`), homoglyph, trailing whitespace, embedded
+newline, and a URL carrying the allowed domain in a query parameter.
+
+### Fixed: dangerous tools inferred to a verb no rung could act on
+
+`classify_verb` returns `call` for a name it does not recognise, and `call` is
+DISCLOSURE, which is below WRITE. So an undeclared `wire_funds` or
+`terraform_destroy` was not `is_effectful`: the floor's write and egress rules
+did not apply and no rung was permitted to refuse it. Ten of twelve dangerous
+names tested this way.
+
+The verb table now covers destructive (`destroy`, `drop`, `purge`, `truncate`,
+`wipe`, `terminate`, `revoke`), authorization-surface (`grant`, `rotate`,
+`assume`, `provision`), shipping (`deploy`, `patch`, `merge`), outbound
+(`upload`, `publish`, `push`, `reply`), money (`wire`, `withdraw`, `disburse`,
+`remit`, `charge`, `settle`, `debit`) and ordinary mutation (`edit`, `move`,
+`put`, `fork`, `attach`, `rename`, `append`, `replace`).
+
+Measured over 34 tool names taken from widely used MCP servers (filesystem,
+github, slack, postgres, aws, stripe), the share falling through to `call` goes
+from **38% to 6%**. The two that remain are honest: `directory_tree` names no
+verb, and `lambda_invoke` may or may not have an effect.
+
+**Matching order was also wrong, and the widening exposed it.** The loop
+returned on the first match in list order, so a short verb shadowed a longer one
+containing it: `set` prefix-matched `settle_invoice`, and the infix `_grant` in
+`disburse_grant` beat the prefix `disburse`. Both money movements read as plain
+writes. Prefix now beats infix, longest first within each.
+
+Benign cost is unchanged at 0 of 20,619 events, and containment is unchanged on
+every corpus, because the corpora normalise tool verbs into four values and
+cannot see this. The evidence is the classifier and gateway behaviour directly:
+`test_verb_inference_covers_danger.py` asserts 22 dangerous names infer to
+something a rung can refuse, and 15 reads still infer to `read`.
+
+
+### Fixed: ordinary business data read as the authorization surface
+
+`_touches_security_surface` matched its 17-term security vocabulary as
+SUBSTRINGS against every argument value. `acl` is inside "oracle", `iam` inside
+"William Diamond", `key` inside "monkey wrench", `access` inside "accessory".
+Four of seven ordinary refund arguments classified as SECURITY, the highest
+consequence level there is.
+
+That is not a cosmetic mislabel. SECURITY sits at or above WRITE, so
+`is_effectful` is true for it: a READ carrying an incidental "monkey" went from
+a step-up to something a rung is allowed to refuse outright.
+
+Matching is now on words, splitting on non-alphanumerics, which keeps every
+intended hit because the names that matter are compounds: `access_key`,
+`iam-role`, `rotate.secret`. Verified in both directions: 0 of 8 false
+positives remain and 11 of 11 real detections are preserved.
+
+The same line existed in `monitor/aml.py`, whose delegated-trust check the
+`consequence.py` comment says is kept in sync with it. Both are fixed.
+
+### Fixed: a dead function that could not have worked
+
+`windowed_value_budget_from_mandate` called
+`value_budget_config_from_mandate(mandate)` without `tracked`, a keyword-only
+argument with no default, so every call raised `TypeError`. It also tested the
+result for `None`, which the callee's signature never returns. Never called,
+exported, or tested. Removed; the live path builds `WindowedValueBudget`
+directly and is unaffected.
+
+### Performance: 40% off the decision path
+
+0.136 ms to 0.081 ms per authorization, measured as CPU time over seven
+repetitions of 1,500 calls. Containment is byte-identical on every corpus.
+
+- **The flow tracker did its full work when nothing sensitive had been read.**
+  The default sensitivity policy ships patterns for `.env` and `id_rsa`, so
+  `policy.active` is true in every deployment and the early return never fired.
+  Each of the four detection passes matches the payload against
+  `_sensitive_tokens` and returns empty when that is empty, so the result was
+  already known. It now short-circuits, and still RECORDS the write, because a
+  read can make a value sensitive after an earlier write carried part of it.
+  Proven behaviour-neutral by replaying the fragment-before-the-read ordering
+  against the previous implementation.
+
+- **The security-surface check** ran 17 substring scans over the joined
+  arguments. One split and a set intersection replaces them.
+
+### Benchmarks: a crash can no longer pass for containment
+
+`StackEngine.decide` scores an exception as "not allowed" so one broken task
+cannot take down a sweep, which means a crash counts as a contained attack.
+There are none today, across 5,203 attack events on six corpora, and nothing
+said so. The engine now counts them and
+`benchmarks/tests/test_no_stack_errors.py` fails if any appear.
+
+### Fixed: attestation cached a replaced binary
+
+`ivisor_binary_identity` cached on the path alone, justified by "the binary does
+not change mid-session". It is a module-level cache in a gateway that serves
+many sessions, so a binary replaced between two of them kept attesting under the
+old hash, and reported the old SIZE. Now keyed on size and mtime: a swap
+invalidates, an unchanged file still hits the cache.
+
+
+### Integration
+
+- **`Guardrail` is exported from `agentauth.capabilities`** and gains
+  `from_policy_file`. Governing an agent is now one import and two lines:
+
+  ```python
+  guard = Guardrail.from_policy_file("policy.yaml")
+  tools = guard.wrap_all({"issue_refund": issue_refund})
+  ```
+
+  The wrapper existed but was reachable only through a deep module path and
+  needed `load_policy` imported alongside it. The README showed the low-level
+  path instead: three imports and a hand-built `Action` with five fields,
+  including a `resource` string and a verb the caller had to classify.
+
+### README, rewritten for a developer
+
+Measured against what open-source guidance says a reader needs, and against The
+Economist's rules on sentences.
+
+- **The API was 3,333 words in**, after roughly 1,700 words of benchmark tables.
+  A reader had to get 87% of the way down before seeing how to call anything.
+  Install is now at 113 words and working code at 133.
+
+- **The policy in the README was not a policy.** It used a `value_budget:` key
+  with `ceiling` and `amount_arg`, and no such schema exists, so the first thing
+  a reader copied would have failed to parse. It is now a complete file that
+  lints with no errors, and `test_readme_policy_is_real.py` loads it, lints it,
+  and builds a gateway from it that refuses the second refund.
+
+- **The quickstart runs.** It was a fragment referring to undefined tools; it is
+  now self-contained and prints the refusal it describes.
+
+- **Sentences: mean 20.0 words to 17.9, median 19 to 16**, and sentences over 40
+  words from 9 to 2. Badges added for licence, Python versions, tests and PyPI.
+
+
+### Benchmark methodology
+
+- **The `per-call` baseline was handed half the policy, and its zero was
+  arithmetic.** `benchmarks/bpl/policies.py` declares a rule for the Core-12 and
+  says in its docstring that every condition receives it. Nothing read it:
+  `Scenario.policy` defaulted to an empty `Policy()` and no builder assigned it,
+  so 0 of 132 scenarios carried a rule at runtime. With no `scope` rule the
+  per-call condition falls back to "every tool in the scenario's own catalog",
+  and the scripts only call tools from that catalog, so it could not refuse
+  anything whatever the scenario was. `get_scenario` now attaches the declared
+  policy, and the per-call branch enforces every rule kind that is a property of
+  a single call rather than only `scope`. It earns `bulk-exfil` through the
+  recipient allowlist and scores **1 of 132 on the joint metric instead of 0**.
+  Clay Seal's own numbers are unchanged; the row it is compared against is now a
+  measurement.
+
+- **Four of the six documented tiers were inert in the published table, and
+  turning them on is worth nothing.** The provenance, taint and flow tiers read
+  what a tool RETURNED, and the sweep never fed a return back. Separately,
+  `SensitivityPolicy.active` is False until a mandate declares confidentiality
+  classes and 0 of 132 scenarios declare any. Both are now switchable
+  (`--observe-results`, `--confidentiality derived`) and both default to off.
+  Measured: results fed back alone changes nothing; adding a declaration derived
+  from the sealed goal moves containment 54→55 and completion 130→129, leaving
+  the joint metric at 52 of 132 exactly. The placebo control passes, the
+  aggregate and escape families move by zero, and the conclusion is that the
+  gap against dataflow taint on confidentiality is not a switched-off tier.
+  [declaration_determines_enforcement.md](benchmarks/results/declaration_determines_enforcement.md).
+
+- **`--step-up {block,allow}`** prices the autonomous and the pessimal
+  supervised deployment of the same gateway, because scoring a STEP_UP as a hard
+  block was a choice the harness made silently. The suite turns out to produce
+  **zero step-ups** (2,287 ALLOW, 101 DENY), so both settings give an identical
+  table and every contained attack is held by a hard denial. A synthetic
+  positive control asserts the flag would have shown a difference had there been
+  one, because an inert flag and a real null look the same.
+
+- **The verb classifier is a reported parameter, not a silent default.** Under
+  `--verbs bpl` the legacy classifier scores 47% containment and 41% completion
+  against the shipped classifier's 41% and 98%, moving the joint metric 39.4% to
+  32%. The default is the classifier the product ships; the delta is now
+  disclosed rather than discoverable.
+
+### Corrections
+
+- `head_to_head_injection.md` said Progent wins clean utility "on two suites".
+  Its own table shows three: slack, **travel** and workspace, with banking tied.
+  The error was in our favour, about a named published system.
+
+- README and `publication_readiness.md` carried numbers from an earlier run:
+  friction (3 refused / 1 lost, now 2 / 0), the batch spread (sd 0.327, now
+  0.344), complementarity (32/21/21, now 32/20/22), the taint refusal count (46,
+  now 47) and the paired-bootstrap interval ([17.4, 36.4], now [18.2, 37.9]).
+  The bootstrap is seeded, so these were stale rather than noisy.
+
+- **The default verb classifier depended on an optional benchmark dependency.**
+  `benchmarks/bpl/schema.verb_for` reached `classify_verb` through
+  `benchmarks.live.broker_defense`, which re-exports it from
+  `benchmarks.datasets._common`, which re-exports it from
+  `agentauth.capabilities.tool_verbs` where it actually lives, and which
+  hard-imports `agentdojo` at module scope. Without that optional extra
+  installed, the classifier raised on **every action of every scenario** and the
+  sweep scored all 132 Clay Seal cells as errored. It imports from the library
+  directly now, and the full suite produces an identical table with and without
+  `agentdojo` present. The "a gate that raises has not contained anything" guard
+  is what turned this into a visible failure rather than a silent zero. Two
+  further callers, `benchmarks/invariance.py` and its test, reached
+  `classify_verb` the same way and are fixed the same way.
+
+- The nightly `invariants` job had failed five consecutive runs.
+  `benchmarks/live/broker_defense.py` imports `agentdojo`, an optional benchmark
+  dependency absent from the fast gate, which turned a missing extra into a
+  collection error that killed the whole job in 30 seconds.
+  `test_supervision_parity.py` now `importorskip`s it.
+
+### Documentation and layout
+
+- **Three examples the README tells you to run were never committed.**
+  `examples/02_the_proxy.py`, `examples/refund.yaml` and
+  `examples/refund_server.py` existed on one machine only, so the first command
+  a new reader is given did not exist in a fresh clone. All three are in, all
+  five examples run, and `test_documented_paths_exist.py` now fails if any path
+  the documentation names is missing from the repository.
+
+- **1,598 em-dashes removed** from prose across 379 files, replaced by the
+  punctuation the sentence actually needs. The remainder are table cells where
+  the dash means "not applicable".
+
+- **The README defines its terms before using them.** It used "rung",
+  "envelope", "sealed goal" and "steps up" with no introduction, and the check
+  order that explains them sat 380 lines further down. There is now a "How it
+  works" section up front: the three answers a call can get, why step-up exists,
+  the six checks in order, and what "budget" means. The results section says
+  plainly that the average hides the result and that what decides it is whether
+  your rule states a countable limit.
+
+- **`docs/README.md`** indexes the fifteen documents by the question each one
+  answers. Eight were linked from nowhere and two were unreachable entirely.
+
+- **A top-level `tests/` directory held one file** whose name collided with a
+  file in `python/tests/`. CI only runs `python/tests`, so its three tests had
+  never executed. Merged, and the directory is gone.
+
+
+### Security
+
+- **Session content no longer reaches a third party on ambient credentials.**
+  `DeployableStack.from_goal` built the optional entailment judge whenever
+  `OPENAI_API_KEY`, `AZURE_OPENAI_*` or a key file in the home directory
+  happened to be present. The judge's prompt carries the user's request text
+  and the declared write payloads, so a deployment holding an OpenAI key for an
+  unrelated reason would have sent exactly the content this gateway exists to
+  contain, with no line in any policy saying so. Egress is now opt-in: pass a
+  judge explicitly, or set `CLAYSEAL_ENTAILMENT=1`. Credentials alone do
+  nothing. `test_judge_egress_is_opt_in.py`.
+
+- **Audit evidence and ledger state are created 0600, in a 0700 directory.**
+  The decision log and principal ledger were opened with a plain `open("a")`
+  and inherited the process umask, which yields 0644 on a typical host: every
+  local user could read the authorization trail, including principal identity,
+  resource paths and outcomes. `os.open` now applies the mode at creation, so
+  there is no window between create and chmod. A directory that already existed
+  keeps the mode its operator gave it. `test_evidence_files_are_private.py`.
+
+- **`clayseal serve` warns when bound off loopback.** The gateway authorizes
+  the calls it is handed and does not authenticate whoever hands them over. On
+  `0.0.0.0` anyone who can reach the port can push tool calls through it under
+  the loaded policy's authority; the warning names the mitigation.
+
+Audited and clean: no credentials in the working tree or in history (the
+`AKIA`/`ghp_` strings are the vendors' own documented example values, and the
+AWS-shaped ones are 22 characters where a real key is 20); no `pickle`,
+`yaml.load`, `shell=True`, `os.system`, `eval`/`exec` or disabled TLS
+verification in the shipped library; every `subprocess` call passes an argv list;
+`uuid4` is the only randomness on a security path; no bare `assert` in shipped
+code; the upstream URL is closed over from operator config so the request body
+cannot redirect it, and `urllib` rejects CRLF in the header values derived from
+that body. Outbound fetches of untrusted URLs go through `safe_http`, which pins
+resolved IPs and blocks the cloud metadata endpoint.
+
+
+### Changed: a read is a disclosure, not a lookup
+
+A read puts content into a context every later action can use, and no later
+action can remove it. 275 of AgentHarm's 507 in-surface attack events are reads
+and calls, and the consequence classifier was passing all of them.
+
+- **`ConsequenceLevel.DISCLOSURE = 1`**, beneath `WRITE = 2`. Every existing
+  comparison against `WRITE` is unchanged by construction, so no rung that asked
+  for a mutation started seeing reads.
+
+- **The predicate split in two, and that is what carries the result.**
+  `is_consequential` now means DISCLOSURE or above and drives detection,
+  escalation and replan gating. **`is_effectful`** means WRITE or above and is
+  what every rung ending in an unrecoverable DENY asks for. A disclosure
+  escalates and never refuses: an envelope with imperfect recall will miss
+  legitimate reads, and a step-up lets a supervisor wave those through where a
+  refusal nobody can lift turns every recall miss into lost work.
+
+- **AgentHarm containment 45.0% to 53.8% per session**, 152 to 196 of 507 per
+  event. It also stops attacks EARLIER, which the containment column does not
+  show: the first stop lands on the attack's opening action in 20 of 86 stopped
+  sessions against 4 of 74 before.
+
+- **Zero measured cost**: 0 refusals in 20,619 benign events and 0 of 5,851
+  benign sessions across eight corpora. Structural rather than lucky, because a
+  benign read is an on-plan read, so the reclassification can only fire on a
+  read the sealed goal did not ask for. At 5,851 sessions the 97.5% upper bound
+  on the disruption rate is about 0.06%.
+
+- **The credential-payload rung** gated on "consequential" where it meant
+  write-or-egress. It now asks `is_effectful`, matching the definition its
+  0-of-761 false-positive bound was measured under.
+
+`benchmarks/results/disclosure_moonshot.md`.
+
+### Added: a rule lives under a heading, and the reader was skipping headings
+
+Operational policy states an operation once in a heading and never again in the
+sentences beneath it. `extract` skipped headings, so against tau2's own tool
+catalogue the airline document, 167 lines, produced **zero** enforceable
+rules.
+
+- **A scope stack.** A heading must name an ACT and not a thing, or `### Order`
+  scopes all six order tools and binds a data dictionary's attribute definitions
+  to them as though they were rules. A heading replaces its own level and clears
+  everything deeper even when it names no operation. A subsection narrows its
+  parent. A tie is kept only when the tied tools matched the same word.
+
+- **Airline: 0 to 4 compiled rules. External rules bound: 7 to 10 of 61.**
+  tau2 false blocks unchanged at 1 of 13,907.
+
+- **Section bindings are `inferred`, not `extracted`,** and carry the heading in
+  their citation, because it is the reader's inference and a reviewer has to be
+  able to see it and disagree.
+
+- **A prerequisite is resolved by verb first, phrase second**, and
+  parentheticals are stripped: they elaborate and never name the object of the
+  verb. Both rules keep an incidental noun from binding an unrelated tool.
+
+- **Containment on tau2's refusal tasks is unchanged.** On those tasks the agent
+  already calls `get_user_details` before it writes, so a precondition requiring
+  it has nothing to stop. The claim is coverage at no cost.
+
+- **The remaining limit is vocabulary rather than structure.** tau2's telecom document argues about
+  bills, lookup and suspension while its tools are named `make_payment`,
+  `refuel_data` and `resume_line`. No reader working from tool NAMES can bridge
+  that; tool descriptions can, and `policy_scaffold.Catalog` already carries them.
+
+`benchmarks/results/section_scope.md`.
+
+### Removed: everything that was not this project
+
+A cleanup pass before open-sourcing. 69 files and 3,115 lines left the
+repository; every deletion is recoverable from history at `fe4efcf`.
+
+- **`.demo-runs/` (47 files).** Generated demo output: workspaces, ticket
+  corpora and guest scratch. It is `demo/cli.py`'s default `IVISOR_RUN_ROOT`
+  and the demo tests use `tmp_path`, so nothing read the committed copy. Now
+  gitignored.
+
+- **Paper drafts and the fundraising memo (456K)** moved out of the code repo to
+  `clay-seal-papers/`: `INVESTOR_MEMO.md`, `CYBERTOOL_MEMO_REVISED.{tex,pdf}`,
+  `_results_table_draft.{tex,pdf,png}`. They are documents ABOUT the project
+  rather than documentation OF it. Two audit files check their claims against
+  this code and note that the audited document is kept elsewhere.
+
+- **`notes/roadmap_v0.2.md`**, a roadmap for a version three releases old, and
+  two dated positioning surveys nothing cited (`sota_assessment.md`,
+  `frontier_2026_and_what_to_build.md`), also moved out.
+
+- **Four duplicate benchmark run directories.** `matrix-pilot`,
+  `matrix-oai-travel`, `matrix-fpfix` and `attack-probe-adaptive` were the same
+  head-to-head experiment at other configurations, none carrying a `STATUS:`
+  line and none cited. `matrix-oai-4omini` is kept, and stamped, because
+  `table_audit.md` checks a published claim against it.
+
+- **`scoping/retrieval/rg_channel.py`.** 106 lines referenced by nothing, and
+  the only module in that package that shells out to a subprocess. An
+  authorization layer should not ship an unused process-spawning path.
+
+- **17 result files** carried captured stdout and no provenance. Each now
+  carries `STATUS:` and the command that regenerates it, verified against the
+  `fixture` dataset.
+
+### Fixed: internal references in a public repository
+
+- **An internal Azure resource name** in 13 files is now `<aoai-resource>`, and
+  the resource group `<aoai-resource-group>`. The substitution caveat those comments
+  carry is unchanged: the deployment is NAMED `gpt-4o-mini-2024-07-18`
+  and SERVES `gpt-5-mini`, which is why every live result records the served
+  model separately.
+
+- **Local absolute paths** in two audit files, including a scratch path carrying
+  a session id and a sibling checkout under a home directory.
+
+- **Development-session references in three code comments**, and a comment
+  citing a measurement file that does not exist. `defer_to_binding` now states
+  that its measurement is outstanding and names the two nearest files, neither
+  of which isolates the flag.
+
+### Fixed: open-source readiness
+
+- **`requires-python` was `>=3.10,<3.14`** and the ceiling came from `agentdojo`,
+  a dependency of the OPTIONAL `benchmarks` extra. It locked every user of the
+  gateway out of current Python for a package they were never going to install.
+  Now `<3.15`: the wheel builds, installs and imports all 172 modules on 3.14,
+  and 2,156 tests pass there with no failures. CI tests 3.10, 3.13 and 3.14.
+
+- **PyPI metadata was absent.** Added keywords and classifiers. `Typing :: Typed`
+  is deliberately NOT claimed and `py.typed` is NOT shipped: 98% of the library's
+  functions carry annotations, but mypy has never gated them and reports 92
+  findings across 32 files, none triaged.
+
+- **`benchmarks/results/README.md`**, an index over 128 result files with the
+  five headline numbers, their reproduce commands and the honest limits.
+
+- **`benchmarks/live/run_full_benchmark.sh`** hardcoded one developer's home
+  directory and a scratch venv named after a dead session id. Resolved from the
+  script's own location now.
+
+- **A collaborator's home directory path** in a recorded demo session
+  (`demo/sessions/ticket-triage-mock.jsonl`) redacted to `/opt/ivisor/...`.
+
+- **Three stale documentation claims.** `README.md` and `docs/POLICY.md` both
+  said `derive_counts=False` "turns it off" when it has been the default since
+  the count rung was measured at three interruptions per catch. `docs/POLICY.md`
+  also cited 82.8% sleight containment, a figure its own citation retracts as a
+  deny-all artifact; the corrected figure is 23.0% at zero benign cost.
+
+
 ### Added: external validation, on both sides at once
 
 `external_corpora_structure.md` has said since it was written that the aggregate
@@ -403,7 +896,7 @@ into a Python object and never speaks a transport.
   being pluggable, does not have to. The broker guards it now, so the property
   holds for every sink rather than for the ones written here.
 
-- **The probe was wrong twice before it was right.** Its bookkeeping rule
+- **The fault probe's verdict rule was too weak.** It
   checked only that a broken component did not produce an ALLOW, and a crash is
   not an allow, so a metrics call raising on every refusal passed as `ok`. And
   six of twelve seams were reported `skipped`, which in a table of green ones
@@ -519,8 +1012,7 @@ interpretation.
   every escaping path resolves to. Traversal is no longer a class on either
   side.
 
-- **The probe had the same blind spot as the code.** The first version of the
-  differential EXCLUDED every string containing `..`, on the reasoning that
+- **The path differential excluded traversal.** It skipped every string containing `..`, on the reasoning that
   traversal was this library's business rather than the filesystem's. It then
   reported five clean properties over 50,000 cases while the worst defect in the
   module sat inside the exclusion. A probe written by the author of the thing it
@@ -1487,8 +1979,8 @@ tests exercised the shapes their author had in mind.
   a profile switch cannot be overridden at the call site, and enabling a HAZARD
   requires naming it.
 - **Decision sinks** (`decision_sinks.py`): JSONL (fsync-optional), rotating
-  JSONL, Redis stream, composite. No default destination — that is a deployment
-  decision — but the default is a `NullSink` that COUNTS what it drops, so
+  JSONL, Redis stream, composite. No default destination: that is a deployment
+  decision, but the default is a `NullSink` that COUNTS what it drops, so
   "nothing configured" and "configured and working" no longer look alike.
   `DecisionLog.durability()` reports evicted-vs-dropped.
 - **`docs/THREAT_MODEL.md`**: trust boundaries, the four signed objects and what
@@ -1551,7 +2043,7 @@ tests exercised the shapes their author had in mind.
   behaviour with the environment unset, which is the check that would have caught
   the polarity problem above.
 - **Two signed objects did not fail closed in production.** The intent envelope
-  accepted any keyholder when `trusted_keys` was unset — and it is the object
+  accepted any keyholder when `trusted_keys` was unset, and it is the object
   `reclear` swaps mid-session, so a self-signed envelope replaced the sealed plan
   wholesale. The step-up approval honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1`
   in production, so one environment variable turned a refusal into a grant. Found
@@ -1562,7 +2054,7 @@ tests exercised the shapes their author had in mind.
   base64-of-hex, double-base64 and decimal byte codes go from leaking to 100%
   contained (200/200) at 0 of 1,242 false blocks, unchanged.
 - **`test_biscuit_scope.py` aborted collection** rather than skipping when the
-  optional identity layer was absent — which is why the suite could only be
+  optional identity layer was absent, which is why the suite could only be
   called green by passing `--ignore`.
 - CI: a legible guard for the missing `CLAY_SEAL_CI_TOKEN` instead of a private
   repo reporting as "not found"; the optional identity layer is now actually
@@ -1574,47 +2066,47 @@ The layer stopped being a set of primitives and became a gateway. `pyproject`
 has said `0.5.0` since July while this file stopped at 0.4.0, so everything
 below shipped unrecorded.
 
-### Added — the gateway
+### Added, the gateway
 
-- **`SessionBroker`** (`broker.py`) — one live per-session gate composing the
+- **`SessionBroker`** (`broker.py`), one live per-session gate composing the
   hard per-action floor (expiry, delegation, tool/capability/argument binding,
   protected zones, path scope, egress) with the behavioural tiers, as one
   ordered decision. Hard denial requires positive evidence of malice; a scope
   miss steps up, because a step-up halts an autonomous attacker just as hard.
-- **`DeployableStack`** (`deployable_stack.py`) — the single configured profile
+- **`DeployableStack`** (`deployable_stack.py`), the single configured profile
   every benchmark path and every deployment builds through.
-- **`IntentEnvelope`** (`monitor/`) — a goal-derived, history-free plan with
+- **`IntentEnvelope`** (`monitor/`), a goal-derived, history-free plan with
   provenance-typed argument slots, compiled from the sealed goal and signed.
   `reclear()` adopts a fresh envelope mid-session on trusted input.
-- **`ParameterProvenance`** — containing-object provenance for destinations:
+- **`ParameterProvenance`**, containing-object provenance for destinations:
   structured field allows, free text of a goal-named object steps up, ungrounded
   denies.
-- **`FlowTracker` / `SensitivityPolicy`** (`confidentiality.py`) — content
+- **`FlowTracker` / `SensitivityPolicy`** (`confidentiality.py`), content
   derivation across a session. STEP_UP only, never DENY, because it is sound
   where it fires and incomplete in what it catches.
-- **`PrincipalLedger` / `SharedPrincipalLedger`** — aggregate budgets keyed to
+- **`PrincipalLedger` / `SharedPrincipalLedger`**, aggregate budgets keyed to
   the mandate rather than the session, with cross-process mutual exclusion,
   shared committed spend and shared outstanding holds. Four processes against a
   ceiling of 100 previously landed 400.
-- **`DecisionLog`** — hash-chained, tamper-evident decision records for L3.
-- **Sandbox integration** (`sandbox/`) — an envelope's egress and path scope
+- **`DecisionLog`**, hash-chained, tamper-evident decision records for L3.
+- **Sandbox integration** (`sandbox/`), an envelope's egress and path scope
   compile into iVisor policy; its verdict stream returns as attested evidence.
-- **`resolve_step_up`** — the missing half of the step-up protocol. Every
+- **`resolve_step_up`**, the missing half of the step-up protocol. Every
   "supervised utility" number predating it was a counterfactual.
 - Delegation boundaries, compute/call/value budgets, velocity limits, staleness,
   re-identification, mandate linting, replan.
 
-### Added — this release
+### Added, this release
 
-- **`monitor/planner.py`** — the privileged planner now SHIPS. It built every
+- **`monitor/planner.py`**, the privileged planner now SHIPS. It built every
   live AgentDojo result while living in `benchmarks/live/`, outside the wheel, so
   a package user could not construct the primary behavioural tier from a real
   request. `benchmarks/live/planner.py` is now an alias over it.
-- **`session_state.py`** — `snapshot()` / `restore()` for everything a session
+- **`session_state.py`**, `snapshot()` / `restore()` for everything a session
   accumulates. Outstanding step-ups could not previously cross a process, so
   the step-up protocol did not complete behind a load balancer; spent approvals
   and audit spend reset on restart, and neither is a ceiling if it does.
-- **`session_rules.py`** — the five corpus-derived pattern rules, extracted from
+- **`session_rules.py`**, the five corpus-derived pattern rules, extracted from
   `SessionBroker.authorize` where they were invisible and unswitchable. Same
   predicates and same reason strings: ON in `DeployableStack.from_goal` so every
   published number reproduces, OFF on the raw broker.
@@ -1632,7 +2124,7 @@ below shipped unrecorded.
   in a module `agentauth/capabilities/__init__.py` imports. `requires-python`
   claimed `>=3.10`. CI never caught it because CI has never run.
 - **`issue_commit_token` returned a tuple** instead of a token when
-  `action_name` was not a string — a guard copy-pasted from the verifier, which
+  `action_name` was not a string, a guard copy-pasted from the verifier, which
   produced an `AttributeError` at a trust boundary, the exact failure the guard
   exists to prevent. It raises `ValueError` now.
 - **The documented quickstart called an API that does not exist.** README and
@@ -1681,15 +2173,15 @@ below shipped unrecorded.
 
 ### Added
 
-- **Cross-provider identity integration** — layer 2 works with five built-in L1 adapters:
+- **Cross-provider identity integration**, layer 2 works with five built-in L1 adapters:
   - `agentauth`, `spiffe_jwt`, `oidc`, `auth0`, `aws_sts`
 - Shared authority contract in `agentauth.core`:
   - `AuthorityBinding`, `IdentityProvider`, `IdentitySession`, `CapabilityTokenBackend`, `CapabilityLayer`
 - `agentauth.capabilities.identity_adapters` registry with `get_identity_provider(name)`.
-- `agentauth.capabilities.integration` — `execution_context_from_session`, `default_biscuit_backend()`.
+- `agentauth.capabilities.integration`, `execution_context_from_session`, `default_biscuit_backend()`.
 - `AgentAuthCapabilityLayer` in `agentauth.capabilities.layer`.
 - `docs/cross_layer_integration.md` and `examples/04_cross_provider_commit.py`.
-- `docs/DEV_GUIDE.md` — comprehensive developer guide.
+- `docs/DEV_GUIDE.md`, comprehensive developer guide.
 - GitHub Actions CI (installs identity from sibling repo, runs `python/tests`).
 - Eight adapter tests in `python/tests/test_identity_adapters.py`.
 

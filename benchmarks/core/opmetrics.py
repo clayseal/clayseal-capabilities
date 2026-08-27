@@ -21,8 +21,8 @@ reporting **detection at a false-alarm rate the operator chose**:
 
 The structural property that makes this family unhackable: every metric here is
 computed by *sweeping a threshold over a continuous score*. A detector whose
-score does not separate the classes — including a deny-all, which assigns every
-trajectory the same score — yields detection ≈ FPR at every operating point, so
+score does not separate the classes, including a deny-all, which assigns every
+trajectory the same score, yields detection ≈ FPR at every operating point, so
 it scores ~0 instead of 100%. That is asserted in
 ``benchmarks/tests/test_opmetrics.py`` rather than argued here.
 
@@ -107,7 +107,7 @@ def threshold_at_fpr(benign: list[float], fpr_target: float) -> float:
     Blocking is ``score >= threshold``. The budget must hold as an upper bound,
     never approximately, and ties are what break a naive implementation: taking
     the k-th largest benign score as the threshold blocks every benign sharing
-    that score, which can be all of them. A constant scorer is the extreme case —
+    that score, which can be all of them. A constant scorer is the extreme case
     it has one tie group containing the whole corpus, so the k-th largest is also
     the smallest, and the "1% FPR" threshold blocks 100% of benign while catching
     100% of attacks. That is precisely the deny-all result this module exists to
@@ -247,7 +247,7 @@ class ScoreReport:
         return len(self.benign) * max_fpr >= 1.0
 
     def auc(self) -> float:
-        """Full AUC — reported alongside pAUC so a corpus too small to resolve
+        """Full AUC, reported alongside pAUC so a corpus too small to resolve
         the deployment region still says something rather than nothing."""
         return partial_auc(self.benign, self.attack, 1.0, standardized=False)
 

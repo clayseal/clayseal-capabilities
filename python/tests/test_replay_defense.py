@@ -78,7 +78,7 @@ def test_hostile_token_ids_do_not_crash_or_collide():
 
 
 # --------------------------------------------------------------------------- #
-# Eviction correctness — the part the heap could get wrong.
+# Eviction correctness, the part the heap could get wrong.
 # --------------------------------------------------------------------------- #
 def test_an_expired_token_id_can_be_marked_again():
     store = InMemoryUsedTokenStore()

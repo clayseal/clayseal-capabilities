@@ -1,4 +1,4 @@
-"""Streaming line renderer — stdlib only, and the demo's regression gate.
+"""Streaming line renderer, stdlib only, and the demo's regression gate.
 
 Shares the reducer with the TUI so the two can never disagree about what
 happened: this module decides nothing, parses nothing, and counts nothing. It
@@ -132,7 +132,7 @@ class PlainRenderer:
                 f"{ev.level_name:<11} {ev.digest[:6]}")
         if not ev.changed:
             # The visible proof that exposure alone cost the agent nothing.
-            head += self._c("  (digest unchanged — noticed, nothing revoked)", DIM)
+            head += self._c("  (digest unchanged, noticed, nothing revoked)", DIM)
             return head
         allow = ",".join(ev.allow) or "(none)"
         head += f"  allow=[{allow}]"
@@ -182,7 +182,7 @@ class PlainRenderer:
         if state.all_met():
             return 0
         self._emit(self._c(
-            "\nsome expectations were not met — with a live model this can simply "
+            "\nsome expectations were not met, with a live model this can simply "
             "mean it declined the task; try --provider mock", YELLOW))
         return 1
 

@@ -11,7 +11,7 @@ at a measured false-alarm rate, not a per-construction guarantee.
 
 Each ``BenchmarkTask`` becomes two trajectories under one sealed goal: a benign
 one (its benign events) and an attack one (benign events followed by the injected
-attack events, or — for ``parallel_twins`` — the attack transcript alone).
+attack events, or, for ``parallel_twins``, the attack transcript alone).
 Parallel-twin attacks are assessed with ``reference=benign`` so the twin
 corridor / intent two-signal / surface gate can fire. Training and calibration
 see only benign trajectories, matching the one-class threat model.
@@ -119,8 +119,8 @@ def task_to_trajectories(task: BenchmarkTask) -> tuple[Trajectory, Trajectory]:
     from an external read earlier in the stream; the rule reads only the verb
     order, so benign and attack actions are treated identically and the
     ground-truth ATTACK label is never consulted to taint an action. The detector
-    must therefore separate benign from attack by BEHAVIOUR — an untrusted-driven
-    action that leaves the sealed goal — not by reading which events were injected.
+    must therefore separate benign from attack by BEHAVIOUR, an untrusted-driven
+    action that leaves the sealed goal, not by reading which events were injected.
 
     Injection-style tasks (AgentDojo, fixtures): attack = benign prefix + injected
     steps. Parallel-twin tasks (SLEIGHT): attack is the attack transcript alone,

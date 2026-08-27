@@ -62,7 +62,7 @@ class Capability:
 
 
 # ---------------------------------------------------------------------------
-# Builders — a couple of reusable sealed capabilities scenarios draw from.
+# Builders, a couple of reusable sealed capabilities scenarios draw from.
 # ---------------------------------------------------------------------------
 def pkg_install_capability(
     *,

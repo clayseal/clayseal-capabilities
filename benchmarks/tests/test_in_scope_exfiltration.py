@@ -55,7 +55,7 @@ def test_an_unlinked_readme_write_is_not_an_escape():
 
     Without it the predicate fires on any session that happens to touch a secret
     and later touch a README, which would manufacture escapes the attacker never
-    achieved — the exact failure the module warns about.
+    achieved, the exact failure the module warns about.
     """
     achieved = in_scope_exfiltration_objective().achieved
     assert not achieved([
@@ -119,5 +119,5 @@ def test_the_full_ladder_does_not_contain_in_scope_staging():
 
     assert escaped["allow-all"], "the attacker achieved nothing even unopposed"
     assert escaped[FULL] == escaped["allow-all"], (
-        "the ladder now blocks something allow-all does not — update this test "
+        "the ladder now blocks something allow-all does not, update this test "
         f"and the writeup: {len(escaped['allow-all'] - escaped[FULL])} newly blocked")

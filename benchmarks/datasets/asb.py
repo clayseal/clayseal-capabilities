@@ -1,22 +1,22 @@
-"""Agent Security Bench (ASB) loader — breadth across 10 agent roles.
+"""Agent Security Bench (ASB) loader, breadth across 10 agent roles.
 
 ASB (Zhang et al., ICLR 2025) ships static JSONL: 10 domain agents (system-admin,
 financial-analyst, medical-advisor, ...), each with 5 user tasks, 2 legitimate
-tools, and 40 attacker tools — 400 attacker tools total, evenly split
+tools, and 40 attacker tools, 400 attacker tools total, evenly split
 stealthy/disruptive and aggressive/non-aggressive.
 
 Each attacker tool is a fully specified malicious capability
 (``ResourceAllocationHijack``, ``CredentialHarvesting``, ``AccessEscalation``)
 with the instruction the injection would use. ASB's own harness runs an LLM agent
-under ten attack vectors; this loader takes only the static ground truth — which
-tools the agent legitimately holds vs. which tools the attack invokes — so the
+under ten attack vectors; this loader takes only the static ground truth, which
+tools the agent legitimately holds vs. which tools the attack invokes, so the
 replay stays deterministic.
 
 What this measures, honestly
 ----------------------------
 ASB's attack surface is *tool substitution*: the injected step calls a tool the
 user never granted. That makes it a breadth test (400 attacker tools x 10
-domains) rather than a depth test — a plain tool-name allowlist is expected to
+domains) rather than a depth test, a plain tool-name allowlist is expected to
 contain essentially all of it, and the ladder above it should add nothing. That
 is a real and reportable property of the benchmark, not a weakness of the
 system under test: it says ASB probes the outermost authority boundary. It is

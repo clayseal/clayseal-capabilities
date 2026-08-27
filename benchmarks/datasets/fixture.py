@@ -1,4 +1,4 @@
-"""Offline fixture dataset — AgentDojo-shaped, no downloads.
+"""Offline fixture dataset, AgentDojo-shaped, no downloads.
 
 Three scenarios span the attack classes the enforcement ladder is meant to
 separate, so the smoke test proves each rung contains strictly more than the one

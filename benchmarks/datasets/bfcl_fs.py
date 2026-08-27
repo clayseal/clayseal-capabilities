@@ -9,7 +9,7 @@ not synthesized traffic.
 
 This module deliberately exposes only the parsed calls; the caller decides how to
 label and scope them. ``benchmarks/datasets/bfcl.py`` remains the standalone BFCL
-loader — this is the narrower file-system-only view RedCode pairs against.
+loader: this is the narrower file-system-only view RedCode pairs against.
 """
 from __future__ import annotations
 

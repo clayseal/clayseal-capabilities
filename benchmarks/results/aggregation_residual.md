@@ -102,7 +102,7 @@ escape closed that way reappears under the next name.
 ## The linter, and what it actually buys
 
 `agentauth/capabilities/mandate_lint.py` now answers them. It is static and
-offline — no model, no traffic, no learning — in the same style as
+offline, no model, no traffic, no learning, in the same style as
 `hardening/object_class.py`, which compiles its patterns in rather than inferring
 them. `lint_mandate()` reports; `require_clean()` raises, for a deployment that
 wants an uncovered money tool to be a startup failure rather than a log line.
@@ -124,7 +124,7 @@ requires a mandate the tooling refuses before the session starts.
 
 Session restart is a warning rather than an error on purpose. A per-session
 ceiling is a coherent thing to want, and `principal_ledger.py` already exists for
-when it is not — the linter's job there is to make the choice visible rather than
+when it is not, the linter's job there is to make the choice visible rather than
 default.
 
 Two limits, stated because a coverage tool that overstates its coverage is worse
@@ -135,7 +135,7 @@ than none:
   check is silent, and that silence is not coverage. Pinned as
   `test_the_linter_needs_a_catalog_to_find_a_missing_tool`.
 - **Family membership is by name.** A money tool named `process_item_47` is
-  invisible to it. The patterns are deliberately narrow — a rule matching
+  invisible to it. The patterns are deliberately narrow, a rule matching
   `get_balance` produces a finding on a read, and an operator who sees one false
   finding stops reading the rest.
 
@@ -172,7 +172,7 @@ sampled instead: draw a mandate, run the strongest effect sequence against it,
 and ask whether anything escaped and whether the linter had said so beforehand.
 
 **It found the claim was false.** Over 4,000 sampled mandates, **211 escaped
-while the linter called them clean** — 5.3%, every one of them through an
+while the linter called them clean**, 5.3%, every one of them through an
 opaquely-named tool. The linter matched effect families by name, and
 `process_item_47` moves money without saying so. That limitation was written
 down in `mandate_lint.py` from the start; what was missing was any measure of
@@ -197,5 +197,5 @@ property actually costs: declare your catalog, or accept that you are relying on
 tool names being honest.
 
 Pinned by `test_the_closure_property_holds_over_sampled_mandate_space`, which
-also asserts the sample contains escapes — a search that finds nothing proves
+also asserts the sample contains escapes, a search that finds nothing proves
 nothing.

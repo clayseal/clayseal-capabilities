@@ -1,7 +1,7 @@
 """Named profiles: one object that says what a deployment turned on, and why.
 
 `DeployableStack.from_goal` takes fourteen switches that change the security
-posture materially, and one of them — `defer_allows_bound` — is a MEASURED
+posture materially, and one of them, `defer_allows_bound`, is a MEASURED
 NEGATIVE RESULT kept in the tree so the finding reproduces. A constructor with
 fourteen knobs and no named settings has three problems:
 
@@ -10,8 +10,8 @@ fourteen knobs and no named settings has three problems:
   which one produced it.
 - The one switch you must never enable looks exactly like the thirteen you may.
 
-A profile is a frozen set of those switches with a name, a stated intent, and —
-where one exists — the measurement that justifies each departure from the
+A profile is a frozen set of those switches with a name, a stated intent, and
+where one exists, the measurement that justifies each departure from the
 default. `stack.profile` already existed as a bare string; this gives it
 something to be the name OF.
 
@@ -50,9 +50,9 @@ from typing import Any
 HAZARDS: dict[str, str] = {
     "defer_allows_bound": (
         "MEASURED NEGATIVE RESULT. On AgentDojo travel this took ASR from 5.6% "
-        "to 27.8% and dropped blocks from 17 to 3. The motivating argument — an "
+        "to 27.8% and dropped blocks from 17 to 3. The motivating argument, an "
         "injected step's destination never clears the binding floor, so this "
-        "gate catches nothing the floor missed — holds on banking (0.0% either "
+        "gate catches nothing the floor missed, holds on banking (0.0% either "
         "way) and is FALSE on travel. The flag exists so the result reproduces, "
         "not so it can be enabled. See benchmarks/results/denial_diagnosis.md."
     ),
@@ -105,7 +105,7 @@ class Profile:
         if missing:
             raise ValueError(
                 f"profile {self.name!r}: no rationale given for "
-                f"{sorted(missing)}. Pass rationale={{'switch': 'why'}} — a "
+                f"{sorted(missing)}. Pass rationale={{'switch': 'why'}}, a "
                 f"switch without a stated reason is how a posture drifts."
             )
         return replace(
@@ -118,7 +118,7 @@ class Profile:
     def build(self, goal: Any, **kwargs: Any) -> Any:
         """Build a `DeployableStack` under this profile.
 
-        ``kwargs`` carry the AUTHORITY — scope, egress, budgets, envelope — and
+        ``kwargs`` carry the AUTHORITY, scope, egress, budgets, envelope, and
         the profile carries the POSTURE. A caller that passes a posture switch
         here is overriding the profile silently, so that is refused: change the
         profile with `with_switches`, where the change needs a reason.
@@ -178,7 +178,7 @@ AUTONOMOUS = Profile(
             "Off. Deferring an off-plan consequential action to the binding "
             "floor is only safe when the resulting STEP_UP reaches somebody."
         ),
-        "defer_allows_bound": "Hazard. Never enabled — see profiles.HAZARDS.",
+        "defer_allows_bound": "Hazard. Never enabled, see profiles.HAZARDS.",
         "scope_is_advisory": (
             "The resource list is treated as an operator grant, not a planner "
             "guess, so replanning may not widen it."
@@ -189,7 +189,7 @@ AUTONOMOUS = Profile(
             "utility (benchmarks/results/agentdyn.md)."
         ),
         "enable_flow": (
-            "On. STEP_UP-only, so on this profile it becomes a denial — which "
+            "On. STEP_UP-only, so on this profile it becomes a denial, which "
             "is the correct reading of an unattended secret-derived write."
         ),
         "session_rules": (
@@ -237,7 +237,7 @@ SUPERVISED = Profile(
             "task that would have succeeded into one that failed. With a human "
             "on the path those become questions."
         ),
-        "defer_allows_bound": "Hazard. Never enabled — see profiles.HAZARDS.",
+        "defer_allows_bound": "Hazard. Never enabled, see profiles.HAZARDS.",
         "scope_is_advisory": (
             "Default off: only set this when the resource list came from a "
             "planner guess rather than a signed mandate."
@@ -263,7 +263,7 @@ BENCHMARK = Profile(
     name="benchmark",
     intent=(
         "Reproduces the published numbers exactly. NOT a deployment "
-        "recommendation — it exists so a result can be checked."
+        "recommendation, it exists so a result can be checked."
     ),
     switches={
         "graduated": False,
@@ -293,7 +293,7 @@ BENCHMARK = Profile(
             "this profile must be read with the endorsements-per-task column "
             "beside them. Nobody was charged for the interruptions."
         ),
-        "defer_allows_bound": "Hazard. Off even here — see profiles.HAZARDS.",
+        "defer_allows_bound": "Hazard. Off even here, see profiles.HAZARDS.",
         "graduated": "Off: the published hard-deny numbers were measured this way.",
         "defer_to_binding": "Off: as measured.",
         "scope_is_advisory": "Off for deterministic corpora; live AgentDojo sets it True.",

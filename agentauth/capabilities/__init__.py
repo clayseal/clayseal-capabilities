@@ -27,6 +27,12 @@ from agentauth.capabilities.delegation import (
     verify_delegation_chain,
 )
 from agentauth.capabilities.deployable_stack import DeployableStack, StackDecision
+from agentauth.capabilities.guardrail import (
+    Guardrail,
+    GuardrailError,
+    Refused,
+    StepUpRequired,
+)
 from agentauth.capabilities.layer import (
     AgentAuthCapabilityLayer,
     default_capability_layer,
@@ -78,15 +84,19 @@ __all__ = [
     "DeployableStack",
     "DynamoDBUsedTokenStore",
     "GoalSpec",
+    "Guardrail",
+    "GuardrailError",
     "InMemoryUsedTokenStore",
     "Mandate",
     "MandateBudgets",
     "RedisUsedTokenStore",
+    "Refused",
     "SessionCallBudget",
     "SessionMemory",
     "SessionValueBudget",
     "SignedCommitToken",
     "StackDecision",
+    "StepUpRequired",
     "TaskScope",
     "UnsupportedBudgetType",
     "UsedTokenStore",

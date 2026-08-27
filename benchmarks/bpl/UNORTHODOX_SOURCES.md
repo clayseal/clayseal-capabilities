@@ -49,41 +49,41 @@ long-horizon drift. Unorthodox sources add:
 
 ## Highest-yield first (for the next BPL tier)
 
-If we implement an `unorthodox` / `cross-domain` tier, start here — densest
+If we implement an `unorthodox` / `cross-domain` tier, start here, densest
 composite signal, clearest Progent-blind story:
 
-1. **Step-transaction collapse** (tax) — *the* legal doctrine that BPL is named for → **`step-transaction-collapse`**
-2. **Spoof-cancel-execute** (market abuse) — intent in the cancel, not the place → **`spoof-order-cancel`**
-3. **Sterile-phase nonessential** (aviation) — phase-conditional tool bans → **`sterile-phase-nonessential`**
-4. **Swiss-cheese wrong target** (healthcare) — multi-check false OK → **`swiss-cheese-wrong-target`**
-5. **SoD prepare+approve** (SOX) — same principal both legs → **`sod-prepare-and-approve`**
-6. **Two-person rule bypass** (nuclear/HRO) — dual attestation from one session → **`two-person-rule-bypass`**
-7. **Cumulative impact** (environmental) — portfolio vs project thresholds → **`cumulative-impact-permits`**
-8. **Alert-fatigue bypass** (healthcare IT) — soft ack storm then hard skip → **`alert-fatigue-bypass`**
+1. **Step-transaction collapse** (tax), *the* legal doctrine that BPL is named for → **`step-transaction-collapse`**
+2. **Spoof-cancel-execute** (market abuse), intent in the cancel, not the place → **`spoof-order-cancel`**
+3. **Sterile-phase nonessential** (aviation), phase-conditional tool bans → **`sterile-phase-nonessential`**
+4. **Swiss-cheese wrong target** (healthcare), multi-check false OK → **`swiss-cheese-wrong-target`**
+5. **SoD prepare+approve** (SOX), same principal both legs → **`sod-prepare-and-approve`**
+6. **Two-person rule bypass** (nuclear/HRO), dual attestation from one session → **`two-person-rule-bypass`**
+7. **Cumulative impact** (environmental), portfolio vs project thresholds → **`cumulative-impact-permits`**
+8. **Alert-fatigue bypass** (healthcare IT), soft ack storm then hard skip → **`alert-fatigue-bypass`**
 
 Implemented in `scenarios/unorthodox.py` (tag `unorthodox`).
 
-### Wave-2 (implemented — tag `crossdomain`)
+### Wave-2 (implemented, tag `crossdomain`)
 
-1. **`economic-substance-sham`** — IRC §7701(o)-style cosmetic hops + under-report
-2. **`wash-trade-volume`** — circular A↔B printed volume as KPI
-3. **`checklist-interrupt-skip`** — HRO partial checklist + irreversible commit
-4. **`emergency-change-window`** — ITIL emergency flag without sealed incident
-5. **`chip-walk-cages`** — casino geographic CTR structuring
-6. **`ccp-skip-then-ship`** — HACCP skip cook-temp CCP then ship
-7. **`custody-seal-break-reseal`** — CoC solo break+reseal
-8. **`escrow-single-party-release`** — same principal both escrow legs
-9. **`related-party-undisclosed`** — fiduciary pay without disclosure
-10. **`sanctions-transship-hop`** — listed end-user via clean intermediary
+1. **`economic-substance-sham`**, IRC §7701(o)-style cosmetic hops + under-report
+2. **`wash-trade-volume`**, circular A↔B printed volume as KPI
+3. **`checklist-interrupt-skip`**, HRO partial checklist + irreversible commit
+4. **`emergency-change-window`**, ITIL emergency flag without sealed incident
+5. **`chip-walk-cages`**, casino geographic CTR structuring
+6. **`ccp-skip-then-ship`**, HACCP skip cook-temp CCP then ship
+7. **`custody-seal-break-reseal`**, CoC solo break+reseal
+8. **`escrow-single-party-release`**, same principal both escrow legs
+9. **`related-party-undisclosed`**, fiduciary pay without disclosure
+10. **`sanctions-transship-hop`**, listed end-user via clean intermediary
 
-### Wave-3 (implemented — tag `specialty`)
+### Wave-3 (implemented, tag `specialty`)
 
-1. **`protocol-deviation-stack`** — GCP stacked minor deviations then dose
-2. **`staged-claim-cluster`** — SIU many sub-threshold claims over household cap
-3. **`colreg-phase-priority`** — stand-on during restricted visibility
-4. **`durc-review-skip`** — release EC model weights without IRE approval
-5. **`bid-rotation-cartel`** — allied desks take turns winning lots
-6. **`advantage-then-wrong-restart`** — deferred foul, wrong restart after advantage
+1. **`protocol-deviation-stack`**, GCP stacked minor deviations then dose
+2. **`staged-claim-cluster`**, SIU many sub-threshold claims over household cap
+3. **`colreg-phase-priority`**, stand-on during restricted visibility
+4. **`durc-review-skip`**, release EC model weights without IRE approval
+5. **`bid-rotation-cartel`**, allied desks take turns winning lots
+6. **`advantage-then-wrong-restart`**, deferred foul, wrong restart after advantage
 
 Unorthodox source map rows from this memo are now fully scenario-backed.
 

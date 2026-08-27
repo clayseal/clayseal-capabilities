@@ -2,7 +2,7 @@
 """CLI smoke tests.
 
 These exist because the rest of the suite imports demo modules directly, so a
-broken import in `demo.cli` — a stray dependency, a typo in a subcommand — would
+broken import in `demo.cli`, a stray dependency, a typo in a subcommand, would
 pass every other test and fail only when someone actually ran the demo. That
 happened once; this is the guard.
 """

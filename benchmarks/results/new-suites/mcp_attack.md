@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, mcp_attack (5 tasks, 9 benign / 5 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/mcp_attack.json
-# Clay Seal enforcement benchmark — mcp_attack (5 tasks, 9 benign / 5 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset mcp_attack --mode ladder --ci --json benchmarks/results/new-suites/mcp_attack.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

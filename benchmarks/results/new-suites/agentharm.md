@@ -1,4 +1,10 @@
-# AgentHarm — DeployableStack (current) vs stale ladder
+# AgentHarm, DeployableStack (current) vs stale ladder
+
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset agentharm --mode ladder --ci --json benchmarks/results/new-suites/agentharm.json
+```
 
 ## DeployableStack (authoritative for product claims)
 

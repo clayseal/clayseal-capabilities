@@ -65,7 +65,7 @@ def run(suite_name, model, n_user, ablations, out_path):
 
         This was an exact-name dict, and adding an ablation without adding a key
         silently produced `planner=None`, which builds no intent envelope at
-        all. The run then reports zero denials and full baseline utility — a
+        all. The run then reports zero denials and full baseline utility, a
         perfect score for a defense that was not running. It looked like a
         50-point improvement.
 

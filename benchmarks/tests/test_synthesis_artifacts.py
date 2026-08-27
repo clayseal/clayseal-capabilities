@@ -1,7 +1,7 @@
 """Synthesized corpora manufacture the signal they are used to measure.
 
 `adequacy.py` says 0 of 11 corpora can evaluate a provenance layer. The standard
-repair — synthesize attacks into the benign corpora — appears to fix that and
+repair, synthesize attacks into the benign corpora, appears to fix that and
 does not: an appended attack runs at the end of a trajectory, by which point the
 session has ingested external content, so it is taint-derived almost by
 construction. The gap that results is positional, not semantic.

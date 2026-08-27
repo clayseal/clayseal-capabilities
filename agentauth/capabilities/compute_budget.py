@@ -1,4 +1,4 @@
-"""Session-level cumulative *compute-time* budget — the wall-clock sibling of
+"""Session-level cumulative *compute-time* budget, the wall-clock sibling of
 the value ledger in ``value_budget.py`` and the call ledger in ``call_budget.py``.
 
 ``BudgetType.COMPUTE_SECONDS`` has been declarable in a mandate all along, but
@@ -16,7 +16,7 @@ SIGKILL, not the accounting.
 WALL, NOT CPU. A VM run consumes wall time whether or not the guest is on-CPU,
 and the timeout that enforces the ceiling is a wall-clock timeout. CPU seconds
 are recorded alongside for observability but are deliberately not the charged
-unit — ``getrusage(RUSAGE_CHILDREN)`` also counts unrelated reaped children, so
+unit, ``getrusage(RUSAGE_CHILDREN)`` also counts unrelated reaped children, so
 charging it would be both unfaithful to the grant and imprecise.
 
 Concurrency mirrors the sibling ledgers: the atomic :meth:`SessionComputeBudget.
@@ -135,7 +135,7 @@ class ComputeBudgetConfig:
 class ComputeReservation:
     """Handle for compute seconds reserved atomically before a run.
 
-    ``granted_seconds`` is what the run may actually use — the smaller of the
+    ``granted_seconds`` is what the run may actually use, the smaller of the
     requested estimate and what the grant has left. Callers pass it to the
     sandbox as the timeout, which is what makes the ceiling enforceable rather
     than merely recorded.
@@ -181,7 +181,7 @@ class SessionComputeBudget:
         Total by contract: any input yields a decision, never an exception. A
         string estimate used to raise ``TypeError`` from the ``< 0`` comparison
         before any budget logic ran, and a non-finite one sailed through to be
-        "clamped" — ``float('nan')`` was granted as ``ok_clamped``, which then
+        "clamped", ``float('nan')`` was granted as ``ok_clamped``, which then
         poisons every later comparison on the ledger because NaN compares False
         against everything. Both are refused here.
 

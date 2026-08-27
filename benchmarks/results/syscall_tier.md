@@ -1,4 +1,4 @@
-# Tier 4 — syscall boundary (iVisor trace replay)
+# Tier 4, syscall boundary (iVisor trace replay)
 
 STATUS: current
 

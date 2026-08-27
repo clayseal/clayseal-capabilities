@@ -1,11 +1,11 @@
 """The privileged planner: compile a trusted request into a sealed envelope.
 
-The intent envelope is the primary behavioural tier — the thing that decides
+The intent envelope is the primary behavioural tier, the thing that decides
 whether an action the floor allowed is a step the task actually implies. Nothing
 in the shipped package could build one from a real user request. ``generation.py``
 ships ``StructuredIntentPlanner``, which reads a plan the goal ALREADY contains,
 and the planner that produces one from a prompt lived in ``benchmarks/live/
-planner.py`` — outside the wheel, in the harness.
+planner.py``, outside the wheel, in the harness.
 
 Every live AgentDojo number in ``benchmarks/results/`` was produced by that
 benchmark file. A deployment installing the package got either a hand-authored
@@ -27,7 +27,7 @@ Two properties follow, and both are enforced here rather than assumed:
   parameter through which tool output could reach it.
 - The LLM's tool SEQUENCE is discarded. It is a guess, and enforcing a guessed
   serialisation blocks benign work. What survives is the sound structural
-  constraint — every acquisition phase precedes every effect phase — derived
+  constraint, every acquisition phase precedes every effect phase, derived
   from verb semantics rather than from model text, and so not injectable.
 
 FAILING WITHOUT FAILING OPEN
@@ -117,7 +117,7 @@ def verb_class_order(phases: tuple[Phase, ...]) -> frozenset[tuple[int, int]]:
 
     Every effect phase must be preceded by every acquisition phase. Acquisitions
     are unordered among themselves and so are effects, so only the cross-class
-    edges are enforced — the dynamic structural constraint without the LLM's
+    edges are enforced, the dynamic structural constraint without the LLM's
     guessed serialisation.
 
     This does not by itself catch a read-then-send injection; that is the
@@ -186,7 +186,7 @@ class LLMQueryPlanner:
 
     ``client`` is any object exposing the OpenAI-style
     ``chat.completions.create``; the package does not depend on a provider SDK.
-    Results are cached on ``(query, tool set)`` — keying on the query alone
+    Results are cached on ``(query, tool set)``, keying on the query alone
     returns a plan built for a different catalog whenever the same request runs
     against a different tool set, which is exactly what an ablation sweep does.
     """

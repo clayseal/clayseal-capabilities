@@ -51,7 +51,7 @@ class UsedTokenStore(Protocol):
 
         Returns ``True`` when this is the first time the token is seen (the
         caller may proceed), or ``False`` when the token was already recorded
-        and has not yet expired (a replay — the caller MUST reject).
+        and has not yet expired (a replay, the caller MUST reject).
         """
         ...
 
@@ -61,7 +61,7 @@ class InMemoryUsedTokenStore:
 
     WARNING: this only defends against replay WITHIN a single process. On a
     multi-instance deployment (e.g. several AWS tasks behind a load balancer) a
-    token consumed on one instance is NOT visible to the others — back
+    token consumed on one instance is NOT visible to the others, back
     :func:`verify_commit_token` with a shared/distributed store instead.
     """
 
@@ -149,7 +149,7 @@ class CommitToken:
         """Reject a token that cannot be serialized, at construction.
 
         ``to_dict`` coerces the two integer fields with ``int()``, and it is the
-        FIRST thing ``verify_commit_token`` calls — before the signature check.
+        FIRST thing ``verify_commit_token`` calls, before the signature check.
         So a ``CommitToken`` holding ``authority_version='x'`` does not fail
         verification, it raises ``ValueError`` from inside the verifier, ahead of
         every check that would have rejected it.
@@ -163,7 +163,7 @@ class CommitToken:
 
         Found by ``benchmarks/stress_commit.py``, which mutates every field of a
         valid token and asserts that exactly one input verifies. It found no
-        mutation that verified — the binding is sound — and 37 that raised.
+        mutation that verified, the binding is sound, and 37 that raised.
         """
         for name in ("authority_version", "permit_epoch"):
             raw = getattr(self, name)
@@ -234,7 +234,7 @@ def parse_signed_commit_token(
     indexes required keys and coerces with ``int()``/``str()``, so hostile JSON
     produces a raw exception rather than a decision. Measured across six
     single-field mutations of an otherwise well-formed token, it raises
-    ``ValueError``, ``TypeError`` and ``KeyError`` — three different types, none
+    ``ValueError``, ``TypeError`` and ``KeyError``, three different types, none
     of them a verdict:
 
         authority_version='PWNED'  -> ValueError
@@ -244,7 +244,7 @@ def parse_signed_commit_token(
         token not a mapping        -> ValueError
         signature absent           -> KeyError
 
-    That is not a fail-open — no malformed token verifies, and the mutation
+    That is not a fail-open, no malformed token verifies, and the mutation
     stress in ``benchmarks/stress_commit.py`` confirms every field of the token
     and of the context is genuinely bound. It is worse-shaped than that: an
     unhandled exception at the exact boundary where attacker-controlled bytes
@@ -254,7 +254,7 @@ def parse_signed_commit_token(
 
     So the boundary gets its own total entry point. This function returns
     ``(token, None)`` or ``(None, reason)`` and raises nothing, for any input at
-    all — including ``None``, a list, or a string. ``from_dict`` keeps its
+    all, including ``None``, a list, or a string. ``from_dict`` keeps its
     existing behaviour and is documented as the trusted-data constructor.
     """
     if not isinstance(raw, dict):
@@ -281,13 +281,13 @@ def issue_commit_token(
     # exactly the way the signed token is not. ``ActionDescriptor`` performs no
     # validation and lives in the sibling core package, so the guard belongs
     # here: a non-string ``action_name`` raised ``AttributeError`` from
-    # ``.rsplit`` — nine variants, found by benchmarks/stress_commit.py.
+    # ``.rsplit``, nine variants, found by benchmarks/stress_commit.py.
     #
     # RAISES, and does not return a verdict. The verifier's matching guard
     # returns ``(False, reason)`` because verification is total by contract: it
     # answers a question about attacker-supplied bytes and must never throw.
-    # Minting is the opposite — there is no "no" to return, only a token or
-    # nothing — and this guard was copy-pasted from the verifier, so it returned
+    # Minting is the opposite: there is no "no" to return, only a token or
+    # nothing, and this guard was copy-pasted from the verifier, so it returned
     # a ``tuple`` from a function annotated ``-> SignedCommitToken``. The caller
     # then failed with an ``AttributeError`` one frame further out, which is the
     # exact failure shape the guard exists to prevent. ``ValueError`` matches the
@@ -332,19 +332,19 @@ def verify_commit_token(
 
     The signature proves integrity, not authority: any keyholder can produce an
     internally consistent token. ``trusted_minting_keys`` (or the
-    ``AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`` env var) pins which signer(s) —
-    hex public keys or key_ids — are the governor/committer allowed to mint.
+    ``AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS`` env var) pins which signer(s)
+    hex public keys or key_ids, are the governor/committer allowed to mint.
     In production a pin is REQUIRED; without one verification fails closed.
 
     Single-use enforcement is a swappable seam: pass ``used_token_store`` and a
     ``token_id`` that has already been consumed (before its expiry) is rejected
-    as a replay. PRODUCTION CALLERS MUST PASS A STORE — without one a captured,
+    as a replay. PRODUCTION CALLERS MUST PASS A STORE, without one a captured,
     still-valid token can be replayed until it expires. Use
     :class:`InMemoryUsedTokenStore` for a single instance, or a shared /
     distributed :class:`UsedTokenStore` for a multi-instance AWS deployment.
     The store is consulted only after every other check passes, so a rejected
-    token never burns a ``token_id`` slot. If the store raises — a partition, a
-    timeout — verification DENIES with a reason rather than propagating the
+    token never burns a ``token_id`` slot. If the store raises, a partition, a
+    timeout, verification DENIES with a reason rather than propagating the
     exception; see the handler for why that is not configurable.
     """
     at = at or _utc_now()
@@ -387,7 +387,7 @@ def verify_commit_token(
     # exactly the way the signed token is not. ``ActionDescriptor`` performs no
     # validation and lives in the sibling core package, so the guard belongs
     # here: a non-string ``action_name`` raised ``AttributeError`` from
-    # ``.rsplit`` — nine variants, found by benchmarks/stress_commit.py — instead
+    # ``.rsplit``, nine variants, found by benchmarks/stress_commit.py, instead
     # of returning a verdict. A verifier that crashes on a malformed context is a
     # denial of service, and behind a broad ``except`` it is an allow.
     if not isinstance(ctx.action.action_name, str):
@@ -443,8 +443,8 @@ def verify_commit_token(
             # forces every integrator to implement the deny themselves, and the
             # first one who wraps this call in a broad `except` converts a
             # partition into whatever their fallback does. Single-use is the one
-            # property with no second line of defence — nothing above the token
-            # re-checks it — so the decision belongs here, once.
+            # property with no second line of defence, nothing above the token
+            # re-checks it, so the decision belongs here, once.
             #
             # Deliberately NOT offered as a fail-open option. A caller who wants
             # to trade replay exposure for availability already has a supported

@@ -1,9 +1,9 @@
-"""MCP-attack loader — poisoned tools, confused deputy, and tool-result injection.
+"""MCP-attack loader, poisoned tools, confused deputy, and tool-result injection.
 
 Product-shaped suite: the agent is granted a legitimate MCP tool surface, and
 the attack arrives through (a) a tool whose *description* steers the model,
 (b) a tool result that smuggles an out-of-scope call, or (c) a deputy tool that
-forwards to an attacker host. Not a public corpus clone — a first-class Clay
+forwards to an attacker host. Not a public corpus clone, a first-class Clay
 Seal fixture that exercises destination binding and scope the way buyers ask.
 """
 from __future__ import annotations

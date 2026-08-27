@@ -2,7 +2,7 @@
 
 `run_benchmark` gives a calibrated engine one look at clean traffic through
 `observe_corpus`. The adaptive path did not, and the omission was invisible
-because an uncalibrated engine does not crash — it silently uses a default.
+because an uncalibrated engine does not crash, it silently uses a default.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def test_the_velocity_cap_is_calibrated_rather_than_left_at_its_default():
     Uncalibrated, `VelocityLadderEngine` falls back to ``default_cap = 5``.
     Calibration on RedCode yields **32**. So every adaptive result for that rung
     was produced with a cap 6.4x tighter than the one an operator would set from
-    their own logs, which biases containment upward — the direction that flatters
+    their own logs, which biases containment upward, the direction that flatters
     the system.
     """
     tasks = _tasks()

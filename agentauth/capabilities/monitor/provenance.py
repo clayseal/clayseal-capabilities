@@ -1,4 +1,4 @@
-"""Taint / provenance tracking — the principled defense against injection at the
+"""Taint / provenance tracking, the principled defense against injection at the
 action layer.
 
 Prompt injection, hidden-Unicode instructions, and poisoned tool descriptions

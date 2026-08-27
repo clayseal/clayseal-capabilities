@@ -1,0 +1,49 @@
+# The authority for one refund run, and the whole of it.
+#
+#   clayseal proxy --policy examples/refund.yaml -- python examples/refund_server.py
+#
+# The ceiling is the point. Every individual refund below is within the
+# operator's per-refund discretion; the eleventh is refused because the session
+# has already spent the authority, and nothing that decides one call at a time
+# can see that.
+version: 1
+
+goal:
+  id: refund-run-2026-08
+  summary: Pay the approved customer refunds in today's queue.
+
+profile: supervised
+expires_at: 2027-12-31T00:00:00Z
+
+tools:
+  # `wire_funds` exists on the server and is deliberately absent here. It is
+  # never advertised to the agent, so the agent does not plan around a tool it
+  # would then be refused.
+  allow:    [list_open_refunds, issue_refund]
+  harmless: [list_open_refunds]
+  effects:  {list_open_refunds: read, issue_refund: write}
+
+paths:
+  # Both tools act on an invoice, not on a file. Asserting that is what stops
+  # the gateway refusing an effectful call whose path it could not resolve.
+  pathless: [list_open_refunds, issue_refund]
+
+# `clayseal policy lint examples/refund.yaml` reports two warnings and no
+# errors, and both warnings are correct rather than oversights:
+#
+#   no-egress-policy       neither tool sends anything anywhere, so there is no
+#                          destination to constrain. A real AP policy that could
+#                          email a remittance advice would need this section.
+#   session-scoped-ceiling the ceiling is spent over the life of the proxy
+#                          process. That is the intent here — one process is one
+#                          refund run — and it is the wrong reading if you meant
+#                          "per task". See the session-lifetime note in
+#                          agentauth/capabilities/mcp_proxy.py.
+budgets:
+  value:
+    ceilings: {refunds: "1000.00"}
+    tracked:
+      # `identity: [invoice]` makes the effect once-per-object, so "pay each
+      # invoice once, under ceiling" is expressible as the two separate
+      # constraints it actually is.
+      issue_refund: {arg: amount, budget: refunds, identity: [invoice]}

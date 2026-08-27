@@ -101,3 +101,8 @@ docs/*.out
 # working notes, not results; the finding they produced belongs in
 # benchmarks/results/ and the mechanism in the library.
 scratchpad/
+
+# Demo run output. `demo/cli.py` writes here by default (IVISOR_RUN_ROOT) and
+# the demo tests use tmp_path, so nothing reads the committed copy. 47 files of
+# generated workspaces, ticket corpora and guest scratch were checked in.
+.demo-runs/

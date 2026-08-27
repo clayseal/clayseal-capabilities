@@ -52,7 +52,7 @@ exists to avoid.
 The intent envelope is included precisely because it is **not** invariant: it
 reads a verb derived from the tool name, which the attacker names. A layer that
 moves under adaptive attack next to one that cannot is the comparison that makes
-the claim mean something — without it, a flat row is indistinguishable from a
+the claim mean something, without it, a flat row is indistinguishable from a
 harness that never varied its input.
 """
 from __future__ import annotations
@@ -235,14 +235,17 @@ def envelope_asr() -> dict[str, bool]:
     """The intent envelope, attacked by renaming the tool.
 
     Included because a flat row proves nothing on its own. The envelope reads a
-    verb derived from the tool NAME, and the attacker names the tool — so this
+    verb derived from the tool NAME, and the attacker names the tool, so this
     layer is reachable from the prompt, and it moves.
     """
+    # `classify_verb` comes from the library, NOT from `benchmarks.live.
+    # broker_defense`, which re-exports it and hard-imports the optional
+    # `agentdojo` extra at module scope. See `bpl/schema.verb_for`.
     from agentauth.capabilities.broker import Outcome, SessionBroker
     from agentauth.capabilities.monitor.action import Action
     from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
     from agentauth.capabilities.scoping.goal import GoalSpec
-    from benchmarks.live.broker_defense import classify_verb
+    from agentauth.capabilities.tool_verbs import classify_verb
 
     def escapes(tool: str) -> bool:
         broker = SessionBroker(
@@ -270,7 +273,7 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
 
     print(f"objective: land more than {CEILING} against a ceiling of {CEILING}\n")
-    print("PROMPT-LEVEL ADAPTATION — everything the attacker controls\n")
+    print("PROMPT-LEVEL ADAPTATION, everything the attacker controls\n")
     head = f"{'strategy':<30}{'calls':>7}{'landed':>10}{'ceiling':>9}{'':>4}"
     print(head)
     print("-" * len(head))
@@ -287,10 +290,10 @@ def main(argv=None) -> int:
     print(f"\n{escaped} of {len(prompt_rows)} prompt-level strategies escape.")
     print("The ledger's inputs are the committed multiset and the mandate. "
           "Neither is\na function of model output, so there is nothing here for "
-          "an adaptive attacker\nto optimise against — including a gradient "
+          "an adaptive attacker\nto optimise against, including a gradient "
           "attack, which searches exactly the\nchannel this predicate ignores.")
 
-    print("\n\nMANDATE-LEVEL — what an incomplete CONFIGURATION allows\n")
+    print("\n\nMANDATE-LEVEL, what an incomplete CONFIGURATION allows\n")
     head2 = f"{'strategy':<32}{'landed':>10}{'':>10}  {'linted as'}"
     print(head2)
     print("-" * (len(head2) + 12))
@@ -309,7 +312,7 @@ def main(argv=None) -> int:
     if unlinted:
         print("UNLINTED: " + "; ".join(unlinted))
 
-    print("\n\nCONTROL — a layer that IS reachable from the prompt\n")
+    print("\n\nCONTROL, a layer that IS reachable from the prompt\n")
     env = envelope_asr()
     for name, allowed in env.items():
         print(f"  {name:<34}{'ESCAPED' if allowed else 'held'}")

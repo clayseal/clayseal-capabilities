@@ -1,6 +1,6 @@
 """The demo's pure reducer: what counts as evidence, and what never can.
 
-These run with `rich` absent and with no sandbox — which is the point. If they
+These run with `rich` absent and with no sandbox, which is the point. If they
 ever need either, the pure layer has stopped being pure.
 """
 from demo.expectations import (
@@ -103,7 +103,7 @@ def test_never_allowed_starts_satisfied():
 
 
 # --------------------------------------------------------------------------- #
-# Epoch-conditional grading — the thesis
+# Epoch-conditional grading, the thesis
 # --------------------------------------------------------------------------- #
 
 def _contained_epoch(index=1):

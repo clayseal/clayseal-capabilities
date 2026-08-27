@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         if not total:
             continue
         lost = sum(data["flipping"].values())
-        print(f"## `{ablation}` — {total} benign denials, {lost} on tasks the defense lost\n")
+        print(f"## `{ablation}`, {total} benign denials, {lost} on tasks the defense lost\n")
 
         print("| Rule | denials | of which flipped a task | layer |")
         print("| --- | --: | --: | --- |")

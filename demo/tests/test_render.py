@@ -1,7 +1,7 @@
 """Both renderers, and the property that they cannot disagree.
 
-Neither renderer parses, counts, or decides anything — the reducer does all of
-it — so these tests mostly assert that what the reducer separated stays
+Neither renderer parses, counts, or decides anything, the reducer does all of
+it, so these tests mostly assert that what the reducer separated stays
 separated on screen.
 """
 from io import StringIO
@@ -189,7 +189,7 @@ def test_a_worker_exception_is_never_reported_as_a_clean_run(tmp_path, capsys):
 
     The loop runs on a thread and the Live display owns the alternate screen, so
     an uncaught exception used to vanish and leave a tidy summary in which
-    nothing had happened — an auth failure was indistinguishable from a model
+    nothing had happened, an auth failure was indistinguishable from a model
     that declined the task. It must exit 2 and show the traceback.
     """
     pytest.importorskip("rich")

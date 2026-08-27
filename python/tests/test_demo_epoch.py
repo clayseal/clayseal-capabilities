@@ -57,7 +57,7 @@ def test_each_epoch_gets_its_own_run_directory(scen, tmp_path):
 
 
 # --------------------------------------------------------------------------- #
-# Staging and migration — where quarantine is actually enforced
+# Staging and migration, where quarantine is actually enforced
 # --------------------------------------------------------------------------- #
 
 def test_tickets_are_staged_below_quarantine(scen, tmp_path):
@@ -72,7 +72,7 @@ def test_quarantine_unstages_the_ticket_corpus(scen, tmp_path):
     epoch = _epoch(scen, Level.QUARANTINED, tmp_path)
     assert not any(k.startswith("data/tickets/") for k in epoch.base_files)
     # The tools remain: the agent can still run, it just has nothing to read.
-    # Absence, not refusal — the guest sees ENOENT.
+    # Absence, not refusal, the guest sees ENOENT.
     assert "tools/read_ticket.py" in epoch.base_files
 
 

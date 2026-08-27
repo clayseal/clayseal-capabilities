@@ -94,7 +94,7 @@ class PolicyEvent:
     @property
     def is_bind_hardening(self) -> bool:
         # iVisor denies binding an ephemeral (inbound) port by default. That is
-        # least-privilege network hardening, not the containment of an attack —
+        # least-privilege network hardening, not the containment of an attack
         # benign tools trigger it and still complete. Bucketed separately.
         return self.op == "net.bind" and self.kv.get("reason") == "ephemeral-port"
 
@@ -169,7 +169,7 @@ def evaluate(event: PolicyEvent, action: Action, cap: Capability,
             where = f"host {host}" if host else "resolves to no sealed host"
             return Decision("deny", "egress",
                             (f"destination {dst} is not an authorized egress endpoint ({where})",))
-        # D. behavioral limit — egress volume, even to an authorized host
+        # D. behavioral limit, egress volume, even to an authorized host
         if budget is not None:
             res = budget.reserve("net.connect", {})
             if not res.allowed:
@@ -178,7 +178,7 @@ def evaluate(event: PolicyEvent, action: Action, cap: Capability,
                                  f"beaconing/exfil over an allowed channel",), bpl=True)
             res.commit()
 
-    # C. task-scope floor — writes only inside /work
+    # C. task-scope floor, writes only inside /work
     if event.is_fs_write and event.path is not None:
         if not cap.write_in_scope(event.path):
             return Decision("deny", "task-scope",

@@ -3,7 +3,7 @@
 This is the step that turns "exfiltration" from a string in a dict into a
 syscall. Resolving and connecting to the recipient's domain is what iVisor's
 egress policy actually adjudicates, so the verdict stream records whether the
-destination was admitted — independently of whether the host could reach it.
+destination was admitted, independently of whether the host could reach it.
 """
 import socket
 import sys

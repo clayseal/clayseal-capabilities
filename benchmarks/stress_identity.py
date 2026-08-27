@@ -181,8 +181,8 @@ def probe_principal_identity() -> list[dict]:
 
         # The same pair through `principal_ledger.principal_key`, which is what
         # a ledger must actually be keyed on. The row above is expected to fail
-        # on every adapter — `sub` is unique only within an issuer and the
-        # adapters report it faithfully — so this row is the one that matters.
+        # on every adapter, `sub` is unique only within an issuer and the
+        # adapters report it faithfully, so this row is the one that matters.
         def pk(raw, provider=provider):
             try:
                 return principal_key(_binding(provider, raw))

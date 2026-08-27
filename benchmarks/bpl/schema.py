@@ -1,4 +1,4 @@
-"""BPL scenario schema — shared by the live H2H runner and unit tests."""
+"""BPL scenario schema, shared by the live H2H runner and unit tests."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -40,7 +40,7 @@ class Scenario:
     #:
     #: Before this existed, the threshold reached the enforcer and the violation
     #: oracle through the same Python name in 36 of 133 scenarios, and only the
-    #: ClaySeal condition was given it at all — so the table compared one system
+    #: ClaySeal condition was given it at all, so the table compared one system
     #: that knew the rule against two that were never told. A policy the whole
     #: field can read turns that into the architectural question worth asking:
     #: given the same rule, which designs can enforce it?
@@ -72,8 +72,8 @@ def verb_for(tool: str) -> str:
     """The verb the broker will see. Delegates to the SHIPPED classifier.
 
     There were two of these and they disagreed on 9 of 11 sampled tools.
-    `legacy_verb_for` above returns raw synonyms — `load`, `get`, `dump`,
-    `wire`, `advance` — while `broker_defense.classify_verb`, which the live
+    `legacy_verb_for` above returns raw synonyms, `load`, `get`, `dump`,
+    `wire`, `advance`, while `broker_defense.classify_verb`, which the live
     AgentDojo path uses, normalizes to a canonical `{read, write, transfer,
     send, call}`. The verb is decided BEFORE the broker sees the action, so BPL
     and AgentDojo have been measuring the same system through different front
@@ -86,7 +86,7 @@ def verb_for(tool: str) -> str:
         completion    40% (53/132)  ->  71% (94/132)
 
     72 of 79 false blocks were the single tool `load_policy`, classified `load`,
-    a verb no scenario envelope allows — a benign policy read refused at step
+    a verb no scenario envelope allows, a benign policy read refused at step
     one. And 24 scenarios the suite labels `clayseal_expected: open` are in fact
     contained, each by a real block and none of them contained under allow-all.
     Those labels were calibrated against this bug.
@@ -94,7 +94,18 @@ def verb_for(tool: str) -> str:
     **Every BPL number published before this used `legacy_verb_for`**, which is
     why it is kept rather than deleted: `bpl_sweep --verbs bpl` reproduces them.
     """
-    from benchmarks.live.broker_defense import classify_verb
+    # Straight from the library, which is where it lives and what the README
+    # tells an integrator to import. This used to route through
+    # `benchmarks.live.broker_defense`, which re-exports it from
+    # `benchmarks.datasets._common`, which re-exports it from here, and which
+    # hard-imports `agentdojo` at module scope.
+    #
+    # So the default verb classifier of the headline benchmark depended on an
+    # optional benchmark dependency. Without `agentdojo` installed, this raised
+    # on EVERY action of EVERY scenario, and the sweep scored all 132 clayseal
+    # cells as `contained=None`. Only the "a gate that raises has not contained
+    # anything" guard turned that into a visible failure instead of a silent one.
+    from agentauth.capabilities.tool_verbs import classify_verb
 
     return classify_verb(tool)
 
@@ -117,7 +128,7 @@ def scope_envelope_verbs(allow: set[str], extra: set[str] | None = None) -> set[
     THE DEFECT THIS REPLACES
     ------------------------
     `_scope_broker` was copy-pasted into fourteen scenario modules, each with its
-    own hardcoded verb vocabulary — `{read, list, create, update, pay, send,
+    own hardcoded verb vocabulary, `{read, list, create, update, pay, send,
     call}` in most of them. Not one of those sets contains `transfer` or
     `write`, and the shipped classifier emits exactly `{read, write, transfer,
     send, call}`. So `pay` was declared, `transfer` arrived, and the envelope
@@ -127,7 +138,7 @@ def scope_envelope_verbs(allow: set[str], extra: set[str] | None = None) -> set[
     twin** at the first consequential step, every one with `verb '<canonical>'
     not expected for the goal`. Several of them grant `pay_vendor` and then score
     progress as "did the vendors get paid", so the mandate forbade the only thing
-    the task required. That is not a policy, it is a bug — and it inflated
+    the task required. That is not a policy, it is a bug, and it inflated
     containment, because a scenario whose benign path is blocked also blocks the
     attack that shares a verb with it.
 
@@ -137,7 +148,7 @@ def scope_envelope_verbs(allow: set[str], extra: set[str] | None = None) -> set[
 
     WHY DERIVING IS NOT FITTING
     ---------------------------
-    The verbs come from the granted TOOLS — the same source as the tool
+    The verbs come from the granted TOOLS, the same source as the tool
     allowlist, which is already derived rather than hardcoded. A mandate that
     grants `pay_vendor` authorizes paying; that is what granting it means. It
     cannot widen authority past the grant, because `allowed_tools` still gates

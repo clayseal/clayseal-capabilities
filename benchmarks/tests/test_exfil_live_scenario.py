@@ -1,6 +1,6 @@
 """The sandboxed BPL scenario: grading logic, and a real end-to-end replay.
 
-The grading tests need no sandbox — they drive `violated()` with synthetic
+The grading tests need no sandbox, they drive `violated()` with synthetic
 verdicts. The replay test runs real guests and is gated on IVISOR_E2E, like
 python/tests/test_ivisor_e2e.py.
 """
@@ -111,6 +111,6 @@ def test_replay_contains_the_exfil_only_under_the_ivisor_condition(scenario,
 
     # Undefended: the exfil destination is admitted. Sandboxed: refused.
     assert results["none"] == (True, 1.0)
-    # Contained, and the legitimate work still finished — containment without
+    # Contained, and the legitimate work still finished, containment without
     # over-blocking is the whole claim.
     assert results["ivisor"] == (False, 1.0)

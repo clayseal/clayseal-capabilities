@@ -22,8 +22,8 @@ as a curve.
     demand/ceiling > 1     the tail must be refused. Any landing is a VIOLATION.
     demand/ceiling ~ 1     where a real control is judged.
 
-A control can win either half trivially — deny-all takes the right-hand side,
-allow-all takes the left — so the curve is the result and neither column alone
+A control can win either half trivially, deny-all takes the right-hand side,
+allow-all takes the left, so the curve is the result and neither column alone
 is. The `deny-all` and `allow-all` rows are printed permanently for that reason,
 the same discipline `opeval.py` uses.
 
@@ -59,7 +59,7 @@ def _exact(amounts: list[Decimal], total: Decimal) -> list[Decimal]:
 
     Not cosmetic. Rounding each element independently left `front-loaded` at
     ratio 1.00 requesting 1000.01 against a ceiling of 1000, and the ledger
-    correctly refused the last cent — which this harness then counted as a
+    correctly refused the last cent, which this harness then counted as a
     false block, because it had labelled the demand as fitting. One cent of
     generator drift and the benchmark reports a defect in the system under
     test. The remainder goes on the last element so the shape keeps its

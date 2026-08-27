@@ -23,7 +23,7 @@ from benchmarks.bpl.scenarios.specialty import SPECIALTY_BUILDERS
 from benchmarks.bpl.scenarios.ultra import ULTRA_BUILDERS
 from benchmarks.bpl.scenarios.unorthodox import UNORTHODOX_BUILDERS
 
-# Builder callables — instantiate via SCENARIOS[name]().
+# Builder callables, instantiate via SCENARIOS[name]().
 SCENARIO_BUILDERS: dict[str, Callable[[], Scenario]] = {
     **LEGACY_BUILDERS,
     **AGGREGATE_BUILDERS,
@@ -63,9 +63,32 @@ def list_scenarios(*, family: Family | str | None = None,
 
 
 def get_scenario(name: str) -> Scenario:
+    """Build the scenario AND attach the policy declared for it.
+
+    `policies.py` exists so every condition is handed the rule, and it said so
+    in its docstring while nothing read it. `Scenario.policy` defaults to an
+    empty `Policy()`, no builder assigned it, and `apply_call` reads
+    `scen.policy`, so the declared Core-12 rules reached the coverage report
+    and the agreement test and never reached the enforcement path.
+
+    What that cost is specific. With no `scope` rule the per-call condition
+    falls back to "every tool in the scenario's own catalog", and the scripts
+    only ever call tools from that catalog, so per-call could not refuse
+    anything whatever the scenario was. Its 0-of-132 was arithmetic rather than
+    a measurement, and the table called that row "given the policy".
+
+    Attaching it here rather than in each builder keeps the declaration in one
+    auditable table, which is the reason `policies.py` was written that way.
+    Scenarios with no declared policy still get an empty one; that is the
+    migration state, not a claim, and `--policy-coverage` prints it.
+    """
     if name not in SCENARIO_BUILDERS:
         raise KeyError(f"unknown BPL scenario: {name}")
-    return SCENARIO_BUILDERS[name]()
+    from benchmarks.bpl.policies import policy_for
+
+    scen = SCENARIO_BUILDERS[name]()
+    scen.policy = policy_for(name)
+    return scen
 
 
 def scenarios_by_family() -> dict[str, list[str]]:

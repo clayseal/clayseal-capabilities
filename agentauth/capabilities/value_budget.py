@@ -70,7 +70,7 @@ def value_budget_config_from_mandate(
     stateful layer-2 ledger that catches fragmented-but-individually-valid
     effects such as two $999 payments against one $1000 authorization.
 
-    Only ``BudgetType.USD_LIMIT`` budgets are consumed here — the value ledger
+    Only ``BudgetType.USD_LIMIT`` budgets are consumed here, the value ledger
     sums monetary quantities at cent precision, so it is the wrong home for a
     call-count, token, compute, or byte grant. Those are dispatched to their own
     enforcers by :func:`agentauth.capabilities.session_budgets_from_mandate`;
@@ -112,7 +112,7 @@ def session_value_budget_from_mandate(
 
 #: Sentinels for `effect_identity`. Hoisted out of the f-string because an
 #: escape sequence inside an f-string EXPRESSION is a syntax error before
-#: Python 3.12, and this package declares support from 3.10 — the module is
+#: Python 3.12, and this package declares support from 3.10, the module is
 #: imported by `agentauth.capabilities.__init__`, so the error made the whole
 #: package unimportable on 3.10/3.11. Values are unchanged.
 _IDENTITY_SEP = "\u0000"
@@ -300,14 +300,14 @@ def parse_amount(
     ``None``                  the call is genuinely untracked: this tool has
                               no money spec, or carries no amount argument.
     ``(budget_id, None)``     the call IS tracked and the amount is present
-                              but unusable — non-numeric, unparseable, or
+                              but unusable, non-numeric, unparseable, or
                               non-finite.
     ``(budget_id, Decimal)``  a usable amount.
 
     The middle state is the one that did not exist, and its absence was a
     fail-open. Every unparseable amount returned ``None``, callers read that
     as "untracked", and the reservation came back ``allowed=True`` with
-    reason ``ok_untracked`` — no ceiling check at all. Measured against a
+    reason ``ok_untracked``, no ceiling check at all. Measured against a
     ceiling of 10, all of these were allowed and booked nothing:
 
         '1e999'  'Infinity'  '-Infinity'  'sNaN'  '0x10'  ''  10**30
@@ -320,7 +320,7 @@ def parse_amount(
 
     Non-finite values are rejected explicitly rather than left to raise.
     ``Decimal('NaN')`` quantizes without complaint and then raises
-    ``InvalidOperation`` on the very next comparison — ``amount < 0`` — which
+    ``InvalidOperation`` on the very next comparison, ``amount < 0``, which
     escaped ``reserve`` unhandled and took the whole authorization call with
     it. Fail-closed on a bad amount; never fail by exception.
     """
@@ -453,7 +453,7 @@ class SessionValueBudget:
         budget_id, amount = parsed
         if amount is None:  # tracked but unusable: fail closed, never untracked
             return ValueReservation(False, "value_budget_unparseable_amount")
-        if amount < 0:  # negative debits open ceiling headroom — reject (see would_allow)
+        if amount < 0:  # negative debits open ceiling headroom, reject (see would_allow)
             return ValueReservation(False, "value_budget_negative_amount")
         ceiling = self.config.ceiling_for(budget_id)
         raw_key = args.get("_idempotency_key")
@@ -524,7 +524,7 @@ class SessionValueBudget:
                 # A released reservation frees its object again. Without this a
                 # downstream refusal would pin the identity for the session and
                 # the retry of a legitimate action would be refused as a
-                # duplicate — the failure that hides, because it is safe.
+                # duplicate, the failure that hides, because it is safe.
                 self._reserved_identities.get(budget_id, set()).discard(res._identity)
             res._settled = True
 

@@ -40,7 +40,7 @@ is atomic across processes.
 **Committed spend.** The in-memory index is a snapshot from load time. Every
 transaction now tails the log for bytes appended by anyone else. A server process
 holds one ledger for its lifetime, so "read it at startup" is the same bug as not
-sharing at all — it just takes longer to show up.
+sharing at all, it just takes longer to show up.
 
 **Outstanding holds.** The subtle one, and the part a shared log alone does not
 fix. Two processes that each hold a reservation cannot see each other's, so both
@@ -62,7 +62,7 @@ override rather than seven.
 
 **A load race.** `__post_init__` read the whole file and then separately stat'd
 it for the offset. Anything appended between those two calls was skipped
-forever — spend this process could not see, so headroom it would grant twice.
+forever, spend this process could not see, so headroom it would grant twice.
 Fixed by starting at offset 0 and letting the first transaction read under the
 lock, which is the only place a load is safe.
 
@@ -74,7 +74,7 @@ phantom holds pinning 50 of a 100 ceiling, 70 landing where 100 should have.
 
 It failed in the safe direction, which is exactly why it needed finding: the
 ceiling is never breached, the system quietly refuses honest work, and every
-individual decision looks correct. Nothing needed preserving — a hold created in
+individual decision looks correct. Nothing needed preserving, a hold created in
 a transaction is written before that transaction ends, and `release` matches on
 `hold_id` rather than object identity, so a caller's reference still resolves
 after a sync replaces the objects.
@@ -82,7 +82,7 @@ after a sync replaces the objects.
 ## 3. The backend is a dependency, so it can be down
 
 Before: a raw `PermissionError` escaped the authorization path. Fail-closed only
-by accident — it takes the request down, cannot be told from a bug, and nothing
+by accident, it takes the request down, cannot be told from a bug, and nothing
 counts it.
 
 Now `LedgerUnavailable`, with an explicit configured policy:
@@ -98,7 +98,7 @@ already shipped six fail-opens whose whole shape was a control that stopped
 applying when its input was unusual and reported success.
 
 `allow` is never the default and is always counted. One refused action counts as
-exactly one outage — `reserve` calls `spent`, which opens its own transaction,
+exactly one outage, `reserve` calls `spent`, which opens its own transaction,
 and without re-entrancy on the failure path one action reported two, which is the
 kind of inflated number an operator learns to ignore on the one metric that says
 the ceiling stopped being enforced.
@@ -115,7 +115,7 @@ ceiling stopped being enforced and both were recorded and surfaced nowhere:
 ```
 
 `late_breaches` is a commit that landed after its hold was voided and no longer
-fit — the spend is booked and the log is correct, but the check did not hold for
+fit, the spend is booked and the log is correct, but the check did not hold for
 it, and that needs reconciling the same day rather than a window later.
 `totals_verified` is the one that should page someone: false means the cached
 totals have drifted from the log, which silently raises a ceiling.
@@ -130,8 +130,8 @@ the number becomes measured rather than assumed. That is
 only worth something if the new path is identical to the old when nobody answers,
 otherwise every published autonomous number came from different code.
 
-The plan states it as W1's verification and it now runs: with `NeverApprove` —
-which enters the loop, asks, and is declined — verdicts, allow counts and block
+The plan states it as W1's verification and it now runs: with `NeverApprove`
+which enters the loop, asks, and is declined, verdicts, allow counts and block
 counts all match the plain `gate()` path exactly. A guard test asserts the
 fixture still produces a refusal, so the parity has something to prove.
 

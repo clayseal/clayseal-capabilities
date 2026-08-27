@@ -61,7 +61,6 @@ from typing import Any
 
 from agentauth.capabilities.value_budget import (
     SessionValueBudget,
-    ValueBudgetConfig,
     ValueReservation,
 )
 
@@ -215,35 +214,3 @@ class WindowedValueBudget(SessionValueBudget):
         out["windows"] = dict(self.windows)
         out["in_window"] = {b: self.in_window(b) for b in self.windows}
         return out
-
-
-def windowed_value_budget_from_mandate(
-    mandate: Any, *, clock: Callable[[], float] | None = None,
-) -> WindowedValueBudget | None:
-    """Build one from a mandate that declares `window_seconds` on a budget.
-
-    Returns None when the mandate declares no windowed value budget, so a caller
-    can fall back to `session_value_budget_from_mandate` without a special case.
-    """
-    from agentauth.capabilities.value_budget import value_budget_config_from_mandate
-
-    config = value_budget_config_from_mandate(mandate)
-    if config is None:
-        return None
-    document = getattr(mandate, "document", None) or mandate
-    budgets = (document or {}).get("budgets") if isinstance(document, dict) else None
-    windows: dict[str, float] = {}
-    for entry in (budgets or []):
-        if not isinstance(entry, dict):
-            continue
-        budget_id = entry.get("budget_id") or entry.get("id")
-        window = entry.get("window_seconds")
-        if budget_id and isinstance(window, (int, float)) and window > 0:
-            windows[str(budget_id)] = float(window)
-    if not windows:
-        return None
-    return WindowedValueBudget(
-        config=config if isinstance(config, ValueBudgetConfig) else ValueBudgetConfig(),
-        windows=windows,
-        clock=clock or time.monotonic,
-    )

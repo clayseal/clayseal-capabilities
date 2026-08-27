@@ -1,4 +1,4 @@
-"""ATIF MCP agent-trajectory loader — real long benign trajectories.
+"""ATIF MCP agent-trajectory loader, real long benign trajectories.
 
 The ATIF-v1.2 corpus (in agentauth-receipts/benchmarks/corpus) is a set of real
 MCP agent sessions: a user request followed by many agent steps, each carrying
@@ -88,7 +88,7 @@ def _session_to_task(path: Path, index: int) -> BenchmarkTask | None:
         },
         # Per-app goal bucket: each ATIF app is its own tool surface. With one
         # session per app the structural corridor abstains (min_samples) rather
-        # than over-flag a single heterogeneous bucket — the honest degradation
+        # than over-flag a single heterogeneous bucket, the honest degradation
         # when per-goal data is too thin. tau2 (hundreds/domain) is the
         # well-sampled counterpart.
         meta={"source": "atif", "app": path.parent.name, "goal_kind": f"atif:{path.parent.name}"},

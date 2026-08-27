@@ -34,7 +34,7 @@ def default_biscuit_backend() -> CapabilityTokenBackend:
     Resolution order: an explicitly registered/entry-point plugin named
     ``biscuit`` in the ``agentauth.capability_backends`` group wins; otherwise
     fall back to the built-in backend over the identity layer's Biscuit
-    primitives (optional extra — identity is not a hard dependency of this
+    primitives (optional extra, identity is not a hard dependency of this
     layer).
     """
     from agentauth.core.plugins import get_plugin
@@ -49,7 +49,7 @@ def default_biscuit_backend() -> CapabilityTokenBackend:
     except ImportError as exc:
         raise ImportError(
             "The default Biscuit backend needs the identity layer. Install with: "
-            "pip install 'agentauth-capabilities[biscuit-service]' — or register "
+            "pip install 'agentauth-capabilities[biscuit-service]', or register "
             "your own CapabilityTokenBackend under the "
             "'agentauth.capability_backends' entry-point group as 'biscuit'."
         ) from exc

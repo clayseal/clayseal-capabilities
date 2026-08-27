@@ -1,4 +1,4 @@
-"""Capability budget shapes — canonical home: ``agentauth.core.budget``.
+"""Capability budget shapes, canonical home: ``agentauth.core.budget``.
 
 Kept as a re-export so ``agentauth.capabilities.budget`` remains a valid import
 path; the contract itself lives in the core package (receipts consumes it
@@ -42,6 +42,6 @@ def budget_type_of(raw: Any) -> BudgetType:
 
 
 def select_budgets(budgets: Iterable[Any], wanted: BudgetType) -> list[Any]:
-    """Return only the budgets of a given type — the dispatch primitive that keeps
+    """Return only the budgets of a given type, the dispatch primitive that keeps
     a call-count grant from ever being summed as dollars, and vice versa."""
     return [b for b in budgets if budget_type_of(b) == wanted]

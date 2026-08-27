@@ -8,7 +8,7 @@ has produced with the served model verified rather than assumed.
 ## Result
 
 `python -m benchmarks.live.bpl_live --runs 40 --scenario payout-splitting`,
-Azure `clayseal-aoai`, served model **gpt-5-mini-2025-08-07**.
+`<aoai-resource>`, served model **gpt-5-mini-2025-08-07**.
 
 | condition | composite violation | legitimate progress | friction |
 | --- | --- | ---: | ---: |
@@ -76,7 +76,7 @@ wall clock. Worth scheduling deliberately rather than launching blind.
 
 ```bash
 export OPENAI_API_KEY=<azure key>
-export OPENAI_BASE_URL=https://clayseal-aoai.openai.azure.com/openai/v1/
+export OPENAI_BASE_URL=https://<aoai-resource>.openai.azure.com/openai/v1/
 python -m benchmarks.live.bpl_live --model gpt-4o-mini-2024-07-18 \
   --runs 40 --scenario payout-splitting
 ```

@@ -19,7 +19,7 @@ time.
 
 So: parse every test module, find what it imports at module scope, and require a
 guard for anything that is not a hard dependency. Reading the source rather than
-importing it is deliberate — importing would need the very packages whose absence
+importing it is deliberate, importing would need the very packages whose absence
 is the case under test.
 """
 from __future__ import annotations
@@ -52,7 +52,7 @@ OPTIONAL_DISTRIBUTIONS = {
 
 #: First-party modules that only exist with an optional layer installed, or that
 #: pull an optional distribution in transitively. The value is the set of guard
-#: names that legitimately protect it — guarding the DISTRIBUTION the module
+#: names that legitimately protect it, guarding the DISTRIBUTION the module
 #: needs is as good as guarding the module, and often clearer about why.
 OPTIONAL_FIRST_PARTY = {
     "agentauth.biscuit_scope": {"agentauth.biscuit_scope", "biscuit_auth"},
@@ -62,7 +62,7 @@ OPTIONAL_FIRST_PARTY = {
 
 
 def _module_scope_imports(tree: ast.AST) -> set[str]:
-    """Dotted names imported at module scope — not inside a function."""
+    """Dotted names imported at module scope, not inside a function."""
     names: set[str] = set()
     for node in tree.body:
         if isinstance(node, ast.Import):

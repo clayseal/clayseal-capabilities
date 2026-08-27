@@ -208,6 +208,133 @@ def _subject_of(line: str) -> str | None:
     return word if len(word) > 2 else None
 
 
+#: Operational verbs that name the same act in different words. VERBS ONLY, and
+#: each group is one act. The `_PROSE` lesson in `policy_scaffold` was a NOUN
+#: ("invoice") that read `lookup_invoice` as a money transfer, and the same
+#: mistake here would be worse: a noun group would let "Book flight" match every
+#: `*_reservation` tool in the catalog, so `reservation` is deliberately absent
+#: from the booking group even though a booking is a reservation.
+_VERB_SYNONYMS: tuple[frozenset[str], ...] = (
+    frozenset({"modify", "update", "change", "edit", "amend"}),
+    frozenset({"cancel", "cancellation"}),
+    frozenset({"lookup", "get", "find", "retrieve", "fetch", "search",
+               "obtain", "locate"}),
+    frozenset({"suspend", "suspension"}),
+    frozenset({"resume", "reactivate", "restore"}),
+    frozenset({"pay", "payment"}),
+    frozenset({"book", "booking", "reserve"}),
+    frozenset({"return", "refund"}),
+)
+
+#: A heading that opens with one of these is describing a thing rather than
+#: naming an operation. "Each user has a profile containing:" is a data
+#: dictionary and binding the bullets under it to `get_user` would attach
+#: attribute definitions to a tool as if they were rules.
+_NOT_AN_OPERATION = frozenset({
+    "each", "every", "the", "a", "an", "all", "you", "to", "as", "it", "we",
+    "this", "these", "those", "important", "note", "notes", "for", "if", "in",
+    "when", "there", "domain", "general", "generic", "overview", "example",
+    "examples",
+})
+
+
+#: Verbs that carry no act of their own: the noun after them does. A tool called
+#: `make_payment` is a PAYMENT tool, and reading its leading word as the act
+#: means a section headed "Overdue Bill Payment" matches nothing. Kept short and
+#: literal, because a verb wrongly called light moves the act onto a noun and
+#: binds the wrong tool: `send_payment_request` is a SEND, not a payment.
+_LIGHT_VERBS = frozenset({"make", "perform", "do", "issue", "take"})
+
+
+def _act_of(parts: list[str]) -> str:
+    """The word in a tool's name that says what it does."""
+    if len(parts) > 1 and parts[0] in _LIGHT_VERBS:
+        return parts[1]
+    return parts[0]
+
+
+def _stem(word: str) -> str:
+    """Enough of a word to compare two spellings of the same act."""
+    word = word.lower()
+    for suffix in ("ations", "ation", "ments", "ment", "ings", "ing", "ies",
+                   "ers", "er", "es", "s"):
+        if len(word) > len(suffix) + 2 and word.endswith(suffix):
+            return word[: -len(suffix)]
+    return word
+
+
+def _same_act(left: str, right: str) -> bool:
+    """Do two words name the same act, allowing for spelling and word class?"""
+    left, right = _stem(left), _stem(right)
+    if left == right:
+        return True
+    for group in _VERB_SYNONYMS:
+        if any(_stem(w) == left for w in group) and \
+                any(_stem(w) == right for w in group):
+            return True
+    return False
+
+
+def _heading_of(line: str) -> str | None:
+    """The operation this line names, if it is a heading rather than prose.
+
+    Two forms, because operational policy documents use both: a markdown
+    heading, and a short label ending in a colon. A bullet is never a label
+    even when it ends in a colon, and neither is a sentence: both would drag
+    running prose into the scope stack.
+    """
+    line = line.strip()
+    if line.startswith("#"):
+        return line.lstrip("#").strip() or None
+    if not line.endswith(":") or line.startswith(("-", "*", ">")):
+        return None
+    text = line[:-1].strip()
+    words = text.split()
+    if not words or len(words) > 5 or "," in text or "." in text:
+        return None
+    if words[0].lower() in _NOT_AN_OPERATION:
+        return None
+    return text or None
+
+
+def _scope_tools(heading: str, catalog: Iterable[str], *,
+                 tie: str = "abstain") -> list[str]:
+    """Tools a heading scopes, or nothing when it does not clearly name one.
+
+    Scored by how many of the tool's own name-words the heading also says, and
+    only the strict top score wins. A tie is kept rather than broken WHEN the
+    tied tools all match the same word of the heading, because "Modify flight"
+    over a catalog holding `update_reservation` and `change_cabin` is one
+    section covering two tools rather than an ambiguity between them. A tie
+    across unrelated words is an abstention, and abstaining leaves the sentence
+    as a TODO for a person, which is the safe direction.
+    """
+    words = [w for w in re.split(r"[^a-zA-Z]+", heading) if len(w) > 2]
+    if not words:
+        return []
+    scored: dict[str, tuple[int, frozenset[str]]] = {}
+    for tool in catalog or ():
+        parts = [w for w in str(tool).lower().replace("-", "_").split("_") if w]
+        matched = {w for w in words
+                   if any(_same_act(w, part) for part in parts)}
+        # A heading has to name the ACT, not just the thing. Tool names are
+        # verb-then-noun, so the test is a match on the leading word. Without it
+        # `### Order` scopes all six order tools and `### User` scopes `get_user`,
+        # and those headings open a data dictionary: the bullets beneath them
+        # define attributes, and binding an attribute definition to a tool
+        # attaches a rule to it that the document never stated.
+        if matched and any(_same_act(w, _act_of(parts)) for w in words):
+            scored[str(tool)] = (len(matched), frozenset(m.lower() for m in matched))
+    if not scored:
+        return []
+    best = max(n for n, _ in scored.values())
+    winners = {t: m for t, (n, m) in scored.items() if n == best}
+    if (tie == "abstain" and len(winners) > 1
+            and len({frozenset(m) for m in winners.values()}) > 1):
+        return []
+    return sorted(winners)
+
+
 def _tools_named(line: str, catalog: Iterable[str]) -> list[str]:
     """Tools whose name, or whose name read as words, appears in the sentence.
 
@@ -238,6 +365,57 @@ def _tools_named(line: str, catalog: Iterable[str]) -> list[str]:
     return out
 
 
+class _ScopeStack:
+    """The section a sentence sits in, as a document is read top to bottom.
+
+    A heading REPLACES its own level and clears everything deeper, including
+    when it names no tool. Leaving a stale scope standing instead is the bug
+    this class exists to avoid: `### Payment Method` scopes `pay_bill` and the
+    `### Line` that follows it names no operation, so without the clear every
+    rule about lines would be attached to bill payment.
+
+    The scope in force is the DEEPEST section that named an operation, narrowed
+    by the section containing it where the two overlap. A subsection is a
+    refinement of its section, so `### Modify items` under `## Modify pending
+    order` is `modify_order` and not all three tools whose name starts `modify`.
+    Where they do not overlap the subsection is talking about something its
+    parent does not cover, and the parent is the safer of the two readings.
+    """
+
+    _LABEL_LEVEL = 9
+
+    def __init__(self) -> None:
+        self._levels: dict[int, list[str]] = {}
+        self._titles: dict[int, str] = {}
+
+    def read(self, line: str, catalog: Iterable[str]) -> None:
+        heading = _heading_of(line)
+        if heading is None:
+            return
+        stripped = line.strip()
+        level = (len(stripped) - len(stripped.lstrip("#"))
+                 if stripped.startswith("#") else self._LABEL_LEVEL)
+        for deeper in [lv for lv in self._levels if lv > level]:
+            del self._levels[deeper]
+            self._titles.pop(deeper, None)
+        self._levels[level] = _scope_tools(heading, catalog)
+        self._titles[level] = heading
+
+    def current(self) -> tuple[list[str], str]:
+        """The tools in force and the heading they came from, or ([], "")."""
+        named = sorted((lv for lv, t in self._levels.items() if t), reverse=True)
+        if not named:
+            return [], ""
+        tools = list(self._levels[named[0]])
+        title = self._titles.get(named[0], "")
+        for outer in named[1:]:
+            overlap = [t for t in tools if t in self._levels[outer]]
+            if overlap:
+                tools = overlap
+            break
+        return tools, title
+
+
 def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
     """Read a document into a draft. Deterministic, no model, no network.
 
@@ -251,16 +429,20 @@ def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
     """
     catalog = list(tools or ())
     draft = Draft()
+    scope = _ScopeStack()
     for line_no, raw in enumerate(document.splitlines(), start=1):
         line = raw.strip()
-        if not line or line.startswith("#"):
+        scope.read(line, catalog)
+        if not line or line.startswith("#") or _heading_of(line) is not None:
             continue
         low = line.lower()
         if not any(marker in low for marker in RULE_MARKERS):
             continue
 
+        scoped, section = scope.current()
         found_here: list[Rule] = []
-        found_here.extend(_conditional_rules(line, line_no, catalog))
+        found_here.extend(_conditional_rules(line, line_no, catalog,
+                                             scoped=scoped, section=section))
         amount = _money(line)
         period = _period_in(line)
         count = None
@@ -523,20 +705,78 @@ def to_yaml(draft: Draft, *, goal_id: str = "REPLACE-ME",
     return "\n".join(out) + "\n"
 
 
-def _conditional_rules(line: str, line_no: int, catalog: list[str]) -> list[Rule]:
-    """Ordering and state-conditional rules, bound to tools from the catalog."""
+def _prerequisites(verb: str, phrase: str, catalog: list[str]) -> list[str]:
+    """Tools an ordering rule names as preconditions.
+
+    The rule's VERB picks the candidates and the rest of the phrase picks
+    between them, in that order. Scoring the phrase first and filtering after
+    loses the rule entirely: "you must LIST the action details and obtain
+    explicit USER confirmation" scores `get_user` above `list_orders` on the
+    word count, and the sentence is an ordering rule about listing.
+
+    Two words of a tool's name have to appear before it is named, unless it is
+    the only tool the verb admits at all. That is what keeps "confirm the order
+    id and the LIST of items to be returned" from making `list_orders` a
+    precondition, off a noun several words from the verb governing it.
+    """
+    head = verb.split()[0]
+    # A parenthetical elaborates; it never names the object of the verb. "obtain
+    # the reason for cancellation (change of plan, airline cancelled FLIGHT, or
+    # other reasons)" made `search_direct_flight` a precondition of cancelling,
+    # off a noun inside a list of reason values, and that one rule produced both
+    # of the false blocks this extractor cost tau2's airline ground truth.
+    phrase = re.sub(r"\([^)]*\)?", " ", phrase)
+    words = [w for w in re.split(r"[^a-zA-Z]+", phrase) if len(w) > 2]
+    scored: list[tuple[str, int]] = []
+    for tool in catalog:
+        parts = [w for w in str(tool).lower().replace("-", "_").split("_") if w]
+        if not parts or not _same_act(head, _act_of(parts)):
+            continue
+        matched = {w for w in words if any(_same_act(w, p) for p in parts)}
+        scored.append((str(tool), len(matched)))
+    if not scored:
+        return []
+    if len(scored) == 1:
+        return [scored[0][0]] if scored[0][1] else []
+    return sorted(t for t, n in scored if n >= 2)
+
+
+def _conditional_rules(line: str, line_no: int, catalog: list[str], *,
+                       scoped: list[str] | None = None,
+                       section: str = "") -> list[Rule]:
+    """Ordering and state-conditional rules, bound to tools from the catalog.
+
+    A sentence that names its own tool binds to that. A sentence that names none
+    binds to the section it sits under, which is how operational policy is
+    actually written: `## Cancel flight` states the operation once and the
+    bullets beneath it say "the user must provide their user id" without
+    repeating it. Reading a line at a time saw the bullet and not the heading,
+    and left every one of them for a person.
+
+    A section binding is marked `inferred` rather than `extracted` and carries
+    the heading in its citation, because it is the reader's inference and a
+    person reviewing the draft has to be able to see that and disagree.
+    """
     if not catalog:
         return []
     subjects = _tools_named(line, catalog)
+    inferred = False
+    if not subjects and scoped:
+        subjects, inferred = list(scoped), True
     if not subjects:
         return []
     out: list[Rule] = []
 
     ordering = _ORDERING.search(line)
     if ordering:
-        prerequisites = [t for t in catalog
-                         if t.lower().startswith(
-                             ordering.group(1).lower().split()[0])]
+        # The prerequisite is the whole phrase, not its verb. "must first obtain
+        # the user id" is `get_user`, and matching the catalog by name prefix
+        # looked for a tool called `obtain_*` and found none, so every ordering
+        # rule in the airline document resolved to an empty precondition and was
+        # dropped. Ties are kept here rather than abstained on, because "obtain
+        # the user id and reservation id" really is two preconditions.
+        phrase = re.split(r"[.;!]", line[ordering.start(1):])[0]
+        prerequisites = _prerequisites(ordering.group(1), phrase, catalog)
         targets = [t for t in subjects if t not in prerequisites]
         if prerequisites and targets:
             out.append(Rule(kind="ordering", line_no=line_no, source=line,
@@ -563,6 +803,10 @@ def _conditional_rules(line: str, line_no: int, catalog: list[str]) -> list[Rule
         out.append(Rule(kind="conditional", line_no=line_no, source=line,
                         payload={key: {fact: value}, "deny": subjects,
                                  "form": form}))
+    if inferred:
+        for rule in out:
+            rule.origin = "inferred"
+            rule.payload["section"] = section
     return out
 
 

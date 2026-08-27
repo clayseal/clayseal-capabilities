@@ -19,7 +19,7 @@ object was read, and a publication-classed object was written".
 ``SensitivityPolicy`` states the rule this module follows: *nothing here is
 inferred at runtime, because a policy an attacker can influence is not a policy.*
 So this is a declared taxonomy compiled in, exactly like
-``hardening/protected_zones.DEFAULT_PROTECTED_PATTERNS`` — not a classifier, not
+``hardening/protected_zones.DEFAULT_PROTECTED_PATTERNS``, not a classifier, not
 a heuristic over content, and nothing an agent's own output can move. A
 deployment overrides it from the mandate; the defaults exist so that a mandate
 which does not enumerate its own secrets is not silently unprotected.
@@ -78,7 +78,7 @@ def classify(path: str | None) -> ObjectClass:
     """Classify a path or resource reference. Total: never raises.
 
     SECRET is checked first. A file named ``docs/secrets.md`` matches both lists,
-    and treating it as a publication surface would be the dangerous reading —
+    and treating it as a publication surface would be the dangerous reading
     the ordering is the conservative one, and the two classes are only ever
     consequential in conjunction anyway.
     """

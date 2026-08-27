@@ -181,7 +181,7 @@ def _layout(scen, run, done, height) -> Layout:
 
 def _footer() -> Panel:
     t = Text.assemble(
-        ("fd 3 is unreachable from the guest — every verdict above is iVisor's own output the agent cannot forge", MUTED),
+        ("fd 3 is unreachable from the guest, every verdict above is iVisor's own output the agent cannot forge", MUTED),
     )
     return Panel(t, border_style=BORDER, padding=(0, 1))
 

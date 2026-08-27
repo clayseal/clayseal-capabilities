@@ -4,7 +4,7 @@ session enforcers.
 A mandate can carry several budget *kinds* at once (a USD ceiling and a tool-call
 allowance, say). Each kind has a different enforcer and different arithmetic:
 money is summed at cent precision, calls are counted as integers. The bug this
-module exists to prevent is routing one kind through the other's ledger — a
+module exists to prevent is routing one kind through the other's ledger, a
 "3 tool calls" grant reinterpreted as a "$3.00" ceiling that nothing debits, so
 an unlimited number of individually-valid calls sails through.
 
@@ -41,11 +41,11 @@ from agentauth.capabilities.value_budget import (
 )
 
 # Budget kinds that currently have a stateful session enforcer. Kinds outside
-# this set are refused rather than approximated — see the module docstring.
+# this set are refused rather than approximated, see the module docstring.
 #
 # COMPUTE_SECONDS joined this set only once a sandboxed run could enforce it:
 # the reservation is the timeout that kills the guest, so the ceiling is real
-# rather than merely recorded. DATA_EXPORT_BYTES is deliberately still absent —
+# rather than merely recorded. DATA_EXPORT_BYTES is deliberately still absent
 # iVisor's verdict stream reports which destinations were reached, not how many
 # bytes crossed, and charging a byte budget from anything else would be a
 # fabricated measurement. It stays refused until something can honestly meter it.
@@ -94,7 +94,7 @@ def session_budgets_from_mandate(
 
     Raises :class:`UnsupportedBudgetType` if the mandate carries a budget kind
     with no enforcer, unless ``allow_unsupported`` is set (in which case such
-    budgets are ignored — opt in only when a higher layer enforces them).
+    budgets are ignored, opt in only when a higher layer enforces them).
     """
     budgets = _budget_attr(mandate, "budgets") or []
     present = {budget_type_of(b) for b in budgets}

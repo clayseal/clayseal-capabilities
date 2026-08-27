@@ -1,9 +1,9 @@
-"""Trajectory-driven sandbox recompilation — a runnable demonstration.
+"""Trajectory-driven sandbox recompilation, a runnable demonstration.
 
 A real agent triages support tickets inside iVisor. One ticket carries an
 injected instruction. As untrusted content enters the trajectory and the agent
-acts on it, the sandbox policy is recompiled — each step a fresh immutable
-config with its own digest — and capabilities the agent still legitimately held
+acts on it, the sandbox policy is recompiled, each step a fresh immutable
+config with its own digest, and capabilities the agent still legitimately held
 are progressively revoked.
 
     python -m demo run ticket-triage --provider mock --plain

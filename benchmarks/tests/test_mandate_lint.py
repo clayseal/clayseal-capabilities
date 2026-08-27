@@ -1,8 +1,8 @@
 """The linter must fire on exactly the configs that escaped, and on nothing else.
 
 Both halves are load-bearing. `stress_aggregation.py` found three escapes that
-are not defects in the ledger — the ledger debited exactly what it was told to,
-correctly, on every one — so the only place they can be caught is the mandate.
+are not defects in the ledger, the ledger debited exactly what it was told to,
+correctly, on every one, so the only place they can be caught is the mandate.
 And a coverage linter that reports a finding on an ordinary read-only catalog is
 one an operator mutes in week one, at which point the three real escapes are
 undetected again *and* the repository has a muted linter instead of a known gap.
@@ -31,7 +31,7 @@ def test_a_fully_accounted_mandate_produces_no_findings():
     """The false-alarm half, under the current contract.
 
     `get_balance`, `query`, `read` and `list_events` all touch money-adjacent
-    surfaces and none is an effect — but the linter cannot know that from a
+    surfaces and none is an effect, but the linter cannot know that from a
     name, and `benchmarks/mandate_search.py` measures what trusting names costs:
     over 4,000 sampled mandates, 211 escaped while the linter called them clean,
     every one through an opaquely-named tool. So a reachable tool must either
@@ -205,7 +205,7 @@ def test_the_closure_property_holds_over_sampled_mandate_space():
     Sampling mandate space found **211 of 4,000 escaping while the linter called
     them clean**, all through opaquely-named tools. The `unaccounted-tool` rule
     closed it: 0 of 40,000 across two seeds. This test is the small, fast
-    version — if someone reintroduces name-trust, it fails here first.
+    version, if someone reintroduces name-trust, it fails here first.
     """
     from benchmarks.mandate_search import run
 

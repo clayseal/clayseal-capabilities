@@ -1,8 +1,8 @@
 """Defense-in-depth evaluation: enforcement floor + behavioral detector.
 
 The per-action floor contains attacks that leave the authorized surface. The
-residual — injections that stay entirely within the authorized tool, args, and
-scope — is exactly what the behavioral detector is meant to catch. This module
+residual, injections that stay entirely within the authorized tool, args, and
+scope, is exactly what the behavioral detector is meant to catch. This module
 measures the two together:
 
   floor containment      attacks blocked by the enforcement engine

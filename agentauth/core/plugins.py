@@ -1,4 +1,4 @@
-"""Shared plugin registry — the discovery mechanism behind every Clay Seal seam.
+"""Shared plugin registry, the discovery mechanism behind every Clay Seal seam.
 
 Each swappable seam (identity providers, capability-token backends, policy engines,
 receipt exporters, approval backends, attestation verifiers) is a named *group*. A
@@ -7,7 +7,7 @@ plugin is any object registered under ``(group, name)``. Resolution checks, in o
 1. objects registered in-process via :func:`register_plugin`, then
 2. entry points advertised by installed distributions under the group
    ``agentauth.<group>`` (so a third-party package adds a provider by declaring an
-   entry point — no edits to the layer that consumes it).
+   entry point, no edits to the layer that consumes it).
 
 This keeps the layers decoupled: a consumer asks for ``get_plugin("identity_providers",
 "oidc")`` without importing whatever package implements it.

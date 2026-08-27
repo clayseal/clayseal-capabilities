@@ -23,16 +23,16 @@ three columns neither degenerate control can win.
 
 | clayseal vs | wins | losses | difference (95% CI) | p |
 | --- | ---: | ---: | ---: | ---: |
-| undefended | 50 | 0 | 39.4% [31.1%, 47.7%] | 4.4e-16 |
-| refuse everything | 50 | 0 | 39.4% [31.1%, 47.7%] | 4.4e-16 |
-| per-call authorization | 50 | 0 | 39.4% [31.1%, 47.7%] | 4.4e-16 |
-| dataflow taint | 42 | 7 | 28.0% [18.2%, 37.9%] | 1.21e-07 |
+| undefended | 52 | 0 | 39.4% [31.1%, 47.7%] | 4.4e-16 |
+| refuse everything | 52 | 0 | 39.4% [31.1%, 47.7%] | 4.4e-16 |
+| per-call authorization | 52 | 1 | 38.6% [30.3%, 47.7%] | 1.20e-14 |
+| dataflow taint | 44 | 7 | 28.0% [18.2%, 37.9%] | 1.21e-07 |
 
 Exact McNemar on the discordant scenarios; difference by paired bootstrap over
 scenarios; **all four survive Holm correction** over the family.
 
 McNemar rather than Fisher because the pairing is the point: the two mechanisms
-agree on only 21 of 132, so an unpaired test pools 111 scenarios that carry no
+agree on only 22 of 132, so an unpaired test pools 110 scenarios that carry no
 information about which is better.
 
 ### Cluster-robust, because the scenarios are not independent
@@ -104,10 +104,10 @@ checked, and it is 26 scenarios, enumerated in the label-free writeup.
 
 Leave one batch out. Held-out batches do **not** score systematically worse than
 the rest, so there is no evidence of fitting to individual scenarios. What there
-is instead is heterogeneity: held-out rates run from nothing to 87.5%, sd 0.327,
+is instead is heterogeneity: held-out rates run from nothing to 100%, sd 0.344,
 against a pooled 39.4%.
 
-That is not a mechanism with a 37.9% success rate. It is a mechanism that works
+That is not a mechanism with a 39.4% success rate. It is a mechanism that works
 on some kinds of scenario and not on others, and any pooled number is partly a
 property of the suite's mix. It is also the justification for the cluster-robust
 interval: with this much between-batch variance the naive interval is not

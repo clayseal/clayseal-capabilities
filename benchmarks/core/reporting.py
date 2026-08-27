@@ -10,7 +10,7 @@ property: 0 of 18 has a one-sided 97.5% upper bound of about 18%, and 0 of 20 in
 the head-to-head has one of about 15%. Both were published as "0%".
 
 **Record the model the API reports, never the one the caller asked for.** The
-`clayseal-aoai` deployment is named `gpt-4o-mini-2024-07-18` and serves
+`<aoai-resource>` is named `gpt-4o-mini-2024-07-18` and serves
 `gpt-5-mini-2025-08-07`. `repeat_runs.py` already clears Azure specifically to
 avoid this, which is a workaround rather than a check: nothing verifies that the
 model in a result file is the model that answered. A model-strength trend is the
@@ -123,7 +123,7 @@ class ModelIdentity:
     def mismatched(self) -> bool:
         """True only when a DIFFERENT model answered, not a pinned version of it.
 
-        The distinction is the whole value of this check. `clayseal-aoai` has a
+        The distinction is the whole value of this check. `<aoai-resource>` has a
         deployment named `gpt-4o-mini-2024-07-18` that serves `gpt-5-mini`, and
         that is the mislabelling this class exists to catch. Flagging every
         version pin as well would bury that one real case in a warning printed on

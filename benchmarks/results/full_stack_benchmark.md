@@ -28,9 +28,9 @@ events) at 0% benign false-block, at 250k–670k decisions/second.
 | agentdojo | 53 / 24 | 33.3% | 20k traj/s |
 
 The sensor is good on well-sampled long-trajectory corpora (tau2) and noisy on
-short heterogeneous ones (agentdojo) — floor territory, not sensor territory.
+short heterogeneous ones (agentdojo), floor territory, not sensor territory.
 
-## C. Intent envelope (history-free) — the complementarity
+## C. Intent envelope (history-free), the complementarity
 
 Goal-derived plan, **zero training**, benign false-block **0.0%** (n=300):
 
@@ -67,12 +67,12 @@ inspiration in real data. The modest recall reflects a naive per-feature z-score
 | Intent-envelope conformance | 24 µs | 32 µs | 41k/s |
 | **Broker `authorize()` — full stack** | **94 µs** | **145 µs** | **10,000 actions/s** |
 
-The full stack — hard floor, goal-derived intent envelope, behavioral sensor, and
-a tamper-evident receipt per action — runs at **10,000 authorized actions/second**
+The full stack, hard floor, goal-derived intent envelope, behavioral sensor, and
+a tamper-evident receipt per action, runs at **10,000 authorized actions/second**
 (94 µs median). Agents act at roughly 1–10 actions/second, so the entire defense
 adds imperceptible latency with about a thousandfold headroom.
 
-## A2. Complete adversarial matrix — every dataset × all 8 attack classes
+## A2. Complete adversarial matrix, every dataset × all 8 attack classes
 
 Enforcement full-stack (`task-scope+binding+budget`) containment per synthesized
 attack class. `-` = class not applicable to that dataset's shape (e.g.
@@ -91,7 +91,7 @@ which InjecAgent/ToolEmu tasks lack).
 
 Reading it: across all seven corpora the enforcement floor contains **every
 surface-leaving attack class at ~100%, 0% false-block**. The one column that is
-0% everywhere is **in-scope-burst** — by design: it is an entirely in-scope
+0% everywhere is **in-scope-burst**, by design: it is an entirely in-scope
 attack the per-action floor *cannot* see, and it is the behavioral layer's job
 (the sensor catches it at 100% recall; §C shows the envelope catching the other
 in-scope shapes). So the 80–95% "overall" is dragged down only by that single

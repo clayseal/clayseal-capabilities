@@ -1,4 +1,4 @@
-"""ATBench loader — and the corpus that does NOT translate to a per-action ladder.
+"""ATBench loader, and the corpus that does NOT translate to a per-action ladder.
 
 ATBench (Li et al., arXiv:2604.02022) and its legacy release ATBench500 (shipped
 with AgentDoG, arXiv:2601.18491) are trajectory-level *guardrail-judge*
@@ -42,7 +42,7 @@ consulted:
    nothing else.
 
 2. **Every call is inside that pool.** 0 of 2,972 tool calls in ATBench and 0 of
-   1,743 in ATBench500 name a tool outside the trajectory's own pool — in the
+   1,743 in ATBench500 name a tool outside the trajectory's own pool, in the
    safe half *and* the unsafe half. ASB is the corpus where the tool allowlist
    catches everything; this is its mirror image, where it catches exactly
    nothing, and so does every rung that inherits the same mandate.
@@ -66,7 +66,7 @@ And the taxonomy says why. Of 497 unsafe ATBench trajectories the largest
 failure modes are ``failure_to_validate_tool_outputs`` (99),
 ``unconfirmed_or_over_privileged_action`` (87),
 ``provide_inaccurate_misleading_or_unverified_information`` (66) and
-``flawed_planning_or_reasoning`` (66) — content- and judgment-defined harm, the
+``flawed_planning_or_reasoning`` (66), content- and judgment-defined harm, the
 axis ``benchmarks/results/four_axes.md`` reports as contained by nobody. 60 more
 are ``procedural_deviation_or_inaction``, where part of the harm is the agent
 *not* acting; a layer that only denies cannot address that even in principle.
@@ -77,7 +77,7 @@ more of the trajectory's own tools in 297 of 497 cases, none in 51, and
 ATBench500 has no ``reason`` field at all), and labelling them BENIGN would
 credit us for allowing traffic the corpus says should have been stopped. The
 trajectory is still loaded, with its taxonomy and the corpus's own rationale in
-``meta``, and a declared ``uncontained_reason`` — the same treatment
+``meta``, and a declared ``uncontained_reason``, the same treatment
 ``agent_threat_bench.py`` gives memory_poison and autonomy_hijack.
 
 Why the false-block column is not reportable either
@@ -94,7 +94,7 @@ What this loader is FOR, given it reports no rate
 Two things. It is the record that ATBench does not translate, so the next person
 does not wire it into a containment table. And its 503 (ATBench) / 250
 (ATBench500) safe trajectories are 1,294 and 657 real tool calls against 929 and
-450 distinct tools — by some distance the widest tool surface in this repo —
+450 distinct tools, by some distance the widest tool surface in this repo
 which is usable as clean traffic for the tiers that do not need a mandate
 (``benchmarks/trajectory.py``, ``benchmarks/burst.py``). It is short traffic,
 though: no safe ATBench trajectory exceeds 4 calls, so it is a breadth sample,
@@ -231,7 +231,7 @@ def _destination(args: dict[str, Any]) -> str | None:
     "token" is not.
 
     First URL wins where a call carries several. Nothing decides on this field
-    today — no path scope is declared — so it is provenance for the tiers that
+    today, no path scope is declared, so it is provenance for the tiers that
     read event.path (flow, trajectory), not an authorization input.
     """
     for value in args.values():

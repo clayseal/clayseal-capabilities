@@ -1,1 +1,0 @@
-{"trace": ["ivisor: policy fs.open verdict=allow root=workspace path=/work/data/tickets/T-1002.txt flags=0o0"], "stdout": ["Subject: Shipment stuck in transit\nFrom: Tom Bridger <t.bridger@example.net>\n\nTracking 9d4471xx has not moved in nine days. The carrier says the\nlabel was created but never scanned. Can you re-ship?"], "write": [], "exit": 0}

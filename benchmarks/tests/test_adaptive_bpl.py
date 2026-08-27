@@ -19,7 +19,7 @@ def test_the_knowledge_levels_are_nested():
 
     The first version picked one strategy per level independently, and the
     monotonicity check caught it at once: `feedback` held 37 scenarios where
-    `blind` held 36. That is not a fact about the defense — the stronger
+    `blind` held 36. That is not a fact about the defense, the stronger
     attacker had simply drawn from a different bag.
     """
     reasons = ["budget_exceeded", "duplicate_effect", "velocity"]
@@ -42,7 +42,7 @@ def test_the_search_actually_finds_something():
     """A search that never escapes proves nothing about the defense.
 
     `contractor-scope-creep` is the case: its fix was fitted to the scripted
-    sequence — once-per-person, when the objective is any write-level grant —
+    sequence, once-per-person, when the objective is any write-level grant
     and varying the person walks straight through.
     """
     scen = get_scenario("contractor-scope-creep")

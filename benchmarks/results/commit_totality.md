@@ -3,7 +3,7 @@
 STATUS: current
 
 Produced by `python -m benchmarks.stress_commit`. The commit token is the
-cryptographic root — scope, budgets, egress and the whole behavioural layer
+cryptographic root, scope, budgets, egress and the whole behavioural layer
 presuppose that a verified token means *this authority, this tool, this resource,
 these exact arguments, this query, not expired, not already spent*. If the
 verifier can be made to say yes when any one of those is false, nothing above it
@@ -27,11 +27,11 @@ input that verifies, and it must be the untouched one.
 
 Confirmed sound, by measurement rather than by reading:
 
-- every field of the signed token is genuinely bound — `token_id`, `issued_at`,
+- every field of the signed token is genuinely bound, `token_id`, `issued_at`,
   `expires_at`, `query_id`, `authority_id`, `authority_version`, `permit_epoch`,
   `tool_name`, `resource_ref`, `arguments_hash`;
 - every field of the caller-supplied context is genuinely compared;
-- a **different valid keypair** minting a perfect token is rejected — signature
+- a **different valid keypair** minting a perfect token is rejected, signature
   integrity is not mistaken for authority;
 - an expired token fails an hour later;
 - a token presented twice against a used-token store fails the second time;
@@ -44,7 +44,7 @@ after every other check passes, exactly as its docstring claims.
 ## Three total-function gaps, all closed
 
 None of these was a fail-open. Every one was the verifier raising instead of
-returning a verdict — which is a denial of service at best, and behind a broad
+returning a verdict, which is a denial of service at best, and behind a broad
 `except Exception` upstream it becomes an allow.
 
 **1. `CommitToken.to_dict()` raised before the signature check.** It coerces the
@@ -54,8 +54,8 @@ two integer fields with `int()`, and it is the *first* line of
 rejected it. 37 of the 46 raises were this.
 
 Fixed by validating in `CommitToken.__post_init__`, so the unserializable token
-cannot be constructed at all. No shipped path produced one — `from_dict` coerces
-with `int()`, `issue_commit_token` reads integers off the context — but the
+cannot be constructed at all. No shipped path produced one, `from_dict` coerces
+with `int()`, `issue_commit_token` reads integers off the context, but the
 dataclass permitted the state, and **a type that permits a state whose only
 expression is an exception deep inside a security check is the wrong shape.**
 
@@ -66,7 +66,7 @@ sibling core package, so the guard belongs in the verifier. Nine variants; both
 call sites guarded.
 
 **3. The wire boundary had no total entry point.** `SignedCommitToken.from_dict`
-is a constructor for *trusted* data — it indexes required keys and coerces — so
+is a constructor for *trusted* data, it indexes required keys and coerces, so
 hostile JSON produces three different exception types, none of them a verdict:
 
 ```
@@ -92,7 +92,7 @@ four times before it was right:
 
 - `token.authority_version = '1'` against an original of `1` was reported as a
   verification. Both sides are compared with `int()`, deliberately, so `'1'` and
-  `1` are **the same value** — a textual difference is not a semantic one.
+  `1` are **the same value**, a textual difference is not a semantic one.
 - Same for `permit_epoch = '0'`.
 - `ctx.action_name` and `ctx.resource_ref` set to the values they already held
   were counted as mutations. The no-op skip existed for token fields and not for
@@ -106,7 +106,7 @@ fields numerically and skips no-op context assignments.
 - **`ExecutionContext` is unvalidated by construction.** The verifier now guards
   `action_name`, but `resource_ref`, `query_id` and `authority_id` are compared
   with `==`, which is total for any type, so they deny rather than crash. That is
-  correct behaviour and not a gap — noted so the asymmetry is not read as one.
+  correct behaviour and not a gap, noted so the asymmetry is not read as one.
 - **The used-token store seam is only tested with `InMemoryUsedTokenStore`.** The
   Redis and DynamoDB stores that ship for multi-instance gateways have not been
   put through this, and a store that fails open under partition would defeat

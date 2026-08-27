@@ -3,7 +3,7 @@
 Each engine wraps a REAL Clay Seal decision primitive (no reimplemented policy
 logic) so the benchmark measures the shipping system, not a mock. Two families:
 
-Enforcement ladder — increasing authority granularity on the same trace. Each
+Enforcement ladder, increasing authority granularity on the same trace. Each
 rung should contain strictly more attacks than the one below without adding
 false blocks:
 
@@ -14,7 +14,7 @@ false blocks:
   task-scope+binding   + argument binding      (commit-token arguments_hash)
   deny-all             blocks everything (friction ceiling)
 
-Engine-integration family — the SAME compiled policy carried across pluggable
+Engine-integration family, the SAME compiled policy carried across pluggable
 external authorization engines via ``agentauth.capabilities.authorizers``. Holds
 policy fixed to expose per-engine decision parity and overhead, answering "which
 authz engine should we integrate?" rather than "which scoping strategy wins?".
@@ -72,7 +72,7 @@ class DecisionEngine(Protocol):
 # Enforcement ladder
 # --------------------------------------------------------------------------- #
 class AllowAllEngine:
-    """No enforcement — establishes the attack-prevention floor."""
+    """No enforcement, establishes the attack-prevention floor."""
 
     name = "allow-all"
 
@@ -81,7 +81,7 @@ class AllowAllEngine:
 
 
 class DenyAllEngine:
-    """Blocks everything — establishes the friction ceiling."""
+    """Blocks everything, establishes the friction ceiling."""
 
     name = "deny-all"
 
@@ -106,7 +106,7 @@ class ToolAllowlistEngine:
 
 
 class CapabilityTokenEngine:
-    """``resource:action`` capability match — the Biscuit token semantics."""
+    """``resource:action`` capability match, the Biscuit token semantics."""
 
     name = "capability-token"
 
@@ -303,7 +303,7 @@ class BudgetLadderEngine(TaskScopeInputBindingEngine):
         if not call_res.allowed:
             value_res.release()
             return Decision(False, call_res.reason, self.name)
-        # Authorized by every rung — the call proceeds and debits its ledgers.
+        # Authorized by every rung, the call proceeds and debits its ledgers.
         value_res.commit()
         call_res.commit()
         return Decision(True, "within scope, binding, and budget", self.name)
@@ -317,7 +317,7 @@ def _policy_evaluator(task: BenchmarkTask):
 
     Stands in for an OPA/Cedar/OpenFGA sidecar: swap this closure for a thin
     client that posts the authorizer's input shape to the real engine. Holding
-    the policy identical is the point — it isolates the engine integration.
+    the policy identical is the point, it isolates the engine integration.
     """
     caps = normalize_capabilities(task.capabilities)
 
@@ -652,7 +652,7 @@ class DensityLadderEngine(VelocityLadderEngine):
 
     while the tool dimension is free (no loss at all). So the flagship containment
     is one mechanism: the attack path is outside a literally enumerated set. An
-    operator does not write mandates that way — they write `~/repo/**` — and at
+    operator does not write mandates that way, they write `~/repo/**`, and at
     that grant the measured containment is 0-33%.
 
     A density does not have the membership property. `repo/app/summary.txt` and
@@ -749,8 +749,8 @@ class DensityLadderEngine(VelocityLadderEngine):
 
         # Never calibrate on a task that carries an attack, even when the runner
         # offers one. ``_calibration_split`` falls back to (tasks, tasks) for a
-        # corpus with fewer than two clean tasks — ASB, InjecAgent and SLEIGHT
-        # all hit that path — which would hand this rung the very sessions it is
+        # corpus with fewer than two clean tasks, ASB, InjecAgent and SLEIGHT
+        # all hit that path, which would hand this rung the very sessions it is
         # about to judge. Filtering benign EVENTS out of an attack task is not
         # enough: the task is still in the scored set, so the baseline would be
         # fit in-sample and its false-block rate would be arithmetic.
@@ -846,7 +846,7 @@ class StagingLadderEngine(DensityLadderEngine):
 
     ``benchmarks/results/in_scope_exfiltration.md``: against an oracle attacker
     the ladder below this rung contains in-scope data staging at exactly the rate
-    ``allow-all`` does — identical escaped-task sets, not merely similar. The
+    ``allow-all`` does, identical escaped-task sets, not merely similar. The
     attack is ``read:/app/.env -> write:/app/README.md`` and every rung
     discriminates on a dimension it does not move.
 
@@ -860,7 +860,7 @@ class StagingLadderEngine(DensityLadderEngine):
     Every rung below is a pure function of one action. This one is not, and it
     cannot be: neither half of the attack is suspicious alone. Reading ``.env``
     is what a build agent does; writing a README is what a documentation agent
-    does. Only the pair, in one session, is evidence — which is the same
+    does. Only the pair, in one session, is evidence, which is the same
     structure as the budget rungs, and the reason this composes with them rather
     than duplicating them.
 
@@ -868,7 +868,7 @@ class StagingLadderEngine(DensityLadderEngine):
 
     It does not read file contents to check whether the write actually carries
     the secret. In replay there are no contents, and in deployment a content
-    check is the confidentiality flow tracker's job — this rung is the coarse
+    check is the confidentiality flow tracker's job, this rung is the coarse
     metadata gate that runs when the tracker has nothing to look at. The cost is
     a real false-block on a session that legitimately reads a credential and
     later edits documentation, which is why the honest deployment posture is

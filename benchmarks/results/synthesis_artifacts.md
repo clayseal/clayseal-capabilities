@@ -29,7 +29,7 @@ perfectly, and every other row on such a table is unreadable.
 
 ## 2. Appending manufactures provenance signal, which is worse
 
-This is the one that matters, because it does not look like an artifact — it
+This is the one that matters, because it does not look like an artifact, it
 looks like a result.
 
 An appended attack runs at the END of a trajectory, by which point the session
@@ -46,7 +46,7 @@ A 15 to 22 point gap reads as a provenance channel with real signal. It is
 **positional**: not "attacks are untrusted-driven" but "later actions are
 taint-derived, and an appended attack is always later."
 
-`adequacy.py` already documents the same artifact with the sign reversed —
+`adequacy.py` already documents the same artifact with the sign reversed
 RedCode attack tasks are single-event and begin cold, so 83.7% of benign actions
 are taint-derived against **0 of 718** attack actions, a corpus that rewards an
 inverted detector. Both directions are the same positional effect.
@@ -64,7 +64,7 @@ at a **drawn** position rather than appending them.
 
 Tail substitution trades the length tell for a position one, which is why the
 position is drawn. Variants whose source session is too short to host the attack
-length-matched are **dropped, not appended as a fallback** — falling back would
+length-matched are **dropped, not appended as a fallback**, falling back would
 reintroduce the shortcut on exactly the short sessions where it is strongest.
 That costs volume: bfcl 1,150 variants becomes 744.
 
@@ -83,7 +83,7 @@ event position.
 
 So the honest summary is not that the substrate got better. **It is that the
 substrate is as bad as `adequacy.py` originally said, the standard way of
-repairing it manufactures the signal it claims to add, and only `bfcl` moved —
+repairing it manufactures the signal it claims to add, and only `bfcl` moved
 from unusable to one usable layer.**
 
 ## What this means for anything already measured

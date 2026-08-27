@@ -4,7 +4,7 @@
     python -m benchmarks.concentration --corpora atif tau2 redcode
 
 `density_sweep.py` found that the target-density channel on RedCode learned
-exactly one bit — the workspace root — because benign traffic below it is nearly
+exactly one bit, the workspace root, because benign traffic below it is nearly
 all-distinct: 99 paths over 314 events, escape mass 0.317 at the `app` node. A
 node that diffuse reserves so much probability for unseen children that novelty
 there carries no information, and an adversary who relocates inside a known root
@@ -19,7 +19,7 @@ explanations with opposite consequences:
   (b) These corpora are synthetic. RedCode generates a plausible-looking filename
       per test case, so no file is ever visited twice by construction, and the
       diffuseness is an artifact of corpus authorship rather than of agent
-      behaviour. Real repositories concentrate hard — an agent edits the same
+      behaviour. Real repositories concentrate hard, an agent edits the same
       handful of files over and over.
 
 This module measures the difference, because the repo contains both kinds of
@@ -36,7 +36,7 @@ chosen after seeing the numbers:
     depth-1 escape  median d*U/N one level down (the level mimicry exploits)
 
 Nothing here reads an attack label; concentration is a property of benign
-traffic, which is the point — it can be measured on a tenant's own logs before
+traffic, which is the point: it can be measured on a tenant's own logs before
 any decision to deploy the channel.
 """
 from __future__ import annotations

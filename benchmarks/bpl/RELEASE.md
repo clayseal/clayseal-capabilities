@@ -1,6 +1,6 @@
 # BPL release notes
 
-## v1.1 (unreleased) — fairness and provenance
+## v1.1 (unreleased), fairness and provenance
 
 Core-12 and Hard-24 membership is **unchanged**, so v1.0 numbers remain
 comparable. What changed is how the comparison is set up.
@@ -9,7 +9,7 @@ comparable. What changed is how the comparison is set up.
 declarative rule language and `policies.py` declares the rule for each Core
 scenario. Previously the threshold reached the enforcer and the violation oracle
 through the same Python name in 36 of 133 scenarios, and only the reference
-defense was given it — so the table partly measured which condition had been told
+defense was given it, so the table partly measured which condition had been told
 the rule. The surviving claim is the architectural one: given the same policy, a
 defense with no cross-call state cannot enforce an aggregate constraint.
 
@@ -35,19 +35,19 @@ declarative, so "not yet migrated" cannot read as "has no rule".
 
 ### Open before submission
 
-- [x] Re-run the Core-12 live H2H under the shared policy —
+- [x] Re-run the Core-12 live H2H under the shared policy
       [`../results/bpl_shared_policy.md`](../results/bpl_shared_policy.md),
       n=20 per cell, 12/12 scenarios. `per-call` given the rule scores 55.0%
       violation against 56.2% undefended.
 - [ ] Raise the leaderboard to n>=100 (protocol in `REPRODUCE.md`); n=20 leaves
       a zero with a 16.1% upper bound.
 - [ ] Replace or retire the 3 scenarios that discriminate nothing
-      (`allowed-channel-drip`, `po-split-threshold`, `sod-prepare-and-approve` —
+      (`allowed-channel-drip`, `po-split-threshold`, `sod-prepare-and-approve`
       no condition violates them at n=20, so they cost runtime and measure
       nothing). Requires a version bump: they are frozen Core members.
 - [ ] Declarative policy for Hard-24.
 - [ ] A second model on the live leaderboard.
-- [ ] Scenarios contributed by someone who did not write the reference defense —
+- [ ] Scenarios contributed by someone who did not write the reference defense
       the limitation that bounds every result here.
 
 ---

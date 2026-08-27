@@ -1,7 +1,7 @@
 """A ceiling that holds across machines, not just across processes.
 
-`SharedPrincipalLedger` fixed the cross-PROCESS hole with `fcntl` — four workers
-against a ceiling of 100 went from 400 landed to 100 — and its docstring names
+`SharedPrincipalLedger` fixed the cross-PROCESS hole with `fcntl`, four workers
+against a ceiling of 100 went from 400 landed to 100, and its docstring names
 what is left: a file lock is invisible to a second machine, so a two-node
 deployment is back to one ceiling per node.
 
@@ -11,8 +11,8 @@ with independent client objects standing in for independent nodes.
 WHAT THIS DOES AND DOES NOT PROVE
 ---------------------------------
 They run against `fakeredis`, an in-process double. That is honest for what is
-being tested — the ledger's own logic, which is where every bug in the file
-backend was — and it is NOT a test of a real Redis under partition or failover.
+being tested, the ledger's own logic, which is where every bug in the file
+backend was, and it is NOT a test of a real Redis under partition or failover.
 Set `AGENTAUTH_TEST_REDIS_URL` to run the identical suite against a live server;
 without it those parametrisations skip rather than passing silently.
 """
@@ -59,7 +59,7 @@ def server():
 
 
 def node(server, **kwargs) -> RedisPrincipalLedger:
-    """A ledger with its OWN client and its own in-memory index — a second host."""
+    """A ledger with its OWN client and its own in-memory index, a second host."""
     client, prefix = server()
     return RedisPrincipalLedger(
         client=client, prefix=prefix, window_seconds=3600, **kwargs
@@ -104,7 +104,7 @@ def test_committed_spend_on_one_node_is_visible_on_another(server):
     """An in-memory index is a snapshot from load time.
 
     A server process holds one ledger for its lifetime, so "read it at startup"
-    is the same bug as not sharing at all — it just takes longer to show up.
+    is the same bug as not sharing at all, it just takes longer to show up.
     """
     a, b = node(server), node(server)
     hold = a.reserve(PRINCIPAL, BUDGET, Decimal("90"), CEILING)
@@ -148,7 +148,7 @@ def test_a_hold_released_on_another_node_is_not_resurrected(server):
     On the file backend, merging this process's own `_holds` on top of the store
     resurrected holds their owners had already released: 5 phantoms pinning 50
     of a 100 ceiling, 70 landing where 100 should have. It failed in the SAFE
-    direction, which is why it needed finding — the ceiling is never breached,
+    direction, which is why it needed finding, the ceiling is never breached,
     the system quietly refuses honest work, and every decision looks correct.
     """
     a, b = node(server), node(server)
@@ -167,7 +167,7 @@ def test_a_hold_released_on_another_node_is_not_resurrected(server):
 def test_the_lock_is_fenced_against_its_own_expiry(server):
     """Unlock must never delete a lock that is no longer ours.
 
-    A TTL can expire while the holder is still inside the transaction — a GC
+    A TTL can expire while the holder is still inside the transaction, a GC
     pause, a paused container. An unconditional delete would then remove the
     lock a DIFFERENT node has since acquired, and two writers would proceed each
     believing it held it alone.

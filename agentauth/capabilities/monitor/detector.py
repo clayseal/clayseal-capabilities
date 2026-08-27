@@ -1,4 +1,4 @@
-"""TrajectoryDetector — the escalating-cost orchestrator.
+"""TrajectoryDetector, the escalating-cost orchestrator.
 
 Composes injection-resistant layers into one decision over the action stream.
 Every layer is a pure function of action metadata (tools, verbs, resources,
@@ -12,9 +12,9 @@ Layers, cheap to expensive:
 
 1. Typed goal envelope (per-action structural).
 2. Taint / provenance (trust labels, not content).
-3. Waymo path envelope — does the trajectory stay inside the corridor of
+3. Waymo path envelope, does the trajectory stay inside the corridor of
    plausible action paths for its goal (reachability.PathEnvelope).
-4. AML analytics — velocity, fan-out, structuring, escalation, peer-group
+4. AML analytics, velocity, fan-out, structuring, escalation, peer-group
    deviation (aml.AmlAnalytics).
 5. Goal-conditioned surprise -> conformal p-value (calibrated false-alarm bound).
 
@@ -22,7 +22,7 @@ The path envelope and AML typologies are calibrated by "past the benign
 corridor / peer group", so they are strong low-false-positive structural signals
 and can block outright. Every hard-blocking tier is conformally gated at
 ``alpha/k`` (k = number of active tiers), so by the Bonferroni union bound the
-combined benign block rate is bounded by ``alpha`` — not by ``k*alpha``, which an
+combined benign block rate is bounded by ``alpha``, not by ``k*alpha``, which an
 unadjusted OR of per-tier ``alpha`` gates would allow.
 """
 from __future__ import annotations
@@ -99,7 +99,7 @@ class TrajectoryDetector:
     # corridor / intent two-signal / surface gate (SLEIGHT-style covert intent).
     use_twin_reference: bool = True
     # Soft content/intent advisory (digΔ vs declaration; optional LLM judge).
-    # Escalates only — never sets structural_block on its own.
+    # Escalates only, never sets structural_block on its own.
     use_intent_advisory: bool = True
     intent_judge: object | None = None  # optional Callable[[Action, str], str|None]
     _fitted: bool = False
@@ -108,7 +108,7 @@ class TrajectoryDetector:
     def fit(self, benign: list[Trajectory]) -> TrajectoryDetector:
         # Split-conformal (inductive): the scorer trains on one slice and the
         # conformal layer calibrates on a DISJOINT slice. Calibrating on the
-        # scorer's own training data leaks — an overfit scorer scores its train
+        # scorer's own training data leaks, an overfit scorer scores its train
         # set too low, the threshold turns too tight, and held-out benign is
         # flagged far above alpha. A held-out calibration slice restores
         # exchangeability with future benign, so the false-alarm bound holds.
@@ -139,7 +139,7 @@ class TrajectoryDetector:
         # scores on the disjoint calibration slice are out-of-sample. Fitting on
         # all benign (including cal) makes every calibration penalty look in-
         # corridor, leaving the tier uncalibrated and free to block any novel-
-        # but-benign path outright — which is exactly what inflated the benign
+        # but-benign path outright, which is exactly what inflated the benign
         # false-alarm rate far above alpha with no response to alpha at all.
         if self.path_envelope is not None:
             self.path_envelope.fit(fit_set)
@@ -192,7 +192,7 @@ class TrajectoryDetector:
         the empirical UNION false-alarm rate stays near alpha; the honest worst-case
         union bound is k*alpha. A single combined statistic could reclaim the split,
         but calibrating its threshold is data-fragile on heterogeneous corpora,
-        whereas per-tier conformal control is robust — the deliberate trade here."""
+        whereas per-tier conformal control is robust, the deliberate trade here."""
         return dict.fromkeys(active, self.alpha)
 
     def assess(
@@ -291,7 +291,7 @@ class TrajectoryDetector:
                 twin_block = True
                 structural_reasons.extend(twin.reasons)
 
-        # Intent advisory: digΔ vs declaration (and optional judge). Soft only —
+        # Intent advisory: digΔ vs declaration (and optional judge). Soft only
         # promote the last step to ESCALATE so the broker can step up without
         # claiming a hard structural containment win on content harm.
         if self.use_intent_advisory and reference is not None and reference.actions:
@@ -338,7 +338,7 @@ class TrajectoryDetector:
     @staticmethod
     def _step_decision(conformal_flag: bool, hard_taint: bool, in_envelope: bool) -> Decision:
         # Taint hard-blocks only when the untrusted-driven consequential action
-        # ALSO leaves the sealed goal (out of the typed envelope) — the injection
+        # ALSO leaves the sealed goal (out of the typed envelope), the injection
         # shape the module docstring describes: "driven by untrusted context, and
         # which does something consequential the sealed goal never asked for."
         # Provenance is data-flow derived, so a benign read->authorized action is

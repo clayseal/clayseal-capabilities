@@ -5,7 +5,7 @@ The left pane renders `state.agent`; the right renders `state.verdicts`. The onl
 path into `state.verdicts` requires `verified=True` (see `state._apply_verdict`),
 so a policy-shaped line the guest printed lands on the LEFT, marked as a forgery
 attempt. A rendering bug cannot merge the two, because this module has nothing
-to merge and no parsing of its own — every decision was already made by the
+to merge and no parsing of its own, every decision was already made by the
 reducer that `--plain` also uses.
 
 The epoch rail is the third element and never scrolls away: it is where the
@@ -124,7 +124,7 @@ def _audit_pane(state: AppState) -> Panel:
     body.append(f"\nforgery attempts  {state.forgery_attempts}\n",
                 "yellow" if state.forgery_attempts else "grey50")
     body.append(f"misses (counted)  {state.counters.miss}\n", "grey50")
-    body.append("\nAML: none — this scenario has no destructive verb and never\n"
+    body.append("\nAML: none, this scenario has no destructive verb and never\n"
                 "reaches five distinct egress targets, so the typologies that\n"
                 "exist cannot fire. Nothing here depends on them.\n", "grey50")
     return Panel(body, title="AUDIT", border_style="white")
@@ -146,7 +146,7 @@ def _rail(state: AppState) -> Panel:
         style = _LEVEL_STYLE.get(epoch.level_name, "white")
         allow = ",".join(epoch.allow) or "(none)"
         detail = (f"allow=[{allow}]" if epoch.changed
-                  else "digest unchanged — noticed, nothing revoked")
+                  else "digest unchanged, noticed, nothing revoked")
         table.add_row(
             Text(f"#{epoch.index}", "grey62"),
             Text(epoch.level_name, style),
@@ -237,7 +237,7 @@ def run_tui(config, state: AppState, *, recorder=None) -> int:
 
     # A worker exception must never be silent. The loop runs on a thread, and
     # the Live display owns the alternate screen, so an uncaught traceback would
-    # be painted over and lost — leaving a clean-looking summary in which simply
+    # be painted over and lost, leaving a clean-looking summary in which simply
     # nothing happened. An API auth failure looked exactly like a model that
     # declined the task. Capture it and report it after the screen is released.
     failure: list[BaseException] = []
@@ -315,7 +315,7 @@ def _print_summary(console: Console, state: AppState) -> None:
     if not state.agent or not state.epochs:
         console.print("[bold yellow]the agent made no tool calls at all.[/bold "
                       "yellow] That is a harness or provider problem, not a "
-                      "containment result — rerun with --plain to see the error.")
+                      "containment result, rerun with --plain to see the error.")
     for expect in unmet:
-        note = f" — {expect.explain()}" if expect.explain() else ""
+        note = f", {expect.explain()}" if expect.explain() else ""
         console.print(f"[yellow]not met:[/yellow] {expect.describe()}{note}")

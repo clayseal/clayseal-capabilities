@@ -110,7 +110,7 @@ consistent with (the MultiPath distribution).
 
 ```
 sealed goal + tool schemas + ontology
-        │  (privileged planner, sees only the trusted prompt — CaMeL)
+        │  (privileged planner, sees only the trusted prompt, CaMeL)
         ▼
    sample K candidate plans (self-consistency / temperature)
         │

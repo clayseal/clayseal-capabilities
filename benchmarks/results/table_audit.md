@@ -1,7 +1,11 @@
-# Audit of `docs/_results_table_draft.tex`
+# Audit of `_results_table_draft.tex`
+
+
+> The audited document is kept outside this repository. The findings below are
+> checks of its claims against this code.
 
 Measured against committed HEAD `9bd0ec0` in a detached worktree at
-`/private/tmp/claude-501/-Users-pberlizov/bb985f9b-3c54-43bc-b89c-47f06594ad01/scratchpad/audit-wt`
+`audit-wt` (a local scratch script)
 with `.benchmark-corpus` symlinked read-only from the main tree. The user's
 working tree was not modified, stashed or reverted. Every number below is either
 read from a file at HEAD, printed by a command run in that worktree, or produced
@@ -373,7 +377,7 @@ figures are our own code, our own ablations, or unsourced.**
 
 | figure | source |
 | --- | --- |
-| ARGUS ~5 pts utility | `notes/INVESTOR_MEMO.md` line 49, arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
+| ARGUS ~5 pts utility | `INVESTOR_MEMO.md` line 49, arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
 | CaMeL ~7 pts utility | line 52, arXiv:2503.18813, 84 -> 77 on AgentDojo |
 | Progent ~19 pts utility | line 50, arXiv:2606.26479. Sourced but contradicted by our own head-to-head, which measures Progent's released code at 12.5 points on gpt-4o-mini |
 
@@ -417,7 +421,7 @@ that is our own ladder must say so in the cell, not in a caption.
 
 ## 6. Corrected table
 
-Same format as `docs/_results_table_draft.tex`. Every cell below is a figure I
+Same format as `_results_table_draft.tex`. Every cell below is a figure I
 read at HEAD or produced in the clean worktree. Rows the audit could not support
 in any form are absent, and the caption says which and why.
 

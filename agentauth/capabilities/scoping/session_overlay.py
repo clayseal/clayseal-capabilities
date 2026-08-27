@@ -1,4 +1,4 @@
-"""DP-8: Incremental updates — session overlay for changed files.
+"""DP-8: Incremental updates, session overlay for changed files.
 
 The base ``RepoChunkIndex`` is frozen at ``repo@sha`` when the goal starts.
 During the session, the agent edits files.  This module provides a
@@ -6,8 +6,8 @@ During the session, the agent edits files.  This module provides a
 the index without a full rebuild.
 
 Two layers:
-    RepoChunkIndex   — immutable base (built at goal start)
-    SessionChunkOverlay — append + patch during the session
+    RepoChunkIndex, immutable base (built at goal start)
+    SessionChunkOverlay, append + patch during the session
 """
 from __future__ import annotations
 

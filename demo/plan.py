@@ -8,7 +8,7 @@ benchmarks use, and the two disagreeing is precisely the failure this demo
 exists to make visible. Neither import pulls anything heavy (stdlib only).
 
 WHY NOT `IntentEnvelope.from_goal`: it leaves `phase_order=None`, which means a
-legacy TOTAL order — every phase must follow every lower-indexed one. With
+legacy TOTAL order, every phase must follow every lower-indexed one. With
 per-tool phases, reading T-1003 after T-1005 would register as OUT_OF_ORDER and
 the demo would blame the injection for an artifact of its own plan encoding.
 `verb_class_order` gives a real partial order (reads unordered among themselves,

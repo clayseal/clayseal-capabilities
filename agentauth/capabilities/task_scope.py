@@ -1,9 +1,9 @@
-"""TaskScope compilation — canonical home: ``agentauth.core.task_scope``.
+"""TaskScope compilation, canonical home: ``agentauth.core.task_scope``.
 
 The contract (TaskScope shape, compilation from mandates/authorizations, path
 enforcement) lives in the core package; this module re-exports it and adds the
-one capability-layer-specific operation — narrowing a Biscuit token to a
-compiled scope — which needs a ``CapabilityTokenBackend``.
+one capability-layer-specific operation, narrowing a Biscuit token to a
+compiled scope, which needs a ``CapabilityTokenBackend``.
 """
 
 from __future__ import annotations

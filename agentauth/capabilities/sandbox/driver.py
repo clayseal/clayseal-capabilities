@@ -9,7 +9,7 @@ other side of a process boundary.
 
 THE EVIDENCE CHANNEL: iVisor writes policy verdicts to the fd named by
 IVISOR_TRACE_FD. Guest fds are virtualized and only 0/1/2 exist, so a host fd
->= 3 is structurally unreachable from inside the guest — which is what makes
+>= 3 is structurally unreachable from inside the guest, which is what makes
 those lines evidence. A guest that knows the format can print policy-shaped
 lines to its own stdout/stderr; we collect those separately as
 `unverified_claims` and never count them.
@@ -43,7 +43,7 @@ from agentauth.capabilities.sandbox.verdicts import (
 # and it silently reroutes verdicts to (guest-forgeable) stderr.
 _DEGRADED_MARKERS = ("IVISOR_TRACE_FD", "policy trace -> stderr")
 
-# crates/ivisor/src/runtime.rs:614 — a syscall handler panic caught by
+# crates/ivisor/src/runtime.rs:614, a syscall handler panic caught by
 # catch_unwind kills the thread group with 128 + SIGSYS(31).
 HANDLER_PANIC_CODE = 159
 
@@ -68,7 +68,7 @@ class IVisorResult:
     exit_kind: ExitKind
     exit_code: int | None = None          # guest exit status, u8-truncated
     signal: int | None = None
-    events: tuple[PolicyEvent, ...] = ()          # trace fd only — evidence
+    events: tuple[PolicyEvent, ...] = ()          # trace fd only, evidence
     unverified_claims: tuple[PolicyEvent, ...] = ()  # guest-authored, never evidence
     trace_degraded: bool = False
     stdout: str = ""
@@ -217,8 +217,8 @@ def _classify_exit(returncode: int, timed_out: bool, saw_events: bool,
 
     The guest's own code is truncated to u8 by the CLI, a fatal guest signal
     surfaces as 128 + signo, and a caught syscall-handler panic as 159. Exit 1
-    is ambiguous — it is both a CLI/config error and a perfectly ordinary guest
-    failure — so we only call it a config error when nothing ran: no verdict
+    is ambiguous: it is both a CLI/config error and a perfectly ordinary guest
+    failure, so we only call it a config error when nothing ran: no verdict
     ever reached the trace fd and the sentry printed its own error prefix.
     """
     if timed_out:

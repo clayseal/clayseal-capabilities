@@ -16,8 +16,8 @@ downstream of that refusal and can only affect later steps.
 
 WHY L1 CHANGES NOTHING. Exposure to untrusted content is not evidence of
 misuse. `monitor/consequence.py` states the principle for the broker's own
-two-signal gate — "a departing read is reconnaissance to log, not damage to
-stop" — and the same rule applies to capabilities. L1 is recorded, the digest is
+two-signal gate, "a departing read is reconnaissance to log, not damage to
+stop", and the same rule applies to capabilities. L1 is recorded, the digest is
 unchanged, and nothing is taken away. This is not politeness: the legitimate
 internal summary email is sent one step after the poisoned ticket is read, and
 it succeeds precisely because L1 took nothing.
@@ -64,7 +64,7 @@ class SealedGoal:
 @dataclass(frozen=True)
 class Capabilities:
     """What the agent may do, at one level. Every field is lowered or enforced
-    somewhere concrete — `enforced_at` says where, so the display can never
+    somewhere concrete, `enforced_at` says where, so the display can never
     imply the syscall boundary is checking a recipient rule."""
 
     egress_domains: frozenset[str] = frozenset()
@@ -96,14 +96,14 @@ def next_level(current: Level, s: Signals) -> tuple[Level, tuple[str, ...]]:
     """The ladder. Pure, monotone, and blind to the pending action."""
     want, why = Level.BASELINE, []
 
-    # L1 — untrusted content is present. Noticed, not punished.
+    # L1, untrusted content is present. Noticed, not punished.
     if s.untrusted_items:
         want = Level.SUSPECT
         why = ["untrusted content entered the trajectory"]
         if s.injection_markers:
             why.append("input-hardening markers in a tool return")
 
-    # L2 — the two-signal gate fired, or an effect attempt was already refused.
+    # L2, the two-signal gate fired, or an effect attempt was already refused.
     # Each of these is positive evidence about an ACTION, not mere exposure.
     if s.taint_consequential:
         want = Level.CONTAINED
@@ -117,7 +117,7 @@ def next_level(current: Level, s: Signals) -> tuple[Level, tuple[str, ...]]:
         want = Level.CONTAINED
         why = [f"{refused} refused effect attempt(s)"]
 
-    # L3 — contained, and still trying. The trigger is a VERIFIED denial, so it
+    # L3, contained, and still trying. The trigger is a VERIFIED denial, so it
     # cannot be manufactured by the guest.
     if current >= Level.CONTAINED and s.denials_since_contained:
         want = Level.QUARANTINED
@@ -139,7 +139,7 @@ def policy_for(level: Level, sealed: SealedGoal) -> Capabilities:
     all_verbs = frozenset({"read", "list", "write", "send"})
 
     if level <= Level.SUSPECT:
-        # L0 and L1 are deliberately identical — see the module docstring.
+        # L0 and L1 are deliberately identical, see the module docstring.
         return Capabilities(
             egress_domains=sealed.domains,
             allowed_verbs=all_verbs,
@@ -164,7 +164,7 @@ def policy_for(level: Level, sealed: SealedGoal) -> Capabilities:
     # QUARANTINED. Note this is namespace revocation, not a read-only mount:
     # iVisor serves exactly two mounts and /work is writable by construction, so
     # "read-only" would be a claim the substrate cannot keep. Instead the next
-    # epoch opens a run dir with the tickets unstaged and nothing migrated —
+    # epoch opens a run dir with the tickets unstaged and nothing migrated
     # what is not staged is not in the namespace at all, which shows up as a
     # verified `fs.open verdict=miss root=workspace ... errno=ENOENT`.
     return Capabilities(

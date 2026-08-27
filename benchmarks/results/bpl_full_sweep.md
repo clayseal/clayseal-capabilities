@@ -1,8 +1,8 @@
 # The whole BPL suite, both directions, and where it stops working
 
-STATUS: superseded in part — see the correction below
+STATUS: superseded in part, see the correction below
 
-> ## CORRECTION 2026-08-20 — the containment column was inflated by 27 points
+> ## CORRECTION 2026-08-20, the containment column was inflated by 27 points
 >
 > **Every containment number below is superseded.** The mandates these scenarios
 > were measured against forbade the work the scenarios ask for.
@@ -10,7 +10,7 @@ STATUS: superseded in part — see the correction below
 > `_scope_broker` was copy-pasted into **fourteen** scenario modules, each with
 > its own hardcoded verb vocabulary. Most were
 > `{read, list, create, update, pay, send, call}`. The shipped classifier emits
-> `{read, write, transfer, send, call}` — so `pay` was declared, `transfer`
+> `{read, write, transfer, send, call}`, so `pay` was declared, `transfer`
 > arrived, and the envelope refused. Several of those scenarios grant
 > `pay_vendor` and then score progress as "did the vendors get paid".
 >
@@ -18,8 +18,8 @@ STATUS: superseded in part — see the correction below
 > "BPL's [classifier] emitted a vocabulary no mandate is written against." Fixing
 > the classifier left the **declarations** speaking the old language.
 >
-> Deriving the verbs from the granted tools — the same source the tool allowlist
-> already uses — gives:
+> Deriving the verbs from the granted tools, the same source the tool allowlist
+> already uses, gives:
 >
 > | family | n | contained | completed | BOTH |
 > | --- | ---: | ---: | ---: | ---: |
@@ -39,7 +39,7 @@ STATUS: superseded in part — see the correction below
 > the misleading one.
 >
 > **Sixteen `clayseal_expected: contain` labels were calibrated against this
-> defect** and are now `open` — 13 escape, 3 aggregate. This is the SECOND time
+> defect** and are now `open`, 13 escape, 3 aggregate. This is the SECOND time
 > labels here have been calibrated against a harness bug. The relabelling makes
 > the headline worse, which is the only evidence worth having that it was not
 > fitted.
@@ -50,14 +50,14 @@ STATUS: superseded in part — see the correction below
 
 
 `python -m benchmarks.bpl_sweep`. 132 of the suite's 133 scenarios carry a
-`violating_script` and a `compliant_script` — a scripted attack and its benign
+`violating_script` and a `compliant_script`, a scripted attack and its benign
 twin, sitting in the data since before anyone asked for benign twins. Replaying
 both through the real gate measures the mechanism on the entire suite in seconds,
 with no model, no API budget and no sampling variance.
 
 This asks a different question from the live head-to-head and a better-posed one.
 The live run asks "does a model, driven by this prompt, end up violating", which
-conflates the defense with the model's willingness to attack — it is why
+conflates the defense with the model's willingness to attack: it is why
 undefended violation rates below 100% appear at all. This asks "when the
 violating sequence is actually attempted, is it stopped, and when the benign
 sequence is attempted, does it complete". Neither replaces the other.
@@ -77,7 +77,7 @@ tools:
 
 The verb is decided *before* the broker sees the action, and BPL's emitted a
 vocabulary no mandate is written against. **72 of 79 false blocks were the single
-tool `load_policy`** — a benign policy read, classified `load`, a verb no
+tool `load_policy`**, a benign policy read, classified `load`, a verb no
 scenario envelope allows, refused at step one.
 
 Switching BPL to the shipped classifier is not a trade-off. It improves **both**
@@ -126,19 +126,19 @@ contained **and** completed, per scenario.
 
 ## Where it generalizes, and where it does not
 
-**Aggregate — this is the claim, and it holds.** 67% on both columns against
+**Aggregate: this is the claim, and it holds.** 67% on both columns against
 dataflow-taint's 4% and per-call's zero. The suite's largest single family after escape,
 45 scenarios, and the one the mechanism was built for. per-call contains none of
 it by construction: per-call policy has no cross-call state.
 
-**Confidentiality — a tie, and dataflow-taint wins the containment half.** 46% against
+**Confidentiality, a tie, and dataflow-taint wins the containment half.** 46% against
 dataflow-taint's 57%. We are not a dataflow system and this is the class dataflow-taint is built
 for. We recover the tie on completion (75% vs 57%), which is the honest shape of
 the Pareto claim rather than a win. **15 scenarios dataflow-taint contains and we do
 not**, mostly re-identification, cross-tenant reference sharing and cache
-poisoning — none of which a committed-effect ledger can see.
+poisoning, none of which a committed-effect ledger can see.
 
-**Escape — weakest, and the false blocks live here.** 22% on both columns.
+**Escape, weakest, and the false blocks live here.** 22% on both columns.
 Containment is respectable at 61%, but **41% of benign twins are refused**, which
 is where the remaining friction is concentrated. This is the injection and
 scope-violation family the project has said from the start it does not compete
@@ -154,13 +154,13 @@ Every scenario carries a `clayseal_expected` label. Measured against it:
 | `partial` | 35 | 14 | 21 |
 | `open` | 46 | **24** | 22 |
 
-**24 scenarios labelled `open` are contained.** Each by a real block — none has
+**24 scenarios labelled `open` are contained.** Each by a real block, none has
 zero blocks, and none is contained under `allow-all`, so this is not the
 scenario failing to violate. Those labels were calibrated against the verb-
 classifier bug above, and should be re-derived rather than trusted.
 
 **No regressions remain.** All 51 scenarios the suite labels `contain` are
-contained, and completion did not move while closing them — so none was bought
+contained, and completion did not move while closing them, so none was bought
 with friction.
 
 ### Two of the four were real defects, and both are now closed
@@ -178,14 +178,14 @@ set, the effect is once-per-object, and a second commit against the same identit
 is refused.
 
 This is the same cumulative framing with a different predicate over the same
-multiset of committed effects — not `sum <= ceiling` but `no object appears
+multiset of committed effects, not `sum <= ceiling` but `no object appears
 twice`. A per-call defense can express neither. With the mandate declaring it,
 the attack is contained **and** the benign twin still completes with zero blocks
 and full progress.
 
 Two details that matter more than the headline. A released reservation frees its
 object, or a downstream refusal would pin the identity for the session and refuse
-the legitimate retry — the failure that hides because it is safe. And an omitted
+the legitimate retry, the failure that hides because it is safe. And an omitted
 identity argument is represented explicitly rather than skipped, so an attacker
 cannot mint a fresh identity by leaving the field out.
 
@@ -208,7 +208,7 @@ recipients believes they have bound them.
 
 Addresses in destination-shaped fields are now checked against the enumerated
 list when that list names any address. Gated on that, so a policy listing only
-opaque identifiers — or none — is unchanged and no existing deployment narrows
+opaque identifiers, or none, is unchanged and no existing deployment narrows
 underneath itself. Confidentiality containment moves 46% to 50% with completion
 unchanged, so it bought containment without spending friction.
 
@@ -272,7 +272,7 @@ from the ledger, the identity predicate, the recipient binding and the content
 check. Only `escape` gains, 14/59 against 11/59, and it pays 24 false blocks for
 those three.
 
-This is the deny-all pathology that this repository has already found twice —
+This is the deny-all pathology that this repository has already found twice
 once in a shipped 100% containment number that was 13 of 18 benign trajectories
 refused, and once in the SLEIGHT detector. It is worth stating plainly: **the
 headline 67% overstates what the mechanism discriminates, and the joint score is

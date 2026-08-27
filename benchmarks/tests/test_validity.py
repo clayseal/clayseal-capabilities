@@ -2,7 +2,7 @@
 
 A checklist that only ever passes is decoration. These tests assert both
 directions for every mechanical gate, and pin the three defects the gates
-themselves shipped with — each of which made the audit blame the evaluation for
+themselves shipped with, each of which made the audit blame the evaluation for
 something the gate had got wrong.
 """
 import pytest
@@ -96,7 +96,7 @@ def test_partial_labels_cannot_disagree():
 def test_labels_are_checked_only_against_the_system_under_test():
     """Bug 2: a corpus label describes the system, not every condition.
 
-    Checking it against the baselines too trebled the apparent disagreement —
+    Checking it against the baselines too trebled the apparent disagreement
     the baselines are SUPPOSED to fail a scenario labelled `contain`.
     """
     cells = _good_cells() + [

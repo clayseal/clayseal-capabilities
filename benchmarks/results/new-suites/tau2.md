@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, tau2 (2545 tasks, 14842 benign / 0 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/tau2.json
-# Clay Seal enforcement benchmark — tau2 (2545 tasks, 14842 benign / 0 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset tau2 --mode ladder --ci --json benchmarks/results/new-suites/tau2.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

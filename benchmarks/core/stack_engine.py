@@ -2,13 +2,13 @@
 
 `benchmarks/adversarial/adaptive.py` runs the only adaptive search in this
 repository, at three attacker knowledge levels, and it judges candidates with a
-`DecisionEngine` — a ladder rung. The ladder is an ABLATION: a monotone sequence
+`DecisionEngine`, a ladder rung. The ladder is an ABLATION: a monotone sequence
 of floor constructions used to attribute containment to a mechanism. It is not
 the product.
 
 So the published adaptive numbers describe rungs, and the thing a deployment
-actually runs — `DeployableStack`, floor plus intent envelope plus provenance
-plus flow plus session state — had never been put in front of an adaptive
+actually runs, `DeployableStack`, floor plus intent envelope plus provenance
+plus flow plus session state, had never been put in front of an adaptive
 adversary at all. `notes/production_sota_path.md` names this as open work: "extend
 the adaptive adversary from the detector to the plan-plus-taint path; report the
 residual."
@@ -86,7 +86,7 @@ class DeployableStackEngine:
     #: Without this the confidentiality tracker and the parameter provenance
     #: graph have no runtime input at all: they correlate a value SEEN in a tool
     #: result with a later action, and a harness that only replays authorize()
-    #: calls never produces one. Measured before it existed — the adaptive run
+    #: calls never produces one. Measured before it existed, the adaptive run
     #: against the shipped stack returned numbers byte-identical to its floor
     #: rung, with zero step-ups, because every observation-driven layer was
     #: starved rather than quiet.
@@ -130,6 +130,12 @@ class DeployableStackEngine:
                 intent_envelope=... if self.with_envelope else None,
                 derive_counts=self.derive_counts)
         return self._stack
+
+    #: Decisions that ended in an exception rather than a verdict. A crash is
+    #: scored as "not allowed" so the sweep survives it, which means a crash
+    #: LOOKS like containment; this is how that is kept visible.
+    stack_errors: int = 0
+    stack_error_kinds: dict = field(default_factory=dict)
 
     def reset(self) -> None:
         """Drop the session. The adaptive search re-runs a task many times, and
@@ -180,6 +186,14 @@ class DeployableStackEngine:
         try:
             verdict = stack.authorize(action)
         except Exception as exc:  # noqa: BLE001 - a gate may deny, never crash the run
+            # A crash is NOT containment. The run continues, because one broken
+            # task must not take down a sweep, but the count is kept so a
+            # regression cannot quietly raise the containment number by throwing
+            # on the attacks it can no longer decide. `stack_errors` is asserted
+            # to be zero by `benchmarks/tests/test_no_stack_errors.py`.
+            self.stack_errors += 1
+            self.stack_error_kinds[type(exc).__name__] = (
+                self.stack_error_kinds.get(type(exc).__name__, 0) + 1)
             return Decision(False, f"stack error: {type(exc).__name__}", self.name)
         if verdict.outcome == "allow":
             if self.observe_reads:

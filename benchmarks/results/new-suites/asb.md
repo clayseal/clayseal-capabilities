@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, asb (51 tasks, 102 benign / 2040 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/asb.json
-# Clay Seal enforcement benchmark — asb (51 tasks, 102 benign / 2040 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset asb --mode ladder --ci --json benchmarks/results/new-suites/asb.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

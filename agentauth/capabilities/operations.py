@@ -1,4 +1,4 @@
-"""Capability operations contract — canonical home: ``agentauth.core.operations``.
+"""Capability operations contract, canonical home: ``agentauth.core.operations``.
 
 Re-export so ``agentauth.capabilities.operations`` remains a valid import path.
 """

@@ -2,7 +2,7 @@
 
 ``action_token`` reduces an action to ``verb|tool|resource_class``, and
 ``resource_class`` collapses every concrete resource to its scheme. That keeps
-the sequence vocabulary estimable, which is the right call for an n-gram — and it
+the sequence vocabulary estimable, which is the right call for an n-gram, and it
 destroys the only signal that separates benign from attack on the corpora where
 the threat is *where the agent reached*. Measured on this repo's own loaders:
 
@@ -16,7 +16,7 @@ SLEIGHT the benign and attack histograms match almost cell for cell and 100% of
 attack actions carry a token that also occurs in benign. No scorer recovers that:
 the information is gone before any model sees it.
 
-The fix is not a bigger vocabulary — a flat multinomial over hundreds of paths is
+The fix is not a bigger vocabulary, a flat multinomial over hundreds of paths is
 not estimable from realistic trajectory counts, which is exactly what the
 collapse was avoiding. The fix is to stop asking one channel to carry two
 signals. This module is the second channel, and it uses a representation suited
@@ -52,8 +52,8 @@ children reserves a lot and a novel branch is barely remarkable. The model is
 appropriately unsure where it has seen little, which is what keeps this from
 becoming a false-positive generator on sparse buckets.
 
-Conditioning is ``(goal_bucket, verb)`` — reading ``/etc`` and writing ``/etc``
-are different events — with backoff to ``(goal_bucket)`` and then to a global
+Conditioning is ``(goal_bucket, verb)``, reading ``/etc`` and writing ``/etc``
+are different events, with backoff to ``(goal_bucket)`` and then to a global
 trie when a key has too few observations to estimate from. That backoff chain is
 the cohort structure in miniature: entity, then peer group, then prior.
 """
@@ -186,7 +186,7 @@ class TargetDensityScorer:
         The backoff chain is entity -> peer group -> prior, but it is **gated on
         the goal bucket existing at all**. A bucket never seen in training has no
         peer group and no entity history, and falling through to the global prior
-        would score its first entirely legitimate action at double-digit bits —
+        would score its first entirely legitimate action at double-digit bits
         a new customer agent would light up as an incident on the day it shipped.
 
         That gate matters more than it looks. The conformal layer downstream
@@ -208,7 +208,7 @@ class TargetDensityScorer:
 
         ``d*U/N`` alone is wrong at a **terminal** node. A path that always ended
         here has ``U=0``, so the discounted term is exactly zero and any deeper
-        continuation scores ``-log2(1e-12)`` = 39.9 bits — maximally surprising,
+        continuation scores ``-log2(1e-12)`` = 39.9 bits, maximally surprising,
         blocked outright. That is a false-positive generator: an agent legitimately
         touching ``app/documents/new.txt`` when the baseline only ever saw
         ``app/documents`` would be refused, and the corpora here did not catch it
@@ -291,7 +291,7 @@ class TargetDensityScorer:
     #: Observations per distinct target below which the channel cannot separate.
     #: Measured, not chosen. ``benchmarks/concentration.py --curve`` subsamples
     #: three corpora and finds depth-1 novel-child surprise tracking a single
-    #: governing variable — observations per distinct target — regardless of
+    #: governing variable, observations per distinct target, regardless of
     #: whether the corpus is synthetic or real, tool-catalog or filesystem:
     #:
     #:     obs/target   1.7   3.0   4.5   8.3   75    196
@@ -308,14 +308,14 @@ class TargetDensityScorer:
 
         Readiness is not one bit, it is a **depth**, and conflating the two was
         the last silent failure in this channel. On RedCode the root is estimated
-        from 123 observations over 2 children — escape 0.003, a genuinely sharp
-        boundary — while depth 1 has 68 distinct targets over the same traffic,
+        from 123 observations over 2 children, escape 0.003, a genuinely sharp
+        boundary, while depth 1 has 68 distinct targets over the same traffic,
         1.8 per target, which cannot separate anything. A single global readiness
         flag either throws the root away or claims the leaves.
 
         The adaptive ladder is that asymmetry measured from the other side: the
         channel catches L0 (a novel *root*) at 66.6% and L1/L2 (a novel *leaf*)
-        at exactly 0. Returning a depth makes the limit structural — the scorer
+        at exactly 0. Returning a depth makes the limit structural, the scorer
         stops contributing surprise where it stops knowing anything, instead of
         contributing noise that a threshold has to absorb.
 
@@ -340,7 +340,7 @@ class TargetDensityScorer:
     def readiness(self, bucket: str | None = None) -> dict:
         """Can this baseline support a decision yet, and if not, what is missing?
 
-        The channel's power is not a fixed property of the mechanism — it is a
+        The channel's power is not a fixed property of the mechanism: it is a
         function of how much clean traffic the cohort has accumulated, and it
         grows monotonically with it. So "does the density work?" is the wrong
         question; the answerable one is "how much traffic until it does?", and
@@ -380,7 +380,7 @@ class TargetDensityScorer:
 
     @staticmethod
     def _distinct_paths(node: _Node) -> int:
-        """Leaf count — the size of the target namespace this trie has seen."""
+        """Leaf count, the size of the target namespace this trie has seen."""
         if not node.children:
             return 1
         return sum(TargetDensityScorer._distinct_paths(c)
@@ -391,14 +391,14 @@ class TargetDensityScorer:
 
         **Read this before deploying the channel, not after.** The discriminative
         power at a node is governed entirely by its escape mass ``d*U/N``, and
-        that is computable from clean traffic alone — no attacks, no labels. A
+        that is computable from clean traffic alone, no attacks, no labels. A
         node with many distinct children relative to its observation count
         reserves most of its mass for novel children, so a novel child there is
         *not surprising* and the channel cannot see an attacker who relocates to
         it.
 
         The measurement that motivated this method: on RedCode the root node has
-        N=53, U=2, escape 0.019 — highly concentrated, so a target outside the
+        N=53, U=2, escape 0.019, highly concentrated, so a target outside the
         workspace is very surprising. One level down, ``app`` has N=41, U=26,
         escape 0.317. Benign traffic there is nearly all-distinct (99 distinct
         paths over 314 events), so the baseline has learned exactly **one bit**:

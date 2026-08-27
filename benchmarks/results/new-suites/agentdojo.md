@@ -1,6 +1,10 @@
+# Clay Seal enforcement benchmark, agentdojo (77 tasks, 215 benign / 77 attack events)
 
-Wrote JSON results to benchmarks/results/new-suites/agentdojo.json
-# Clay Seal enforcement benchmark — agentdojo (77 tasks, 215 benign / 77 attack events)
+STATUS: current
+
+```bash
+python -m benchmarks.cli --dataset agentdojo --mode ladder --ci --json benchmarks/results/new-suites/agentdojo.json
+```
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |

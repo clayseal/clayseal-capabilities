@@ -65,7 +65,7 @@ def axis_double_commit() -> dict:
 
 
 def axis_window_boundary() -> dict:
-    """Spend ages out on the window. Intended — the check is the boundary.
+    """Spend ages out on the window. Intended, the check is the boundary.
 
     A ceiling with no window is a lifetime quota, so aging out is by design.
     What must not happen is aging out EARLY, which would let the same spend be
@@ -96,7 +96,7 @@ def axis_idempotency_amount_swap() -> dict:
 
     The escape is the ledger DEDUPING the second call, which would move 10,000
     while booking 1. Booking both is the correct outcome, so the check is that
-    the total reflects both — not that it stays under a ceiling. `book` is the
+    the total reflects both, not that it stays under a ceiling. `book` is the
     recording layer and takes no ceiling; `reserve` is where a ceiling lives.
     That distinction is why the first version of this axis reported an escape
     here: it compared a booking total against a ceiling that booking never
@@ -220,7 +220,7 @@ def axis_delegation_splitting() -> dict:
     deployments live", and it was: every sub-agent has its own `sub`, therefore
     its own `principal_key`, therefore its own ceiling. Measured at 600 against
     a ceiling of 100 for a parent plus five delegates. A per-delegate ceiling is
-    not a ceiling — anyone who can spawn sub-agents mints headroom.
+    not a ceiling, anyone who can spawn sub-agents mints headroom.
     """
     from agentauth.core.authority_binding import AuthorityBinding
 

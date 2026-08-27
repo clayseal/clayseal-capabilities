@@ -21,7 +21,7 @@ Everything is optional. `signal` makes the process kill itself with that signal
 so the driver's exit decoding can be exercised.
 
 This keeps the whole driver test suite free of HVF, codesigning, and Apple
-Silicon — it runs anywhere CI does.
+Silicon, it runs anywhere CI does.
 """
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ def main(argv: list[str]) -> int:
 
     # A guest that writes into its workspace. The real sentry's guest does this
     # through the gofer; here the workspace is just a host directory, so the
-    # fake writes it directly. Optional and additive — callers that omit it see
+    # fake writes it directly. Optional and additive, callers that omit it see
     # the previous behaviour exactly.
     for entry in script.get("write", []):
         try:

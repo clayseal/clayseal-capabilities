@@ -1,4 +1,4 @@
-"""Scripted agents — no model, but a completely real sandbox.
+"""Scripted agents, no model, but a completely real sandbox.
 
 Everything downstream of `next_calls` is genuine: real guests are launched, real
 syscalls are made, real verdicts come back on the trace fd, and real denials
@@ -8,7 +8,7 @@ THE SCRIPTED AGENT IS THE BETTER CONTAINMENT PROOF, and this is worth being
 explicit about rather than treating the mock as a fallback. A live model may
 simply decline the injected instruction, in which case the run shows a safety
 property holding without ever being stressed. A scripted agent that follows the
-injection to the letter — including its fallback clause — is the adversary you
+injection to the letter, including its fallback clause, is the adversary you
 actually want contained, and it produces the same evidence a compliant model
 would, deterministically, on a plane, with no API key.
 """
@@ -72,7 +72,7 @@ def attack_provider(scenario) -> ScriptedProvider:
 
     The last three calls are the demo's argument. The direct exfil is refused by
     the sealed envelope. The agent then takes the injection's fallback to an
-    internal mirror — an attempt the tool-level gate has no grounds to refuse —
+    internal mirror, an attempt the tool-level gate has no grounds to refuse
     and retries it once after that is denied.
     """
     calls = _triage_prefix(scenario.tickets)

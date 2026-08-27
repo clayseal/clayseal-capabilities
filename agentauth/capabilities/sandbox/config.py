@@ -9,7 +9,7 @@ Only iVisor's trace switches are passed as env (see driver.py).
 
 FAIL-CLOSED ALLOWLIST VALIDATION: iVisor *warns and skips* an allowlist entry
 it cannot parse, so a typo silently narrows egress toward deny-all rather than
-failing. We validate every entry up front and raise instead — a policy that
+failing. We validate every entry up front and raise instead, a policy that
 does not mean what it says is a bug, not a degraded mode. Note the asymmetry is
 only safe in this direction: a skipped entry can never widen access.
 """
@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 KNOWN_KEYS = ("ram_mb", "rootfs", "workspace", "compute", "compute_ring_mb",
               "hostd", "allow", "listen", "sandbox")
 
-# crates/ivisor/src/config.rs:145 — the fixed heap base plus a usable mmap
+# crates/ivisor/src/config.rs:145, the fixed heap base plus a usable mmap
 # arena needs >= 768 MiB, and the guest RAM size must be 16 MiB-granular.
 MIN_RAM_MB = 768
 RAM_GRANULARITY_MB = 16
@@ -64,13 +64,13 @@ def validate_allow_entry(entry: str) -> None:
         raise AllowEntryError(
             f"allowlist entry {entry!r} is not an IP or a dotted domain name. "
             "iVisor has no wildcard rules, and it silently drops entries it "
-            "cannot parse — which would leave egress more restricted than the "
+            "cannot parse, which would leave egress more restricted than the "
             "policy claims.")
 
 
 @dataclass(frozen=True)
 class IVisorConfig:
-    """One sentry configuration — the launch-time materialization of a grant."""
+    """One sentry configuration, the launch-time materialization of a grant."""
 
     rootfs: str
     workspace: str
@@ -112,7 +112,7 @@ class IVisorConfig:
         return "\n".join(lines) + "\n"
 
     def digest(self) -> str:
-        """sha256 of the rendered text — the policy digest carried into
+        """sha256 of the rendered text, the policy digest carried into
         attestation, binding every verdict to the exact policy that produced
         it. The comment line is excluded so a cosmetic label change does not
         look like a policy change."""

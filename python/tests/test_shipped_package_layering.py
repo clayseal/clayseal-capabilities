@@ -2,14 +2,14 @@
 
 ``pyproject.toml`` ships
 ``only-include = ["agentauth/capabilities", "agentauth/core"]``. Anything the
-library reaches for outside those trees — the ``benchmarks`` harness, the
-``demo`` package, the optional identity layer at module scope — is present in
+library reaches for outside those trees, the ``benchmarks`` harness, the
+``demo`` package, the optional identity layer at module scope, is present in
 the development checkout and absent in every real install, so the failure never
 shows up here and always shows up for the integrator.
 
 ``deployable_stack.py`` did exactly this: a lazy ``from benchmarks.core.
 detector_eval import _goal_for`` inside ``from_benchmark_task``. Lazy, so import
-succeeded and only the call raised, and the CI layering step did not cover it —
+succeeded and only the call raised, and the CI layering step did not cover it
 it forbids ``agentauth.receipts``, ``agentauth.backend`` and top-level
 ``agentauth.identity``, and had no opinion about the harness.
 
@@ -110,7 +110,7 @@ def _dotted_imports(tree: ast.AST) -> set[str]:
 
 
 def _module_level_imports(tree: ast.AST) -> set[str]:
-    """Modules imported at module scope — not inside a function or method.
+    """Modules imported at module scope, not inside a function or method.
 
     The distinction is the contract for an optional extra: a lazy import inside
     `default_biscuit_backend()` is correct and an import at the top of the file
@@ -137,7 +137,7 @@ def test_optional_layers_are_imported_lazily(path: Path):
     """An optional extra imported at module scope is not optional.
 
     This replaces the CI step `python -m agentauth.core.layering ...`, which
-    referenced a module that does not exist in `agentauth-core` at all — a dead
+    referenced a module that does not exist in `agentauth-core` at all, a dead
     reference left by the repo split, and one that could only be discovered by
     CI actually running, which it had never done.
     """

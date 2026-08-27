@@ -10,7 +10,7 @@ NeurIPS Datasets & Benchmarks track.
 **For what purpose was the dataset created?**
 
 To measure whether a defense can enforce a *business-process* constraint on a
-tool-using agent — a rule that no single action violates. Existing agent-security
+tool-using agent, a rule that no single action violates. Existing agent-security
 benchmarks (AgentDojo, InjecAgent, ASB, AgentHarm) measure attack-success rate
 under prompt injection: an adversary inserts content, and the question is whether
 the model obeys it. BPL asks a different question, and one that persists when the
@@ -25,7 +25,7 @@ being helpful.
 
 This matters more, not less, as models improve. Measured on `gpt-5-mini`,
 undefended attack-success rate under four stock AgentDojo injections is **0 of
-18** — the injection channel is closing. Composite-policy violation on the same
+18**, the injection channel is closing. Composite-policy violation on the same
 model is **100 of 100** on `payout-splitting`.
 
 **Who created it and who funded it?**
@@ -67,13 +67,13 @@ static input/label pair. A scenario provides
 
 **Frozen evaluation suites** (`SUITES.yaml`, version `BPL-v1.0`):
 
-- **core (12)** — the leaderboard set. Fully policy-declared.
-- **hard (24)** — reported separately.
-- **research_quarantine (12)** — paradox-class cases (Heisenberg, lacuna, LTL,
+- **core (12)**, the leaderboard set. Fully policy-declared.
+- **hard (24)**, reported separately.
+- **research_quarantine (12)**, paradox-class cases (Heisenberg, lacuna, LTL,
   negation-as-failure, two-clock). **Not scored.** They are included because
   they are interesting and excluded because it is not clear a correct answer
   exists.
-- **full** — the whole pack (133), appendix only. Resolved from the
+- **full**, the whole pack (133), appendix only. Resolved from the
   registry rather than enumerated in `SUITES.yaml`, so it grows without a
   version bump; Core and Hard do not.
 
@@ -110,7 +110,7 @@ Yes, stated plainly: 12 of 133 scenarios carry a declarative `Policy`. The other
 
 **How was the data acquired?**
 
-Scenarios were *authored*, not collected — and this is the dataset's principal
+Scenarios were *authored*, not collected, and this is the dataset's principal
 limitation (see Limitations). They are written translations of documented failure
 modes from domains that have spent decades cataloguing them:
 
@@ -181,7 +181,7 @@ versions and is appendix-only.
 
 **Will it be updated?**
 
-Yes — the roadmap is (a) declarative policy coverage beyond the Core-12,
+Yes, the roadmap is (a) declarative policy coverage beyond the Core-12,
 (b) additional models on the live leaderboard, (c) scenarios contributed by
 people who did not write the reference defense, which is the limitation that
 matters most.
@@ -194,10 +194,10 @@ Stated here rather than in a footnote, because two of them bound what the result
 can support.
 
 **1. The scenarios and the reference defense share an author.** This is the
-central threat to validity. It is mitigated — `clayseal_expected` is declared
+central threat to validity. It is mitigated, `clayseal_expected` is declared
 before measurement, `open` cases are excluded from scoring, paradox cases are
 quarantined, and the validity audit (`benchmarks/validity.py`, after Arp et al.
-USENIX 2022) fails the build on undeclared label provenance — and it is not
+USENIX 2022) fails the build on undeclared label provenance, and it is not
 eliminated. The honest reading is that BPL measures whether a defense can enforce
 *these* constraints, and independent scenario contribution is the fix.
 
@@ -212,7 +212,7 @@ is architectural: a defense with no cross-call state cannot enforce an aggregate
 constraint, which is checkable by inspection and does not depend on any
 implementation.
 
-**3. Every condition now receives the policy — earlier results did not.** In the
+**3. Every condition now receives the policy, earlier results did not.** In the
 first release only the reference defense was configured with the threshold, so
 the table partly measured which condition had been told the rule. Fixed by
 `policy.py`; results predating it are marked in `bpl_head_to_head.md`.
@@ -237,8 +237,8 @@ policy-allowed (other) work units. It does not measure whether the work was done
 
 The scenarios describe how to structure payments under a reporting threshold,
 split purchase orders, and drip sensitive fields through an allowed channel.
-Every technique is already documented in public compliance literature — FATF
-typologies exist precisely so institutions can recognise them — and none of it
+Every technique is already documented in public compliance literature, FATF
+typologies exist precisely so institutions can recognise them, and none of it
 is operational: the environments are toy simulations with fabricated identifiers
 and no connection to a real system. The dual-use balance is the same one AML
 training material strikes, and the alternative is that only attackers have the

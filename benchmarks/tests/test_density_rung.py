@@ -135,7 +135,7 @@ def test_a_corpus_without_enough_clean_traffic_abstains_rather_than_blocking():
     """Cold start degrades to the rung below, never to blocking on no evidence.
 
     ipi_coding offers 5 clean calibration actions and agent_threat_bench 9,
-    against a floor of 60. Both must abstain — and the flat rows they produce in
+    against a floor of 60. Both must abstain, and the flat rows they produce in
     the sweep are that abstention, not a mechanism failure.
     """
     for name in ("ipi_coding", "agent_threat_bench"):
@@ -173,7 +173,7 @@ def test_an_attack_bearing_task_never_calibrates_the_density():
 
     ASB, InjecAgent and SLEIGHT all take that path, which would hand this rung
     the very sessions it is about to judge. Filtering attack EVENTS is not
-    enough — the task is still scored, so the baseline would be fit in-sample.
+    enough, the task is still scored, so the baseline would be fit in-sample.
     """
     tasks = _tasks("sleight")
     calibration, _ = _calibration_split(tasks, 0)

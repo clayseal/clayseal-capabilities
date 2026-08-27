@@ -2,8 +2,8 @@
 
 An agent gateway serves one session from several threads: a model that emits
 parallel tool calls, an async runtime, a worker pool behind a request. Nothing in
-`SessionBroker` was synchronised — no lock in `broker.py`, `session_memory.py`,
-`session_grants.py` or `decision_log.py` — while `value_budget`, `call_budget`,
+`SessionBroker` was synchronised, no lock in `broker.py`, `session_memory.py`,
+`session_grants.py` or `decision_log.py`, while `value_budget`, `call_budget`,
 `velocity`, `staleness` and `principal_ledger` all take one.
 
 The findings below are separated by how strong the evidence for each is, because
@@ -26,7 +26,7 @@ NOT REPRODUCED, GUARDED ANYWAY
     handful of bytecodes and CPython's GIL does not switch inside it in practice.
 
     They are asserted here regardless. The guarantee they rest on is an
-    implementation detail of one interpreter — it does not hold on a
+    implementation detail of one interpreter: it does not hold on a
     free-threaded build, and it stops holding here the moment anything is added
     between the compare and the increment. These tests state the invariant so
     that change fails loudly instead of silently widening the window.
@@ -70,7 +70,7 @@ def _run_concurrently(fn, n: int = THREADS) -> list:
 
 
 def test_the_audit_budget_is_not_overspent():
-    """Invariant guard. Not reproduced under the GIL — see the module docstring."""
+    """Invariant guard. Not reproduced under the GIL, see the module docstring."""
     budget = 3
     broker = SessionBroker(
         goal=GOAL, scope=SCOPE, audit_budget=budget, on_audit_exhausted="deny"
@@ -100,7 +100,7 @@ def test_one_approval_clears_exactly_one_action():
 
     The request is built and registered directly, the way
     `test_step_up_resolution.py` does, because the rule has to carry a
-    CLASSIFIED violation code — an unclassified one is refused before the
+    CLASSIFIED violation code, an unclassified one is refused before the
     single-use check is ever reached, which would leave the ledger untested.
     """
     from agentauth.capabilities.step_up import (
@@ -154,7 +154,7 @@ def test_the_decision_chain_stays_verifiable_under_concurrency():
     assert ok, reason
     records = broker.decision_log.records()
     assert len(records) == THREADS
-    # Sequence numbers dense and unique — no record overwrote another.
+    # Sequence numbers dense and unique, no record overwrote another.
     assert sorted(r["seq"] for r in records) == list(range(THREADS))
 
 

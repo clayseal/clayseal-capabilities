@@ -8,7 +8,7 @@ rule nobody checks.
 
 **The oracle and the policy stay independently written.** If the policy were
 constructed from the same expression `violated()` uses, agreement between them
-would be a tautology. Declared separately, agreement is a real check —
+would be a tautology. Declared separately, agreement is a real check
 `test_policy_agrees_with_oracle` runs both against every scripted trajectory and
 fails when they disagree, which is how a mis-stated threshold gets caught.
 
@@ -107,7 +107,7 @@ def policy_for(name: str) -> Policy:
 
 
 def coverage() -> tuple[int, int]:
-    """(declared, total) — printed by `--policy-coverage`, cited in RELEASE.md."""
+    """(declared, total), printed by `--policy-coverage`, cited in RELEASE.md."""
     from benchmarks.bpl.registry import SCENARIOS
 
     return len(CORE_POLICIES), len(SCENARIOS)

@@ -1,4 +1,4 @@
-# Safety/usefulness frontier — workspace, gpt-4o-mini-2024-07-18, 6x3 runs per config
+# Safety/usefulness frontier, workspace, gpt-4o-mini-2024-07-18, 6x3 runs per config
 
 | Configuration | ASR | clean utility | utility under attack | friction/task | |
 | --- | --: | --: | --: | --: | --- |

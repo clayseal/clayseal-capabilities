@@ -1,7 +1,7 @@
 """Materialize a path scope as an iVisor workspace.
 
-iVisor serves exactly two mounts — a read-only `rootfs` at guest `/` and a
-read-write `workspace` at guest `/work` — with no per-path ACLs and no third
+iVisor serves exactly two mounts, a read-only `rootfs` at guest `/` and a
+read-write `workspace` at guest `/work`, with no per-path ACLs and no third
 mount. So a fine-grained path scope cannot be *described* to iVisor; it has to
 be *constructed*, by staging only the permitted files into the run's workspace.
 What is not staged is not in the guest's namespace at all, which is why a denied
@@ -11,9 +11,9 @@ COPY, NEVER LINK. Both alternatives are unsafe here:
 
 * A symlink's target is stored verbatim and resolved guest-side against the
   sentry's mount table, so a link to a host file either dangles or is rejected
-  as a containment escape (iVisor gofer.rs:788-791) — useless either way.
+  as a containment escape (iVisor gofer.rs:788-791), useless either way.
 * A hardlink shares the inode, and `/work` is writable, so a guest write would
-  reach through and mutate the original host file — defeating the point.
+  reach through and mutate the original host file, defeating the point.
 
 Run-dir layout, which doubles as a re-runnable artifact:
 
@@ -198,7 +198,7 @@ def stage_workspace(plan: StagingPlan, run_root: Path | str, *,
         target = workspace / item.guest_rel
         target.parent.mkdir(parents=True, exist_ok=True)
         # Re-staging into a reused run dir has to replace a previously staged
-        # file, which may have been chmod'd read-only below — and copying onto
+        # file, which may have been chmod'd read-only below, and copying onto
         # a 0o444 file fails. Unlinking also drops any guest edit, which is the
         # point: staged inputs are restored to the pristine host copy each run.
         if target.exists() or target.is_symlink():
@@ -234,7 +234,7 @@ def workspace_delta(staged: StagedWorkspace) -> dict:
 def collect_writeback(staged: StagedWorkspace, lease) -> dict[str, bytes]:
     """Guest-side changes the lease actually authorizes writing back.
 
-    Returned for the caller to apply — never applied here. Anything the guest
+    Returned for the caller to apply, never applied here. Anything the guest
     changed outside `lease.write_files` is dropped, which is what keeps a
     writable `/work` from laundering an out-of-scope edit back into the repo.
     """

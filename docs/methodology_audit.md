@@ -1,8 +1,9 @@
-# Methodological audit: how our own utility measurement may mislead us
+# Where the utility metric can mislead
 
-Written while chasing the clean-utility loss. Before optimizing the system we
-should be sure we are measuring the right thing. These are the flaws in our
-current evaluation, most load-bearing first. The queued paired diagnostic
+The benchmarks report how much legitimate work a defended agent still completes.
+That number is easy to read wrongly. This lists the ways it can be misleading,
+most consequential first, so nobody tunes the system against a metric that is
+measuring the wrong thing. The queued paired diagnostic
 (benchmarks/live/diagnose_methodology.py) tests the first two directly; the rest
 are framing issues to state, not bugs to fix in code.
 

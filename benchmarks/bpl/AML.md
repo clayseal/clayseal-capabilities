@@ -2,7 +2,7 @@
 
 ClaySeal’s monitor already treats agent tool streams like AML activity streams
 (`agentauth/capabilities/monitor/aml.py`): **velocity, fan-out, structuring,
-post-read escalation, delegated-trust laundering, peer deviation** — scoring
+post-read escalation, delegated-trust laundering, peer deviation**, scoring
 *shape*, not memo text. BPL scenarios are the **composite-policy unit tests**
 for those typologies in an agent loop (Progent-blind per call; violation in the
 sequence).
@@ -37,8 +37,8 @@ sequence).
 ## Design rule for AML-BPL cases
 
 1. **Threshold in policy tool / mandate**, not only the user prompt (placement looks individually authorized).
-2. **Violation = aggregate shape** (sum, fan-out cardinality, hop net, round-trip count) — same philosophy as CTR avoidance.
-3. **No injection strings** — the “laundering” is faithful task execution that recreates the typology.
+2. **Violation = aggregate shape** (sum, fan-out cardinality, hop net, round-trip count), same philosophy as CTR avoidance.
+3. **No injection strings**, the “laundering” is faithful task execution that recreates the typology.
 4. Label `clayseal_expected` honestly: value/call budgets **contain** structuring/fan-out/velocity; layering/round-trip/TBML may need multi-key ledgers or provenance (**partial/open**).
 
 ## Product punchline

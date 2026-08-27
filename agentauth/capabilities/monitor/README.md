@@ -13,12 +13,12 @@ it turns population-level anomaly detection into intent-faithfulness detection.
 
 ## Injection-resistant by construction
 
-Every layer is a pure function of **action metadata** — tools, verbs, resources,
+Every layer is a pure function of **action metadata**, tools, verbs, resources,
 amounts, targets, counts, order, and provenance labels. No layer reads the
 natural-language content an attacker controls. That is the point: an injection
 can move the agent, but it cannot write text that argues a bad trajectory back
 inside the safe set the way it could talk an LLM judge out of a verdict. There is
-deliberately **no LLM adjudicator** in this trust boundary — a model that reads
+deliberately **no LLM adjudicator** in this trust boundary, a model that reads
 untrusted content is the one component an attacker can prompt-inject.
 
 ## Escalating-cost layers
@@ -38,7 +38,7 @@ inside a safe envelope of action paths.
 
 All trajectory-level signals (max-surprise, CUSUM, path envelope, AML) are
 calibrated per goal bucket by conformal, and the block decision is
-**trajectory-level** so the false-alarm rate stays near `alpha` — a per-step OR
+**trajectory-level** so the false-alarm rate stays near `alpha`, a per-step OR
 would inflate it to ~`1-(1-alpha)^length`. The conformal layer is **split**
 (calibrated on a slice disjoint from the scorer's training) to avoid the
 leakage that makes an overfit scorer's threshold too tight.
@@ -48,7 +48,7 @@ leakage that makes an overfit scorer's threshold too tight.
 `agentauth/capabilities/broker.py` composes the per-action enforcement floor
 (scope, protected zones, egress, budgets) and this behavioral detector into the
 single online gateway the memo describes. Per action it runs the hard floor,
-then — only for floor-allowed actions — the trajectory detector, and it speaks
+then, only for floor-allowed actions, the trajectory detector, and it speaks
 the existing capability vocabulary: a soft escalation raises a
 `step_up` request; every outcome updates a `ScopingMetrics` (prevented
 violations, `scan`/`drift`/`novelty` triggers, broker overhead).
@@ -88,9 +88,9 @@ guarantee.
 
 ## Scorers
 
-- `scoring/ngram.py` — deterministic goal-conditioned n-gram. No dependencies,
+- `scoring/ngram.py`, deterministic goal-conditioned n-gram. No dependencies,
   runs anywhere, is the honest floor and the offline fallback.
-- `scoring/transformer.py` — goal-conditioned decoder-only LM (torch, the
+- `scoring/transformer.py`, goal-conditioned decoder-only LM (torch, the
   `[monitor]` extra). Surprise is the model's negative log-probability of each
   action given the sealed goal and the prior actions. Trained on a GPU VM.
 

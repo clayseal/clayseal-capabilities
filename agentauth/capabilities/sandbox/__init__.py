@@ -6,7 +6,7 @@ path scope are compiled into iVisor launch policy, the work runs inside the
 guest, and iVisor's verdict stream comes back as evidence the agent cannot
 forge.
 
-Typical use — the sandbox is a peer of the broker, invoked after it allows:
+Typical use, the sandbox is a peer of the broker, invoked after it allows:
 
     decision = broker.authorize(action)
     if decision.outcome is Outcome.ALLOW:

@@ -25,7 +25,7 @@ for s in DATA:
 # escape so the JSON can live safely inside a <script> tag
 DATA_JS = json.dumps(DATA, separators=(",", ":")).replace("</", "<\\/")
 
-HTML = r"""<title>Clay Seal × iVisor — Containment Report</title>
+HTML = r"""<title>Clay Seal × iVisor, Containment Report</title>
 <style>
 :root{
   --ground:#0e1214; --panel:#141a1d; --panel-2:#10161a; --line:#243036;
@@ -331,7 +331,7 @@ function renderDetail(){
     <div class="sec-label" style="margin-top:20px"><span>Raw audit channel</span>
       <button class="toggle" onclick="this.closest('.detail').querySelector('.firehose').classList.toggle('on');this.textContent=this.textContent.includes('show')?'hide raw fd-3 firehose':'show raw fd-3 firehose'">show raw fd-3 firehose</button></div>
     <div class="firehose">
-      <div class="cap">${s.raw.length} verdict lines written to fd 3, a descriptor the guest cannot open, read, or forge. Decision log: ${s.log.receipts} hash-chained receipts, head <span class="mono">${s.log.head.slice(0,26)}…</span> — <span style="color:var(--allow)">${s.log.verified?"VERIFIED":"FAILED"}</span></div>
+      <div class="cap">${s.raw.length} verdict lines written to fd 3, a descriptor the guest cannot open, read, or forge. Decision log: ${s.log.receipts} hash-chained receipts, head <span class="mono">${s.log.head.slice(0,26)}…</span>, <span style="color:var(--allow)">${s.log.verified?"VERIFIED":"FAILED"}</span></div>
       <pre>${s.raw.map(esc).join("\n")}</pre>
     </div>`;
 

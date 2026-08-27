@@ -193,7 +193,7 @@ def test_a_baseline_that_only_knows_the_root_scores_only_the_root():
     # The precise invariant: below ``ready_depth`` the scorer is *indifferent*.
     # A novel leaf and a known leaf under the same known root must score
     # identically, because all the surprise either earns comes from the root
-    # segment. Asserting the novel leaf scores exactly 0 would be wrong — the
+    # segment. Asserting the novel leaf scores exactly 0 would be wrong, the
     # known root still contributes its own (near-zero) term.
     novel_leaf = scorer.surprise(_traj(["repo/unique0/stolen.txt"]))[0].surprise
     known_leaf = scorer.surprise(_traj(["repo/unique0/file0.txt"]))[0].surprise

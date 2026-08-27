@@ -1,4 +1,4 @@
-"""Lightweight tool ontology — preconditions, effects, and reversibility.
+"""Lightweight tool ontology, preconditions, effects, and reversibility.
 
 The feasibility check needs to know, for each tool, what facts it requires to
 run (preconditions), what facts it makes true or false (effects), and whether an

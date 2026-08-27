@@ -176,13 +176,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n**{totals['bound']} of {totals['rule_shaped']} "
               f"({totals['bound'] / totals['rule_shaped']:.0%}) are extracted "
               f"and bound to a tool automatically**, against 1 before. The "
-              f"remainder still arrive as TODO comments for a person, and the "
-              f"reason is worth naming rather than rounding away: the reader "
-              f"is a line-at-a-time regex, so a sentence wrapped across two "
-              f"lines has its tools on one and its rule on the other and "
-              f"neither half binds, and a rule whose subject is a business "
-              f"noun rather than a tool name has nothing in the catalogue to "
-              f"match.")
+              f"remainder arrive as TODO comments for a person. What binds a "
+              f"rule is the HEADING it sits under, which names the operation "
+              f"once and never repeats it in the sentence; reading the section "
+              f"took tau2's airline document from 0 enforceable rules to 4. "
+              f"The remaining limit is vocabulary rather than structure: the "
+              f"telecom document argues about bills, lookup and suspension "
+              f"while its tools are named `make_payment`, `refuel_data` and "
+              f"`resume_line`, and no reader working from tool NAMES can bridge "
+              f"that. Tool DESCRIPTIONS can, and `policy_scaffold.Catalog` "
+              f"already carries them. See "
+              f"`benchmarks/results/section_scope.md`.")
 
     if totals["silent"]:
         print(f"\n**{totals['silent']} of {totals['rule_shaped']} rule-shaped "

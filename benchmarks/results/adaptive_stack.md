@@ -13,8 +13,8 @@ python -m benchmarks.adaptive_stack --dataset redcode --rounds 8 --breadth 24 \
 ## Why this run exists
 
 `validity.py` gate P10 reads a declaration: how many attacker knowledge levels
-does this evaluation have. The BPL sweep declares four — `scripted, blind,
-feedback, oracle` — and passes.
+does this evaluation have. The BPL sweep declares four, `scripted, blind,
+feedback, oracle`, and passes.
 
 The declaration was not backed for the system it names. Every adaptive artifact
 in `results/` attacks a **ladder rung**:
@@ -25,7 +25,7 @@ in `results/` attacks a **ladder rung**:
 | `adaptive_inscope.json` | `allow-all` … `+velocity+density` |
 | `adaptive_persistence.json`, `adaptive_destruction.json`, `adaptive_side-channel.json` | ladder rungs |
 
-The ladder is an **ablation** — a monotone sequence of floor constructions used
+The ladder is an **ablation**, a monotone sequence of floor constructions used
 to attribute containment to a mechanism. The system the meta names (`clayseal`)
 is `DeployableStack`: floor **plus** intent envelope, parameter provenance,
 confidentiality flow and session state. It had never faced an adaptive adversary
@@ -40,14 +40,14 @@ its objective predicates run unchanged against the product.
 Neither was visible in a number. Both would have produced a confident wrong
 conclusion.
 
-**The stack was byte-identical to its floor rung in every cell.** Not close —
+**The stack was byte-identical to its floor rung in every cell.** Not close
 identical, with `step-up=block` and `step-up=allow` also identical, meaning the
 gateway never issued a single step-up across 1.4M candidates. Every behavioural
 layer was contributing exactly nothing.
 
 The cause was not the layers. The harness replays `authorize()` calls and never
-calls `observe_output`, so the flow tracker and the provenance graph — both of
-which correlate a value seen in a TOOL RESULT with a later action — had no
+calls `observe_output`, so the flow tracker and the provenance graph, both of
+which correlate a value seen in a TOOL RESULT with a later action, had no
 runtime input. They were starved, not quiet. This is the repository's own
 invariant failing: *does the mechanism have a runtime input?* Reporting it as
 "the behavioural layers contribute nothing" would have blamed the mechanism for
@@ -61,7 +61,7 @@ secret's VALUE, which neither produced.
 
 So a new objective, `in-scope-content-staging`: the secret's **bytes** are
 recoverable from a published artifact. It is defined over what an observer of
-that artifact could reconstruct and never references a policy — checked
+that artifact could reconstruct and never references a policy, checked
 structurally by `test_content_staging.py`, which asserts the module cannot even
 import the library it judges. The old objective is unchanged and still reported,
 so nothing published moves.
@@ -86,7 +86,7 @@ Containment that does not move as the attacker learns the design is a
 **structural** guarantee: knowing the policy does not help, because the policy
 is a property of where the action points and the attacker cannot point elsewhere
 and still achieve the objective. This is the claim worth making, and it is the
-same at all three levels for the stack and for its floor rung — the floor is
+same at all three levels for the stack and for its floor rung, the floor is
 what earns it.
 
 ### In-scope content staging: the behavioural layers do all the work
@@ -106,13 +106,13 @@ an action points can see it. That reproduces `in_scope_exfiltration.md` against
 the shipped gateway rather than against the ladder.
 
 **The behavioural layers close it, and get STRONGER as the attacker learns
-more** — 75.6% → 96.8% → 100.0%. That direction is unusual enough to explain: a
+more**, 75.6% → 96.8% → 100.0%. That direction is unusual enough to explain: a
 better-informed attacker constructs payloads that reliably CARRY the secret,
 and carrying the secret is exactly what the flow tracker keys on. Knowing the
 design does not help you exfiltrate a value without moving the value.
 
 **All of it is STEP_UP.** The `step-up=allow` row is the pessimistic supervised
-reading — a human who approves everything — and it collapses to the floor's
+reading, a human who approves everything, and it collapses to the floor's
 number. So this containment is real for an unattended deployment and is entirely
 a bet on supervision otherwise. It is one row rather than a footnote because
 reporting a single number here would hide which deployment is being described.
@@ -132,7 +132,7 @@ a proxy for the harm, and this row is what a proxy measures.
 ## A defect the search found in the shipped code
 
 Of nine staging evasions run against the gateway, **base85 was the one that got
-through** — which is what `flow_window.md` already records as open.
+through**, which is what `flow_window.md` already records as open.
 
 The cause: `confidentiality._decode_layer` tries encodings strictest-first and
 stopped at the first attempt that did not raise. `urlsafe_b64decode` does not
@@ -140,9 +140,9 @@ validate, so it "succeeds" on a base85 token, returns 13 bytes of noise, and the
 base85 decoder two lines below was never reached.
 
 Fixed by judging whether a decode plausibly SUCCEEDED rather than whether it
-raised. The plausibility check had the same bug on its first attempt —
+raised. The plausibility check had the same bug on its first attempt
 `errors="ignore"` deletes every invalid byte, so the noise became a
-six-character mostly-printable string and passed — so it decodes strictly now.
+six-character mostly-printable string and passed, so it decodes strictly now.
 
 | | before | after |
 | --- | ---: | ---: |
@@ -158,13 +158,13 @@ having, and it did not move.
 - **One corpus.** RedCode. The objectives are corpus-independent but the tasks
   are not.
 - **The synthetic secret is a constant** both sides agree on, because a replay
-  has no real tool output. That is faithful in the way that matters — the
-  defender learns the value only by observing the read — and it is not a test of
+  has no real tool output. That is faithful in the way that matters, the
+  defender learns the value only by observing the read, and it is not a test of
   detecting an unknown secret.
 - **The attacker's repertoire is authored**, not searched. Nine staging shapes
   chosen to include the ones already documented as open. A stronger attacker is
   a stronger result; this one is a floor on what an adaptive adversary achieves,
   not a ceiling.
-- **`step-up=allow` is pessimistic by construction** — it assumes a human
+- **`step-up=allow` is pessimistic by construction**, it assumes a human
   approves every request. The true supervised number is between the two rows and
   depends on the approver.

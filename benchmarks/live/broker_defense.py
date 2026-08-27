@@ -184,7 +184,7 @@ def goal_named_env_destinations(
     """Destinations in clean snapshots of files the sealed goal named.
 
     Only files whose names appear in the goal are opened. Contents come from
-    the pre-contamination snapshot, not from runtime tool output — so an
+    the pre-contamination snapshot, not from runtime tool output, so an
     injection spliced into the bill after task start never enters the seed.
     """
     if not clean_files:
@@ -298,7 +298,7 @@ class LiveBrokerHarness:
         if self.provenance or self.taint:
             recips, domains = goal_destinations(query)
             # Trusted environment provenance: IBANs/emails in the CLEAN copy of
-            # files the user named. Never read the live/injected env here —
+            # files the user named. Never read the live/injected env here
             # banking attacks overwrite bill text with the attacker IBAN.
             env_recips = goal_named_env_destinations(query, self.clean_files)
             recips |= env_recips
@@ -313,7 +313,7 @@ class LiveBrokerHarness:
                                   allowed_domains=set(domains),
                                   self_identifiers=set(self._identity))
         self._egress = egress
-        # Fresh provenance graph per run — never carry destinations across tasks.
+        # Fresh provenance graph per run, never carry destinations across tasks.
         if self.provenance or self.taint:
             from agentauth.capabilities.parameter_provenance import ParameterProvenance
 
@@ -388,8 +388,8 @@ class LiveBrokerHarness:
 
         STRUCTURED recipient fields of a tool output widen the trusted egress
         set (injection hides in free text, which extract_recipients ignores).
-        Free-text destinations are NEVER auto-trusted — even from a goal-named
-        containing object — because the legit recipient and an injected attacker
+        Free-text destinations are NEVER auto-trusted, even from a goal-named
+        containing object, because the legit recipient and an injected attacker
         IBAN can sit side by side in one trusted file (measured ASR 4.2% when
         we auto-trusted unique free-text). Free-text of a goal-named object
         steps up via provenance on the authorize path instead.
@@ -556,7 +556,7 @@ class BrokerToolsExecutor(ToolsExecutor):
         super().__init__(tool_output_formatter)
         self.harness = harness
         # ARGUS-style: one re-audited retry with a grounded destination when the
-        # floor attached trusted_candidates. Default on — pure utility, no
+        # floor attached trusted_candidates. Default on, pure utility, no
         # bypass (retry goes through gate/authorize again).
         self.auto_retry_hints = auto_retry_hints
 

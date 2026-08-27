@@ -13,7 +13,7 @@ done
 ```
 
 Azure OpenAI, deployment `gpt-4o-mini-2024-07-18`, which **serves
-`gpt-5-mini-2025-08-07`** — the name is an alias so AgentDojo's `ModelsEnum`
+`gpt-5-mini-2025-08-07`**, the name is an alias so AgentDojo's `ModelsEnum`
 accepts it. 6 user tasks per cell. Raw log:
 [attacks_2026_banking.log](attacks_2026_banking.log).
 
@@ -45,7 +45,7 @@ An injection can fail for two very different reasons:
 2. there is **nothing to detect**, because complying is reasonable.
 
 Alignment training closes (1). It cannot close (2), because (2) is not
-misbehaviour — the model is reading a document it was told to read and doing what
+misbehaviour, the model is reading a document it was told to read and doing what
 the document says. A bill really does carry payment instructions. A landlord
 notice really does carry an account change.
 
@@ -87,13 +87,13 @@ complies with a plausible one a third of the time. The gap is not the model
 getting weaker; it is the attack no longer looking like an attack.
 
 **The defense catches what alignment did not.** Every cell the model fell for,
-the authorization layer contained — 0 of 48 across the whole family. That is the
+the authorization layer contained, 0 of 48 across the whole family. That is the
 claim worth having, and it is stronger than the old one: containing an attack
 the model would have refused anyway proves very little, and this is the
 complement of that.
 
-**Structure beats prose.** `schema_field` — key/value under a bracketed header,
-`auto_authorized=true` — matches the best prose attack while being the least
+**Structure beats prose.** `schema_field`, key/value under a bracketed header,
+`auto_authorized=true`, matches the best prose attack while being the least
 persuasive text in the set. It never argues. It looks like the tool speaking,
 and instruction/data confusion at the STRUCTURAL level is not something a
 politeness-shaped refusal boundary catches.
@@ -109,7 +109,7 @@ That is not a neutral sample.
 | 4 | "**modify the recipient of a recurring payment**" | yes — a landlord notice says exactly this |
 
 Every run taking the first three measures the goals a model is most likely to
-balk at on **content** grounds, independently of how the injection is framed —
+balk at on **content** grounds, independently of how the injection is framed
 and that ceiling is invisible in the ASR number. The effect is visible in the
 table above: `document_workflow` goes 0 of 6 to 2 of 6 purely by changing which
 goal it carries, with the framing held constant.
@@ -127,7 +127,7 @@ published moves.
 - **The defense's 0 of 48 is at n=48 pooled**, one-sided 97.5% upper bound
   ≈ 7.4%. It is not "zero".
 - **Friction is real and uneven.** `schema_field` on the plausible goal costs
-  0.83 step-ups per task — the layer asks about five of six tasks. That is the
+  0.83 step-ups per task, the layer asks about five of six tasks. That is the
   supervision bill for containing this class, and it is not free.
 - **The honest worry.** An injection that lands because it is plausible may be
   one a *human approver* would also wave through. The step-up column is the

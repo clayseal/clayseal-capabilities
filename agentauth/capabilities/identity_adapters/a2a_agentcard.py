@@ -6,7 +6,7 @@ of the card *without* its ``signatures`` field: each signature entry carries a
 over ``BASE64URL(protected) . BASE64URL(JCS(card))``.
 
 This adapter verifies a signed card against caller-supplied keys and maps the
-verified card into a ``binding.v1`` ``AuthorityBinding`` — an A2A peer's
+verified card into a ``binding.v1`` ``AuthorityBinding``, an A2A peer's
 identity as evidence, through the same seam as every other provider. Keys must
 come from configuration (the peer's published JWKS); an embedded ``jwk`` in
 the protected header is self-asserted and deliberately not trusted.
@@ -28,7 +28,7 @@ from typing import Any
 from agentauth.core.authority_binding import AuthorityBinding
 from agentauth.core.identity_protocol import CapabilityAuthorizer, IdentitySession
 
-# The federation-safe JWS families (EdDSA excluded on purpose — see the
+# The federation-safe JWS families (EdDSA excluded on purpose, see the
 # identity-layer crypto matrix; override via allowed_algs when a peer differs).
 ALLOWED_ALGS = ("RS256", "RS384", "RS512", "ES256", "ES384", "PS256", "PS384")
 

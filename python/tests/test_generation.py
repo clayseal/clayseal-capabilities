@@ -1,4 +1,4 @@
-"""Phase C1: envelope generation — plan, ground against the ontology, sign.
+"""Phase C1: envelope generation, plan, ground against the ontology, sign.
 
 The grounding step is the point: a coherent plan seals, an incoherent plan (a
 goal the tools cannot reach) is caught and never sealed, so a hallucinated plan

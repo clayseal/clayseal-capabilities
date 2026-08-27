@@ -30,7 +30,7 @@ each gate is that scalp. A gate with no scalp is a guess.
 ## Using it on your own evaluation
 
 `audit()` takes a plain list of cells and a metadata dict. Nothing in it is
-specific to this repository — the point is that another defense can run it and
+specific to this repository, the point is that another defense can run it and
 publish the verdict, including against us.
 """
 from __future__ import annotations
@@ -308,7 +308,7 @@ GATES: tuple[Gate, ...] = (
     Gate("P3", "calibration isolation", g_data_snooping, kind="declaration",
          scalp="the adaptive harness never called `observe_corpus`, so every "
                "velocity result ran with a cap 6.4x tighter than an operator "
-               "would set — in the direction that flatters the system."),
+               "would set, in the direction that flatters the system."),
     Gate("P4", "trivial controls", g_spurious_correlation,
          scalp="a `deny-all` control row caught a tie-handling bug that scored "
                "it 100% at 1% FPR, and a length leak that scored it AUC 1.000."),
@@ -339,7 +339,7 @@ GATES: tuple[Gate, ...] = (
 
 def audit(cells: Iterable[dict], meta: dict | None = None) -> list[Finding]:
     """Run every gate. The Gate's own `kind` wins over the Finding's default,
-    so a declaration gate that passes is still reported as a declaration —
+    so a declaration gate that passes is still reported as a declaration
     otherwise a reader cannot tell which verdicts a program actually settled."""
     cells = list(cells)
     meta = dict(meta or {})

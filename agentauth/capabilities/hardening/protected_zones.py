@@ -89,7 +89,7 @@ def is_protected_path(
     """True when ``path`` falls in a protected zone and is not explicitly allowed.
 
     Total by contract: for any input this returns a decision and never raises.
-    That is not a nicety for a deny-list — a deny-list is allow-by-default, which
+    That is not a nicety for a deny-list, a deny-list is allow-by-default, which
     makes an unreadable path the *dangerous* direction. "I cannot parse this,
     therefore it is not protected" is precisely the fail-open that
     ``benchmarks/stress_gates.py`` exists to find, and before this guard a

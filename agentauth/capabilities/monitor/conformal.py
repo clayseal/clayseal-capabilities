@@ -1,4 +1,4 @@
-"""Conformal calibration — the distribution-free false-alarm guarantee.
+"""Conformal calibration, the distribution-free false-alarm guarantee.
 
 A raw surprise score is not a decision. Thresholding it by hand trades one
 magic number for another and gives no guarantee about how often benign steps are

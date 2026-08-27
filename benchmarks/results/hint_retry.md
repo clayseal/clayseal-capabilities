@@ -6,9 +6,9 @@ retry is fully re-authorized. We had `trusted_candidates` on
 
 ## Mechanism
 
-- `agentauth/capabilities/retry_hints.py` — rewrite destination-shaped args
+- `agentauth/capabilities/retry_hints.py`, rewrite destination-shaped args
   only (`to` / `account` / …); never touch `body`.
-- `BrokerToolsExecutor` — on floor egress miss with candidates, one re-audited
+- `BrokerToolsExecutor`, on floor egress miss with candidates, one re-audited
   retry via `harness.gate` (full `authorize`). No bypass.
 - Candidate order: egress allow-list first (can ALLOW), then provenance
   structured (STEP_UP only under product policy).
