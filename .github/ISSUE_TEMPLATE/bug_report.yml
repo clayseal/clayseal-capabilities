@@ -1,0 +1,62 @@
+name: Bug report
+description: Something the gateway got wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For anything that lets an agent get **past** a control, stop and use
+        [a private advisory](https://github.com/pberlizov/clayseal/security/advisories/new)
+        instead.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The decision you got.
+      placeholder: |
+        `issue_refund(amount=900)` was allowed on the second call, after the
+        session ceiling of 1000 was already spent.
+    validations: {required: true}
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations: {required: true}
+
+  - type: textarea
+    id: policy
+    attributes:
+      label: The policy
+      description: >
+        The policy file, or the smallest part of it that still shows the
+        problem. This is usually the fastest thing to look at, because most
+        surprises turn out to be a rule that says something other than what it
+        looks like it says. `clayseal policy lint` output helps too.
+      render: yaml
+    validations: {required: true}
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: >
+        The shortest script that shows it. A failing test is ideal and is what
+        the fix will need anyway.
+      render: python
+    validations: {required: true}
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`pip show clayseal | head -2`, or the commit SHA."
+    validations: {required: true}
+
+  - type: input
+    id: platform
+    attributes:
+      label: Python and OS
+      placeholder: "3.13 on macOS 15 / 3.10 on Ubuntu 24.04"
+    validations: {required: true}

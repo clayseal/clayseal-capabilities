@@ -173,6 +173,8 @@ Verified in production posture:
 | Step-up exhaustion (ask until the human stops reading) | `audit_budget`, charged at every step-up site | `SUPERVISED` profile sets 8 |
 | Approval replayed for a second action | `(tool, arguments_hash)` keying + single-use `approval_id` | `test_step_up_resolution.py` |
 | Nested destination hidden in an object argument | Egress walk covers dicts, bounded | Found by this pass; `test_egress_floor_properties.py` |
+| Destination re-spelled so the allow-list cannot read it (IP literal in any base, bracketed IPv6, single-label host, non-ASCII homograph) | Host parse canonicalises to one form before matching: `inet_aton` rules for IPv4, IDNA for non-ASCII | `test_egress_destination_spellings.py`; all five were ALLOWED before the 0.6 pass while the dotted form was refused |
+| Denied path re-spelled so `fnmatchcase` cannot match it (case, Win32 trailing dot or space) | Extra readings widen DENY only; a path is denied if any reading is denied | `test_path_scope_same_file_spellings.py`; `workspace/SECRETS/key.pem` was ALLOWED under `denied_paths=["workspace/secrets/**"]` |
 | **Content-defined harm** (authorized action, harmful meaning) | **Not stopped** | 6.3% ([why_we_fail.md](../benchmarks/results/why_we_fail.md)) |
 | **In-scope data staging** | **Not stopped** | byte-identical to allow-all ([in_scope_exfiltration.md](../benchmarks/results/in_scope_exfiltration.md)) |
 

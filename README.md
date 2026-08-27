@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-2%2C244%20passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-2300%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![PyPI](https://img.shields.io/badge/pip-clayseal-orange.svg)](https://pypi.org/project/clayseal/)
 
 **A policy gateway for AI agents. It stops the attack where every single call
@@ -633,7 +633,11 @@ want:
 - [Privacy and data handling](docs/PRIVACY.md) for what it stores and what leaves the process
 
 For reporting a vulnerability see [SECURITY.md](SECURITY.md); to contribute see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md). Upgrading from `agentauth-capabilities`:
+[docs/MIGRATION.md](docs/MIGRATION.md). Corpora and their licences:
+[THIRD_PARTY.md](THIRD_PARTY.md). Cutting a release:
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Naming
 
