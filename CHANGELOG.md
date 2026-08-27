@@ -6,6 +6,104 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Public-benchmark coverage
+
+- **A control for event ORDER, because four corpora could be beaten by
+  counting.** A benign-paired corpus that replays a benign prefix and then an
+  attack suffix can be "contained" without reading a tool, a path, a destination
+  or a policy: block late events and the attack share falls, because the attack
+  events are the late ones. Every paired corpus in the repository segregates
+  this way, in 100% of paired tasks. `position-only-control` reads an event's
+  index and nothing else, and is now printed in every ladder table beside
+  `deny-all`, for the same reason `deny-all` is there. It lives in `CONTROLS`
+  rather than `LADDER` so the monotone-ablation invariants stay valid.
+
+  Screened over every registered corpus by
+  `python -m benchmarks.ordering_exposure`: `agent_threat_bench`, `asb`,
+  `injecagent` and `ipi_coding` each report 100% containment that a position cut
+  also reaches at the same zero false-block. That is a statement about those
+  corpora, not about the rungs. The ones that discriminate do so decisively,
+  RedCode 100% against counting's 0/400 and AgentDojo 100% against 3.9%, which
+  is what keeps the control honest.
+  [ordering_exposure.md](benchmarks/results/ordering_exposure.md).
+
+- **`benchmarks/cli.py` honours the contract the corpus already declared.** A
+  loader can name its highest valid rung (`ladder_rung`) and mark its
+  false-block column unscoreable (`false_block_unscoreable`). `scoreboard.py`
+  read both; the CLI, which generates every `results/new-suites/*.md`, read
+  neither. So `sleight.md` published a velocity row as a result on a corpus
+  whose own loader says velocity "misreads long coding-agent sessions as abuse"
+  and whose friction column it marks unmeasurable.
+
+- **An uncalibrated cap is no longer printed as a measurement.**
+  `VelocityLadderEngine.calibrate` reads only attack-free tasks. A loader that
+  concatenates a benign twin and its attack supplies none, so the cap silently
+  became `default_cap = 5`, an arbitrary constant, on SLEIGHT and ASB.
+  `calibrate_with_provenance` returns whether calibration data existed and the
+  table now names the rungs that fell back.
+
+- **SLEIGHT is reported through the layer it tests.** Its sabotage happens inside
+  a workspace the agent legitimately holds (all 122 escaped events are under
+  `/opt/**`, the largest category being `model_priors`), so a per-action
+  authorization layer is the wrong instrument: 5.4% at the ladder's valid rung
+  against the trajectory detector's **94.4% (17/18) at 0/18, 97.5% upper bound
+  18.5%**. The loader already said so in `meta["score_with"]`.
+
+- **Five corpora cannot support a friction claim at all.** Rendering the zeros
+  with their bounds shows `fixture` has 7 benign events, `b3` 8, `mcp_attack` 9,
+  `advbench_agent` 11, `agent_threat_bench` 24. A zero false-block on 7 events is
+  not distinguishable from 41%.
+
+### Changed: the corpus-derived rule pack is off by default
+
+Measured at zero on every published number, so running non-general pattern
+matching in front of everybody's traffic buys nothing. It was on by default
+because the published figures had been produced that way, which is a reason to
+keep an arm reproducible and not a reason to make it the default. Turn it on
+with `session_rules=True`. Every number is unchanged either way:
+`corpus_rule_contribution.md`.
+
+### Fixed: a policy document's most common sentence was dropped entirely
+
+"Payments over $10,000 require approval" produced **no rule and no TODO**. The
+marker list held `requires approval` and not `require approval`, so a plural
+subject lost the line, and the module's whole contract is that nothing
+rule-shaped disappears silently. The same singular/plural miss sat one layer
+down, where a ceiling that was extracted recorded `needs_approval_above: False`,
+which inverts the rule rather than missing it.
+
+Three more ordinary phrasings were dropped the same way: "No payment may exceed
+$500", "Payments are capped at $50,000 per day", "The daily limit is $20,000".
+
+Rather than add four phrases to a phrase list that loses on the fifth, **a line
+naming an amount of money is now rule-shaped whatever words it uses.** Money is
+a structural signal. Prose with a bare number ("5 Main Street", "12 sections")
+is unaffected, because the money pattern wants a currency.
+
+On tau2's own documents this finds two more real rules, both compensation
+ceilings the airline policy states ($100 and $50 travel certificates), and the
+external oracle is unchanged at 1 false block in 13,907 ground-truth actions.
+
+### Verified: the integration surfaces
+
+Exercised rather than described, because a broken integration is invisible to
+the corpora: nothing in the benchmark harness speaks MCP over HTTP, emits OCSF,
+or wraps a framework's tools. `test_integration_surfaces.py` now covers all six.
+
+| surface | checked |
+| --- | --- |
+| `Guardrail.wrap_all` | name, docstring and signature survive, so a framework introspects the tool it had; the ceiling still refuses |
+| MCP proxy | an ungranted tool is withheld from the catalogue AND its call is never forwarded upstream |
+| HTTP gateway | protocol `2026-07-28`; a header that disagrees with the body is refused with `-32020` per SEP-2243 |
+| OCSF sink | `class_uid` 6003 with the required API Activity fields |
+| W3C trace context | a valid `traceparent` parses, a malformed one is rejected |
+| document to policy | the draft round-trips through the policy loader |
+
+`ledger_backends` was the one optional extra that did not name itself on a
+missing dependency: setting the ledger URL without the redis client gave a bare
+`ImportError`. It now says which install fixes it, like the others.
+
+
 ### Removed: literals copied from benchmark scenarios
 
 The same audit as the regex one, applied to overfitting: every compound string

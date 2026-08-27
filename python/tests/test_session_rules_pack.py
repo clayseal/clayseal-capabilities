@@ -56,9 +56,24 @@ def test_the_primitive_applies_them_when_asked():
     assert decision.layer == "session-taint"
 
 
-def test_the_measured_profile_defaults_to_on():
-    """Every published containment number was produced with the pack running."""
+def test_the_pack_is_off_unless_a_deployment_asks_for_it():
+    """It is corpus-derived, and it was measured at zero.
+
+    The published numbers were produced with it ON, which is a reason to keep
+    that arm reproducible and not a reason to run non-general pattern matching
+    in front of everybody's traffic. Removing it changes no number on any
+    corpus or on the BPL headline: `corpus_rule_contribution.md`.
+    """
     stack = DeployableStack.from_goal(GOAL, scope=SCOPE, entailment_judge=None)
+    assert stack.broker.session_rules is False
+    stack.broker.session.adopt(_tainted_session())
+    assert stack.authorize(PACKAGING).outcome == "allow"
+
+
+def test_asking_for_it_still_gets_the_pack():
+    stack = DeployableStack.from_goal(
+        GOAL, scope=SCOPE, entailment_judge=None, session_rules=True
+    )
     assert stack.broker.session_rules is True
     stack.broker.session.adopt(_tainted_session())
     decision = stack.authorize(PACKAGING)
@@ -67,7 +82,7 @@ def test_the_measured_profile_defaults_to_on():
 
 
 def test_the_profile_can_be_measured_without_them():
-    """The switch a deployment on unlike traffic needs, and could not reach before."""
+    """Explicitly off, which is now also the default."""
     stack = DeployableStack.from_goal(
         GOAL, scope=SCOPE, entailment_judge=None, session_rules=False
     )

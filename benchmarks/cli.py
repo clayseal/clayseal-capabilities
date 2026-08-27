@@ -138,7 +138,7 @@ def _corpus_caveats(tasks, engines) -> list[str]:
             "construction. Friction is measured on corpora that do not have this "
             "property.")
     uncal = [e.name for e in engines
-             if hasattr(e, "calibrated") and not getattr(e, "calibrated")]
+             if hasattr(e, "calibrated") and not e.calibrated]
     if uncal:
         lines.append(
             f"\n> **Uncalibrated:** {', '.join(uncal)} found no attack-free task to "

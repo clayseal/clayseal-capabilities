@@ -30,6 +30,24 @@ system containment is monotone up the ladder at flat, near-zero false-block:
 | `task-scope+binding+budget` | `SessionValueBudget` / `SessionCallBudget` | + fragmented over-budget (aggregate volume) |
 | `deny-all` | — | everything (friction ceiling) |
 
+Two rows are **controls, not rungs**. They live in `CONTROLS` rather than
+`LADDER` so the monotone-ablation invariants stay valid, and both are printed in
+every table because a containment number that does not beat its controls is not
+a measurement:
+
+| Control | Reads | Bounds |
+| --- | --- | --- |
+| `deny-all` | nothing | the containment column: refuse everything and you win it |
+| `position-only-control` | an event's index in its task, and nothing else | the **order** column: a corpus that replays a benign prefix then an attack suffix can be "contained" by counting |
+
+The second one exists because four of fourteen corpora turned out to be
+ordering-exposed: `agent_threat_bench`, `asb`, `injecagent` and `ipi_coding` each
+report 100% containment that a pure position cut also reaches at the same zero
+false-block. That is a statement about those corpora, not about the rungs, and
+it is measured for every registered corpus by
+`python -m benchmarks.ordering_exposure`
+([results/ordering_exposure.md](results/ordering_exposure.md)).
+
 The budget rung is stateful: it threads a task's events through the real
 session ledgers in event order, catching aggregate volume (many individually
 valid calls that together cross a requester-inherited ceiling) that every

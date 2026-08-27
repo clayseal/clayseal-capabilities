@@ -3,8 +3,33 @@
 STATUS: current
 
 ```bash
+python -m benchmarks.cli --dataset sleight --mode detector      # the layer this corpus tests
 python -m benchmarks.cli --dataset sleight --mode ladder --ci --json benchmarks/results/new-suites/sleight.json
 ```
+
+## Read the detector number, not the ladder
+
+SLEIGHT is a catalogue of **evasion**, not of risky operations. Its published
+result is about monitors, and its sabotage happens inside a workspace the agent
+was legitimately granted: of the 122 attack events the authorization ladder lets
+through, every path is under `/opt/**`, and the largest category is
+`model_priors` (47), which is about what a monitor believes rather than what an
+action touches. A per-action authorization layer is the wrong instrument here and
+the loader says so in `meta["score_with"] = "detector"`.
+
+| layer | containment | false-block |
+| --- | ---: | ---: |
+| authorization ladder, at this corpus's declared valid rung | 5.4% (7/129) | not scoreable, see below |
+| **trajectory detector** (`--mode detector`, split-conformal, alpha=0.05) | **94.4% (17/18)** | 0/18, 97.5% upper bound 18.5% |
+
+The detector fits on train-split benign trajectories only and measures both axes
+on the held-out split, so neither number sees its own training data. Eighteen
+held-out tasks is a small denominator and the false-block zero is bounded
+accordingly: it means "not distinguishable from 18.5%", not "never".
+
+The ladder table below is an **ablation**, kept because the contrast is the
+finding: it shows what per-action authorization cannot reach on covert sabotage,
+which is most of it.
 
 | Engine | Attack prevented | False-block | Overhead p50/p95/p99 (ms) | Tasks |
 | --- | --- | --- | --- | --- |
