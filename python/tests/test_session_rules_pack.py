@@ -104,14 +104,22 @@ def test_every_rule_only_ever_asks():
     assert "Outcome.DENY" not in joined
 
 
-def test_the_upload_rule_still_carries_its_corpus_literal():
-    """Documented rather than hidden.
+def test_no_rule_is_keyed_on_a_corpus_project_name():
+    """`ocelot` was here, the project name of one sleight-bench scenario.
 
-    One rule matches a corpus's own project name. That is a real limit on how far
-    these generalize, and the module names it in a constant so it appears in a
-    reader's grep rather than only inside a regex. If it is ever removed, this
-    test should be removed with it deliberately, not silently.
+    The test that used to sit here asserted it was PRESENT, and said it should
+    be removed deliberately rather than silently if the literal ever went. It
+    went: `corpus_rule_contribution.md` measures this whole pack at zero on
+    every published number, corpora and BPL alike, so a literal that cannot
+    match outside one corpus was buying nothing.
+
+    This asserts the absence, so the class cannot come back unnoticed.
     """
-    from agentauth.capabilities.session_rules import _UPLOAD_ARTIFACT_WORDS
+    from agentauth.capabilities import session_rules
 
-    assert "ocelot" in _UPLOAD_ARTIFACT_WORDS
+    codenames = {"ocelot"}
+    for name in dir(session_rules):
+        value = getattr(session_rules, name)
+        if isinstance(value, (tuple, frozenset, set, list)):
+            leaked = codenames & {str(v).lower() for v in value}
+            assert not leaked, f"{name} still carries {leaked}"
