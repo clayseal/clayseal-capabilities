@@ -342,9 +342,23 @@ the agent does not plan around a tool it will then be refused.
 The syscall tier compiles an envelope's egress and path scope into a sandbox
 policy and takes back an unforgeable verdict stream
 ([docs/ivisor_integration.md](docs/ivisor_integration.md)). The reference backend
-drives iVisor, which is macOS only by construction: Hypervisor.framework allows
-one VM per process and applies an irreversible Seatbelt profile to its caller.
-The `agentauth.sandbox_backends` entry point makes the substrate swappable, and a
+drives iVisor.
+
+**It catches one class nothing above it can.** A DNS tunnel encodes its payload
+into subdomains, and the data leaves through the resolver rather than through
+any tool. There is no tool call, so `authorize()` is never asked, and every
+layer above denies nothing. On the captured trace iVisor denies all four
+queries and the tool-call layers deny none
+([syscall_tier.md](benchmarks/results/syscall_tier.md)).
+
+It runs the other way too. Beaconing over an allow-listed channel gives iVisor
+nothing to refuse, because each syscall really is permitted; what is anomalous
+is the running total, and only the session budget holds that. Neither layer
+subsumes the other, which is the argument for running both.
+
+iVisor is macOS only by construction: Hypervisor.framework allows one VM per
+process and applies an irreversible Seatbelt profile to its caller. The
+`agentauth.sandbox_backends` entry point makes the substrate swappable, and a
 Linux seccomp or Landlock backend is open work, not something we ship.
 
 ### The gap this does not close

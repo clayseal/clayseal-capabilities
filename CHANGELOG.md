@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Documented: what the syscall tier catches that nothing above it can
+
+The evidence was already in `syscall_tier.md` and neither the result nor the
+README said what it showed. The `iVisor deny` and `Clay deny` columns diverge in
+both directions, and that divergence is the whole argument for the layer.
+
+**04-dns-tunnel: iVisor 4, Clay 0.** The payload leaves as base32 in subdomains
+(`c2vjcmv0`, `zxhmawx0cmf0zwq`) over four A and AAAA queries. Every tool-call
+layer denies nothing, and not through misconfiguration: a DNS resolution inside
+the guest is not a tool call, so `authorize()` is never asked. Only a syscall
+boundary is positioned to see it.
+
+**07-beaconing and 08-exfil-allowed-channel: iVisor 0, Clay 7 and 6.** The
+reverse. The channel is allow-listed so every syscall is legitimate and iVisor
+is right to permit them; what is anomalous is the running total, which only a
+session-scoped budget holds.
+
+Neither layer subsumes the other. The README framed the syscall tier by its
+constraint ("macOS only") and never said what it uniquely catches; it now leads
+with the catch and keeps the constraint.
+
+
 ### Fixed: two syscall scenarios were hardcoded to pass
 
 `syscall_tier.py` contained `elif scen.id in {"05-host-escape",
