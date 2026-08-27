@@ -52,6 +52,7 @@ from agentauth.capabilities.policy_scaffold import (
     tools_block,
     tracked_block,
 )
+from agentauth.core.scan_limits import MAX_LINE
 
 #: Periods a written rule uses, in seconds. `per transaction` and `per payment`
 #: are deliberately absent: they bound a single call, which is a ceiling and not
@@ -483,7 +484,7 @@ def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
         # trailing `.` survives into the glob as a directory component:
         # `/finance/ap/.` became `/finance/ap/./**`, which matches nothing the
         # rule meant. Sentence punctuation is never part of a path.
-        paths = [p.rstrip(".,;:)") for pair in _PATH.findall(line)
+        paths = [p.rstrip(".,;:)") for pair in _PATH.findall(line[:MAX_LINE])
                  for p in pair if p]
         paths = [p for p in paths if p not in ("", "/", "~")]
         if paths:

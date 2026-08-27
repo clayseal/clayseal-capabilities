@@ -53,6 +53,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from agentauth.core.scan_limits import MAX_COMMAND
+
 #: Verbs that move data off the machine. Mirrors ``broker._EGRESS_ACTIONS``;
 #: passed in rather than imported to keep this module free of a broker import.
 _DEFAULT_EGRESS = frozenset({"send", "post", "transfer", "share"})
@@ -142,7 +144,7 @@ def check(
     if (
         session.symlink_taints
         and _UPLOADER.search(cmd)
-        and _ZIP_ARTIFACT.search(cmd)
+        and _ZIP_ARTIFACT.search(cmd[:MAX_COMMAND])
         and any(word in lowered for word in _UPLOAD_ARTIFACT_WORDS)
     ):
         return SessionRuleHit(
@@ -200,7 +202,7 @@ def _sed_line_drift(cmd: str, session: Any) -> SessionRuleHit | None:
         return None
     line_n = int(sed.group(1))
     old_ws, new_ws = sed.group(2), sed.group(3)
-    paths = _SED_PATHS.findall(cmd)
+    paths = _SED_PATHS.findall(cmd[:MAX_COMMAND])
     path = paths[-1] if paths else ""
     shift = session.file_line_shift.get(path, 0) if path else 0
     if not shift and len(session.file_line_shift) == 1:

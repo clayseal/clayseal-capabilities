@@ -229,17 +229,37 @@ def structural_digest(text: str) -> str:
 
 
 # Paths whose contents are treated as SECRET sources for IFC.
-_SECRET_PATH = re.compile(
-    r"(?:^|/)(?:etc(?:/|$)|\.env|.*credential.*|.*secret.*|.*password.*|"
-    r".*\.pem$|id_rsa|.*api[_-]?key.*|.*token.*|shadow|"
-    r"data/models|checkpoints?|anthropic-config|deploy/auth|"
-    r"db/app\.conf|sanitize_rules)",
-    re.IGNORECASE,
+#
+# This was a regex, and every branch of it was a substring test in costume:
+# `.*credential.*` after `(?:^|/)` just asks whether the path contains
+# "credential", because `.` matches `/` too. The alternation over several such
+# branches is what backtracked, for 3 seconds on a 16 KB argument and still 92 ms
+# at PATH_MAX. Plain string operations are linear, and they say what they mean.
+
+#: Anywhere in the path.
+_SECRET_SUBSTRINGS = (
+    "credential", "secret", "password", "token", "id_rsa", "shadow",
+    "data/models", "checkpoint", "anthropic-config", "deploy/auth",
+    "db/app.conf", "sanitize_rules", ".env",
 )
+#: `api_key`, `api-key`, `apikey`.
+_API_KEY_FORMS = ("api_key", "api-key", "apikey")
+#: A whole path segment.
+_SECRET_SEGMENTS = ("etc",)
 
 
 def is_secret_path(path: str) -> bool:
-    return bool(path and _SECRET_PATH.search(path))
+    """Does this path name something whose CONTENTS are secret?"""
+    if not path:
+        return False
+    low = path.lower()
+    if any(term in low for term in _SECRET_SUBSTRINGS):
+        return True
+    if any(term in low for term in _API_KEY_FORMS):
+        return True
+    if low.endswith(".pem"):
+        return True
+    return any(seg in _SECRET_SEGMENTS for seg in low.split("/"))
 
 
 def extract_heredoc(command: str) -> str:
