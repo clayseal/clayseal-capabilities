@@ -6,6 +6,58 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security: regex on attacker-controlled input was a remote hang
+
+Python's `re` backtracks, so `(?:group)+suffix` explores exponentially many
+splits when the suffix never matches. Every compiled pattern in the library was
+fed adversarial input and timed. **Seven took over 50 ms; the worst took 3.5
+seconds on a single 16 KB argument.** All of them read arguments an agent
+controls, so that was a hang anybody could trigger with one tool call.
+
+| pattern | before | after |
+| --- | --: | --: |
+| `egress_policy` bare-host scan | 3,473 ms | 0.6 ms |
+| `sealed_plan._SECRET_PATH` | 2,684 ms | 0.4 ms |
+| `egress_policy` email scan | 2,594 ms | 0.6 ms |
+| `session_rules._SED_PATHS` | 2,397 ms | bounded |
+| `egress_policy._FULL_EMAIL` | 2,308 ms | 0.6 ms |
+| `session_rules._ZIP_ARTIFACT` | 1,465 ms | bounded |
+| `policy_draft._PATH` | 773 ms | bounded |
+
+**Where the input has a grammar, the pattern is gone.** Hostnames and email
+addresses are now found by `_hosts_in` and `_addresses_in`, which scan once,
+left to right, with no backtracking possible. That also made the multi-`@`
+bypass structurally impossible rather than patched: a token resolves to the host
+after its LAST `@`, which is where RFC 5321 routes, and every host between is
+returned too, so `ops@allowed.com@evil.test` cannot present the policy a host it
+will not deliver to. The regex patch shipped for that bug is deleted.
+
+A lenient parser was the obvious alternative and is the wrong one.
+`email.utils.parseaddr` carries CVE-2019-16056 and CVE-2023-27043 for exactly
+this multiple-`@` case, because it guesses at malformed input. An allow-list has
+to reject what it cannot read.
+
+**`is_secret_path` was substring tests in costume.** `.*credential.*` after
+`(?:^|/)` only asks whether the path contains "credential", because `.` matches
+`/` too; the alternation over several such branches is what backtracked. It is
+plain string operations now, verified identical on 27 paths including the ones
+that must NOT match, `etcetera/file` and `/opt/etcd/data`.
+
+**Where a pattern is the right tool, the input is bounded first**, and
+`core/scan_limits.py` states why each bound is the size it is: `PATH_MAX` for a
+path, a command-line bound for a command, a line for a document line. Truncation
+can hide a match, and that is acceptable only because a value past those caps is
+no longer the kind of thing the pattern looks for. The module says so, and says
+that a detector whose input has no natural bound must be rewritten instead.
+
+`test_no_catastrophic_backtracking.py` holds a 250 ms budget across seven
+adversarial shapes, through the egress check, the secret-path check, document
+reading, and a whole authorization. It fails if any decision path becomes
+super-linear again.
+
+Containment, benign cost and the BPL headline are all unchanged.
+
+
 ### Fixed: an address that lied about where it routes cleared the allow-list
 
 `ops@acme-internal.com@evil.test` was **allowed** against an allow-list holding
