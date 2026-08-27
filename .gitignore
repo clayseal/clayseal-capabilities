@@ -11,9 +11,19 @@ __pycache__/
 .eggs/
 dist/
 build/
+# A virtualenv was committed to this repository once: `.venv-h2h`, 7,473 files
+# and 1.57 million lines, 99.6% of everything the history purge removed. The
+# patterns below cover the names one actually gets called, because `venv/`
+# matched `venv` and not `venv312`.
 .venv/
 .venv*/
 venv/
+venv*/
+env/
+ENV/
+.virtualenv/
+.virtualenvs/
+pyvenv.cfg
 .python-version
 .pytest_cache/
 .mypy_cache/
@@ -37,6 +47,7 @@ backend/audit.jsonl
 backend/.env
 
 # Node / dashboard
+node_modules/
 dashboard/node_modules/
 dashboard/dist/
 
