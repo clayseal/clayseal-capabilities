@@ -2,7 +2,6 @@
 import os
 
 import pytest
-from clayseal.core.task_scope import TaskScope
 
 from clayseal.capabilities.sandbox.staging import (
     GUEST_WORKSPACE,
@@ -13,6 +12,7 @@ from clayseal.capabilities.sandbox.staging import (
     workspace_delta,
 )
 from clayseal.capabilities.scoping.models import CapabilityLease
+from clayseal.core.task_scope import TaskScope
 
 
 @pytest.fixture

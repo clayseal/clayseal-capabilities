@@ -145,7 +145,7 @@ def test_remaining_reflects_the_window():
     _pay(budget, 2000)
     assert budget.remaining("roll") == Decimal("1000.00")
     clock.advance(25)
-    assert budget.remaining("roll") == Decimal("3000")
+    assert budget.remaining("roll") == Decimal(3000)
 
 
 # --------------------------------------------------------------------------- #

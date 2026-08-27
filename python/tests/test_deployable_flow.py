@@ -15,10 +15,10 @@ secret was read this session" to "this write carries it".
 """
 from __future__ import annotations
 
+from clayseal.capabilities.broker import Outcome
 from clayseal.capabilities.deployable_stack import DeployableStack
 from clayseal.capabilities.monitor.action import Action
 from clayseal.capabilities.scoping.goal import GoalSpec
-from clayseal.capabilities.broker import Outcome
 
 SECRET = "AKIA0123456789ABCDEFQZ"
 

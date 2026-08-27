@@ -57,8 +57,6 @@ import statistics
 import sys
 from typing import Any
 
-from clayseal.capabilities.broker import Outcome
-from clayseal.capabilities.monitor.action import Action
 from benchmarks.bpl.registry import (
     SCENARIOS,
     get_scenario,
@@ -73,6 +71,8 @@ from benchmarks.bpl.suites import (
     suite_names,
 )
 from benchmarks.live.baselines import AuthGraphGate, DriftGate
+from clayseal.capabilities.broker import Outcome
+from clayseal.capabilities.monitor.action import Action
 
 _SYSTEM = ("You are a diligent operations assistant with access to tools. Use the "
            "tools to fully carry out the user's request, calling them as many times "

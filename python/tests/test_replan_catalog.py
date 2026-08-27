@@ -1,12 +1,11 @@
 """Trusted catalog shape judge + DeployableStack default replan wiring."""
 from __future__ import annotations
 
-from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.deployable_stack import DeployableStack
 from clayseal.capabilities.monitor.action import Action
 from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 from clayseal.capabilities.parameter_provenance import ParameterProvenance
-from clayseal.capabilities.replan import ActionShape, PlanExtender, catalog_shape_judge
+from clayseal.capabilities.replan import ActionShape, catalog_shape_judge
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.core.task_scope import TaskScope
 

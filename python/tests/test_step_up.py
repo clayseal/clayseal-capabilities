@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from clayseal.core.runtime import AuthorityContext
-from clayseal.core.signing import generate_keypair
 from clayseal.capabilities.step_up import (
     StepUpApproval,
     apply_step_up,
@@ -13,6 +11,8 @@ from clayseal.capabilities.step_up import (
     sign_step_up_approval,
     verify_step_up_approval,
 )
+from clayseal.core.runtime import AuthorityContext
+from clayseal.core.signing import generate_keypair
 
 
 def _request():

@@ -16,7 +16,7 @@ import json
 
 import pytest
 
-from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.monitor.action import Action, ContextItem, TrustLevel
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.capabilities.session_state import (

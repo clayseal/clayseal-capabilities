@@ -8,8 +8,6 @@ matters most is the pass-through: a single-principal session must be unchanged.
 """
 from __future__ import annotations
 
-import pytest
-
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor import Action
 from clayseal.capabilities.scoping.goal import GoalSpec

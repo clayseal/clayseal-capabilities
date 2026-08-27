@@ -123,9 +123,9 @@ def test_the_step_up_setting_actually_changes_what_runs():
     must halt under `block` and run under `allow`. Without it, a flag that did
     nothing at all would look exactly like the finding.
     """
-    from clayseal.capabilities.broker import Outcome
     from benchmarks.bpl.registry import get_scenario
     from benchmarks.live.bpl_live import apply_call
+    from clayseal.capabilities.broker import Outcome
 
     class AlwaysStepUp:
         class _D:

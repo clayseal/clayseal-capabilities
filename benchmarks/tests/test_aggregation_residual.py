@@ -11,12 +11,16 @@ must be updated. That is the intended way for them to break.
 """
 from __future__ import annotations
 
-import pytest
-
 from benchmarks.stress_aggregation import (
-    axis_batch_amortization, axis_call_budget_idempotency, axis_key_splitting,
-    axis_negative_offset, axis_reserve_release_churn, axis_session_boundary,
-    axis_structuring, axis_unit_confusion, axis_untracked_tool,
+    axis_batch_amortization,
+    axis_call_budget_idempotency,
+    axis_key_splitting,
+    axis_negative_offset,
+    axis_reserve_release_churn,
+    axis_session_boundary,
+    axis_structuring,
+    axis_unit_confusion,
+    axis_untracked_tool,
 )
 
 
@@ -97,8 +101,7 @@ def test_the_declared_forms_close_two_structural_escapes():
     contained once declared, which reclassifies them from structural holes to
     declaration gaps.
     """
-    from benchmarks.stress_aggregation import (
-        axis_batch_declared, axis_unit_declared)
+    from benchmarks.stress_aggregation import axis_batch_declared, axis_unit_declared
 
     assert not axis_batch_declared()["escaped"]
     assert not axis_unit_declared()["escaped"]

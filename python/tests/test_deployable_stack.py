@@ -1,11 +1,12 @@
 """Parity: DeployableStack floor matches ladder top on mandate corpora."""
 from __future__ import annotations
 
+from conftest import requires_corpus
+
 from benchmarks.core.broker_eval import run_broker_benchmark
 from benchmarks.core.engines import build_engines
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets import get_loader
-from conftest import requires_corpus
 
 
 @requires_corpus("RedCode", "InjecAgent")

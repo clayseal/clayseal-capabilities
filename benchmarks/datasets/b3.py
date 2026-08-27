@@ -96,6 +96,7 @@ from typing import Any
 
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 
+
 # --------------------------------------------------------------------------- #
 # Corpus location
 # --------------------------------------------------------------------------- #

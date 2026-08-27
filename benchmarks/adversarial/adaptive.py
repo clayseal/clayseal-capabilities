@@ -42,9 +42,9 @@ result reproduces exactly, runs in seconds, and belongs in CI.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Iterable
 
 from benchmarks.core.engines import DecisionEngine
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel

@@ -81,8 +81,8 @@ BARE_ZERO = re.compile(r"(?<![.\d])0(?:\.0+)?\s?%")
 #: the shape this rule should permit.
 HAS_BOUND = re.compile(
     r"upper bound|97\.5%|95% CI|\[\s*0?\.|interval|n/a|±|\bCI\b"
-    r"|\d+\s*/\s*\d+|\d+\s+of\s+[\d,]+|n\s*=\s*\d+", re.I)
-STATUS = re.compile(r"^\s*STATUS:\s*(current|superseded|retracted)\b", re.I | re.M)
+    r"|\d+\s*/\s*\d+|\d+\s+of\s+[\d,]+|n\s*=\s*\d+", re.IGNORECASE)
+STATUS = re.compile(r"^\s*STATUS:\s*(current|superseded|retracted)\b", re.IGNORECASE | re.MULTILINE)
 
 #: Literal phrases SEND_PACKET.md forbids. Deliberately narrow: a regex that
 #: guesses at intent produces false alarms, and a linter that cries wolf is

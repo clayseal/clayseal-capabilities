@@ -2,7 +2,6 @@
 reachability over a tool ontology. The coding-agent mission-break, caught cold."""
 from __future__ import annotations
 
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor import (
     Action,
@@ -11,7 +10,7 @@ from clayseal.capabilities.monitor import (
     Trajectory,
 )
 from clayseal.capabilities.scoping.goal import GoalSpec
-
+from clayseal.core.task_scope import TaskScope
 
 # A deploy task: build -> test -> deploy. Deleting the build is individually
 # plausible (agents delete files) but destroys a precondition of deploy, so the
@@ -92,9 +91,12 @@ def test_broker_allows_graceful_replan():
 
 
 def test_envelope_roundtrips_and_signs():
-    from clayseal.core.signing import generate_keypair
     from clayseal.capabilities.monitor import (
-        sign_intent_envelope, verify_intent_envelope, IntentEnvelope)
+        IntentEnvelope,
+        sign_intent_envelope,
+        verify_intent_envelope,
+    )
+    from clayseal.core.signing import generate_keypair
 
     env = IntentEnvelope.from_goal(_goal())
     # to_dict/from_dict preserves the plan and the feasibility model.

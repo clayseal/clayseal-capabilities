@@ -69,7 +69,7 @@ class TaskSurface:
     path_patterns: list[str] = field(default_factory=list)
 
     @classmethod
-    def of(cls, task: BenchmarkTask) -> "TaskSurface":
+    def of(cls, task: BenchmarkTask) -> TaskSurface:
         surface = cls()
         # The granted mandate, which is authorization the user actually issued.
         surface.tools |= set(task.allowed_tools)

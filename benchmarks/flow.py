@@ -75,11 +75,15 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from clayseal.capabilities.confidentiality import (
-    FlowTracker, SensitivityPolicy, SINK_VERBS, SOURCE_VERBS)
 from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.confidentiality import (
+    SINK_VERBS,
+    SOURCE_VERBS,
+    FlowTracker,
+    SensitivityPolicy,
+)
 
 # A value that looks like something worth stealing and is long enough to
 # attribute. Short values appear everywhere and would make everything tainted.

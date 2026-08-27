@@ -88,7 +88,6 @@ def test_no_broken_component_turns_a_refusal_into_an_allow():
     fills up. Four defects were found that way, all of them a component with no
     authority over a decision being able to prevent one.
     """
-    from clayseal.capabilities.policy import load_policy_text
     from benchmarks.stress_faults import (
         POLICY,
         SEAMS,
@@ -97,6 +96,7 @@ def test_no_broken_component_turns_a_refusal_into_an_allow():
         outcome_with_fault,
         verdict,
     )
+    from clayseal.capabilities.policy import load_policy_text
 
     healthy = load_policy_text(POLICY).build().authorize(_benign()).outcome
     bad = []

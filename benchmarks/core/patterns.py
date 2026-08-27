@@ -54,8 +54,9 @@ from __future__ import annotations
 
 import fnmatch
 import random
+from collections.abc import Iterable
 from dataclasses import replace
-from typing import Any, Iterable
+from typing import Any
 
 from benchmarks.core.events import BenchmarkTask, EventLabel
 

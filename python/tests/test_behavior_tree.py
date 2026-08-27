@@ -2,8 +2,6 @@
 ATC-style re-clearance loop."""
 from __future__ import annotations
 
-from clayseal.core.signing import generate_keypair
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.monitor import (
     Action,
@@ -18,7 +16,8 @@ from clayseal.capabilities.monitor import (
     sign_intent_envelope,
 )
 from clayseal.capabilities.scoping.goal import GoalSpec
-
+from clayseal.core.signing import generate_keypair
+from clayseal.core.task_scope import TaskScope
 
 # Two genuinely different plans for "resolve the ticket":
 #   mode A: investigate -> patch -> verify

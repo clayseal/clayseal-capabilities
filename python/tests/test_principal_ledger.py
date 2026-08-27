@@ -23,7 +23,7 @@ from clayseal.capabilities.principal_ledger import (
     structuring_signal,
 )
 
-CEILING = Decimal("10000")
+CEILING = Decimal(10000)
 TRACKED = {"send_money": ("amount", "usd_payout")}
 
 
@@ -53,7 +53,7 @@ def test_structuring_across_sessions_is_contained():
         _spend(_view(ledger, session=f"s{i}"), "2600") for i in range(4)
     )
     assert allowed == 3, "a fourth fragment of 2600 would cross a 10000 ceiling"
-    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal("7800")
+    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal(7800)
 
 
 def test_many_tiny_fragments_are_contained():
@@ -89,8 +89,8 @@ def test_window_boundary_is_inclusive_of_recent_spend():
     ledger = PrincipalLedger(window_seconds=3600)
     t0 = 1_000_000.0
     _spend(_view(ledger), "9000", now=t0)
-    assert ledger.spent("mandate:payouts", "usd_payout", now=t0 + 3599) == Decimal("9000")
-    assert ledger.spent("mandate:payouts", "usd_payout", now=t0 + 3601) == Decimal("0")
+    assert ledger.spent("mandate:payouts", "usd_payout", now=t0 + 3599) == Decimal(9000)
+    assert ledger.spent("mandate:payouts", "usd_payout", now=t0 + 3601) == Decimal(0)
 
 
 # --------------------------------------------------------------------------- #
@@ -101,15 +101,15 @@ def test_idempotent_booking_does_not_double_count():
     principal out of work it never did."""
     ledger = PrincipalLedger()
     for _ in range(5):
-        ledger.book("p", "usd_payout", Decimal("500"), idempotency_key="call-1")
-    assert ledger.spent("p", "usd_payout") == Decimal("500")
+        ledger.book("p", "usd_payout", Decimal(500), idempotency_key="call-1")
+    assert ledger.spent("p", "usd_payout") == Decimal(500)
 
 
 def test_distinct_keys_both_count():
     ledger = PrincipalLedger()
-    ledger.book("p", "usd_payout", Decimal("500"), idempotency_key="call-1")
-    ledger.book("p", "usd_payout", Decimal("500"), idempotency_key="call-2")
-    assert ledger.spent("p", "usd_payout") == Decimal("1000")
+    ledger.book("p", "usd_payout", Decimal(500), idempotency_key="call-1")
+    ledger.book("p", "usd_payout", Decimal(500), idempotency_key="call-2")
+    assert ledger.spent("p", "usd_payout") == Decimal(1000)
 
 
 def test_ledger_survives_a_restart(tmp_path):
@@ -120,7 +120,7 @@ def test_ledger_survives_a_restart(tmp_path):
     assert _spend(_view(first), "9000")
 
     second = PrincipalLedger(path=path)      # simulates a restart
-    assert second.spent("mandate:payouts", "usd_payout") == Decimal("9000")
+    assert second.spent("mandate:payouts", "usd_payout") == Decimal(9000)
     assert not _spend(_view(second), "2000")
 
 
@@ -130,12 +130,12 @@ def test_a_torn_final_line_is_skipped_not_fatal(tmp_path):
     and offline is open."""
     path = tmp_path / "ledger.jsonl"
     ledger = PrincipalLedger(path=path)
-    ledger.book("p", "usd_payout", Decimal("100"))
+    ledger.book("p", "usd_payout", Decimal(100))
     with path.open("a") as fh:
         fh.write('{"principal": "p", "budget_id": "usd_pay')   # torn
 
     reopened = PrincipalLedger(path=path)
-    assert reopened.spent("p", "usd_payout") == Decimal("100")
+    assert reopened.spent("p", "usd_payout") == Decimal(100)
 
 
 def test_totals_are_cached_but_verifiable():
@@ -152,8 +152,8 @@ def test_totals_are_cached_but_verifiable():
     after pruning rather than being assumed.
     """
     ledger = PrincipalLedger()
-    ledger.book("p", "usd_payout", Decimal("100"))
-    assert ledger.spent("p", "usd_payout") == Decimal("100")
+    ledger.book("p", "usd_payout", Decimal(100))
+    assert ledger.spent("p", "usd_payout") == Decimal(100)
     assert ledger.verify_totals()
 
     # Corrupting the log behind the cache is exactly what the check catches.
@@ -190,7 +190,7 @@ def test_unparseable_amounts_do_not_debit(bad):
     ok, _ = view.would_allow("send_money", {"amount": bad})
     assert ok
     view.commit("send_money", {"amount": bad})
-    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal("0")
+    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal(0)
 
 
 # --------------------------------------------------------------------------- #
@@ -265,7 +265,7 @@ def test_signal_respects_the_window():
     ledger = PrincipalLedger(window_seconds=3600)
     t0 = 1_000_000.0
     for i in range(4):
-        ledger.book("p", "usd_payout", Decimal("2500"), idempotency_key=f"k{i}", now=t0)
+        ledger.book("p", "usd_payout", Decimal(2500), idempotency_key=f"k{i}", now=t0)
     assert structuring_signal(ledger, "p", "usd_payout", CEILING, now=t0).suspicious
     assert not structuring_signal(ledger, "p", "usd_payout", CEILING, now=t0 + 7200).suspicious
 
@@ -278,14 +278,14 @@ def test_idempotency_key_reuse_cannot_launder_spend():
     reused one and moved 40000 against a 10000 ceiling while the ledger booked
     5000. Now scoped to session AND amount."""
     ledger = PrincipalLedger()
-    moved = Decimal("0")
+    moved = Decimal(0)
     for i in range(8):
         v = _view(ledger, session=f"s{i}")
         args = {"amount": "5000", "_idempotency_key": "SAME-KEY"}
         ok, _ = v.authorize("send_money", args)
         if ok:
             v.commit("send_money", args)
-            moved += Decimal("5000")
+            moved += Decimal(5000)
     assert moved <= CEILING
     assert ledger.spent("mandate:payouts", "usd_payout") == moved
 
@@ -295,9 +295,9 @@ def test_idempotency_still_dedupes_a_genuine_retry():
     the same key twice is one debit."""
     ledger = PrincipalLedger()
     for _ in range(3):
-        ledger.book("p", "usd_payout", Decimal("500"),
+        ledger.book("p", "usd_payout", Decimal(500),
                     session="s1", idempotency_key="call-1")
-    assert ledger.spent("p", "usd_payout") == Decimal("500")
+    assert ledger.spent("p", "usd_payout") == Decimal(500)
 
 
 def test_concurrent_sessions_cannot_race_past_the_ceiling():
@@ -316,14 +316,14 @@ def test_concurrent_sessions_cannot_race_past_the_ceiling():
         barrier.wait()
         if ok:
             v.commit("send_money", args)
-            committed.append(Decimal("5000"))
+            committed.append(Decimal(5000))
 
     threads = [threading.Thread(target=racer, args=(i,)) for i in range(8)]
     for t in threads:
         t.start()
     for t in threads:
         t.join()
-    assert sum(committed, Decimal("0")) <= CEILING
+    assert sum(committed, Decimal(0)) <= CEILING
 
 
 def test_jittered_fragments_do_not_evade_detection():
@@ -346,7 +346,7 @@ def test_running_totals_never_drift_from_the_log():
     ledger = PrincipalLedger(window_seconds=100)
     t0 = 1_000_000.0
     for i in range(50):
-        ledger.book("p", "usd_payout", Decimal("10"),
+        ledger.book("p", "usd_payout", Decimal(10),
                     idempotency_key=f"k{i}", now=t0 + i)
     assert ledger.verify_totals()
     ledger.spent("p", "usd_payout", now=t0 + 120)     # forces a prune
@@ -360,7 +360,7 @@ def test_reads_stay_cheap_at_scale():
 
     ledger = PrincipalLedger()
     for i in range(20_000):
-        ledger.book("p", "usd_payout", Decimal("1"), idempotency_key=f"k{i}")
+        ledger.book("p", "usd_payout", Decimal(1), idempotency_key=f"k{i}")
     start = time.perf_counter()
     for _ in range(100):
         ledger.spent("p", "usd_payout")
@@ -382,7 +382,7 @@ def test_a_negative_amount_cannot_lift_the_ceiling_for_other_sessions():
     nothing on disk to show the ledger had been touched.
     """
     ledger = PrincipalLedger()
-    ceilings = {"usd_payout": Decimal("10000")}
+    ceilings = {"usd_payout": Decimal(10000)}
     tracked = {"send_money": ("amount", "usd_payout")}
 
     def view(session):
@@ -391,14 +391,14 @@ def test_a_negative_amount_cannot_lift_the_ceiling_for_other_sessions():
 
     view("attacker").authorize("send_money", {"amount": "-1000000000"})
 
-    moved = Decimal("0")
+    moved = Decimal(0)
     for i in range(50):
         v = view(f"s{i}")
         ok, _ = v.authorize("send_money", {"amount": "9999"})
         if ok:
             v.commit("send_money", {"amount": "9999"})
-            moved += Decimal("9999")
-    assert moved <= Decimal("10000"), f"{moved} moved against a 10000 ceiling"
+            moved += Decimal(9999)
+    assert moved <= Decimal(10000), f"{moved} moved against a 10000 ceiling"
 
 
 def test_a_negative_booking_cannot_manufacture_headroom():
@@ -411,8 +411,8 @@ def test_a_negative_booking_cannot_manufacture_headroom():
     """
     ledger = PrincipalLedger()
     with pytest.raises(ValueError):
-        ledger.book("mandate:payouts", "usd_payout", Decimal("-9000"))
-    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal("0")
+        ledger.book("mandate:payouts", "usd_payout", Decimal(-9000))
+    assert ledger.spent("mandate:payouts", "usd_payout") == Decimal(0)
     assert ledger.verify_totals()
 
 
@@ -420,11 +420,11 @@ def test_a_negative_booking_cannot_manufacture_headroom():
 def test_non_positive_and_non_finite_amounts_are_not_tracked(bad):
     ledger = PrincipalLedger()
     v = PrincipalBudgetView(
-        ledger=ledger, principal="p", ceilings={"b": Decimal("100")},
+        ledger=ledger, principal="p", ceilings={"b": Decimal(100)},
         tracked={"send_money": ("amount", "b")}, session="s")
     ok, reason = v.authorize("send_money", {"amount": bad})
     v.commit("send_money", {"amount": bad})
-    assert ledger.spent("p", "b") == Decimal("0")
+    assert ledger.spent("p", "b") == Decimal(0)
 
 
 # --------------------------------------------------------------------------- #
@@ -439,41 +439,41 @@ def test_one_session_cannot_release_another_sessions_hold():
     only whoever holds it can give it back.
     """
     ledger = PrincipalLedger()
-    ceiling = Decimal("10000")
-    honest = ledger.reserve("mandate:payouts", "usd", Decimal("9000"), ceiling)
+    ceiling = Decimal(10000)
+    honest = ledger.reserve("mandate:payouts", "usd", Decimal(9000), ceiling)
     assert honest is not None
 
     # The attacker holds nothing and can release nothing.
     ledger.release(None)
-    attacker = ledger.reserve("mandate:payouts", "usd", Decimal("9000"), ceiling)
+    attacker = ledger.reserve("mandate:payouts", "usd", Decimal(9000), ceiling)
     assert attacker is None, "the honest session's hold was wiped"
 
 
 def test_a_hold_commits_the_amount_it_reserved():
     ledger = PrincipalLedger()
-    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    hold = ledger.reserve("p", "usd", Decimal(10), Decimal(1000))
     ledger.commit_hold(hold, session="s")
-    assert ledger.spent("p", "usd") == Decimal("10")
+    assert ledger.spent("p", "usd") == Decimal(10)
 
 
 def test_releasing_a_hold_twice_is_harmless():
     ledger = PrincipalLedger()
-    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    hold = ledger.reserve("p", "usd", Decimal(10), Decimal(1000))
     ledger.release(hold)
     ledger.release(hold)
-    assert ledger.reserve("p", "usd", Decimal("1000"), Decimal("1000")) is not None
+    assert ledger.reserve("p", "usd", Decimal(1000), Decimal(1000)) is not None
 
 
 def test_an_abandoned_hold_expires_instead_of_shrinking_the_ceiling_forever():
     """An agent that authorizes and then dies used to shrink the principal's
     ceiling permanently, and enough abandoned holds took it to zero."""
     ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
-    ceiling = Decimal("1000")
-    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=0.0) is not None
+    ceiling = Decimal(1000)
+    assert ledger.reserve("p", "usd", Decimal(900), ceiling, now=0.0) is not None
     # Same instant: no headroom.
-    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=0.0) is None
+    assert ledger.reserve("p", "usd", Decimal(900), ceiling, now=0.0) is None
     # After the TTL the abandoned hold no longer counts.
-    assert ledger.reserve("p", "usd", Decimal("900"), ceiling, now=120.0) is not None
+    assert ledger.reserve("p", "usd", Decimal(900), ceiling, now=120.0) is not None
 
 
 # --------------------------------------------------------------------------- #
@@ -557,33 +557,33 @@ def test_a_torn_append_does_not_swallow_the_next_acknowledged_write(tmp_path):
     the operator believes is in force.
     """
     path = tmp_path / "ledger.jsonl"
-    PrincipalLedger(path=path).book("p", "usd", Decimal("100"), session="s1")
+    PrincipalLedger(path=path).book("p", "usd", Decimal(100), session="s1")
 
     with path.open("a") as fh:                      # simulate the crash
         fh.write('{"principal": "p", "budget_id": "usd", "amoun')
 
-    PrincipalLedger(path=path).book("p", "usd", Decimal("500"), session="s2")
-    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal("600")
+    PrincipalLedger(path=path).book("p", "usd", Decimal(500), session="s2")
+    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal(600)
 
 
 def test_the_torn_record_itself_is_discarded(tmp_path):
     """It was never acknowledged to any caller, so losing it is correct. What
     must not happen is it taking the next one with it."""
     path = tmp_path / "ledger.jsonl"
-    PrincipalLedger(path=path).book("p", "usd", Decimal("100"), session="s1")
+    PrincipalLedger(path=path).book("p", "usd", Decimal(100), session="s1")
     with path.open("a") as fh:
         fh.write('{"principal": "p", "budget_id": "usd", "amount": "999')
-    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal("100")
+    assert PrincipalLedger(path=path).spent("p", "usd") == Decimal(100)
 
 
 def test_a_ledger_survives_repeated_crash_and_restart(tmp_path):
     path = tmp_path / "ledger.jsonl"
     for i in range(10):
-        PrincipalLedger(path=path).book("p", "usd", Decimal("10"), session=f"s{i}")
+        PrincipalLedger(path=path).book("p", "usd", Decimal(10), session=f"s{i}")
         with path.open("a") as fh:
             fh.write('{"partial')
     final = PrincipalLedger(path=path)
-    assert final.spent("p", "usd") == Decimal("100")
+    assert final.spent("p", "usd") == Decimal(100)
     assert final.verify_totals()
 
 
@@ -617,7 +617,7 @@ def test_parking_just_under_the_gate_is_missed_by_the_single_window_test():
     ledger = PrincipalLedger()
     for i in range(4):
         ledger.book("p", "usd", Decimal("2124.75"), session=f"s{i}")
-    assert not structuring_signal(ledger, "p", "usd", Decimal("10000")).suspicious
+    assert not structuring_signal(ledger, "p", "usd", Decimal(10000)).suspicious
 
 
 def test_parking_there_window_after_window_is_its_own_signature():
@@ -664,18 +664,18 @@ def test_a_late_commit_past_a_voided_hold_is_recorded_as_a_breach():
     that it goes unnoticed.
     """
     ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
-    ceiling = Decimal("100")
-    first = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=0.0)
-    second = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=120.0)
+    ceiling = Decimal(100)
+    first = ledger.reserve("p", "usd", Decimal(100), ceiling, now=0.0)
+    second = ledger.reserve("p", "usd", Decimal(100), ceiling, now=120.0)
     assert first is not None and second is not None
 
     ledger.commit_hold(first, now=121.0)
     ledger.commit_hold(second, now=122.0)
 
-    assert ledger.spent("p", "usd", now=123.0) == Decimal("200")
+    assert ledger.spent("p", "usd", now=123.0) == Decimal(200)
     breaches = ledger.late_breaches()
     assert len(breaches) == 1, "the over-ceiling commit was absorbed silently"
-    assert breaches[0].amount == Decimal("100")
+    assert breaches[0].amount == Decimal(100)
     assert ledger.verify_totals()
 
 
@@ -689,9 +689,9 @@ def test_the_breach_check_counts_outstanding_holds():
     the reservations granted using the headroom the voided hold gave back.
     """
     ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
-    ceiling = Decimal("100")
-    voided = ledger.reserve("p", "usd", Decimal("100"), ceiling, now=0.0)
-    ledger.reserve("p", "usd", Decimal("100"), ceiling, now=120.0)  # still held
+    ceiling = Decimal(100)
+    voided = ledger.reserve("p", "usd", Decimal(100), ceiling, now=0.0)
+    ledger.reserve("p", "usd", Decimal(100), ceiling, now=120.0)  # still held
     ledger.commit_hold(voided, now=121.0)
     assert ledger.late_breaches(), "outstanding holds were left out of the check"
 
@@ -700,18 +700,18 @@ def test_a_slow_but_legitimate_commit_is_not_a_breach():
     """The false-positive side. An action that simply took longer than the TTL,
     with no second reservation behind it, still fits and must not be flagged."""
     ledger = PrincipalLedger(reservation_ttl_seconds=60.0)
-    hold = ledger.reserve("p", "usd", Decimal("100"), Decimal("100"), now=0.0)
+    hold = ledger.reserve("p", "usd", Decimal(100), Decimal(100), now=0.0)
     ledger.commit_hold(hold, now=500.0)
-    assert ledger.spent("p", "usd", now=501.0) == Decimal("100")
+    assert ledger.spent("p", "usd", now=501.0) == Decimal(100)
     assert ledger.late_breaches() == []
 
 
 def test_committing_one_hold_twice_books_once():
     ledger = PrincipalLedger()
-    hold = ledger.reserve("p", "usd", Decimal("10"), Decimal("1000"))
+    hold = ledger.reserve("p", "usd", Decimal(10), Decimal(1000))
     ledger.commit_hold(hold, session="s")
     ledger.commit_hold(hold, session="s")
-    assert ledger.spent("p", "usd") == Decimal("10")
+    assert ledger.spent("p", "usd") == Decimal(10)
     assert ledger.verify_totals()
 
 
@@ -725,9 +725,11 @@ def _delegated(sub: str, chain: list[str] | None = None):
                             delegation_chain=list(chain or []))
 
 
-def _chain_view(ledger, binding, ceiling=Decimal("100")):
+def _chain_view(ledger, binding, ceiling=Decimal(100)):
     from clayseal.capabilities.principal_ledger import (
-        PrincipalBudgetView, principal_chain, principal_key,
+        PrincipalBudgetView,
+        principal_chain,
+        principal_key,
     )
     return PrincipalBudgetView(
         ledger=ledger, principal=principal_key(binding),
@@ -762,7 +764,7 @@ def test_a_parent_ceiling_bounds_everything_it_delegates_to():
         if _chain_spend(_chain_view(ledger, binding), 100, float(i)):
             landed += 100
     assert landed == 100, f"delegation split the ceiling: {landed} landed"
-    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal("100")
+    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal(100)
 
 
 def test_a_delegate_may_spend_the_parents_remaining_headroom():
@@ -792,7 +794,7 @@ def test_a_refused_delegate_action_does_not_consume_ancestor_headroom():
     for n in range(3):
         assert not _chain_spend(_chain_view(ledger, _delegated(f"sub-{n}", ["parent"])),
                           10, float(n + 1))
-    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal("100")
+    assert ledger.spent(principal_key(parent), "usd", now=99.0) == Decimal(100)
     assert ledger.verify_totals()
 
 

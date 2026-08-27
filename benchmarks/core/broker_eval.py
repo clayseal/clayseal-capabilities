@@ -12,14 +12,12 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from clayseal.capabilities.deployable_stack import DeployableStack, StackDecision
-
-from benchmarks.core.stack_factory import stack_from_benchmark_task
-from clayseal.capabilities.monitor.action import Action
 from benchmarks.core.detector_eval import _goal_for, task_to_trajectories
 from benchmarks.core.events import EventLabel
-from benchmarks.core.runner import EngineResult, _EGRESS_ACTIONS, _WRITE_ACTIONS
-
+from benchmarks.core.runner import _EGRESS_ACTIONS, _WRITE_ACTIONS, EngineResult
+from benchmarks.core.stack_factory import stack_from_benchmark_task
+from clayseal.capabilities.deployable_stack import DeployableStack, StackDecision
+from clayseal.capabilities.monitor.action import Action
 
 STACK_NAME = "deployable-stack"
 

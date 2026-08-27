@@ -32,9 +32,8 @@ import random
 
 import pytest
 
-from clayseal.capabilities.confidentiality import (
-    SINK_VERBS, FlowTracker, SensitivityPolicy)
 from benchmarks.core.events import EventLabel
+from clayseal.capabilities.confidentiality import SINK_VERBS, FlowTracker, SensitivityPolicy
 
 # Session lengths one tracker is replayed over. The published measurement is the
 # first column and nothing else.

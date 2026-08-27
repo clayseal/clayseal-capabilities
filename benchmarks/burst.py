@@ -59,7 +59,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from benchmarks.core.engines import VelocityLadderEngine, build_engines
+from benchmarks.core.engines import VelocityLadderEngine
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
 

@@ -25,21 +25,21 @@ import json
 import sys
 from pathlib import Path
 
+from benchmarks.core.broker_eval import run_broker_benchmark
+from benchmarks.core.detector_eval import _goal_for, task_to_trajectories
+from benchmarks.datasets.sleight import SleightLoader
 from clayseal.capabilities.monitor import (
-    TrajectoryDetector,
     NGramScorer,
+    TrajectoryDetector,
+    assess_intent_advisory,
     assess_twin_structural,
     check_declaration_against_goal,
-    assess_intent_advisory,
 )
 from clayseal.capabilities.monitor.entailment import (
     assess_plan_entailment,
     content_delta_vs_reference,
     llm_entailment_judge,
 )
-from benchmarks.core.broker_eval import run_broker_benchmark
-from benchmarks.core.detector_eval import task_to_trajectories, _goal_for
-from benchmarks.datasets.sleight import SleightLoader
 
 
 def _maybe_entailment_judge():
@@ -303,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         f"{100 * ora['escalate_attack_rate']:.1f}% / benign "
         f"{100 * ora['escalate_benign_rate']:.1f}%; "
         f"covers {ora['misses_caught']}/{ora['misses_total']} declare_sabotage misses.",
-        f"- **Plan entailment** (deterministic ∪ LLM): "
+        "- **Plan entailment** (deterministic ∪ LLM): "
         + (
             f"enabled (`{ent['model']}` + det), attack "
             f"{100 * (ent['escalate_attack_rate'] or 0):.1f}%, benign FB "

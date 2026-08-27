@@ -8,8 +8,8 @@ import os
 
 import pytest
 
-from clayseal.capabilities.sandbox.verdicts import parse_policy_line
 from benchmarks.live.bpl_live import SCENARIOS
+from clayseal.capabilities.sandbox.verdicts import parse_policy_line
 
 INTERNAL = "acme-internal.com"
 EXTERNAL = "partners-external.com"

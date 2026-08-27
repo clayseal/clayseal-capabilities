@@ -93,8 +93,8 @@ def attack_race(threads: int) -> dict:
 
 def attack_outage() -> dict:
     """What the verifier does when the replay store cannot be reached."""
-    from clayseal.capabilities.commit import verify_commit_token
     from benchmarks.stress_commit import _pair
+    from clayseal.capabilities.commit import verify_commit_token
 
     signed, ctx, trusted = _pair()
     findings = []

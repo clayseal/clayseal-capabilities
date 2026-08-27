@@ -1,6 +1,7 @@
 """The AML peer-deviation sensor separates real fraud (grounding the mechanism)."""
 def test_peer_deviation_beats_chance_on_ulb():
     import pytest
+
     from benchmarks.fraud_validation import evaluate
     try:
         result = evaluate()

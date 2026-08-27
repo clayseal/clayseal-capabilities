@@ -14,7 +14,7 @@ import pytest
 # in the benchmark environment and skips in the library one.
 pytest.importorskip("agentdojo")
 
-from benchmarks.live.broker_defense import session_identity  # noqa: E402
+from benchmarks.live.broker_defense import session_identity
 
 
 def _env():

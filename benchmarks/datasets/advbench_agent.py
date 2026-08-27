@@ -20,7 +20,7 @@ _FIXTURE = (
     Path(__file__).resolve().parents[1] / "fixtures" / "advbench_agent"
     / "clayseal_traces.jsonl"
 )
-_URL = re.compile(r"https?://([^/\s\"']+)", re.I)
+_URL = re.compile(r"https?://([^/\s\"']+)", re.IGNORECASE)
 
 
 class AdvBenchAgentLoader:

@@ -24,14 +24,13 @@ from agentdojo.agent_pipeline.tool_execution import (
     tool_result_to_str,
 )
 
-from clayseal.core.task_scope import TaskScope
+from benchmarks.datasets._common import classify_verb
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.deployable_stack import DeployableStack
-from clayseal.capabilities.hardening.egress_policy import (
-    EgressPolicy, extract_recipients)
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy, extract_recipients
 from clayseal.capabilities.monitor import Action
 from clayseal.capabilities.scoping.goal import GoalSpec
-from benchmarks.datasets._common import classify_verb
+from clayseal.core.task_scope import TaskScope
 
 
 def _all_text(obj, depth: int = 0, out=None) -> str:
@@ -95,13 +94,13 @@ def _iter_dicts(obj, depth: int = 0):
 # requirement, injection markup like ``INFORMATION`` matched as an IBAN.
 _IBAN_RE = re.compile(r"\b[A-Z]{2}[0-9][0-9A-Z]{4,30}\b")
 _EMAIL_RE = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
-_URL_HOST_RE = re.compile(r"https?://([^/\s]+)", re.I)
+_URL_HOST_RE = re.compile(r"https?://([^/\s]+)", re.IGNORECASE)
 # The SAME host label class the egress policy uses to recognise a destination.
 # When the two grammars disagree the goal cannot name a host the policy can
 # match, and the site the user asked for is denied: 'www.resume_templates.com'
 # is a dailylife goal, and the underscore-free class here returned nothing for
 # it while the policy denied 'www.resume'.
-_DOMAIN_RE = re.compile(r"\b(?:[a-z0-9_-]+\.)+[a-z]{2,}\b", re.I)
+_DOMAIN_RE = re.compile(r"\b(?:[a-z0-9_-]+\.)+[a-z]{2,}\b", re.IGNORECASE)
 # Identity fields of the account a session is signed in as. This is session
 # configuration, the same object a deployment reads to know whose mailbox it is
 # holding, and it is not derived from the task, the ground truth or the attack.

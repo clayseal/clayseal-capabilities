@@ -60,11 +60,11 @@ import statistics
 import sys
 from pathlib import Path
 
-from clayseal.capabilities.monitor.scoring.target import action_target
 from benchmarks.core.detector_eval import task_to_trajectories
-from benchmarks.core.opmetrics import partial_auc
 from benchmarks.core.events import EventLabel
+from benchmarks.core.opmetrics import partial_auc
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.monitor.scoring.target import action_target
 
 DEFAULT_CORPORA = ["redcode", "sleight", "ipi_coding", "agent_threat_bench",
                    "agentharm", "toolemu", "tau2", "bfcl", "atif", "asb",
@@ -158,7 +158,7 @@ def verdicts(p: dict) -> dict[str, tuple[str, str]]:
     if shortcut is not None and shortcut >= 0.75 and p["attack_events"]:
         reason = (f"trajectory LENGTH alone separates benign from attack at "
                   f"AUC {shortcut:.3f}; any score here is partly counting")
-        return {layer: ("unusable", reason) for layer in LAYERS}
+        return dict.fromkeys(LAYERS, ("unusable", reason))
 
     # Per-action authorization: needs attack events and benign events. That is all.
     if not p["attack_events"]:

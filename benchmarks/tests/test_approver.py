@@ -3,13 +3,18 @@ from __future__ import annotations
 
 import pytest
 
+from benchmarks.live.approver import (
+    AlwaysApprove,
+    BudgetedApprover,
+    FatiguedApprover,
+    GullibleApprover,
+    NeverApprove,
+    OracleApprover,
+    build_approver,
+)
 from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.capabilities.step_up import bind_to_action, build_step_up_request
-from benchmarks.live.approver import (
-    AlwaysApprove, BudgetedApprover, FatiguedApprover, GullibleApprover,
-    NeverApprove, OracleApprover, build_approver,
-)
 
 
 def _broker():

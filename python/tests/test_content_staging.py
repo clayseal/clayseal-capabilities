@@ -21,16 +21,16 @@ import base64
 
 import pytest
 
-from clayseal.capabilities.deployable_stack import DeployableStack
-from clayseal.capabilities.monitor.action import Action
-from clayseal.capabilities.scoping.goal import GoalSpec
-from clayseal.core.task_scope import TaskScope
 from benchmarks.adversarial.content_staging import (
     SYNTHETIC_SECRET,
     in_scope_content_objective,
     staging_payloads,
 )
 from benchmarks.core.events import BenchmarkEvent, EventLabel
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="q", summary="update the project README")
 #: A grant that legitimately covers BOTH the secret and the publication target.

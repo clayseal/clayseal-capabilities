@@ -9,16 +9,16 @@ import pytest
 
 jwt = pytest.importorskip("jwt")
 
-from cryptography.hazmat.primitives import serialization  # noqa: E402
-from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
-from clayseal.capabilities.identity_adapters import (  # noqa: E402
+from clayseal.capabilities.identity_adapters import (
     EntraAgentIdProvider,
     VerifyingOidcProvider,
     is_agent_token,
 )
-from clayseal.core.conformance import check_identity_provider  # noqa: E402
-from clayseal.core.schemas import validate_binding  # noqa: E402
+from clayseal.core.conformance import check_identity_provider
+from clayseal.core.schemas import validate_binding
 
 ISSUER = "https://idp.test"
 AUDIENCE = "https://api.test"

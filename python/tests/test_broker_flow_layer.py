@@ -13,8 +13,6 @@ fragments out of order still walk out in 162/200 runs and unkeyed encodings are
 """
 from __future__ import annotations
 
-import pytest
-
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 from clayseal.capabilities.monitor.action import Action

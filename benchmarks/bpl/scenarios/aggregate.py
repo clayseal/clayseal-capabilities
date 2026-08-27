@@ -1,6 +1,7 @@
 """Family A, aggregate / sequence scenarios (longer than legacy)."""
 from __future__ import annotations
 
+from benchmarks.bpl.schema import Env, Scenario
 from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.capabilities.value_budget import (
@@ -8,7 +9,6 @@ from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )
-from benchmarks.bpl.schema import Env, Scenario
 
 
 def cross_tool_value_ceiling() -> Scenario:

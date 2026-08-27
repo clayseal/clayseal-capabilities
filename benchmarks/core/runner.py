@@ -11,10 +11,9 @@ import random
 import time
 from dataclasses import dataclass, field
 
-from clayseal.capabilities.scoping.metrics import ScopingMetrics
-
 from benchmarks.core.engines import DecisionEngine
 from benchmarks.core.events import BenchmarkTask, EventLabel
+from clayseal.capabilities.scoping.metrics import ScopingMetrics
 
 _EGRESS_ACTIONS = {"send", "post", "email", "egress", "transfer", "share", "publish"}
 _WRITE_ACTIONS = {"write", "create", "update", "delete", "transfer"}

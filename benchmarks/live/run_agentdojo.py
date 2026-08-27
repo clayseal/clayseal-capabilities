@@ -15,7 +15,6 @@ import sys
 import time
 from collections import Counter
 
-
 _REAL_OPENAI = None  # captured before any patching, so the OpenAI backup is restorable
 # Upstream flakiness counters, reported at the end of a run so a result always
 # says how much the backend had to be retried to produce it.
@@ -133,7 +132,7 @@ def _configure_provider(model: str) -> str:
                         if getattr(resp, "choices", None):
                             break
                         _TRANSIENT["empty_choices"] += 1
-                    except Exception as exc:  # noqa: BLE001 - re-raised below
+                    except Exception as exc:
                         status = getattr(exc, "status_code", None)
                         if status not in (424, 429, 500, 502, 503) or attempt >= attempts:
                             raise
@@ -199,13 +198,21 @@ def _configure_provider(model: str) -> str:
     return f"openai ({model})"
 
 from agentdojo.agent_pipeline import (
-    AgentPipeline, PipelineConfig, ToolsExecutionLoop, ToolsExecutor)
+    AgentPipeline,
+    PipelineConfig,
+    ToolsExecutionLoop,
+    ToolsExecutor,
+)
 from agentdojo.attacks import load_attack
 from agentdojo.benchmark import (
-    get_suite, run_task_with_injection_tasks, run_task_without_injection_tasks)
+    get_suite,
+    run_task_with_injection_tasks,
+    run_task_without_injection_tasks,
+)
 from agentdojo.logging import OutputLogger
 
-import benchmarks.live.adaptive_attack  # noqa: F401  (registers envelope_aware)
+import benchmarks.live.adaptive_attack
+
 # Registers document_workflow / record_update / schema_field /
 # deferred_conditional. The 2024 attacks no longer transfer to a 2026 model
 # (undefended ASR 0 of 18 on gpt-5-mini across four of them); these drop the
@@ -294,7 +301,9 @@ def _recipient_map(suite, user_ids):
     on banking, emails/URLs on workspace/travel/slack. Privileged ceiling; the
     deployable form seeds from provenance of trusted-named resources, not GT."""
     from clayseal.capabilities.hardening.egress_policy import (
-        extract_destinations, extract_recipients)
+        extract_destinations,
+        extract_recipients,
+    )
     env = suite.load_and_inject_default_environment({})
     m = {}
     for uid in user_ids:

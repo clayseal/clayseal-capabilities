@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import random
 
-from clayseal.core.task_scope import TaskScope
 from clayseal.capabilities.broker import Outcome, SessionBroker
 from clayseal.capabilities.decision_log import DECISION_SCHEMA, DecisionLog
 from clayseal.capabilities.monitor import Action, NGramScorer, TrajectoryDetector
 from clayseal.capabilities.monitor.training.synth_corpus import generate, workflow_for
-from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def test_decision_log_chain_verifies_and_detects_tamper():

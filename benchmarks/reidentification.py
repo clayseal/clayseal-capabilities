@@ -107,15 +107,19 @@ import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from clayseal.capabilities.confidentiality import (
-    FlowTracker, SensitivityPolicy)
-from clayseal.capabilities.reidentification import (
-    ATTRIBUTES, DEFAULT_FIELD_MAP, DEFAULT_SUBJECT_KEYS,
-    PrincipalReidentificationLedger, ReidentificationMonitor,
-    ReidentificationPolicy, identifiability_bits)
-from benchmarks.core.engines import VelocityLadderEngine, build_engines
+from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.reidentification import (
+    ATTRIBUTES,
+    DEFAULT_FIELD_MAP,
+    DEFAULT_SUBJECT_KEYS,
+    PrincipalReidentificationLedger,
+    ReidentificationMonitor,
+    ReidentificationPolicy,
+    identifiability_bits,
+)
 
 # Strangers the attack re-identifies. Fixed values, so a run is reproducible and
 # nothing about the attack can influence a policy parameter.
@@ -826,7 +830,7 @@ def _print(r: ReidResult) -> None:
         print(f"  blast radius     median         "
               f"{r.median_blast_radius:.0f} subjects re-identified before the block")
     if r.cross_session_scoped.total:
-        print(f"\n  one fragment per session, joined on an email address")
+        print("\n  one fragment per session, joined on an email address")
         print(f"    session-scoped accumulator    "
               f"{100*r.cross_session_scoped.rate:5.1f}% contained  "
               f"({r.cross_session_scoped.blocked}/{r.cross_session_scoped.total})")

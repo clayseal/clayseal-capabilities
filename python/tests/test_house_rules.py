@@ -5,8 +5,6 @@ where a deployment adds its own rule without forking the gateway.
 """
 from __future__ import annotations
 
-import pytest
-
 from clayseal.capabilities.deployable_stack import DeployableStack
 from clayseal.capabilities.monitor.action import Action
 from clayseal.capabilities.scoping.goal import GoalSpec

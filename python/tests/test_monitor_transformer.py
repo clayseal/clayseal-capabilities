@@ -14,7 +14,13 @@ import pytest
 
 pytest.importorskip("torch")
 
-from clayseal.capabilities.monitor import Action, ContextItem, Trajectory, TrajectoryDetector, TrustLevel
+from clayseal.capabilities.monitor import (
+    Action,
+    ContextItem,
+    Trajectory,
+    TrajectoryDetector,
+    TrustLevel,
+)
 from clayseal.capabilities.monitor.scoring.transformer import TransformerScorer
 from clayseal.capabilities.monitor.training.data import dump_corpus
 from clayseal.capabilities.monitor.training.train import train

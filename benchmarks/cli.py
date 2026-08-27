@@ -55,8 +55,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def _run_detector(args, tasks) -> int:
     import json as _json
 
-    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
     from benchmarks.core.detector_eval import run_detector_benchmark
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
 
     if args.scorer == "transformer":
         from clayseal.capabilities.monitor.scoring.transformer import TransformerScorer

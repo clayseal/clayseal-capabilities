@@ -78,8 +78,8 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
         # why it is stated before it is measured.
-        from clayseal.capabilities.confidentiality import FlowTracker
         from benchmarks.bpl.sensitivity import derive
+        from clayseal.capabilities.confidentiality import FlowTracker
 
         broker.sensitivity = derive(scen)
         broker.flow = FlowTracker()

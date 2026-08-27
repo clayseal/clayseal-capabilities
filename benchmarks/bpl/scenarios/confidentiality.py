@@ -1,10 +1,10 @@
 """Family C, confidentiality / leak-inspired scenarios."""
 from __future__ import annotations
 
+from benchmarks.bpl.schema import Env, Scenario
 from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from clayseal.capabilities.scoping.goal import GoalSpec
-from benchmarks.bpl.schema import Env, Scenario
 
 
 def cross_tenant_read() -> Scenario:

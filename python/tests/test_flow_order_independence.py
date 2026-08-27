@@ -16,9 +16,12 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from clayseal.capabilities.confidentiality import (
-    FlowTracker, SensitivityPolicy, _assemblable, _compact_fold,
-    _longest_prefix_in)
-
+    FlowTracker,
+    SensitivityPolicy,
+    _assemblable,
+    _compact_fold,
+    _longest_prefix_in,
+)
 
 # The window that bounds this mechanism has two parts, and both are load-bearing
 # for these arms. A character budget alone (24x the value length) drops the

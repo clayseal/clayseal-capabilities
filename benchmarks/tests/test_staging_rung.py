@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from clayseal.capabilities.hardening.object_class import ObjectClass, classify
 from benchmarks.adaptive import calibrate
-from benchmarks.adversarial.adaptive import (
-    Knowledge, in_scope_exfiltration_objective, run_adaptive)
+from benchmarks.adversarial.adaptive import Knowledge, in_scope_exfiltration_objective, run_adaptive
 from benchmarks.core.engines import LADDER, build_engines
 from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.hardening.object_class import ObjectClass, classify
 
 BASE = "task-scope+binding+budget+velocity+density"
 STAGING = BASE + "+staging"

@@ -5,10 +5,10 @@ import os
 import pathlib
 import tempfile
 
+from benchmarks.bpl.schema import Env, Scenario
 from clayseal.capabilities.broker import SessionBroker
 from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from clayseal.capabilities.scoping.goal import GoalSpec
-from benchmarks.bpl.schema import Env, Scenario
 
 
 def bulk_exfil_live() -> Scenario:

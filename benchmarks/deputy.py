@@ -54,6 +54,9 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine
+from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
+from benchmarks.datasets.base import get_loader
 from clayseal.capabilities.deputy import (
     DelegationBoundary,
     DelegationPolicy,
@@ -67,10 +70,6 @@ from clayseal.core.delegation import (
     sign_delegation,
 )
 from clayseal.core.signing import generate_keypair
-
-from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
-from benchmarks.datasets.base import get_loader
 
 # Re-delegation depth the mandate declares. A constant, not a fitted parameter:
 # it never sees traffic of any kind.

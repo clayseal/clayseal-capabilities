@@ -48,14 +48,13 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from benchmarks.core.detector_eval import task_to_trajectories
+from benchmarks.datasets.base import get_loader
 from clayseal.capabilities.monitor.scoring.target import (
     TargetDensityScorer,
     action_target,
     segments,
 )
-from benchmarks.core.detector_eval import task_to_trajectories
-from benchmarks.core.events import EventLabel
-from benchmarks.datasets.base import get_loader
 
 # Labelled by how the benign side was produced, declared before measuring.
 PROVENANCE = {

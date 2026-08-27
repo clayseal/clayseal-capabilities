@@ -1,11 +1,4 @@
 """Attestation: what a run claims about itself, and what it refuses to claim."""
-from clayseal.core.runtime import (
-    ActionDescriptor,
-    AuthorityContext,
-    ExecutionContext,
-    SideEffectLevel,
-)
-
 from clayseal.capabilities.decision_log import DecisionLog
 from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 from clayseal.capabilities.sandbox.attest import (
@@ -19,6 +12,12 @@ from clayseal.capabilities.sandbox.attest import (
 from clayseal.capabilities.sandbox.driver import ExitKind, IVisorResult
 from clayseal.capabilities.sandbox.lowering import lower_to_ivisor
 from clayseal.capabilities.sandbox.verdicts import parse_policy_line
+from clayseal.core.runtime import (
+    ActionDescriptor,
+    AuthorityContext,
+    ExecutionContext,
+    SideEffectLevel,
+)
 
 DENY = parse_policy_line(
     "ivisor: policy net.connect verdict=deny dst=203.0.113.10:443 "

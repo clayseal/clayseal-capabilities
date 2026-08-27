@@ -23,6 +23,7 @@ import random
 import sys
 from collections import Counter
 
+from benchmarks.core.events import EventLabel
 from clayseal.capabilities.behavior_baseline import (
     APPROACHING,
     SessionSummary,
@@ -31,7 +32,6 @@ from clayseal.capabilities.behavior_baseline import (
     profile_from,
 )
 from clayseal.capabilities.monitor.surface import surface_class
-from benchmarks.core.events import EventLabel
 
 DEFAULT_SHARES = (0.10, 0.25, 0.50, 1.00)
 

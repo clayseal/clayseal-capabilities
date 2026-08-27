@@ -100,7 +100,7 @@ HOSTILE_DESTINATIONS = [
 class GateResult:
     """What a gate did with one hostile input."""
 
-    __slots__ = ("value", "allowed", "reason", "error")
+    __slots__ = ("allowed", "error", "reason", "value")
 
     def __init__(self, value, allowed=None, reason="", error=None):
         self.value = value
@@ -113,8 +113,7 @@ class GateResult:
 # Gate adapters, each declares what it polices and how to call it
 # --------------------------------------------------------------------------- #
 def gate_value_budget():
-    from clayseal.capabilities.value_budget import (
-        SessionValueBudget, ValueBudgetConfig)
+    from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 
     def probe(value) -> GateResult:
         budget = SessionValueBudget(config=ValueBudgetConfig(
@@ -128,8 +127,7 @@ def gate_value_budget():
 
 
 def gate_call_budget():
-    from clayseal.capabilities.call_budget import (
-        CallBudgetConfig, SessionCallBudget)
+    from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
 
     def probe(value) -> GateResult:
         budget = SessionCallBudget(config=CallBudgetConfig(
@@ -144,8 +142,7 @@ def gate_call_budget():
 
 
 def gate_compute_budget():
-    from clayseal.capabilities.compute_budget import (
-        ComputeBudgetConfig, SessionComputeBudget)
+    from clayseal.capabilities.compute_budget import ComputeBudgetConfig, SessionComputeBudget
 
     def probe(value) -> GateResult:
         budget = SessionComputeBudget(config=ComputeBudgetConfig(

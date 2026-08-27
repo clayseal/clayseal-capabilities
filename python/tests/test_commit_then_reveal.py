@@ -13,7 +13,10 @@ from clayseal.capabilities.monitor import Trajectory
 from clayseal.capabilities.monitor.action import Action
 from clayseal.capabilities.monitor.declaration import check_declaration_against_goal
 from clayseal.capabilities.monitor.sealed_plan import (
-    check_sealed_plan, check_secret_flow, compile_sealed_plan)
+    check_sealed_plan,
+    check_secret_flow,
+    compile_sealed_plan,
+)
 from clayseal.capabilities.scoping.goal import GoalSpec
 
 GOAL = GoalSpec(

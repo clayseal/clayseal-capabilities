@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
+from clayseal.capabilities import used_token_store as stores
 from clayseal.capabilities.commit import InMemoryUsedTokenStore
 from clayseal.capabilities.used_token_store import load_used_token_store_from_env
-from clayseal.capabilities import used_token_store as stores
-import pytest
 
 
 def test_in_memory_store_rejects_replay():
