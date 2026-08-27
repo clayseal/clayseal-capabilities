@@ -89,3 +89,48 @@ addressed here. `DecisionLog` already bounds its own retention with
 `max_records`; the trajectory has no equivalent, and giving it one changes what
 the phase-order landmarks can see, which is a semantic decision rather than an
 optimization.
+
+## Re-measured for 0.6, and still open
+
+Measured end to end through `Guardrail` rather than the stack alone: **1,194
+bytes per call** over 2,000 calls in one session. Consistent with the 1,621 above,
+which counts the trajectory entry alone rather than the whole per-decision
+footprint.
+
+It is not one structure but four, and that is why it is still open:
+
+| source | site |
+| --- | --- |
+| `_trajectory.actions` | `broker.py:1255`, append per call |
+| `_trajectory.context` | `broker.py:636`, **rebuilt by copy** per observation, so O(N) time as well as space |
+| the envelope's phase memo | `intent_envelope.py:508`, stores `tuple(steps)` — one `StepConformance` per action, re-allocated every call |
+| `ScopingMetrics._overhead_samples` | **fixed in 0.6**: bounded to the last 2,048 samples, with exact session counters beside them |
+
+Bounding the first three needs a windowed deque plus an aggregate that survives
+eviction, because the consumers are not all suffix reads. Three of them fail in
+directions worth naming: `check_secret_flow`'s taint bit (`sealed_plan.py:598`)
+would **fail open** if the read that tainted the session is evicted; a phase
+`max` count would reset and stop raising `OVER_COUNT`, also **fail open**; and a
+phase `min` landmark would go unmet and raise `OUT_OF_ORDER` on everything after
+it, **failing closed** on exactly the long sessions a window exists to serve.
+
+**The BPL suite cannot choose the window size.** Of the 132 scenarios, the
+longest script is 44 calls (`chronicle-then-blast`), then 42, then 39; the median
+is 16. Any window of 44 or more evicts nothing, so a sweep would return
+byte-identical containment for W ∈ {44, 64, 512, ∞}. That is evidence the
+mechanism never fired, not evidence that windowing is safe. The suite is a
+falsifier over W ∈ [1, 44] and nothing more; choosing a default needs an
+adversarial long-session arm where benign filler is inserted between an attack's
+setup and its payload, and containment is required to be invariant in the amount
+of filler.
+
+Two concrete hazards found while scoping it, both invisible until something is
+actually evicted: `sandbox/monitor_feed.py:96` computes `start_step` from
+`len(trajectory.actions)`, so after eviction synthesized step numbers restart and
+collide with earlier ones, and `detector.py` keys scores by step; and
+`session_state.restore` (`session_state.py:169`) reassigns `.actions` to a plain
+list, which would drop any bound and any aggregate — a fail-open across a
+snapshot boundary.
+
+So it stays open, deliberately, with the design written down rather than half
+applied. `docs/TRAJECTORY_WINDOW.md` carries it.
