@@ -74,7 +74,42 @@ def test_a_rule_that_raises_is_skipped_not_fatal():
     # The broken rule did not stop the good one behind it.
     assert decision.outcome == "step_up"
     assert decision.layer == "house-rules"
-    assert session_rules.RULE_FAILURES.get("broken") == 1
+    # Keyed by __qualname__, so two rules called `check` in different modules
+    # are counted apart. For a module-level rule that is just its name; this one
+    # is nested in a test, so it carries the enclosing scope.
+    assert session_rules.RULE_FAILURES == {
+        f"{test_a_rule_that_raises_is_skipped_not_fatal.__name__}.<locals>.broken": 1
+    }, session_rules.RULE_FAILURES
+
+
+def test_the_failure_counter_cannot_grow_without_bound():
+    """A rule with no `__name__` must not add a key per call.
+
+    `repr()` was the fallback, and for a `functools.partial` or a callable
+    object it embeds the memory address: 200 identical decisions produced 19
+    distinct keys in a dict that lives as long as the process and is written
+    from the authorization path. It also made the count meaningless, since one
+    rule failing 200 times looked like 200 rules failing once.
+    """
+    import functools
+
+    from clayseal.capabilities import session_rules
+
+    def boom(action, session, *, goal_summary, egress_verbs):
+        raise RuntimeError("nope")
+
+    class CallableRule:
+        def __call__(self, action, session, *, goal_summary, egress_verbs):
+            raise RuntimeError("nope")
+
+    session_rules.RULE_FAILURES.clear()
+    for _ in range(200):
+        session_rules._check_extra(
+            (functools.partial(boom), CallableRule()), None, None, "", frozenset())
+
+    assert len(session_rules.RULE_FAILURES) == 2, session_rules.RULE_FAILURES
+    assert set(session_rules.RULE_FAILURES.values()) == {200}
+    assert not any("0x" in k for k in session_rules.RULE_FAILURES)
 
 
 def test_house_rules_run_after_the_shipped_ones():

@@ -149,6 +149,32 @@ def observe(action: Any, session: Any) -> None:
 #: House rules that raised, by rule name. A deployment can assert this is zero.
 RULE_FAILURES: dict = {}
 
+#: A ceiling on distinct keys. The counter lives for the life of the process and
+#: is written from the authorization path, so it has to be something that cannot
+#: grow without bound even when the naming below meets something unexpected.
+_MAX_RULE_FAILURE_KEYS = 256
+
+
+def _rule_key(rule: Any) -> str:
+    """A name for `rule` that is the same on every call.
+
+    `repr()` was the fallback, and for the two rule shapes with no `__name__` —
+    a `functools.partial` and any callable object — repr embeds the memory
+    address. Two hundred identical decisions produced nineteen distinct keys,
+    each one a fresh entry in a process-lifetime dict written from the
+    authorization path. It also made the counter useless for the thing it is
+    for: one rule failing two hundred times and two hundred rules failing once
+    were indistinguishable.
+    """
+    for attr in ("__qualname__", "__name__"):
+        name = getattr(rule, attr, None)
+        if isinstance(name, str) and name:
+            return name
+    func = getattr(rule, "func", None)      # functools.partial
+    if func is not None:
+        return _rule_key(func)
+    return type(rule).__name__
+
 
 def _check_extra(rules, action, session, goal_summary, egress_verbs):
     """Run the deployment's own rules. A rule that raises is skipped."""
@@ -157,8 +183,9 @@ def _check_extra(rules, action, session, goal_summary, egress_verbs):
             hit = rule(action, session, goal_summary=goal_summary,
                        egress_verbs=egress_verbs)
         except Exception:  # noqa: BLE001 - a house rule must not fail the gateway
-            name = getattr(rule, "__name__", repr(rule))
-            RULE_FAILURES[name] = RULE_FAILURES.get(name, 0) + 1
+            name = _rule_key(rule)
+            if name in RULE_FAILURES or len(RULE_FAILURES) < _MAX_RULE_FAILURE_KEYS:
+                RULE_FAILURES[name] = RULE_FAILURES.get(name, 0) + 1
             continue
         if hit is not None:
             return hit
