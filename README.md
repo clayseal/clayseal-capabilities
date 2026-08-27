@@ -302,6 +302,29 @@ assume anybody is at the console to answer a question. `--step-up allow` prices
 the other end of it and produces an identical table, because this suite never
 produces a step-up at all.
 
+### What it costs in time
+
+```bash
+python -m benchmarks.gateway_cost
+```
+
+**34 µs per decision** (29,000/sec), flat in session length: the median cost at
+call 3,500 is the same as at call 0. An agent acts at 1 to 10 actions per second
+and the LLM round trip this gates is hundreds of milliseconds, so the median is
+four orders of magnitude below it.
+
+The median is the least interesting number, so the same file publishes the three
+that are: a 16 KB argument costs 206 µs, because the egress floor scans argument
+text and that text is attacker-influenced; the confidentiality tracker's p99
+reaches 10.7 ms and one run peaked at 219 ms, which is the open performance
+problem; and memory per session is unbounded at 1,182 bytes per decision.
+
+[benchmarks/results/performance.md](benchmarks/results/performance.md) is the one
+place these live, including which measurement point each number is from. That
+matters more than it sounds: four different documents here used to quote four
+different p50s for "the full stack", all correct for what they measured and none
+of them saying which.
+
 ### The rest of the evidence
 
 The two mechanisms catch different things: 32 scenarios are contained by this

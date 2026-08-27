@@ -116,6 +116,36 @@ jobs:
       - name: Lint the shipped package
         run: ruff check clayseal
 
+  # Performance as a PROPERTY, not a stopwatch.
+  #
+  # A wall-clock threshold on a shared runner is a flaky test that gets muted,
+  # and a muted gate is worse than none. What this asserts instead are the two
+  # things that must hold on any machine, both of which are invariants rather
+  # than measurements:
+  #
+  #   * per-call cost does not grow with session length. A session-scoped
+  #     gateway is always one mistake away from an O(N) term on the decision
+  #     path, and this repository has already shipped that once: 13.1 s for
+  #     2,000 actions before it was found.
+  #   * memory retained per decision stays under a ceiling, so a new unbounded
+  #     structure on the hot path fails here rather than in someone's long-lived
+  #     deployment.
+  #
+  # The adversarial-argument budget lives in the test suite
+  # (test_no_catastrophic_backtracking.py, BUDGET_MS) and runs in the fast gate.
+  perf:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Cost properties hold
+        run: python -m benchmarks.gateway_cost --check
+
   # The slow gate: ladder monotonicity, confidentiality flow windows, gate
   # totality, commit-token mutation stress, replay defense, corpus adequacy.
   # These guard against a number being reported that the system did not earn.

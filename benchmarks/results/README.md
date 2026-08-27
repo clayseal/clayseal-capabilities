@@ -72,6 +72,21 @@ are the independent half.
 reviews every automatic binding against the sentence it came from, because an
 extracted rule naming the wrong tool is worse than a TODO: a TODO asks a
 reviewer a question and a wrong binding answers it.
+## What it costs
+
+Performance numbers live in one place, [performance.md](performance.md), and
+every other document links there. Before it existed, four files quoted four
+different p50 latencies for "the full stack" — all correct for what they
+measured, none of them saying which — and `baselines_audit.md` had flagged the
+contradiction against us before anyone outside could.
+
+| question | answer | reproduce |
+| --- | --- | --- |
+| What does one decision cost? | **34.1 µs** at the `Guardrail` boundary, 29,331/sec | `python -m benchmarks.gateway_cost` |
+| Does it get slower as a session runs? | **No.** Cost at call 3,500 over cost at call 0 is a ratio of 1.0 over 4,000 calls | same command |
+| What is the worst case? | **10.7 ms p99** in the confidentiality tracker, one run peaking at 219 ms. The open problem | `python -m benchmarks.flow` |
+| What does it hold? | 11.7 KB per idle session, **1,182 bytes per decision, unbounded** | `python -m benchmarks.gateway_cost` |
+
 ## Provenance
 
 `python -m benchmarks.check_claims` is a CI gate. It gives a containment figure
