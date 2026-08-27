@@ -52,7 +52,6 @@ from agentauth.capabilities.policy_scaffold import (
     tools_block,
     tracked_block,
 )
-from agentauth.core.scan_limits import MAX_LINE
 
 #: Periods a written rule uses, in seconds. `per transaction` and `per payment`
 #: are deliberately absent: they bound a single call, which is a ceiling and not
@@ -70,7 +69,41 @@ _MONEY = re.compile(r"[$£€]\s?([\d,]+(?:\.\d{1,2})?)|\b([\d,]{4,}(?:\.\d{1,2}
 _COUNT = re.compile(r"\bno more than\s+(\d{1,5})\b|\bup to\s+(\d{1,5})\s+(?!.*[$£€])", re.IGNORECASE)
 # `\b` cannot anchor before `*`, which is not a word character, so a rule about
 # `*.ledger` matched nothing at all until the anchor was dropped.
-_PATH = re.compile(r"(?:under|within|in)\s+([~/][\w./*-]+)|([\w./-]*\*\.\w+)")
+#: Filesystem paths a written rule names. The pattern this replaces was
+#: quadratic, 167 ms on 8 KB and growing fourfold per doubling, because
+#: `[\w./-]*\*\.\w+` retries every split of a run that can contain the
+#: characters it then needs to find. A sentence is already whitespace
+#: separated, so one pass over its words answers the same question.
+_PATH_PREPOSITIONS = frozenset({"under", "within", "in"})
+_PATH_WORD_CHARS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./*-~")
+
+
+def _paths_in(line: str) -> list[str]:
+    """Paths and globs named in one line of a policy document.
+
+    Two shapes, as before: a path introduced by a preposition ("under
+    /finance/ap"), and a bare glob ("*.ledger", "reports/*.csv").
+
+    One reading improves. The old pattern stopped at the first dot after the
+    star, so "*.tar.gz" was extracted as "*.tar", a glob that does not match
+    the file the sentence names. The whole word is taken now.
+    """
+    out: list[str] = []
+    words = line.split()
+    for i, raw in enumerate(words):
+        word = raw.strip("(),;:\"'")
+        if not word:
+            continue
+        previous = words[i - 1].strip("(),;:\"'").lower() if i else ""
+        if previous in _PATH_PREPOSITIONS and word[:1] in "~/" and \
+                _PATH_WORD_CHARS.issuperset(word):
+            out.append(word)
+        elif "*." in word and _PATH_WORD_CHARS.issuperset(word):
+            out.append(word)
+    return out
+
+
 _DOMAIN = re.compile(r"\b(?:at|to|@)\s*([a-z0-9-]+(?:\.[a-z0-9-]+)+)\b", re.IGNORECASE)
 
 #: A sentence containing one of these is making a rule. If nothing was extracted
@@ -484,8 +517,7 @@ def extract(document: str, tools: Iterable[str] | None = None) -> Draft:
         # trailing `.` survives into the glob as a directory component:
         # `/finance/ap/.` became `/finance/ap/./**`, which matches nothing the
         # rule meant. Sentence punctuation is never part of a path.
-        paths = [p.rstrip(".,;:)") for pair in _PATH.findall(line[:MAX_LINE])
-                 for p in pair if p]
+        paths = [p.rstrip(".,;:)") for p in _paths_in(line)]
         paths = [p for p in paths if p not in ("", "/", "~")]
         if paths:
             found_here.append(Rule(

@@ -6,6 +6,44 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Security: no pattern in the library is super-linear any more
+
+The sweep was extended from seventeen adversarial shapes to a doubling test over
+every compiled pattern: measure at 1 KB, 2 KB, 4 KB and 8 KB and look at the
+curve. That separated real hazards from jitter. Ten patterns looked alarming on
+a growth ratio alone and were noise from a sub-millisecond base. **Three were
+genuinely quadratic**, growing fourfold per doubling.
+
+| pattern | at 8 KB | after |
+| --- | --: | --- |
+| `session_rules._ZIP_ARTIFACT` | 230 ms | substring test |
+| `policy_draft._PATH` | 167 ms | one pass over the words |
+| `session_rules._SED_PATHS` | 62 ms | one pass over the tokens |
+
+All three asked the same question, "which tokens here look like paths", and a
+sentence or a command is already separated into tokens. Each is now a single
+pass that cannot backtrack.
+
+**The caps added in the previous commit are gone**, and that is the result
+rather than an oversight: replacing the patterns removed every use of them.
+`core/scan_limits.py` is deleted. Bounding the input was always second best,
+because a cap can hide a match past it and leaves the hazard in place for the
+next call site; where the input has a grammar, scanning it linearly costs
+nothing and removes the hazard instead.
+
+Two readings were checked against the patterns they replace rather than assumed.
+`_paths_in_command` differs from its regex on commands like `aws s3 cp r.zip
+s3://b/`, where the old one extracted `//b`; those commands never reach it,
+because it is only called after the `sed -i` guard matches, and on the six sed
+forms that do reach it the value the caller uses is identical. `_paths_in`
+extracts `*.tar.gz` where the old pattern stopped at the first dot and returned
+`*.tar`, a glob that does not match the file the sentence names. That one is an
+improvement and the docstring says so.
+
+`test_no_catastrophic_backtracking.py` now sweeps every pattern in the library
+itself, so a new one cannot reintroduce the class. The guard was verified by
+planting a catastrophic pattern in an unrelated module and confirming it fails.
+
 ### Security: regex on attacker-controlled input was a remote hang
 
 Python's `re` backtracks, so `(?:group)+suffix` explores exponentially many
