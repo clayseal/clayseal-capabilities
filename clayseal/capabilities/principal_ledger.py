@@ -828,6 +828,32 @@ class PrincipalBudgetView:
     #: parent's ceiling bounds the aggregate of everything it delegated to.
     #: Empty for a non-delegated principal, which is the previous behaviour.
     chain: tuple[str, ...] = ()
+    #: The compiled money spec `reserve` reads. It used to be undeclared, set
+    #: onto the instance by `policy.py` after construction, and read back with
+    #: `getattr(self, "config", None)`. A view built any other way therefore had
+    #: no config, and `reserve` opens by returning `ok_untracked` when there is
+    #: none, so it allowed EVERYTHING: 20 of 20 calls of 10.00 against a ceiling
+    #: of 100, with a reason string claiming the calls were not tracked.
+    #:
+    #: `would_allow` reads `ceilings` and `tracked` instead and was correct
+    #: throughout, so the same object had two gates disagreeing, and the one
+    #: that disagreed failed open. The constructor advertises `ceilings` and
+    #: `tracked`, which made hand-wiring a principal ledger the case that
+    #: silently did not enforce.
+    #:
+    #: Declared now, and derived from `ceilings`/`tracked` when the caller did
+    #: not pass one, so there is one answer regardless of how the view was
+    #: built. `policy.py` still assigns it afterwards and that still wins.
+    config: Any = None
+
+    def __post_init__(self) -> None:
+        if self.config is None and (self.ceilings or self.tracked):
+            from clayseal.capabilities.value_budget import ValueBudgetConfig
+
+            self.config = ValueBudgetConfig(
+                tracked=dict(self.tracked),
+                ceilings=dict(self.ceilings),
+            )
 
     def _principals(self) -> tuple[str, ...]:
         return (self.principal, *self.chain)
