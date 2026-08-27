@@ -6,6 +6,73 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed: two syscall scenarios were hardcoded to pass
+
+`syscall_tier.py` contained `elif scen.id in {"05-host-escape",
+"06-audit-evasion"}: ok = True`. Two scenarios passed by NAME, whatever the
+replay did. Their captured traces are byte-identical to each other and carry
+three lines of ordinary allowed activity: open a notes file, resolve pypi.org,
+connect to it. Nothing is attempted, so nothing is contained.
+
+That took a 6-of-6 result and published it as **100.0% (8/8)**. It now reads
+100.0% (6 of 6 scenarios that produce a syscall-level event; 2 excluded as
+non-events), and the two are listed as `n/a` with their reason. A replay that
+carries no attack is evidence of neither containment nor escape.
+
+The other six are real. 01 to 04 are contained by egress, task-scope and the
+iVisor floor. 07 and 08 are contained by the session budget with zero iVisor
+denies, which is the interesting case rather than a weak one: the syscall layer
+allows the channel and the session-level total is what catches the volume.
+
+The generator emitted neither a `STATUS:` line nor its command, so every
+regeneration reintroduced that debt to `check_claims`. It emits both now.
+
+### Removed: a corpus codename from two test fixtures
+
+`claude-ocelot-preview/` appeared in the command strings of two tests. The rule
+they exercise fires on `results`, not on the project name, which the tests
+confirm by still passing with a neutral fixture.
+
+
+### Added: `tools.patterns`, the grant surface only the benchmark could reach
+
+- **The largest friction result in the project was measured against a mechanism
+  no user could deploy.** `SessionBroker.tool_patterns` has been enforced since
+  the pattern work landed, and only `benchmarks/core/patterns.py` could set it:
+  `compile_policy` never read a pattern field, so a policy document could not
+  say it. `generalisation.md` reports held-out false blocks falling from 47.91%
+  to 0.05% on tau2 once a grant is written as patterns rather than as the
+  instance list a logger produces, and until now that was a fact about the
+  harness. `tools.patterns` is the reach.
+
+  Measured at the tool+verb namespace level: **AgentHarm held-out false-block
+  55.56% → 0.82%** for 1.3 points of containment. RedCode is unmoved.
+  **Mind2Web-SC goes 98.00% → 0.00%**, because its containment *is* the exact
+  resource, which is why this is opt-in, documented with that counterexample,
+  and never a default.
+
+- **Two enforcement defects found while wiring it.** `broker.py` treated
+  patterns as REPLACING `allowed_tools` rather than unioning with them, so a
+  grant carrying both refused a tool named explicitly in `tools.allow`. Nothing
+  hit it while only the benchmark could set patterns, because level 0 restates
+  the exact instances and the two readings agree there. And the proxy's first
+  `_tool_granted` asked `allowed_tools is None` after failing to match a
+  pattern, which **fails open** on exactly the document the field exists for:
+  patterns declared, no literal list, every unmatched tool granted. Caught by
+  asserting the proxy's two gates agree with each other.
+
+- **The three cross-checks learned about patterns together.** `tools.effects`,
+  `paths.arg_names` and `paths.pathless` each verified their tools against
+  `tools.allow` with their own copy of the same expression, so each was a
+  separate way for the feature to be unusable. They share `_uncovered` now.
+
+- **Guards.** A universal pattern (`*`, `**`) is refused at compile time, the
+  rule `paths.allow` already carries. An entry with no wildcard is refused,
+  because a literal belongs in `allow`. `lint` always reports a pattern grant,
+  it being the one part of the document whose extent is not visible from
+  reading it, and separately flags a leading wildcard: `*_data` admits
+  `delete_data` as readily as `read_data`.
+
 ### Audit: credentials, and the ignore rule that let a virtualenv in
 
 **No credential is committed anywhere, in the working tree or in any history.**

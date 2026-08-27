@@ -117,6 +117,54 @@ effectful, reachable, and neither budgeted nor declared harmless is an error und
 harmless that is not in `allow` is refused, because it hides a typo as an
 assertion.
 
+#### `patterns`, when the grant is a family rather than a list
+
+```yaml
+tools:
+  allow:    [cancel_booking]        # this tool
+  patterns: ["get_*", "search_*"]   # and this family
+```
+
+`patterns` grants by shape. It is UNIONed with `allow`: a name in `allow` stays a
+literal and nothing about an existing document changes meaning.
+
+**Why it exists.** A grant assembled by enumerating what a session touched is not
+a mandate, it is a log. An operator writes "the reservation tools"; the logger
+writes the fourteen that happened to be called. Measured: rebuild a tau2 grant
+from half a session's benign events and it refuses **47.91%** of the other half,
+and every one of those refusals is `tool 'x' not granted` for a tool the same
+session used, from the same catalog, that landed in the unobserved half. Writing
+the grant as patterns takes that to **0.05%**. See
+[generalisation.md](../benchmarks/results/generalisation.md).
+
+**When not to use it.** This is a real trade and one corpus makes it vivid.
+Generalising the tool grant to a namespace:
+
+| corpus | held-out false-block | containment |
+| --- | --- | --- |
+| AgentHarm | 55.56% → **0.82%** | 27.16% → 25.86% |
+| RedCode | unchanged | 99.86% → 99.86% |
+| **Mind2Web-SC** | — | **98.00% → 0.00%** |
+
+Mind2Web-SC collapses because its containment *is* the exact resource, minted
+from the principal's attested attributes: generalising the grant admits
+everything. If your containment rests on naming exact instances, patterns will
+take it away. If your friction comes from a grant that could not enumerate
+tomorrow's legitimate call, they will fix it. Know which you have before you
+write one.
+
+**Guards.** A universal pattern (`*`, `**`) is refused at compile time, the same
+rule `paths.allow` carries: a grant of everything is not reviewable. An entry
+with no wildcard is refused too, because a literal belongs in `allow` where a
+reader can see it is one tool and not a family. `lint` always reports a pattern
+grant, because it is the one part of the document whose extent is not visible
+from reading it, and separately flags a leading wildcard: `*_data` admits
+`delete_data` as readily as `read_data`.
+
+Under the proxy, patterns filter the advertised catalog exactly as `allow` does,
+through the same predicate, so the tools the agent is offered and the tools it
+may call cannot drift apart.
+
 ### `paths`
 
 ```yaml

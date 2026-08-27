@@ -7,6 +7,8 @@ python -m benchmarks.cli --dataset sleight --mode detector      # the layer this
 python -m benchmarks.cli --dataset sleight --mode ladder --ci --json benchmarks/results/new-suites/sleight.json
 ```
 
+> **The ladder is an ablation; the shipped product scores higher.** `--mode stack` runs the `DeployableStack` this library actually ships, which has the intent envelope, parameter provenance, the confidentiality flow tracker and the session rules the ladder stops below: **union 30.2% (hard 7.0% / soft 23.3%)** against the ladder's 5.4%, at n/a false-block. Soft is a step-up, never fold it into a hard containment headline. The full product tier is in [`benchmarks/scoreboard.py`](../../scoreboard.py).
+
 ## Read the detector number, not the ladder
 
 SLEIGHT is a catalogue of **evasion**, not of risky operations. Its published

@@ -211,6 +211,11 @@ class McpProxy:
 
     gateway: Any
     allowed_tools: set[str] | None = None
+    #: `tools.patterns` from the policy, UNIONed with `allowed_tools`. Both
+    #: gates below consult it, because a catalog filter that disagrees with
+    #: the call check is worse than either: the agent is told a tool does not
+    #: exist and then allowed to call it, or is offered one and refused.
+    tool_patterns: list[str] | None = None
     #: tool -> verb, declared by the operator in the policy document. The
     #: name-based classifier is a fallback and it is wrong on most real MCP
     #: catalogs: measured against 24 tool names taken from widely used servers,
@@ -290,6 +295,7 @@ class McpProxy:
         return cls(
             gateway=policy.build() if gateway is None else gateway,
             allowed_tools=policy.allowed_tools,
+            tool_patterns=policy.tool_patterns,
             tool_verbs=dict(policy.tool_verbs),
             path_args=dict(policy.path_args),
             pathless_tools=policy.pathless_tools,
@@ -447,10 +453,27 @@ class McpProxy:
                 return f"path {path!r} outside scope"
         return None
 
+    def _tool_granted(self, name: str) -> bool:
+        """One predicate for both gates, so they cannot drift apart.
+
+        Only a document that scopes NEITHER dimension admits everything. The
+        first draft asked `allowed_tools is None` after failing to match a
+        pattern, which fails OPEN on the exact document this field exists for:
+        patterns declared, no literal list, so every unmatched tool was granted.
+        Caught by asserting the two gates agree.
+        """
+        if self.allowed_tools is None and self.tool_patterns is None:
+            return True
+        if self.tool_patterns:
+            import fnmatch
+            if any(fnmatch.fnmatch(name, p) for p in self.tool_patterns):
+                return True
+        return bool(self.allowed_tools) and name in self.allowed_tools
+
     def check(self, params: dict[str, Any], *, request_id: Any = None) -> tuple[bool, str]:
         """Decide one `tools/call`. Returns (allowed, reason)."""
         action = self._action_for(params)
-        if self.allowed_tools is not None and action.tool not in self.allowed_tools:
+        if not self._tool_granted(action.tool):
             self.stats.denied += 1
             return False, (
                 f"tool {action.tool!r} is not in this session's policy"
@@ -641,7 +664,7 @@ class McpProxy:
 
         self._absorb(msg)
 
-        if self.allowed_tools is None:
+        if self.allowed_tools is None and self.tool_patterns is None:
             return raw
         result = msg.get("result")
         if not isinstance(result, dict) or not isinstance(result.get("tools"), list):
@@ -650,7 +673,7 @@ class McpProxy:
         kept, dropped = [], set()
         for tool in result["tools"]:
             name = tool.get("name") if isinstance(tool, dict) else None
-            if name is None or name in self.allowed_tools:
+            if name is None or self._tool_granted(str(name)):
                 kept.append(tool)
             else:
                 dropped.add(str(name))

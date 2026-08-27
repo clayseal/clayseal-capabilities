@@ -796,12 +796,22 @@ class SessionBroker:
                         {"delegation": True}, True)
         # Tool / capability / arg-hash binding, same primitives as the ladder
         # engines, so scoreboard and SessionBroker share one floor.
-        if self.tool_patterns is not None:
-            import fnmatch
-            if not any(fnmatch.fnmatch(action.tool, p) for p in self.tool_patterns):
+        if self.allowed_tools is not None or self.tool_patterns is not None:
+            # UNION, not replacement. This was `elif`, so a grant that carried
+            # both dropped the literal list entirely and refused a tool named
+            # explicitly in `tools.allow` because it did not also match a
+            # pattern. Nothing hit it while only the benchmark could set
+            # patterns, because `benchmarks/core/patterns.py` builds a covering
+            # set and level 0 restates the exact instances, so union and
+            # replacement agree there. A policy document means both: `allow`
+            # names tools, `patterns` names families.
+            granted = bool(self.allowed_tools) and action.tool in self.allowed_tools
+            if not granted and self.tool_patterns:
+                import fnmatch
+                granted = any(fnmatch.fnmatch(action.tool, p)
+                              for p in self.tool_patterns)
+            if not granted:
                 return False, f"tool {action.tool!r} not granted", {}, True
-        elif self.allowed_tools is not None and action.tool not in self.allowed_tools:
-            return False, f"tool {action.tool!r} not granted", {}, True
         if self.conditional_tools is not None and \
                 action.tool in self.conditional_tools.withdrawn():
             return (False,
