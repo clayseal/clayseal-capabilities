@@ -151,8 +151,13 @@ none of that class. Pooled over all 3,410 events the full stack contains 82.1%,
 not the 100% the surface-leaving column alone suggests. Publishing the weighted
 number pre-empts the objection rather than waiting for it.
 
-**Cost.** 35us at p50 and 60us at p99 for the full stack, four orders of
-magnitude below the LLM round trip it gates.
+**Cost.** 34us at p50 at the `Guardrail` boundary, four orders of magnitude below
+the LLM round trip it gates. The median is the least interesting number here: the
+argument-size dependence, the confidentiality tail and the unbounded per-session
+memory all matter more, and all three are in the one place these figures now live,
+[benchmarks/results/performance.md](../benchmarks/results/performance.md). This
+line used to quote 35us/60us with no statement of which measurement point it came
+from, which is how four different p50s ended up in four different files.
 
 **Enforcement ladder on RedCode.** All 717 attacks leave the surface via the
 target alone, so `tool-allowlist` and `capability-token` contain **zero** while
