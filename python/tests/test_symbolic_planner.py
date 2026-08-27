@@ -2,18 +2,18 @@
 landmark analysis, deterministic, sound, non-injectable, multi-modal aware."""
 from __future__ import annotations
 
-from agentauth.core.signing import generate_keypair
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import (
+from clayseal.core.signing import generate_keypair
+from clayseal.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import (
     Action,
     SymbolicPlanner,
     Trajectory,
     compile_envelope,
     fact_landmarks,
 )
-from agentauth.capabilities.monitor.ontology import ToolOntology
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor.ontology import ToolOntology
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _goal(ontology, gc=("deployed",), tools=None) -> GoalSpec:

@@ -198,7 +198,7 @@ system's own unused capabilities wired in:
 
 138 tests pass.
 
-## Phase 3 hardening modules (`agentauth/capabilities/hardening/`)
+## Phase 3 hardening modules (`clayseal/capabilities/hardening/`)
 
 - **protected_zones**, global sensitive-path deny-list (wired; path-exfil 100%).
 - **egress_policy**, destination allow-list for send/post tools (default-deny

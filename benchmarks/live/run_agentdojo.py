@@ -266,7 +266,7 @@ class OraclePlanner:
     def __init__(self, mapping):
         self.mapping = mapping
     def plan(self, query, tools):
-        from agentauth.capabilities.monitor import IntentEnvelope, Phase
+        from clayseal.capabilities.monitor import IntentEnvelope, Phase
         gt = self.mapping.get(query) or [n for n, _ in tools]
         phases = tuple(Phase(tools=frozenset([t]), min=1) for t in (self.mapping.get(query) or []))
         # Keep the sound verb-class structure (gather-before-act); see LLMPlanner.
@@ -293,7 +293,7 @@ def _recipient_map(suite, user_ids):
     task's ground-truth calls. One general 'destination binding' primitive: IBANs
     on banking, emails/URLs on workspace/travel/slack. Privileged ceiling; the
     deployable form seeds from provenance of trusted-named resources, not GT."""
-    from agentauth.capabilities.hardening.egress_policy import (
+    from clayseal.capabilities.hardening.egress_policy import (
         extract_destinations, extract_recipients)
     env = suite.load_and_inject_default_environment({})
     m = {}

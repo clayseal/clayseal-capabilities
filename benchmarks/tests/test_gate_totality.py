@@ -12,7 +12,7 @@ import pytest
 
 from benchmarks.stress_gates import GATES, run_gate
 
-#: `agentauth.core.task_scope` lives in the sibling clay-seal-core repository, so
+#: `clayseal.core.task_scope` lives in the sibling clay-seal-core repository, so
 #: it is reported here rather than patched from this one. See the writeup.
 EXTERNAL = {"task-scope"}
 
@@ -88,7 +88,7 @@ def test_no_broken_component_turns_a_refusal_into_an_allow():
     fills up. Four defects were found that way, all of them a component with no
     authority over a decision being able to prevent one.
     """
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
     from benchmarks.stress_faults import (
         POLICY,
         SEAMS,

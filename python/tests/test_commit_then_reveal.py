@@ -9,12 +9,12 @@ pin what that buys and what it does not.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.monitor import Trajectory
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.declaration import check_declaration_against_goal
-from agentauth.capabilities.monitor.sealed_plan import (
+from clayseal.capabilities.monitor import Trajectory
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.declaration import check_declaration_against_goal
+from clayseal.capabilities.monitor.sealed_plan import (
     check_sealed_plan, check_secret_flow, compile_sealed_plan)
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 GOAL = GoalSpec(
     query_id="q",
@@ -73,7 +73,7 @@ def test_the_broker_passes_the_declaration_as_the_reference():
     """The wiring. Without this the corridor is benchmark-only."""
     import inspect
 
-    from agentauth.capabilities import broker
+    from clayseal.capabilities import broker
 
     source = inspect.getsource(broker.SessionBroker)
     assert "reference=self.declared_plan" in source
@@ -81,8 +81,8 @@ def test_the_broker_passes_the_declaration_as_the_reference():
 
 
 def test_broker_fail_closed_on_sabotaged_declaration():
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.core.task_scope import TaskScope
 
     broker = SessionBroker(
         goal=GOAL,
@@ -136,8 +136,8 @@ def test_suspect_callee_nc_not_cleared_by_substring_in_inference():
 
 def test_no_declaration_leaves_behaviour_unchanged():
     """Opt-in: a caller that declares nothing gets exactly today's decisions."""
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.core.task_scope import TaskScope
 
     broker = SessionBroker(
         goal=GOAL,

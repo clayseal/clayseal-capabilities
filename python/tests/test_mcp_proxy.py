@@ -17,11 +17,11 @@ import sys
 import textwrap
 from pathlib import Path
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
-from agentauth.capabilities.policy import compile_policy
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
+from clayseal.capabilities.policy import compile_policy
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _call(tool: str, args: dict | None = None, *, id_: int = 1) -> str:
@@ -71,7 +71,7 @@ def test_a_step_up_is_reported_as_a_refusal_not_a_pass():
     """
     class StepsUp:
         def authorize(self, action):
-            from agentauth.capabilities.broker import BrokerDecision, Outcome
+            from clayseal.capabilities.broker import BrokerDecision, Outcome
 
             return BrokerDecision(
                 outcome=Outcome.STEP_UP, layer="floor",
@@ -143,7 +143,7 @@ def test_the_denied_call_does_not_reach_the_server_process(tmp_path: Path):
     tool was not run. This asserts on the server's own record of what it
     received.
     """
-    from agentauth.capabilities.mcp_proxy import run_stdio_proxy
+    from clayseal.capabilities.mcp_proxy import run_stdio_proxy
 
     server_py = tmp_path / "server.py"
     server_py.write_text(_SERVER)
@@ -194,7 +194,7 @@ def test_the_subprocess_is_not_started_by_the_shell():
     """argv is a list, so a server path with a space is not two arguments."""
     import inspect
 
-    from agentauth.capabilities import mcp_proxy
+    from clayseal.capabilities import mcp_proxy
 
     source = inspect.getsource(mcp_proxy.run_stdio_proxy)
     assert "shell=True" not in source

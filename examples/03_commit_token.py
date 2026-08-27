@@ -1,7 +1,7 @@
 """Standalone commit-token mint and verify (layer 2)."""
-from agentauth.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
-from agentauth.core.signing import generate_keypair
-from agentauth.capabilities.commit import (
+from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
+from clayseal.core.signing import generate_keypair
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
@@ -19,7 +19,7 @@ ctx = ExecutionContext(
     query_id="q-demo",
 )
 signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
-# Both arguments are required unless AGENTAUTH_ENV names a development
+# Both arguments are required unless CLAYSEAL_ENV names a development
 # environment. Pinning the minter is what makes a signature mean authority
 # rather than only integrity; the store is what makes the token single-use.
 ok, reason = verify_commit_token(

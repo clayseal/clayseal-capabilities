@@ -60,7 +60,7 @@ import statistics
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.monitor.scoring.target import action_target
+from clayseal.capabilities.monitor.scoring.target import action_target
 from benchmarks.core.detector_eval import task_to_trajectories
 from benchmarks.core.opmetrics import partial_auc
 from benchmarks.core.events import EventLabel

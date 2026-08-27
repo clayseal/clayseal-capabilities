@@ -1,6 +1,6 @@
 """Does the behavioural baseline fire when nothing changed, and when it did?
 
-`agentauth/capabilities/behavior_baseline.py` answers the longitudinal question
+`clayseal/capabilities/behavior_baseline.py` answers the longitudinal question
 an enterprise risk function asks: has this agent moved toward the edge of its
 grant since we approved it. Any monitor can claim to detect drift. The two
 numbers that decide whether it is deployable are what it does when NOTHING has
@@ -23,14 +23,14 @@ import random
 import sys
 from collections import Counter
 
-from agentauth.capabilities.behavior_baseline import (
+from clayseal.capabilities.behavior_baseline import (
     APPROACHING,
     SessionSummary,
     action_token,
     compare,
     profile_from,
 )
-from agentauth.capabilities.monitor.surface import surface_class
+from clayseal.capabilities.monitor.surface import surface_class
 from benchmarks.core.events import EventLabel
 
 DEFAULT_SHARES = (0.10, 0.25, 0.50, 1.00)

@@ -14,13 +14,13 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.conditional_ceiling import (
+from clayseal.capabilities.conditional_ceiling import (
     ConditionalTools,
     ToolGuard,
     tool_guards_from_config,
 )
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import PolicyError, load_policy_text
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import PolicyError, load_policy_text
 
 POLICY = """
 version: 1
@@ -215,7 +215,7 @@ def test_tool_output_cannot_assert_that_a_prerequisite_ran():
 def test_a_refused_prerequisite_does_not_count_as_having_run():
     """`record_call` sits in `_commit_and_finalize`, which the broker documents
     as the only way to return ALLOW, so a refusal can never satisfy an order."""
-    from agentauth.capabilities.conditional_ceiling import called_fact
+    from clayseal.capabilities.conditional_ceiling import called_fact
 
     policy = load_policy_text(ORDERED.replace(
         "paths: {pathless: [get_order, cancel_order, update_address]}",

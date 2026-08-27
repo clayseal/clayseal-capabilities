@@ -112,7 +112,7 @@ fields numerically and skips no-op context assignments.
   put through this, and a store that fails open under partition would defeat
   replay defense without any of the above changing.
 - **Signature verification itself is not fuzzed here.** It is delegated to
-  `agentauth.core`, and the mutation stress confirms it rejects every tampered
+  `clayseal.core`, and the mutation stress confirms it rejects every tampered
   token, but the Ed25519 path has not been attacked directly.
 
 ## Reproduce

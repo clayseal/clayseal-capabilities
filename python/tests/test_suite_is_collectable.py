@@ -32,7 +32,7 @@ import pytest
 TESTS = Path(__file__).parent
 SOURCES = sorted(p for p in TESTS.glob("*.py") if p.name != Path(__file__).name)
 
-#: Distributions that are NOT hard dependencies of `agentauth-capabilities`.
+#: Distributions that are NOT hard dependencies of `clayseal`.
 #: Every one is an optional extra in `pyproject.toml`, so a module importing one
 #: at module scope must guard it.
 OPTIONAL_DISTRIBUTIONS = {

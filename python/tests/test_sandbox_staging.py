@@ -2,9 +2,9 @@
 import os
 
 import pytest
-from agentauth.core.task_scope import TaskScope
+from clayseal.core.task_scope import TaskScope
 
-from agentauth.capabilities.sandbox.staging import (
+from clayseal.capabilities.sandbox.staging import (
     GUEST_WORKSPACE,
     StagingError,
     build_staging_plan,
@@ -12,7 +12,7 @@ from agentauth.capabilities.sandbox.staging import (
     stage_workspace,
     workspace_delta,
 )
-from agentauth.capabilities.scoping.models import CapabilityLease
+from clayseal.capabilities.scoping.models import CapabilityLease
 
 
 @pytest.fixture

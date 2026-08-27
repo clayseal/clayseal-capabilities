@@ -2,15 +2,15 @@
 reachability over a tool ontology. The coding-agent mission-break, caught cold."""
 from __future__ import annotations
 
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import (
+from clayseal.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import (
     Action,
     IntentEnvelope,
     ToolOntology,
     Trajectory,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 # A deploy task: build -> test -> deploy. Deleting the build is individually
@@ -92,8 +92,8 @@ def test_broker_allows_graceful_replan():
 
 
 def test_envelope_roundtrips_and_signs():
-    from agentauth.core.signing import generate_keypair
-    from agentauth.capabilities.monitor import (
+    from clayseal.core.signing import generate_keypair
+    from clayseal.capabilities.monitor import (
         sign_intent_envelope, verify_intent_envelope, IntentEnvelope)
 
     env = IntentEnvelope.from_goal(_goal())

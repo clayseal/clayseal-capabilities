@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.session_grants import GrantSource, SessionGrants
-from agentauth.capabilities.step_up import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.session_grants import GrantSource, SessionGrants
+from clayseal.capabilities.step_up import (
     StepUpApproval,
     bind_to_action,
     build_step_up_request,
@@ -20,7 +20,7 @@ from agentauth.capabilities.step_up import (
     sign_step_up_approval,
     violation_code,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 KEY = generate_keypair()
 

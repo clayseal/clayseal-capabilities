@@ -1,14 +1,14 @@
 """Attestation: what a run claims about itself, and what it refuses to claim."""
-from agentauth.core.runtime import (
+from clayseal.core.runtime import (
     ActionDescriptor,
     AuthorityContext,
     ExecutionContext,
     SideEffectLevel,
 )
 
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.sandbox.attest import (
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.sandbox.attest import (
     SANDBOX_SCHEMA,
     attach_sandboxing,
     ivisor_binary_identity,
@@ -16,9 +16,9 @@ from agentauth.capabilities.sandbox.attest import (
     sandbox_outcome_label,
     sandboxing_context,
 )
-from agentauth.capabilities.sandbox.driver import ExitKind, IVisorResult
-from agentauth.capabilities.sandbox.lowering import lower_to_ivisor
-from agentauth.capabilities.sandbox.verdicts import parse_policy_line
+from clayseal.capabilities.sandbox.driver import ExitKind, IVisorResult
+from clayseal.capabilities.sandbox.lowering import lower_to_ivisor
+from clayseal.capabilities.sandbox.verdicts import parse_policy_line
 
 DENY = parse_policy_line(
     "ivisor: policy net.connect verdict=deny dst=203.0.113.10:443 "

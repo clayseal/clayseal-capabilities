@@ -54,7 +54,7 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )

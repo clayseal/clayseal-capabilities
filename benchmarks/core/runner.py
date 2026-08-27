@@ -1,6 +1,6 @@
 """Replay tasks through engines and score containment vs friction.
 
-Populates the existing ``agentauth.capabilities.scoping.metrics.ScopingMetrics``
+Populates the existing ``clayseal.capabilities.scoping.metrics.ScopingMetrics``
 schema (false_block_rate, prevented_violations, broker overhead percentiles) so
 the benchmark speaks the metric vocabulary the library already defines, and adds
 the containment axis the security datasets require.
@@ -11,7 +11,7 @@ import random
 import time
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.scoping.metrics import ScopingMetrics
+from clayseal.capabilities.scoping.metrics import ScopingMetrics
 
 from benchmarks.core.engines import DecisionEngine
 from benchmarks.core.events import BenchmarkTask, EventLabel

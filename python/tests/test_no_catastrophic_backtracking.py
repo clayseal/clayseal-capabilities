@@ -48,7 +48,7 @@ def _elapsed_ms(fn, *args) -> float:
 
 @pytest.mark.parametrize("name", sorted(PAYLOADS))
 def test_the_egress_check_is_bounded(name):
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 
     payload = PAYLOADS[name]
     policy = EgressPolicy(allowed_domains={"acme-internal.com"})
@@ -59,7 +59,7 @@ def test_the_egress_check_is_bounded(name):
 
 @pytest.mark.parametrize("name", sorted(PAYLOADS))
 def test_the_secret_path_check_is_bounded(name):
-    from agentauth.capabilities.monitor.sealed_plan import is_secret_path
+    from clayseal.capabilities.monitor.sealed_plan import is_secret_path
 
     took = _elapsed_ms(is_secret_path, PAYLOADS[name])
     assert took < BUDGET_MS, f"{name}: {took:.0f} ms"
@@ -67,7 +67,7 @@ def test_the_secret_path_check_is_bounded(name):
 
 @pytest.mark.parametrize("name", sorted(PAYLOADS))
 def test_reading_a_policy_document_is_bounded(name):
-    from agentauth.capabilities.policy_draft import extract
+    from clayseal.capabilities.policy_draft import extract
 
     took = _elapsed_ms(extract, PAYLOADS[name], ["issue_refund"])
     assert took < BUDGET_MS, f"{name}: {took:.0f} ms"
@@ -75,7 +75,7 @@ def test_reading_a_policy_document_is_bounded(name):
 
 def test_a_whole_authorization_is_bounded_on_an_adversarial_argument():
     """The end the attacker actually reaches."""
-    from agentauth.capabilities.guardrail import Guardrail
+    from clayseal.capabilities.guardrail import Guardrail
 
     guard = Guardrail.from_policy_file("examples/refund.yaml")
     tools = guard.wrap_all({"issue_refund": lambda **k: "ok"})
@@ -93,7 +93,7 @@ def test_a_whole_authorization_is_bounded_on_an_adversarial_argument():
 @pytest.mark.parametrize("name", sorted(PAYLOADS))
 def test_reading_a_command_is_bounded(name):
     """`session_rules` scans commands for paths and archive artefacts."""
-    from agentauth.capabilities.session_rules import (
+    from clayseal.capabilities.session_rules import (
         _names_a_zip,
         _paths_in_command,
     )
@@ -109,11 +109,11 @@ def test_no_pattern_in_the_library_is_super_linear():
     import pkgutil
     import re
 
-    import agentauth.capabilities
-    import agentauth.core
+    import clayseal.capabilities
+    import clayseal.core
 
     patterns = {}
-    for pkg in (agentauth.capabilities, agentauth.core):
+    for pkg in (clayseal.capabilities, clayseal.core):
         for mod in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
             try:
                 loaded = importlib.import_module(mod.name)

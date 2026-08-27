@@ -13,8 +13,8 @@ import inspect
 
 import pytest
 
-from agentauth.capabilities.guardrail import Guardrail, Refused, StepUpRequired
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.guardrail import Guardrail, Refused, StepUpRequired
+from clayseal.capabilities.policy import load_policy_text
 
 DOC = """
 version: 1

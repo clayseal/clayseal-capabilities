@@ -494,7 +494,7 @@ def test_the_twin_corridor_now_has_a_runtime_reference():
     """
     import inspect
 
-    from agentauth.capabilities import broker
+    from clayseal.capabilities import broker
 
     source = inspect.getsource(broker.SessionBroker)
     # WIRED. The reference is now the agent's own DECLARATION rather than a past
@@ -516,7 +516,7 @@ def test_the_delegation_rung_has_a_live_principal():
     """
     import inspect
 
-    from agentauth.capabilities import broker
+    from clayseal.capabilities import broker
 
     source = inspect.getsource(broker)
     # WIRED. The acting principal is read from `action.meta["principal"]` and

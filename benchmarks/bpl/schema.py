@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from agentauth.capabilities.broker import SessionBroker
+from clayseal.capabilities.broker import SessionBroker
 from benchmarks.bpl.policy import Policy
 
 Family = Literal["aggregate", "escape", "confidentiality"]
@@ -105,7 +105,7 @@ def verb_for(tool: str) -> str:
     # on EVERY action of EVERY scenario, and the sweep scored all 132 clayseal
     # cells as `contained=None`. Only the "a gate that raises has not contained
     # anything" guard turned that into a visible failure instead of a silent one.
-    from agentauth.capabilities.tool_verbs import classify_verb
+    from clayseal.capabilities.tool_verbs import classify_verb
 
     return classify_verb(tool)
 
@@ -155,7 +155,7 @@ def scope_envelope_verbs(allow: set[str], extra: set[str] | None = None) -> set[
     which tools exist at all, and the violating scripts escape by using tools or
     sequences OUTSIDE `allow`, which this does not touch.
     """
-    from agentauth.capabilities.monitor.planner import classify_verb
+    from clayseal.capabilities.monitor.planner import classify_verb
 
     # `call` and `read` are always admitted: every scenario has an orientation
     # step (`load_policy`, `status`, a lookup) that is not the thing under test,

@@ -23,7 +23,7 @@ jobs:
         # The floor and the ceiling of `requires-python` in pyproject.toml. Both
         # ends are tested on purpose: a backslash inside an f-string expression
         # is a SyntaxError before 3.12 and shipped undetected in
-        # `value_budget.py`, which `agentauth/capabilities/__init__.py` imports
+        # `value_budget.py`, which `clayseal/capabilities/__init__.py` imports
         # so the package was unimportable on 3.10 and 3.11 while every local
         # interpreter was 3.13.
         # 3.14 is tested because the distribution now admits it. The old
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      # One install, from a clean index. `agentauth.core` is vendored in this
+      # One install, from a clean index. `clayseal.core` is vendored in this
       # repo, so there is no sibling checkout and no PAT. The optional identity
       # layer is a separate distribution; the tests that want it skip via
       # importorskip when it is absent, which is what "optional" has to mean for
@@ -43,8 +43,8 @@ jobs:
         run: pip install -e ".[dev,redis]"
       # The layering contract is now `python/tests/test_shipped_package_layering.py`
       # rather than a CLI step. The step this replaces invoked
-      # `python -m agentauth.core.layering`, a module that does not exist in
-      # agentauth-core at all, a dead reference from the repo split that only
+      # `python -m clayseal.core.layering`, a module that does not exist in
+      # clayseal core at all, a dead reference from the repo split that only
       # surfaced when CI ran for the first time. The test is also stronger: it
       # reads the AST, so a LAZY import inside a function is distinguished from a
       # module-scope one, which is exactly the distinction an optional extra
@@ -55,7 +55,7 @@ jobs:
   # The wheel has to work as a wheel. `deployable_stack.py` imported
   # `benchmarks.core.detector_eval` from inside a method, fine in the checkout,
   # ModuleNotFoundError in every real install, and invisible to the layering step
-  # above, which only knows about sibling agentauth packages. Build the artifact,
+  # above, which only knows about sibling clayseal packages. Build the artifact,
   # install it into a clean environment with NO source tree on the path, and
   # import every shipped module.
   wheel:
@@ -79,10 +79,10 @@ jobs:
         run: |
           python - <<'PY'
           import importlib, pkgutil, sys
-          import agentauth.capabilities, agentauth.core
+          import clayseal.capabilities, clayseal.core
           failed = []
           mods = []
-          for pkg in (agentauth.core, agentauth.capabilities):
+          for pkg in (clayseal.core, clayseal.capabilities):
               mods += list(pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."))
           for mod in mods:
               try:
@@ -114,7 +114,7 @@ jobs:
       # separately-tracked backlog and is not on the deployment path; gating the
       # library on a clean lint is what keeps that backlog from growing into it.
       - name: Lint the shipped package
-        run: ruff check agentauth
+        run: ruff check clayseal
 
   # The slow gate: ladder monotonicity, confidentiality flow windows, gate
   # totality, commit-token mutation stress, replay defense, corpus adequacy.

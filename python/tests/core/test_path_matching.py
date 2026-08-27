@@ -5,7 +5,7 @@ and `//` could evade allow/deny patterns (or escape the permitted root).
 """
 from __future__ import annotations
 
-from agentauth.core.path_matching import evaluate_path_scope, normalize_path, path_escapes_root
+from clayseal.core.path_matching import evaluate_path_scope, normalize_path, path_escapes_root
 
 
 def _allowed(path, *, allow=(), deny=()):

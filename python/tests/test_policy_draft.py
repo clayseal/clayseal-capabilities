@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.policy_draft import extract, to_yaml
+from clayseal.capabilities.policy_draft import extract, to_yaml
 
 DOCUMENT = """
 # Accounts Payable - Delegation of Authority
@@ -159,8 +159,8 @@ def test_the_placeholders_are_loud(draft):
 # --------------------------------------------------------------------------- #
 def test_a_reviewed_draft_compiles_and_enforces(tmp_path):
     """Document, draft, review, working grant. The whole point of the module."""
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.policy import load_policy
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.policy import load_policy
 
     rendered = to_yaml(extract(DOCUMENT), goal_id="ap",
                        goal_summary="Process the approved AP invoice queue",
@@ -263,8 +263,8 @@ def test_nothing_is_extracted_without_a_catalog():
 
 def test_the_draft_round_trips_into_enforcement(tmp_path):
     """The whole point: a document nobody here wrote becomes decisions."""
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.policy import load_policy_text
 
     tools = ["get_order", "list_orders", "cancel_order"]
     document = to_yaml(extract(RETAIL, tools=tools), goal_id="r",
@@ -359,7 +359,7 @@ def test_a_heading_naming_a_thing_rather_than_an_act_scopes_nothing():
     Scoping it would bind every attribute definition beneath it to the four
     reservation tools as though the document had stated a rule about them.
     """
-    from agentauth.capabilities.policy_draft import _scope_tools
+    from clayseal.capabilities.policy_draft import _scope_tools
 
     assert _scope_tools("Reservation", AIRLINE_CATALOG) == []
     assert _scope_tools("Cancel flight", AIRLINE_CATALOG) == ["cancel_reservation"]
@@ -378,7 +378,7 @@ def test_a_parenthetical_does_not_name_the_object_of_the_verb():
 
 
 def test_a_deeper_heading_narrows_its_parent_rather_than_replacing_it():
-    from agentauth.capabilities.policy_draft import _ScopeStack
+    from clayseal.capabilities.policy_draft import _ScopeStack
 
     catalog = ["modify_order", "modify_address", "modify_payment"]
     stack = _ScopeStack()
@@ -390,7 +390,7 @@ def test_a_deeper_heading_narrows_its_parent_rather_than_replacing_it():
 
 
 def test_a_heading_that_names_no_operation_clears_the_one_before_it():
-    from agentauth.capabilities.policy_draft import _ScopeStack
+    from clayseal.capabilities.policy_draft import _ScopeStack
 
     catalog = ["pay_bill", "get_line"]
     stack = _ScopeStack()
@@ -404,7 +404,7 @@ def test_a_heading_that_names_no_operation_clears_the_one_before_it():
 
 def test_a_prerequisite_has_to_share_the_verb_the_rule_used():
     """"confirm the order id and the LIST of items to be returned"."""
-    from agentauth.capabilities.policy_draft import _prerequisites
+    from clayseal.capabilities.policy_draft import _prerequisites
 
     catalog = ["list_orders", "return_order", "get_order"]
     assert _prerequisites("confirm",
@@ -425,7 +425,7 @@ def test_a_light_verb_moves_the_act_onto_the_noun_after_it():
     sentences under that heading state neither an ordering nor a state
     condition, so nothing downstream consumes it yet.
     """
-    from agentauth.capabilities.policy_draft import _scope_tools
+    from clayseal.capabilities.policy_draft import _scope_tools
 
     catalog = ["make_payment", "send_payment_request", "get_bill"]
     assert _scope_tools("Overdue Bill Payment", catalog) == ["make_payment"]

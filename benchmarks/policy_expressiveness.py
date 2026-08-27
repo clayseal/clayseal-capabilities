@@ -24,7 +24,7 @@ import re
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.policy_draft import extract
+from clayseal.capabilities.policy_draft import extract
 
 #: An independent reading of "this sentence states a rule". Broader than the
 #: extractor's markers on purpose.

@@ -11,9 +11,9 @@ Hence: populate always, raise only on `strict_mandate=True`.
 """
 import pytest
 
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )

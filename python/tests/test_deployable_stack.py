@@ -35,11 +35,11 @@ def test_from_benchmark_task_pins_expired_mandate_clock():
 
 
 def test_session_memory_shared_across_stack_authorize():
-    from agentauth.capabilities.deployable_stack import DeployableStack
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.session_memory import SessionMemory
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.session_memory import SessionMemory
+    from clayseal.core.task_scope import TaskScope
 
     shared = SessionMemory()
     shared.symlink_taints.add(("/data/models/x", "results/x/link"))
@@ -67,11 +67,11 @@ def test_session_memory_shared_across_stack_authorize():
 
 def test_require_declaration_for_egress_surprise_only():
     """Surprise egress STEPs UP; goal that already requests email does not."""
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.deployable_stack import DeployableStack
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     coding = GoalSpec(query_id="c", summary="fix indentation in gateway.py")
     stack = DeployableStack.from_goal(

@@ -43,7 +43,7 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
-import agentauth.capabilities.confidentiality as C
+import clayseal.capabilities.confidentiality as C
 from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.flow import _pieces, build_sessions

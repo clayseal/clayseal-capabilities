@@ -28,7 +28,7 @@ same content that was authorized. Not principal: the same agent acts.
 
 ## The mechanism that was already here
 
-`agentauth/capabilities/commit.py` mints single-use commit tokens and
+`clayseal/capabilities/commit.py` mints single-use commit tokens and
 `used_token_store.py` makes single-use hold across processes. Both ship, both
 have unit tests, and no benchmark produced a number for either. That is the same
 shape as velocity before `burst.py`, confidentiality before `flow.py`, and
@@ -64,7 +64,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from agentauth.capabilities.commit import InMemoryUsedTokenStore
+from clayseal.capabilities.commit import InMemoryUsedTokenStore
 from benchmarks.core.engines import _EFFECT_ACTIONS, build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader

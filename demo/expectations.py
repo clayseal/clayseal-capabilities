@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.sandbox.verdicts import PolicyEvent, Verdict
+from clayseal.capabilities.sandbox.verdicts import PolicyEvent, Verdict
 
 
 @dataclass

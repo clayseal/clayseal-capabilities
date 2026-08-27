@@ -31,7 +31,7 @@ because the same agent acts.
 
 ## The mechanism was already here
 
-`agentauth/capabilities/commit.py` mints single-use commit tokens and
+`clayseal/capabilities/commit.py` mints single-use commit tokens and
 `used_token_store.py` is the seam that makes single-use hold across processes.
 Both ship, both have unit tests, and no benchmark produced a number for either.
 
@@ -78,7 +78,7 @@ earlier version of this document overstated it. `verify_commit_token` already
 refuses outright when `is_production()` and no store is configured:
 
     "commit token replay store required in production
-     (configure AGENTAUTH_COMMIT_TOKEN_REDIS_URL or pass used_token_store)"
+     (configure CLAYSEAL_COMMIT_TOKEN_REDIS_URL or pass used_token_store)"
 
 `RedisUsedTokenStore` and `DynamoDBUsedTokenStore` both ship, and
 `load_used_token_store_from_env` resolves either from the environment. So the

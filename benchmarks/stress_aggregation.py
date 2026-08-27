@@ -30,8 +30,8 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )
@@ -199,7 +199,7 @@ def axis_call_budget_idempotency() -> dict:
 
 def axis_batch_declared() -> dict:
     """The same batch attack against a mandate that DECLARES multiplicity."""
-    from agentauth.capabilities.value_budget import EffectSpec
+    from clayseal.capabilities.value_budget import EffectSpec
 
     budget = _budget(
         tracked={"payments.batch": EffectSpec(
@@ -214,7 +214,7 @@ def axis_batch_declared() -> dict:
 
 def axis_unit_declared() -> dict:
     """The same unit attack against a mandate that DECLARES the unit."""
-    from agentauth.capabilities.value_budget import EffectSpec
+    from clayseal.capabilities.value_budget import EffectSpec
 
     budget = _budget(
         tracked={TOOL: EffectSpec(budget_id=BUDGET, amount_arg="amount",
@@ -241,7 +241,7 @@ def _lint_coverage() -> dict[str, list[str]]:
     point: the linter is being asked about the exact mandate that let the escape
     through, not a sketch of it.
     """
-    from agentauth.capabilities.mandate_lint import lint_mandate
+    from clayseal.capabilities.mandate_lint import lint_mandate
 
     probes = {
         "session restart": dict(
@@ -297,7 +297,7 @@ def main(argv=None) -> int:
     lint = _lint_coverage()
     covered = sum(1 for v in lint.values() if v)
     print(f"\nof those, {covered} of {len(lint)} are caught at configure time "
-          f"by agentauth.capabilities.mandate_lint:")
+          f"by clayseal.capabilities.mandate_lint:")
     for axis, codes in sorted(lint.items()):
         mark = "caught " if codes else "SILENT "
         print(f"  {mark}{axis:<34}{', '.join(codes) or '-'}")

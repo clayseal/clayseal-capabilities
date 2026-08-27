@@ -7,9 +7,9 @@ what the scaffold refuses to believe, and what it refuses to leave unsaid.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.policy import load_policy
-from agentauth.capabilities.policy_draft import extract, to_yaml
-from agentauth.capabilities.policy_scaffold import (
+from clayseal.capabilities.policy import load_policy
+from clayseal.capabilities.policy_draft import extract, to_yaml
+from clayseal.capabilities.policy_scaffold import (
     Catalog,
     read_catalog,
     read_tool,

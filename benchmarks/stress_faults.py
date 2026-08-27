@@ -35,8 +35,8 @@ import argparse
 import sys
 from collections import Counter
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy_text
 
 POLICY = """
 version: 1

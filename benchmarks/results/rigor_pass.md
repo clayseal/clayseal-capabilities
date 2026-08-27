@@ -12,7 +12,7 @@ none of which any static corpus in the suite had surfaced.
 
 ### 1. Path traversal defeats scope matching (core, high)
 
-`agentauth.core.task_scope.path_matches_any` fnmatched the raw string. Given a
+`clayseal.core.task_scope.path_matches_any` fnmatched the raw string. Given a
 workspace grant of `/app/**`:
 
 ```

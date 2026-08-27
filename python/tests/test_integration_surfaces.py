@@ -18,7 +18,7 @@ def test_wrapping_tools_preserves_what_a_framework_introspects():
     """LangGraph, the OpenAI Agents SDK and CrewAI all read these."""
     import inspect
 
-    from agentauth.capabilities import Guardrail, Refused
+    from clayseal.capabilities import Guardrail, Refused
 
     def issue_refund(invoice, amount):
         """Refund one invoice."""
@@ -37,8 +37,8 @@ def test_wrapping_tools_preserves_what_a_framework_introspects():
 
 
 def test_the_mcp_proxy_withholds_and_refuses():
-    from agentauth.capabilities.mcp_proxy import McpProxy
-    from agentauth.capabilities.policy import load_policy
+    from clayseal.capabilities.mcp_proxy import McpProxy
+    from clayseal.capabilities.policy import load_policy
 
     proxy = McpProxy.from_policy(load_policy(REFUND_POLICY))
     listing = json.dumps({"jsonrpc": "2.0", "id": 1, "result": {"tools": [
@@ -55,12 +55,12 @@ def test_the_mcp_proxy_withholds_and_refuses():
 
 
 def test_the_http_gateway_speaks_the_current_protocol():
-    from agentauth.capabilities.http_gateway import (
+    from clayseal.capabilities.http_gateway import (
         MCP_PROTOCOL_VERSION,
         HttpGateway,
     )
-    from agentauth.capabilities.mcp_proxy import McpProxy
-    from agentauth.capabilities.policy import load_policy
+    from clayseal.capabilities.mcp_proxy import McpProxy
+    from clayseal.capabilities.policy import load_policy
 
     gateway = HttpGateway(proxy=McpProxy.from_policy(load_policy(REFUND_POLICY)))
     body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
@@ -79,8 +79,8 @@ def test_the_http_gateway_speaks_the_current_protocol():
 
 
 def test_a_decision_renders_as_ocsf_api_activity():
-    from agentauth.capabilities.decision_log import DecisionRecord
-    from agentauth.capabilities.decision_sinks import to_ocsf
+    from clayseal.capabilities.decision_log import DecisionRecord
+    from clayseal.capabilities.decision_sinks import to_ocsf
 
     record = DecisionRecord(
         seq=1, receipt_id="r", created_at="2026-08-26T00:00:00Z", query_id="q",
@@ -96,7 +96,7 @@ def test_a_decision_renders_as_ocsf_api_activity():
 
 
 def test_trace_context_joins_a_receipt_to_the_caller_s_span():
-    from agentauth.capabilities.trace import TraceContext
+    from clayseal.capabilities.trace import TraceContext
 
     parsed = TraceContext.parse(
         "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
@@ -105,8 +105,8 @@ def test_trace_context_joins_a_receipt_to_the_caller_s_span():
 
 
 def test_a_document_becomes_a_policy_the_loader_accepts():
-    from agentauth.capabilities.policy import load_policy_text
-    from agentauth.capabilities.policy_draft import extract, to_yaml
+    from clayseal.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy_draft import extract, to_yaml
 
     draft = extract("Payments over $10,000 require approval.",
                     tools=["pay_vendor"])

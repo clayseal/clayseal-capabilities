@@ -5,7 +5,7 @@
 Every other input boundary in this library has been fuzzed and each one gave up a
 fail-open: `1e999` as a transfer amount returned `allowed=True`, a `NaN` compute
 ceiling granted 1,000,000 seconds as `ok`, `is_protected_path` raised on a list.
-The adapters in `agentauth/capabilities/identity_adapters/` take an attacker- or
+The adapters in `clayseal/capabilities/identity_adapters/` take an attacker- or
 third-party-shaped claims dict and turn it into an `AuthorityBinding`, and nothing
 had ever handed them a malformed one.
 
@@ -43,14 +43,14 @@ import json
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.identity_adapters import (
+from clayseal.capabilities.identity_adapters import (
     auth0,
     aws_sts,
     azure_ad,
     gcp,
     oidc,
 )
-from agentauth.capabilities.principal_ledger import principal_key
+from clayseal.capabilities.principal_ledger import principal_key
 
 ADAPTERS = {
     "oidc": oidc.provider,

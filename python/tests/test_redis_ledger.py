@@ -13,7 +13,7 @@ WHAT THIS DOES AND DOES NOT PROVE
 They run against `fakeredis`, an in-process double. That is honest for what is
 being tested, the ledger's own logic, which is where every bug in the file
 backend was, and it is NOT a test of a real Redis under partition or failover.
-Set `AGENTAUTH_TEST_REDIS_URL` to run the identical suite against a live server;
+Set `CLAYSEAL_TEST_REDIS_URL` to run the identical suite against a live server;
 without it those parametrisations skip rather than passing silently.
 """
 from __future__ import annotations
@@ -24,8 +24,8 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.ledger_backends import RedisPrincipalLedger
-from agentauth.capabilities.principal_ledger import LedgerUnavailable
+from clayseal.capabilities.ledger_backends import RedisPrincipalLedger
+from clayseal.capabilities.principal_ledger import LedgerUnavailable
 
 fakeredis = pytest.importorskip("fakeredis")
 
@@ -37,7 +37,7 @@ CEILING = Decimal("100")
 @pytest.fixture
 def server():
     """One Redis, shared by every 'node' in a test."""
-    live = os.environ.get("AGENTAUTH_TEST_REDIS_URL", "").strip()
+    live = os.environ.get("CLAYSEAL_TEST_REDIS_URL", "").strip()
     if live:
         import redis
 

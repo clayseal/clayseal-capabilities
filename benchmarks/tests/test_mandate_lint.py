@@ -12,12 +12,12 @@ change to either file has to reckon with the other.
 """
 import pytest
 
-from agentauth.capabilities.mandate_lint import (
+from clayseal.capabilities.mandate_lint import (
     Finding,
     lint_mandate,
     require_clean,
 )
-from agentauth.capabilities.value_budget import EffectSpec
+from clayseal.capabilities.value_budget import EffectSpec
 
 CLEAN_CATALOG = ["payments.transfer", "reports.get_balance",
                  "search.query", "files.read", "calendar.list_events"]

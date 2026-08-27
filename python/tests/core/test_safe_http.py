@@ -1,14 +1,14 @@
-"""Tests for agentauth.core.safe_http."""
+"""Tests for clayseal.core.safe_http."""
 
 from __future__ import annotations
 
 import pytest
 
-from agentauth.core.safe_http import SafeHttpError, _NoRedirectHandler, validate_outbound_url
+from clayseal.core.safe_http import SafeHttpError, _NoRedirectHandler, validate_outbound_url
 
 
 def test_validate_https_public_host_ok(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
     url = validate_outbound_url(
         "https://token.actions.githubusercontent.com/.well-known/jwks",
@@ -19,7 +19,7 @@ def test_validate_https_public_host_ok(monkeypatch):
 
 
 def test_validate_rejects_http_by_default(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     with pytest.raises(SafeHttpError, match="https"):
         validate_outbound_url(
             "http://example.com/jwks.json",
@@ -29,7 +29,7 @@ def test_validate_rejects_http_by_default(monkeypatch):
 
 
 def test_validate_rejects_localhost(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     with pytest.raises(SafeHttpError, match="blocked"):
         validate_outbound_url(
             "https://localhost/jwks.json",
@@ -39,7 +39,7 @@ def test_validate_rejects_localhost(monkeypatch):
 
 
 def test_validate_rejects_private_literal(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     with pytest.raises(SafeHttpError, match="globally routable"):
         validate_outbound_url(
             "https://10.0.0.1/jwks.json",
@@ -49,9 +49,9 @@ def test_validate_rejects_private_literal(monkeypatch):
 
 
 def test_production_requires_allowlist(monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
-    monkeypatch.delenv("AGENTAUTH_HTTP_ALLOWED_HOSTS", raising=False)
-    with pytest.raises(SafeHttpError, match="AGENTAUTH_HTTP_ALLOWED_HOSTS"):
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
+    monkeypatch.delenv("CLAYSEAL_HTTP_ALLOWED_HOSTS", raising=False)
+    with pytest.raises(SafeHttpError, match="CLAYSEAL_HTTP_ALLOWED_HOSTS"):
         validate_outbound_url(
             "https://idp.example.com/.well-known/openid-configuration",
             resolve_dns=False,
@@ -59,8 +59,8 @@ def test_production_requires_allowlist(monkeypatch):
 
 
 def test_production_allows_configured_host(monkeypatch):
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
-    monkeypatch.setenv("AGENTAUTH_HTTP_ALLOWED_HOSTS", "idp.example.com")
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
+    monkeypatch.setenv("CLAYSEAL_HTTP_ALLOWED_HOSTS", "idp.example.com")
     url = validate_outbound_url(
         "https://idp.example.com/.well-known/openid-configuration",
         resolve_dns=False,

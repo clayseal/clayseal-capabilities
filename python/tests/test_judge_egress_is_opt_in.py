@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities import deployable_stack as ds
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities import deployable_stack as ds
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 CREDENTIALS = ["OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_KEY",
                "AZURE_OPENAI_API_KEY"]

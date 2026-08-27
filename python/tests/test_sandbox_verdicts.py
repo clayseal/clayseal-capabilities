@@ -1,6 +1,6 @@
 """Verdict-parser tests, ported from iVisor-demo's policy.rs test module so the
 two implementations stay in step (iVisor ADR-0021)."""
-from agentauth.capabilities.sandbox.verdicts import (
+from clayseal.capabilities.sandbox.verdicts import (
     POLICY_PREFIX,
     PolicyEvent,
     Verdict,

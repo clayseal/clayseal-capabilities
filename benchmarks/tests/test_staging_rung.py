@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.hardening.object_class import ObjectClass, classify
+from clayseal.capabilities.hardening.object_class import ObjectClass, classify
 from benchmarks.adaptive import calibrate
 from benchmarks.adversarial.adaptive import (
     Knowledge, in_scope_exfiltration_objective, run_adaptive)

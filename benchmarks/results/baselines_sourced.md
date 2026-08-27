@@ -162,7 +162,7 @@ ground-truth pattern labels) fan-out recall is Multi-GIN+EU 95.42, Multi-PNA
 
 **We lose, and the first refutation is our own data.** The draft cell rested on
 a version of `benchmarks/results/flow.md` that predated both `benchmarks/flow.py`
-and `agentauth/capabilities/confidentiality.py`. That file tested 8 evasion
+and `clayseal/capabilities/confidentiality.py`. That file tested 8 evasion
 shapes and 2 split families. It has since been rewritten from a full
 re-measurement and now agrees with the runs below; the counts here stand.
 The current runs test 22 evasion shapes and 7 split families and disagree with

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.policy import load_policy_text
 
 DANGEROUS = ["wire_funds", "terraform_destroy", "purge_bucket"]
 
@@ -70,6 +70,6 @@ def test_declaring_the_effect_clears_both_findings():
 ])
 def test_a_read_is_still_a_read(tool):
     """Inference stays conservative in the direction that costs utility."""
-    from agentauth.capabilities.tool_verbs import classify_verb
+    from clayseal.capabilities.tool_verbs import classify_verb
 
     assert classify_verb(tool) == "read"

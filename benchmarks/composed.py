@@ -124,7 +124,7 @@ def fit_detector(train_tasks: list[BenchmarkTask], *, alpha: float):
     it is an absent one, and reporting it as an arm would be reporting a
     configuration that does no work.
     """
-    from agentauth.capabilities.monitor import TrajectoryDetector
+    from clayseal.capabilities.monitor import TrajectoryDetector
     from benchmarks.core.detector_eval import task_to_trajectories
 
     benign = [b for b, _ in map(task_to_trajectories, train_tasks) if b.actions]

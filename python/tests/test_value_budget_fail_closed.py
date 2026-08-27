@@ -11,7 +11,7 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )
@@ -136,7 +136,7 @@ def test_a_value_budget_with_an_unusable_ceiling_cannot_be_built(ceiling):
 
 @pytest.mark.parametrize("ceiling", BAD_CEILINGS)
 def test_a_call_budget_with_an_unusable_ceiling_cannot_be_built(ceiling):
-    from agentauth.capabilities.call_budget import CallBudgetConfig
+    from clayseal.capabilities.call_budget import CallBudgetConfig
 
     with pytest.raises(ValueError):
         CallBudgetConfig(tracked={TOOL: "p"}, ceilings={"p": ceiling})
@@ -151,15 +151,15 @@ def test_a_compute_budget_with_an_unusable_ceiling_cannot_be_built(ceiling):
     returned allowed=True with reason ``'ok'`` and the compute budget was
     disabled outright, while reporting success.
     """
-    from agentauth.capabilities.compute_budget import ComputeBudgetConfig
+    from clayseal.capabilities.compute_budget import ComputeBudgetConfig
 
     with pytest.raises(ValueError):
         ComputeBudgetConfig(tracked={TOOL: "p"}, ceilings={"p": ceiling})
 
 
 def test_valid_ceilings_are_still_accepted_on_every_rung():
-    from agentauth.capabilities.call_budget import CallBudgetConfig
-    from agentauth.capabilities.compute_budget import ComputeBudgetConfig
+    from clayseal.capabilities.call_budget import CallBudgetConfig
+    from clayseal.capabilities.compute_budget import ComputeBudgetConfig
 
     ValueBudgetConfig(tracked={TOOL: ("amount", "p")}, ceilings={"p": Decimal(10)})
     ValueBudgetConfig(ceilings={"p": None})            # None means "no ceiling"

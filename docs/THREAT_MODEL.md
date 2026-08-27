@@ -3,7 +3,7 @@
 STATUS: current
 
 This document exists because "who signs what, and what happens when they don't"
-was answered only by `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS` and a reader's
+was answered only by `CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS` and a reader's
 inference. Writing it found two live gaps, both now closed and both recorded
 below rather than quietly fixed, a threat model whose first draft finds nothing
 was not a threat model.
@@ -77,7 +77,7 @@ Two corollaries, both enforced rather than assumed:
 
 | Object | Signer | Verifier pins | Unpinned, in production | Bound to |
 | --- | --- | --- | --- | --- |
-| Commit token | Control-plane minter | `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS` or `trusted_minting_keys=` | **Refused** | tool, resource, `arguments_hash`, authority id + version + epoch, `query_id` |
+| Commit token | Control-plane minter | `CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS` or `trusted_minting_keys=` | **Refused** | tool, resource, `arguments_hash`, authority id + version + epoch, `query_id` |
 | Intent envelope | Control-plane sealer | `trusted_keys=` on `verify_intent_envelope` / `reclear` | **Refused** | the sealed goal it was compiled from |
 | Step-up approval | Human approval service | request commitment | **Unsigned refused** | `(tool, arguments_hash)`, the rule codes shown, one use |
 | Delegation token | Parent principal | chain verification | — | the narrower rights it conveys |
@@ -98,10 +98,10 @@ sealed plan wholesale, and every later conformance check then measured the agent
 against the attacker's plan. Now fails closed in production.
 
 **The unsigned-approval escape worked in production.**
-`AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1` disabled approval authentication entirely.
+`CLAYSEAL_STEP_UP_ALLOW_UNSIGNED=1` disabled approval authentication entirely.
 An approval is the one object in this protocol whose job is to grant something
 the floor refused, so one environment variable converted a refusal into a grant.
-Its siblings (`AGENT_RECEIPTS_ALLOW_STUB`, `AGENTAUTH_DEV_ATTESTOR`) were
+Its siblings (`AGENT_RECEIPTS_ALLOW_STUB`, `CLAYSEAL_DEV_ATTESTOR`) were
 already in the production deny-list; this one was not. Now refused in production
 regardless of how it is spelled, the env var and the explicit
 `allow_unsigned=True` argument are the same fail-open.
@@ -144,7 +144,7 @@ into the data plane, and the boundary in §2 with it.
 
 ### 4.3 The production switch
 
-`AGENTAUTH_ENV=production` (or `AGENT_RECEIPTS_ENV`) turns on every fail-closed
+`CLAYSEAL_ENV=production` (or `AGENT_RECEIPTS_ENV`) turns on every fail-closed
 guard in this table. It is a single environment variable and it is the most
 consequential one in the system.
 
@@ -201,14 +201,14 @@ Verified in production posture:
 
 ## 7. Checklist for a deployment
 
-- [ ] `AGENTAUTH_ENV=production` is set.
+- [ ] `CLAYSEAL_ENV=production` is set.
 - [ ] A named profile is chosen and logged at startup (`profile.describe()`).
-- [ ] `AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS` pins the minter.
+- [ ] `CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS` pins the minter.
 - [ ] `trusted_keys` pins the envelope sealer wherever `reclear` can be reached.
-- [ ] A shared replay store is configured (`AGENTAUTH_COMMIT_TOKEN_REDIS_URL`).
+- [ ] A shared replay store is configured (`CLAYSEAL_COMMIT_TOKEN_REDIS_URL`).
 - [ ] A shared ledger is configured if more than one process or host runs.
 - [ ] A decision sink is configured; `dropped` and `evicted` are alerted on.
 - [ ] `totals_verified: false` and `late_breaches > 0` page someone.
-- [ ] `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED` is **not** set.
+- [ ] `CLAYSEAL_STEP_UP_ALLOW_UNSIGNED` is **not** set.
 - [ ] The in-scope staging gap is accepted in writing, or the workload does not
       grant an agent both secrets and a publication surface.

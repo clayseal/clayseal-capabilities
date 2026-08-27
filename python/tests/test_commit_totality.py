@@ -12,7 +12,7 @@ from dataclasses import replace
 
 import pytest
 
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     CommitToken,
     SignedCommitToken,
     parse_signed_commit_token,

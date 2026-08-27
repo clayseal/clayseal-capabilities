@@ -299,7 +299,7 @@ def _trajectory(board: Scoreboard) -> None:
 
 def _sleight_detector(board: Scoreboard) -> None:
     """SLEIGHT's honest score: trajectory detector, not the per-action ladder."""
-    from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
     from benchmarks.core.detector_eval import run_detector_benchmark
 
     try:

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.envelope import TypedGoalEnvelope
-from agentauth.capabilities.monitor.surface import (
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.envelope import TypedGoalEnvelope
+from clayseal.capabilities.monitor.surface import (
     in_surface,
     matches_surface,
     names_a_target,
@@ -21,7 +21,7 @@ from agentauth.capabilities.monitor.surface import (
     surface_class,
     surface_is_comparable,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 SURFACE = frozenset({"data", "home"})
 
@@ -117,7 +117,7 @@ def test_a_blank_resource_never_populates_the_surface():
 
 def test_intent_envelope_abstains_on_a_disjoint_session():
     """End to end: the exact shape that denied 204 benign sleight events."""
-    from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
+    from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 
     env = IntentEnvelope.from_goal(_goal(["/data/models/**", "/home/js/**"]))
     assert env.allowed_resource_classes
@@ -129,7 +129,7 @@ def test_intent_envelope_abstains_on_a_disjoint_session():
 
 
 def test_intent_envelope_still_refuses_once_the_surface_has_matched():
-    from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
+    from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 
     env = IntentEnvelope.from_goal(_goal(["/data/models/**"]))
     traj = Trajectory(actions=[act(0, "data:models"), act(1, "net:evil.example")],
@@ -246,7 +246,7 @@ def test_a_path_that_escapes_upward_resolves_to_a_traversal():
     goal can produce, because `surface_from` never emits `..` from a real path."""
     assert surface_class("data/../../etc") == ".."
     assert not in_surface(act(0, "data/../../etc"), SURFACE)
-    from agentauth.capabilities.monitor.surface import surface_from
+    from clayseal.capabilities.monitor.surface import surface_from
 
     assert ".." not in surface_from(["/data/**", "../etc"])
 
@@ -288,7 +288,7 @@ def test_a_bare_label_with_no_path_names_nothing_a_surface_can_judge(resource):
     paths. Fixing it took that corpus from 46.5% of benign sessions disrupted
     to 4.7%.
     """
-    from agentauth.capabilities.monitor.surface import names_a_readable_target
+    from clayseal.capabilities.monitor.surface import names_a_readable_target
 
     action = act(0, resource)
     assert not names_a_readable_target(action)
@@ -305,7 +305,7 @@ def test_anything_that_does_name_a_target_is_still_judged(resource, path):
     """The abstention is narrow on purpose. A scheme says where it is going, a
     path says what it opens, and an opaque label with a path is judged on the
     path."""
-    from agentauth.capabilities.monitor.surface import names_a_readable_target
+    from clayseal.capabilities.monitor.surface import names_a_readable_target
 
     action = act(0, resource, path=path)
     assert names_a_readable_target(action)

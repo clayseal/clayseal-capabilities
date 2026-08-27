@@ -16,10 +16,10 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _broker(**kw) -> SessionBroker:

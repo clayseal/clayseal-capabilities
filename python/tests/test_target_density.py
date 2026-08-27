@@ -7,13 +7,13 @@ rather than in a re-measurement six weeks later.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.scoring.target import (
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.scoring.target import (
     TargetDensityScorer,
     action_target,
     segments,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _goal(kind: str = "goal:summarize-app") -> GoalSpec:
@@ -162,7 +162,7 @@ def test_ready_depth_grows_with_observations_per_target():
     gives 6.1. So readiness is not a property of the mechanism, it is a position
     on a curve, and it has to move when the traffic does.
     """
-    from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
+    from clayseal.capabilities.monitor.scoring.ngram import goal_bucket
 
     sparse = TargetDensityScorer().fit(
         [_traj([f"repo/d{i}/f{i}.txt"]) for i in range(60)])
@@ -180,7 +180,7 @@ def test_a_baseline_that_only_knows_the_root_scores_only_the_root():
     anything. The scorer must enforce the first and stay silent on the second,
     rather than emitting noise below the depth it has evidence for.
     """
-    from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
+    from clayseal.capabilities.monitor.scoring.ngram import goal_bucket
 
     scorer = TargetDensityScorer().fit(
         [_traj([f"repo/unique{i}/file{i}.txt"]) for i in range(60)])

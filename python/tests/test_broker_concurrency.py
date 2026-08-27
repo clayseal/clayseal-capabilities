@@ -36,10 +36,10 @@ from __future__ import annotations
 
 import threading
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="race", summary="do the work")
 #: A scope that admits the tool but not the resource, so every action takes the
@@ -103,13 +103,13 @@ def test_one_approval_clears_exactly_one_action():
     CLASSIFIED violation code, an unclassified one is refused before the
     single-use check is ever reached, which would leave the ledger untested.
     """
-    from agentauth.capabilities.step_up import (
+    from clayseal.capabilities.step_up import (
         StepUpApproval,
         bind_to_action,
         build_step_up_request,
         sign_step_up_approval,
     )
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     broker = SessionBroker(goal=GOAL, scope=SCOPE)
     request = bind_to_action(

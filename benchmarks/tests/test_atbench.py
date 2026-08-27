@@ -217,7 +217,7 @@ def test_trajectory_length_is_a_label_proxy_so_no_rung_may_be_credited_for_it(
     The loader's protection is that it emits no attack events, so the rung
     cannot be credited. This test pins the statistic that makes that necessary.
     """
-    from agentauth.capabilities.velocity import EFFECT_VERBS
+    from clayseal.capabilities.velocity import EFFECT_VERBS
 
     from benchmarks.datasets._common import classify_verb
 
@@ -292,7 +292,7 @@ def test_url_arguments_never_forge_a_filesystem_target(name):
     rule the protected-zone floor fires on zero ATBench actions, which is the
     honest reading: this corpus has no filesystem targets.
     """
-    from agentauth.capabilities.hardening.protected_zones import is_protected_path
+    from clayseal.capabilities.hardening.protected_zones import is_protected_path
 
     tasks = _load(name)
     paths = [e.path for t in tasks for e in t.events if e.path]

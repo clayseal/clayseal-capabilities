@@ -5,15 +5,15 @@ import os
 import pathlib
 import tempfile
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.scoping.goal import GoalSpec
 from benchmarks.bpl.schema import Env, Scenario
 
 
 def bulk_exfil_live() -> Scenario:
     """Bulk-exfil class with real iVisor guest execution (optional / gated)."""
-    from agentauth.capabilities.sandbox.session import SandboxRunSpec, run_sandboxed
+    from clayseal.capabilities.sandbox.session import SandboxRunSpec, run_sandboxed
 
     internal = "acme-internal.com"
     external = "partners-external.com"

@@ -57,8 +57,8 @@ import statistics
 import sys
 from typing import Any
 
-from agentauth.capabilities.broker import Outcome
-from agentauth.capabilities.monitor.action import Action
+from clayseal.capabilities.broker import Outcome
+from clayseal.capabilities.monitor.action import Action
 from benchmarks.bpl.registry import (
     SCENARIOS,
     get_scenario,

@@ -17,7 +17,7 @@ it is not injectable.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.monitor import IntentEnvelope, Phase
+from clayseal.capabilities.monitor import IntentEnvelope, Phase
 from benchmarks.datasets._common import classify_verb
 from benchmarks.live.planner import verb_class_order
 

@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     FlowTracker, SensitivityPolicy, _assemblable, _compact_fold,
     _longest_prefix_in)
 

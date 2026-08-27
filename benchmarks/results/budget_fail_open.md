@@ -150,7 +150,7 @@ sells, "bring verified claims from your IdP and build your own gateway":
 
 ### One finding referred rather than patched
 
-`agentauth.core.task_scope_allows_path` raises `TypeError` / `AttributeError` on
+`clayseal.core.task_scope_allows_path` raises `TypeError` / `AttributeError` on
 `None`, `0`, `[1]`, `{}` and `True`. It lives in the sibling **clay-seal-core**
 repository, so it is reported here rather than edited from this one. The fix is
 the same shape as the two above: a non-string path is malformed, never

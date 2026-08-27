@@ -92,5 +92,5 @@ on its own.
 ```
 
 The extension sweep is a research probe rather than shipped behaviour; the shipped
-mechanism is `agentauth/capabilities/replan.py` with the destination interlock in
-`agentauth/capabilities/broker.py`.
+mechanism is `clayseal/capabilities/replan.py` with the destination interlock in
+`clayseal/capabilities/broker.py`.

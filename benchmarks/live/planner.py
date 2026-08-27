@@ -1,6 +1,6 @@
 """CaMeL-style privileged planner, now a thin alias over the shipped one.
 
-The implementation moved to ``agentauth.capabilities.monitor.planner``. It had
+The implementation moved to ``clayseal.capabilities.monitor.planner``. It had
 been living here, in the harness, while every live AgentDojo result in
 ``benchmarks/results/`` was produced by it, so the thing that built the primary
 behavioural tier was the one piece a deployment could not install. A package
@@ -13,7 +13,7 @@ measured path and the shipped path cannot drift apart.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.monitor.planner import (
+from clayseal.capabilities.monitor.planner import (
     LLMQueryPlanner,
     classify_verb,
     envelope_from_plan,

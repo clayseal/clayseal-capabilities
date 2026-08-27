@@ -148,7 +148,7 @@ allow both. No single action is harmful. Only the pair is.
 A per-action authorization layer cannot see a pair. Unlike content-defined harm,
 this one is decidable: it needs remembering, not guessing.
 
-`agentauth/capabilities/confidentiality.py` checks **per value, not per session**.
+`clayseal/capabilities/confidentiality.py` checks **per value, not per session**.
 Bell-LaPadula per session is correct and unusable, because one sensitive read
 blocks every later write. Declassification is bound to the sealed goal, so an
 injected instruction cannot nominate a sink.

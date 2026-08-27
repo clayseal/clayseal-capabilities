@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     verify_commit_token,
 )

@@ -16,7 +16,7 @@ import dataclasses
 
 import pytest
 
-from agentauth.capabilities.profiles import (
+from clayseal.capabilities.profiles import (
     AUTONOMOUS,
     BENCHMARK,
     HAZARDS,
@@ -24,8 +24,8 @@ from agentauth.capabilities.profiles import (
     SUPERVISED,
     get_profile,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="q", summary="pay the approved invoices")
 SCOPE = TaskScope(
@@ -153,7 +153,7 @@ def test_get_profile_names_what_it_knows():
 # --------------------------------------------------------------------------- #
 def test_autonomous_refuses_where_supervised_asks():
     """One action, two postures, two different outcomes, the whole point."""
-    from agentauth.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.action import Action
 
     action = Action(0, "tool", "out-of-scope", "write", args={"n": 1})
 

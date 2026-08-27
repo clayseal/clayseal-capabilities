@@ -3,12 +3,12 @@
 ## Getting a working tree
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-capabilities.git
-cd clay-seal-capabilities
+git clone https://github.com/pberlizov/clayseal.git
+cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest python/tests -q          # ~1,650 tests, under 20 seconds
-ruff check agentauth
+ruff check clayseal
 ```
 
 There are no private dependencies. If that stops being true, it is a bug.
@@ -51,7 +51,7 @@ said.
 ## Style
 
 Ruff is pinned to correctness and security rules rather than inheriting defaults,
-because `ruff check agentauth` is a CI gate and an implicit rule set changes
+because `ruff check clayseal` is a CI gate and an implicit rule set changes
 meaning whenever ruff releases. Style opinions are deliberately not gated. Line
 length is checked by eye.
 

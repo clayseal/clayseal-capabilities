@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import PolicyError, compile_policy
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import PolicyError, compile_policy
 
 BASE = {
     "version": 1,
@@ -121,7 +121,7 @@ def test_the_proxy_gates_agree_with_each_other():
     Either the agent is told a tool does not exist and then allowed to call it,
     or it is offered one and refused. Both gates go through `_tool_granted`.
     """
-    from agentauth.capabilities.mcp_proxy import McpProxy
+    from clayseal.capabilities.mcp_proxy import McpProxy
 
     policy = _policy(pathless=["get_reservation"], patterns=["get_*"],
                      effects={"get_reservation": "read"})

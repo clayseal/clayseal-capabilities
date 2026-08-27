@@ -22,9 +22,9 @@ import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.sandbox.lowering import LoweredPolicy, lower_to_ivisor
-from agentauth.capabilities.sandbox.session import SandboxRunSpec
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.sandbox.lowering import LoweredPolicy, lower_to_ivisor
+from clayseal.capabilities.sandbox.session import SandboxRunSpec
 from demo.escalation import Capabilities, Level
 
 

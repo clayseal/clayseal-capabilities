@@ -6,10 +6,10 @@ cannot become the enforced envelope.
 """
 from __future__ import annotations
 
-from agentauth.core.signing import generate_keypair
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.monitor import (
+from clayseal.core.signing import generate_keypair
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.core.task_scope import TaskScope
+from clayseal.capabilities.monitor import (
     Action,
     IntentEnvelope,
     Planner,
@@ -19,7 +19,7 @@ from agentauth.capabilities.monitor import (
     verify_plan,
     verify_intent_envelope,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 _ONTOLOGY = [
     {"tool": "build", "preconditions": ["source"], "establishes": ["artifact"]},

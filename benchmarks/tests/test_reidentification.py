@@ -15,8 +15,8 @@ import random
 
 import pytest
 
-from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
-from agentauth.capabilities.reidentification import (
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.reidentification import (
     PrincipalReidentificationLedger, ReidentificationMonitor,
     ReidentificationPolicy, identifiability_bits)
 from benchmarks.core.engines import build_engines

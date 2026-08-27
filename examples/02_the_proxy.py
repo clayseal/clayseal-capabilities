@@ -23,8 +23,8 @@ import pathlib
 import sys
 import tempfile
 
-from agentauth.capabilities.mcp_proxy import McpProxy, run_stdio_proxy
-from agentauth.capabilities.policy import load_policy
+from clayseal.capabilities.mcp_proxy import McpProxy, run_stdio_proxy
+from clayseal.capabilities.policy import load_policy
 
 HERE = pathlib.Path(__file__).resolve().parent
 

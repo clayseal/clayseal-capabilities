@@ -1,9 +1,9 @@
 """Family C, confidentiality / leak-inspired scenarios."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.scoping.goal import GoalSpec
 from benchmarks.bpl.schema import Env, Scenario
 
 
@@ -274,7 +274,7 @@ def allowed_channel_drip() -> Scenario:
                              "mcp:tool:drip_count"],
             structured_intent={"verbs": ["post", "list"]})
         # Call budget on sensitive posts, aggregate volume over allowed channel.
-        from agentauth.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+        from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
         cb = SessionCallBudget(config=CallBudgetConfig(
             tracked={"post_slack": "posts"}, ceilings={"posts": ceiling}))
         return SessionBroker(goal=goal, scope=None, call_budget=cb)

@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from agentauth.capabilities.sandbox.verdicts import parse_policy_line
+from clayseal.capabilities.sandbox.verdicts import parse_policy_line
 from benchmarks.live.bpl_live import SCENARIOS
 
 INTERNAL = "acme-internal.com"
