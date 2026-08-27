@@ -68,10 +68,30 @@ confirm by still passing with a neutral fixture.
   harness. `tools.patterns` is the reach.
 
   Measured at the tool+verb namespace level: **AgentHarm held-out false-block
-  55.56% → 0.82%** for 1.3 points of containment. RedCode is unmoved.
-  **Mind2Web-SC goes 98.00% → 0.00%**, because its containment *is* the exact
-  resource, which is why this is opt-in, documented with that counterexample,
-  and never a default.
+  55.56% → 0.82%** for 1.3 points of containment. RedCode is unmoved. Opt-in
+  and never a default, because a pattern cannot tell `get_reservation` from
+  `get_all_reservations`.
+
+- **A confound in the generalisation sweep, found by pulling on the one result
+  that looked too clean.** `patterns.generalize_task` routes both the tool and
+  the resource dimension off `tool_level`, justified by "they are 1:1 in every
+  loader that names resources `mcp:tool:<tool>`". That condition is stated and
+  never checked, and it is false for **8 of 18 corpora**. So `--typed tool`
+  silently varies resources on those, and a result read off that column as a
+  fact about tool patterns can be a fact about resource patterns.
+
+  Mind2Web-SC is the case that proves it. It reads as 98.00% → 0.00% under a
+  `tool+verb` sweep, and was cited here and in `generalisation.md` as the
+  decisive counterexample for tool generalisation. Its tools are `click`,
+  `select` and `type`, granted identically in every task, so the tool dimension
+  cannot carry signal at all. Generalise tools and verbs while pinning
+  resources: **98.0%, unchanged.** The collapse is entirely the resource
+  dimension, and it is the reason `resources` takes no patterns rather than a
+  caveat on the ones `tools` does. `generalize` now detects corpora whose
+  resource axis is independent and marks those rows CONFOUNDED.
+
+  `generalisation.md` also said Mind2Web-SC "breaks at the first level". It
+  survives `up1` and `up2` at 98.00% and breaks at `namespace`.
 
 - **Two enforcement defects found while wiring it.** `broker.py` treated
   patterns as REPLACING `allowed_tools` rather than unioning with them, so a

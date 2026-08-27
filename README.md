@@ -112,7 +112,8 @@ Full reference: [docs/POLICY.md](docs/POLICY.md).
 
 ## See it stop the attack
 
-From a checkout:
+From a checkout. [examples/](examples/) has five, each runnable with no key and
+no network:
 
 ```bash
 python examples/02_the_proxy.py

@@ -54,9 +54,33 @@ namespace with paths exact:
 | AgentHarm | 176 | 21.6% | 20.9% | **-0.8** |
 | **Mind2Web-SC** | 100 | **98.0%** | **0.0%** | **-98.0** |
 
-**Mind2Web-SC is the counterexample and it is decisive.** Its containment *is* the
-exact resource, minted from the principal's attested attributes, so generalising
-the grant admits everything. It breaks at the first level.
+**Mind2Web-SC is the counterexample and it is decisive, but it is a counterexample
+about the RESOURCE dimension and this table is headed "tool and verb".**
+
+Its containment *is* the exact resource, `web:car` against `web:media`, minted
+from the principal's attested attributes. Generalise the resource dimension to
+the surface a bucket's peers touched and the grant admits everything, because
+some other legitimate session used the category this one is attacking.
+
+The row above sits in a tool-and-verb table because `patterns.generalize_task`
+routes both dimensions off `tool_level`, on the stated assumption that they are
+1:1 wherever resources are named `mcp:tool:<tool>`. That assumption is never
+checked and is **false for 8 of 18 corpora**, this one among them: its tools are
+`click`, `select` and `type`, granted identically in every task, so the tool
+dimension cannot carry any signal at all.
+
+Generalising tools and verbs to namespace while pinning resources exact:
+**98.0% contained, 1.0% false-block, unchanged from the exact grant.** The −98.0
+is the resource dimension in its entirety. `python -m benchmarks.generalize
+--typed tool` now marks such corpora CONFOUNDED rather than presenting them as a
+tool-dimension result.
+
+Corrected here too: this section previously said it "breaks at the first level".
+It survives `up1` and `up2` at 98.00% and breaks at `namespace`.
+
+The conclusion the row was recruited for still holds, and is now attached to the
+right dimension: it is why `resources` in the policy document takes no patterns
+while `tools` does.
 
 ## The limit that invalidates the reassuring rows
 
