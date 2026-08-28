@@ -81,6 +81,7 @@ from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 from clayseal.core.hash_util import sha256_hex
 from clayseal.core.task_scope import TaskScope, close_deny_patterns
+from clayseal.core.timestamps import parse_iso8601
 
 #: Document versions this module knows how to compile. A policy without a
 #: version, or with one from the future, is refused rather than interpreted
@@ -762,7 +763,7 @@ def _iso_or_none(value: Any) -> str | None:
         return None
     probe = text.replace("Z", "+00:00")
     try:
-        datetime.fromisoformat(probe)
+        parse_iso8601(probe)
     except ValueError as exc:
         raise PolicyError(
             f"expires_at {text!r} is not ISO 8601. An expiry that cannot be "

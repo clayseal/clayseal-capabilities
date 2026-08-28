@@ -71,6 +71,7 @@ from clayseal.capabilities.value_budget import SessionValueBudget
 from clayseal.core.hash_util import hash_canonical_json
 from clayseal.core.operations import capability_allows, normalize_capabilities
 from clayseal.core.task_scope import TaskScope, task_scope_allows_path
+from clayseal.core.timestamps import parse_iso8601
 
 
 class Outcome(str, Enum):
@@ -1556,7 +1557,7 @@ class SessionBroker:
 
         if request.expires_at:
             try:
-                deadline = datetime.fromisoformat(request.expires_at)
+                deadline = parse_iso8601(request.expires_at)
             except ValueError:
                 return False, "request expiry unparseable"
             if deadline <= _utcnow():

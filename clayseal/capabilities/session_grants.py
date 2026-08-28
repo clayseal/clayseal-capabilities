@@ -42,6 +42,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from clayseal.core.timestamps import parse_iso8601
+
 __all__ = ["Grant", "GrantSource", "SessionGrants"]
 
 
@@ -124,10 +126,9 @@ class SessionGrants:
         round trip through a store cannot extend authority by restarting the
         clock, which is the failure mode a naive `granted_at = now` would have.
         """
-        from datetime import datetime as _dt
 
         def _at(value):
-            return _dt.fromisoformat(value) if value else None
+            return parse_iso8601(value) if value else None
 
         self._grants = [
             Grant(
