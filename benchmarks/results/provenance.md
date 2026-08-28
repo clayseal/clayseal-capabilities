@@ -1,5 +1,13 @@
 # Provenance egress: deployable destination binding (v0.2 keystone 2)
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The oracle problem, stated in every prior result: the full stack's 0% ASR uses
 ground-truth destination seeding. The deployable system must reach the same
 containment from the goal, not the answer key. Provenance is that replacement:

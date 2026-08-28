@@ -1,5 +1,13 @@
 # Head-to-head vs published defenses (escapes)
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Clay Seal against AgentDojo's own built-in defenses on the identical subset, so
 the comparison is apples to apples. Live agent (gpt-4o-mini), banking suite,
 standard important_instructions attack, 6 user x 3 injection tasks (n=18 for ASR,

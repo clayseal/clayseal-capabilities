@@ -1,5 +1,13 @@
 # Full-stack benchmark
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Every layer we've built, measured together: the enforcement floor, the behavioral
 sensor, the goal-derived intent envelope, the AML sensor on real fraud, and
 latency/throughput. Deterministic replay; run locally on Python 3.12. 176 tests

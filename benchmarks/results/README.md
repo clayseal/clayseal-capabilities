@@ -101,19 +101,31 @@ the exceptions the whole time:
 
 ```
 $ python -m benchmarks.check_claims
-results files          105
-stamped with STATUS     66
-neither cmd nor status  23   baseline 23
-bare zeros (total)     354   baseline 354
+results files          107
+stamped with STATUS    90
+enforced this run      63
+bare zeros (total)     337   baseline 337
+neither cmd nor status 0   baseline 0
+stamped unverified    22   (numbers nobody has re-derived)
+containment, no cost   0   baseline 0
 ```
 
-**23 of the 105 files carry numbers with neither a reproduction command nor a
-status stamp.** They are working records of runs that happened, kept because
-deleting a measurement because it is inconvenient to re-derive is worse than
-publishing it with a caveat. But they are not evidence you can check, and they
-should not be read as though they were. `why_we_fail.md` is the one to know
-about, because THREAT_MODEL.md cites it for the 6.3% content-defined-harm
-figure.
+**22 files carry numbers nobody has re-derived, and they now say so.** Each is
+stamped `STATUS: unverified`, which was added to the vocabulary for them: the
+three existing values are `current`, `superseded` and `retracted`, and none of
+them can express "this was measured once and no command was recorded". Stamping
+`current` would have been vouching for a run nobody can reproduce.
+
+They are kept because deleting a measurement for being inconvenient to re-derive
+is worse than publishing it with a caveat. They are not evidence you can check.
+`why_we_fail.md` is the one to know about, because THREAT_MODEL.md cites it for
+the 6.3% content-defined-harm figure.
+
+`unverified` is not a way to clear the debt, and the gate is built so it cannot
+be. The count is printed on its own line, so stamping a file moves it between two
+visible buckets rather than out of sight, and an `unverified` file is never
+strictly enforced. Five of the original 23 gained a real command instead and left
+the set on merit.
 
 The **five headline results at the top of this file are not in that set.** Each
 lists the command beside it, and those commands were re-run against this commit.
@@ -123,7 +135,12 @@ up, so the debt can shrink and cannot grow. That is the mechanism, and it is
 weaker than "everything reproduces". Read the gate's output rather than this
 paragraph if the two ever disagree again.
 
-**354 bare zeros** are zeros printed without the upper bound that belongs beside
-them. A zero over 12 trials and a zero over 132 are different evidence, and the
-headline tables write both (`0/132, 97.5% upper bound 2.8%`). The 354 are in
-files that do not.
+**337 bare zeros** are zeros printed without the upper bound or denominator that
+belongs beside them. A zero over 12 trials and a zero over 132 are different
+evidence, and the headline tables write both (`0/132, 97.5% upper bound 2.8%`).
+
+It was 354. The 17 that went are ones the rule should never have counted: a
+results table states its `n` once, in the caption or the header, and the cells
+below it are bounded by a denominator the reader can see. Counting those put
+findings on the ratchet that were not the sin the rule describes, and a debt
+counter that mostly cries wolf is one nobody acts on.

@@ -1,5 +1,13 @@
 # External evaluation, AgentDojo + InjecAgent (with Phase 3 hardening)
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Deterministic replay of ground-truth tool calls through the real decision path;
 no LLM. Run locally on Python 3.12 (agentdojo needs 3.10–3.12). Numbers reflect
 the per-call argument-binding fix and Phase 3 protected zones.

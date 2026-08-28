@@ -1,5 +1,13 @@
 # Published baselines, sourced
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Every figure here was read from the paper or from one of our own results files.
 Nothing is estimated. Where a cell is still unsourced it says so, because a
 mis-attributed competitor number is worse than a missing one.

@@ -1,3 +1,16 @@
+# Scoreboard: every tier, one table
+
+STATUS: unverified
+
+```bash
+python -m benchmarks.scoreboard
+```
+
+> The command above is recorded and runnable, but these numbers were not
+> re-derived against this commit. `unverified` says nobody has checked
+> them; run the command to reproduce, and stamp `current` when you have.
+
+
 tier                measures                      contained  FB(granted)  FB(held out)               n
 ------------------------------------------------------------------------------------------------------
 redcode             deterministic replay              99.9%        0.00%             -     718a / 344b
