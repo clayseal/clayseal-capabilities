@@ -29,7 +29,13 @@ regexes = [
   '''AKIA(?:IOSFODNN7EXAMPLE|0123456789ABCDEFQZ|9F3C1D77B02E4419QZ|7QF3ZC1D77B02E4X)''',
   # GitHub's own documented example token, quoted in CHANGELOG.md and used as a
   # fixture by the secret-content detector's tests.
-  '''ghp_16C7e42F292c6912E7710c838347Ae178B4a''',
+  #
+  # Written WITHOUT its `ghp_` prefix on purpose. Spelling the whole token here
+  # makes this allowlist itself a file containing a token, and trivy duly
+  # flagged it: one scanner's exemption became another scanner's finding. The
+  # body alone is unique enough to allowlist precisely and matches no
+  # token-shaped rule.
+  '''16C7e42F292c6912E7710c838347Ae178B4a''',
 ]
 
 [[allowlists]]
