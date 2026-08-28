@@ -9,7 +9,13 @@ from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets import get_loader
 
 
-@requires_corpus("RedCode", "InjecAgent")
+# Names every corpus the body loads, which it did not: the marker said
+# `RedCode, InjecAgent` while the loop below loads `redcode`, `ipi_coding` and
+# `mcp_attack`. `fetch_corpora.sh` fetches RedCode and InjecAgent and neither of
+# the other two, so in the nightly job the guard passed and the test then raised
+# `RuntimeError: IPI-Coding-Agent not found`. A guard that names some of what it
+# needs is the shape this repository keeps finding.
+@requires_corpus("RedCode", "InjecAgent", "inspect_evals")
 def test_stack_matches_ladder_on_redcode_and_ipi():
     for name in ("redcode", "ipi_coding", "mcp_attack"):
         tasks = list(get_loader(name).load())
