@@ -95,3 +95,38 @@ def test_the_threshold_sits_between_forty_and_sixty() -> None:
 
 def test_an_unfitted_detector_reports_nothing_rather_than_everything() -> None:
     assert TrajectoryDetector().inert_tiers(_traj(4)) == ()
+
+
+def test_the_bucket_fallback_asks_about_alpha_not_a_fixed_count() -> None:
+    """A tighter alpha must demand more calibration, and say so.
+
+    `min_per_bucket = 20` is right only at alpha=0.05, where 19 points make the
+    alpha reachable. At alpha=0.01 the requirement is 99, and before the
+    fallback consulted alpha a bucket of 20 was preferred over a larger pool and
+    the tier was silently incapable of firing at any corpus size.
+    """
+    def inert_at(n: int, alpha: float) -> tuple[str, ...]:
+        det = TrajectoryDetector(alpha=alpha)
+        det.fit([_traj(4) for _ in range(n)])
+        return det.inert_tiers(_traj(4))
+
+    assert "scorer" not in inert_at(120, 0.05)
+    assert "scorer" in inert_at(120, 0.01), (
+        "alpha=0.01 needs ~99 calibration points; at n=120 after the "
+        "split-conformal and Mondrian splits it is not reachable, and the "
+        "detector must say so rather than run a tier that cannot fire"
+    )
+    assert "scorer" not in inert_at(400, 0.01)
+
+
+def test_a_bucket_that_cannot_reach_alpha_defers_to_the_pool() -> None:
+    """The pool is never smaller, so deferring can only help."""
+    from clayseal.capabilities.monitor.conformal import MondrianConformal
+
+    scored = [("small", float(i)) for i in range(25)]
+    scored += [("big", float(i)) for i in range(500)]
+    mc = MondrianConformal(alpha=0.01).fit(scored)
+    # 25 points cannot reach 0.01 (needs 99), so "small" must use the pool.
+    assert mc.resolution_floor("small") < 1 / 26
+    lenient = MondrianConformal(alpha=0.05).fit(scored)
+    assert lenient.resolution_floor("small") == 1 / 26

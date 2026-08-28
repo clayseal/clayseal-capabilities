@@ -93,6 +93,8 @@ class TrajectoryDetector:
     calibrator: MondrianConformal = field(default_factory=MondrianConformal)
     traj_calibrator: MondrianConformal = field(default_factory=MondrianConformal)
     struct_calibrator: MondrianConformal = field(default_factory=MondrianConformal)
+    #: Set on every calibrator at fit time so the per-bucket fallback can ask
+    #: whether a bucket reaches THIS alpha, rather than a fixed count.
     drift: CusumDrift | None = field(default_factory=CusumDrift)
     path_envelope: PathEnvelope | None = field(default_factory=PathEnvelope)
     aml: AmlAnalytics | None = field(default_factory=AmlAnalytics)
@@ -117,6 +119,12 @@ class TrajectoryDetector:
         # set too low, the threshold turns too tight, and held-out benign is
         # flagged far above alpha. A held-out calibration slice restores
         # exchangeability with future benign, so the false-alarm bound holds.
+        # Tell every calibrator the alpha its tier will be judged at, so the
+        # per-bucket fallback can ask whether a bucket can reach it rather than
+        # comparing against a fixed count that is only right at one alpha.
+        for cal in (self.calibrator, self.traj_calibrator, self.struct_calibrator):
+            if cal is not None:
+                cal.alpha = self.alpha
         n = len(benign)
         cal_n = max(1, int(n * self.calibration_frac)) if n > 1 else 0
         fit_set = benign[cal_n:] if cal_n and cal_n < n else benign

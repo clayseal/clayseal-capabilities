@@ -673,4 +673,35 @@ class EgressPolicy:
                     # session.
                     return "step_up", reason
                 return "deny", reason or f"recipient {r!r} not on allow-list"
+            # ...and of ADDRESSES, exactly as `check` does.
+            #
+            # This block was in `check` and not here, so the narrower
+            # declaration was honoured only on the path WITHOUT provenance.
+            # Every deployment that turned provenance on, which is the product
+            # path `DeployableStack` takes, had its `egress.recipients`
+            # enumeration silently ignored and fell back to the domain. On the
+            # identical arguments the two paths disagreed:
+            #
+            #     check()                 deny: recipient not on allow-list
+            #     check_with_provenance() allow: egress within policy
+            #
+            # The BPL scenario covering this builds a broker with no
+            # provenance, so it exercised the path that was already correct and
+            # reported containment for a configuration the product does not
+            # run.
+            addressed = {a.lower() for a in self.allowed_recipients if "@" in a}
+            if addressed:
+                for addr in extract_email_addresses(args):
+                    if addr.lower() in addressed:
+                        continue
+                    if provenance is None:
+                        return "deny", f"recipient {addr!r} not on allow-list"
+                    trust, reason = provenance.check_destination(
+                        addr,
+                        goal_named_objects=goal_named_objects,
+                        authorized_tools=authorized_tools,
+                    )
+                    if trust in (DestinationTrust.ALLOW, DestinationTrust.STEP_UP):
+                        return "step_up", reason
+                    return "deny", reason or f"recipient {addr!r} not on allow-list"
         return "allow", "egress within policy"

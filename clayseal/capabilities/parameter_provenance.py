@@ -53,6 +53,10 @@ _TOKEN = re.compile(r"[A-Za-z0-9_.:@/+-]{" + str(MIN_ATTRIBUTABLE) + r",}")
 # stronger. See benchmarks/results/flow.md.
 _EDGE = ".:,;!?/+-_@"
 
+#: The pseudo-tool `SessionBroker._seed_goal_provenance` records the sealed
+#: goal under, as both the producing tool and the containing object.
+_SEALED_GOAL = "sealed_goal"
+
 
 class DestinationTrust(str, Enum):
     """Policy verdict for a destination under containing-object provenance.
@@ -89,10 +93,25 @@ class Source:
     containing_object: str = ""  # channel, file, or resource id of the observation
 
     def describe(self) -> str:
+        """One clause a person can read, and so can the agent it is handed to.
+
+        A decision's reasons go back to the model as the explanation for a
+        refusal, which makes this string product surface rather than a log line.
+        The earlier form concatenated four fragments unconditionally and read
+        "a structured field of sealed_goal of a goal-named resource in
+        'sealed_goal'" whenever the tool and the containing object were the same
+        name, which is exactly the common case of a destination seeded from the
+        sealed goal.
+        """
         where = "a structured field" if self.structured else "free text"
-        named = " of a goal-named resource" if self.goal_named else ""
-        obj = f" in {self.containing_object!r}" if self.containing_object else ""
-        return f"{where} of {self.tool}{named}{obj}"
+        obj = self.containing_object
+        if obj == _SEALED_GOAL and self.tool == _SEALED_GOAL:
+            return f"{where} of the sealed goal"
+        if obj and obj != self.tool:
+            origin = f"{where} of {obj!r}, read via {self.tool}"
+        else:
+            origin = f"{where} of {obj or self.tool}"
+        return origin + (", which the goal named" if self.goal_named else "")
 
     def object_trusted(self, goal_named_objects: set[str] | None) -> bool:
         """Is the containing object itself on the sealed goal's named set?"""
@@ -324,7 +343,7 @@ class ParameterProvenance:
                     best = next(iter(sorted(
                         trusted_structured,
                         key=lambda s: (not s.goal_named, s.tool))))
-                    reasons.append(f"{group[0]!r} structured via {best.describe()}")
+                    reasons.append(f"{group[0]!r} came from {best.describe()}")
                     continue
                 if any(s.structured for s in candidates):
                     # Structured but foreign containing object, not slot-ALLOW.
