@@ -1,5 +1,13 @@
 # Adaptive adversary (dynamic sandbox v0.2)
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The decisive anti-overfit test, item 3 of the contract in
 [../../docs/dynamic_sandbox.md](../../docs/dynamic_sandbox.md). A fixed attack
 proves nothing about an adversary who knows the defense. This attacker

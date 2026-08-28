@@ -1,5 +1,13 @@
 # Trajectory detector: the uncontested class, measured without the label
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The goal-conditional trajectory detector is meant to catch the class even the
 budget rung cannot: fully-authorized aggregates like in-scope-burst (an
 authorized read repeated into a scanning/exfil burst), where every action passes

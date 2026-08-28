@@ -1,3 +1,12 @@
+# Adaptive exfiltration
+
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
 
 Wrote benchmarks/results/adaptive_exfiltration.json
 # Adaptive red-team, redcode (450 tasks, objective=exfiltration, 6 rounds)

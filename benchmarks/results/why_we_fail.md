@@ -1,5 +1,13 @@
 # Why we fail where we fail
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Every attack event we miss, across six corpora, analysed for what the missed
 events have in common. The answer is sharper than "in-surface" and it points at
 a specific mechanism rather than at a general limitation.

@@ -41,10 +41,22 @@ contact with a deadline.
                   Use `benchmarks.core.reporting.format_rate`.
 
 ``no-status``     A results file with no `STATUS:` header. `current`,
-                  `superseded`, or `retracted`. There are ~120 files here
-                  including a RETRACTED section inside a live document and a
-                  result contradicted by a later sweep; a reader cannot tell
-                  which is which.
+                  `superseded`, `retracted`, or `unverified`. There are ~120
+                  files here including a RETRACTED section inside a live document
+                  and a result contradicted by a later sweep; a reader cannot
+                  tell which is which.
+
+                  `unverified` was added because the vocabulary could not say
+                  the true thing about 17 of these files. Their numbers were
+                  produced by a run nobody can now reproduce: no command was
+                  recorded, and stamping `current` would be vouching for
+                  something nobody has checked. `unverified` vouches for the
+                  right thing, which is that nobody has.
+
+                  It is deliberately NOT a way to clear the debt. The count of
+                  unverified files is printed on its own line, so labelling a
+                  file moves it between two visible buckets rather than out of
+                  sight, and `unverified` is never strictly enforced.
 
 ``forbidden``     A claim `SEND_PACKET.md` names as auto-fail, matched literally.
 
@@ -82,7 +94,9 @@ BARE_ZERO = re.compile(r"(?<![.\d])0(?:\.0+)?\s?%")
 HAS_BOUND = re.compile(
     r"upper bound|97\.5%|95% CI|\[\s*0?\.|interval|n/a|±|\bCI\b"
     r"|\d+\s*/\s*\d+|\d+\s+of\s+[\d,]+|n\s*=\s*\d+", re.IGNORECASE)
-STATUS = re.compile(r"^\s*STATUS:\s*(current|superseded|retracted)\b", re.IGNORECASE | re.MULTILINE)
+STATUS = re.compile(
+    r"^\s*STATUS:\s*(current|superseded|retracted|unverified)\b",
+    re.IGNORECASE | re.MULTILINE)
 
 #: Literal phrases SEND_PACKET.md forbids. Deliberately narrow: a regex that
 #: guesses at intent produces false alarms, and a linter that cries wolf is
@@ -272,6 +286,10 @@ def main(argv=None) -> int:
     # whole file is: 38 of them on the day this was written, and a check that
     # fails all 38 is a check somebody deletes.
     unverifiable = [r for r in reports if not r["has_command"] and not r["status"]]
+    # Printed on its own line so stamping a file `unverified` moves it between
+    # two VISIBLE buckets rather than out of sight. A label that lowers a debt
+    # count without anyone checking anything is worse than the debt.
+    unverified = [r for r in reports if r["status"] == "unverified"]
     costless = [r for r in reports if r["costless"]]
     stamped = [r for r in reports if r["status"]]
     enforced = [r for r in reports
@@ -301,6 +319,7 @@ def main(argv=None) -> int:
     print(f"enforced this run      {len(enforced)}")
     print(f"bare zeros (total)     {total_bare}   baseline {prior}")
     print(f"neither cmd nor status {len(unverifiable)}   baseline {prior_unverifiable}")
+    print(f"stamped unverified    {len(unverified)}   (numbers nobody has re-derived)")
     print(f"containment, no cost   {len(costless)}   baseline {prior_costless}")
 
     # Blocking vs advisory, and the distinction is a limit of the instrument

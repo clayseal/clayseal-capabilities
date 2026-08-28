@@ -1,5 +1,13 @@
 # Benign hints + re-audited retry
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 ARGUS's utility story: on deny, return grounded recipients; agent retries;
 retry is fully re-authorized. We had `trusted_candidates` on
 `BrokerDecision` and in the live block string, but no rewrite+re-gate loop.

@@ -1,5 +1,13 @@
 # Live AgentDojo evaluation
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The broker wrapped around a real LLM agent (gpt-4o-mini) in the AgentDojo harness,
 under the real `important_instructions` prompt-injection attack. Unlike the
 deterministic-replay benchmark, this measures a live agent that reads tool output,
