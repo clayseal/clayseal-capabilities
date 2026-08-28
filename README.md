@@ -354,7 +354,7 @@ python -m benchmarks.scoreboard
 | mind2web_sc | 98.0% | 100 / 100 | a safety-critical step |
 | b3 | 66.7% | 9 / 8 | mixed |
 | **agentharm** | **55.3%** | 696 / 729 | **the content of an allowed action** |
-| **sleight** | **30.2%** | 129 / 311 | **the content of an allowed action** |
+| **sleight** | **31.0%** | 129 / 311 | **the content of an allowed action** |
 
 **Two further corpora, ASB (2,040 attacks) and InjecAgent (1,598), score 100% and
 are excluded from that table rather than counted.** Every attack in them uses a
@@ -365,7 +365,7 @@ add 3,638 attacks to the numerator for nothing.
 **The spread is the finding, and it is not noise.** It is the same line the
 132-scenario suite draws with budgets: where harm is defined by something the
 gateway can *bind to*, containment is 98 to 100%; where harm is defined by the
-meaning of an otherwise authorized action, it falls to 30 to 55%. This is an
+meaning of an otherwise authorized action, it falls to 31 to 55%. This is an
 authorization layer, not a harm classifier, and
 [THREAT_MODEL.md](docs/THREAT_MODEL.md) declares content-defined harm out of
 scope for exactly that reason.

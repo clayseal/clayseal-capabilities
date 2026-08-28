@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fnmatch
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -174,6 +175,39 @@ def _is_resource_ref(raw: str) -> bool:
 #: What a non-path normalises to. Contains a NUL, so no authored pattern can
 #: match it by accident.
 UNMATCHABLE_PATH = "\x00<not-a-path>"
+
+# A path that still carries a shell expansion is not one path, it is whatever
+# the shell decides at exec time. `${VAR}`, `$(cmd)` and backticks all resolve
+# after this gateway has made its decision, so the string checked here is
+# provably not the string that gets opened.
+_INDETERMINATE_PATH = re.compile(
+    r"""
+      \$\{[^}]*\}      # ${VAR}
+    | \$\([^)]*\)      # $(command)
+    | \$[A-Za-z_]\w*    # $VAR
+    | `[^`]*`           # `command`
+    | %[A-Za-z_]\w*%    # %VAR% (cmd.exe)
+    """,
+    re.VERBOSE,
+)
+
+
+def path_is_indeterminate(path: str) -> bool:
+    """True when the path cannot be resolved to one filesystem location here.
+
+    `rm -rf "$OUTPUT_DIR/$EXP_DIR"` with either variable unset deletes the
+    parent, and no allow-list can be checked against a string whose value is
+    decided after the check. Measured across seven corpora, 20,299 benign
+    events carry no such path and one attack event does, so treating these as
+    unmatchable costs nothing observed and closes the case.
+
+    The failure mode is a false DENIAL on a literal filename that contains a
+    `$` or a backtick, which is legal on POSIX. That direction is deliberate:
+    this is the allow side, where the rule is already "allowed only if every
+    reading is allowed", and an unbounded reading set cannot satisfy it.
+    """
+    return bool(isinstance(path, str) and _INDETERMINATE_PATH.search(path))
+
 
 
 def normalize_scope_path(path: str) -> str:
@@ -374,6 +408,12 @@ def path_readings(path: str) -> tuple[str, ...]:
     readings = [path]
     if "\\" in path:
         readings.append(path.replace("\\", "/"))
+    if path_is_indeterminate(path):
+        # An unexpanded expansion stands for an unbounded set of paths. Adding
+        # the unmatchable sentinel makes the existing rule do the work: the
+        # ALLOW side needs every reading allowed and cannot get it, while the
+        # DENY side is untouched because no real pattern matches the sentinel.
+        readings.append(UNMATCHABLE_PATH)
     return tuple(dict.fromkeys(readings))
 
 
