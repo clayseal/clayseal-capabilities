@@ -220,6 +220,12 @@ throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 | dataflow taint | 0/12, 97.5% upper bound 26.5% | 8.3% (2/24) | 11.4% (15/132) |
 | **Clay Seal** | **75.0% (9/12)** | **41.7% (10/24)** | **39.4% (52/132)** |
 
+**Read 39.4% as an average over two different cases, not as a rate.** Where the
+scenario's grant configures a budget it is 83.3%; where it configures none,
+18.9%. Which case you are in is fixed before anything runs and readable from
+your own policy, so it is a condition you can check rather than a rate you have
+to accept. [The split is below](#when-it-works-and-when-it-does-not).
+
 Per-call authorization scores 1 of 132, and the one it scores is the one worth
 understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a
 single call's own arguments, needing no history at all, so a stateless gate
@@ -331,11 +337,37 @@ The two mechanisms catch different things: 32 scenarios are contained by this
 layer only, 20 by dataflow taint only, 22 by both. Stacking them is still a bad
 trade, because the taint layer refuses 47 benign scripts this one completes.
 
-Against a live model, and on prompt injection, the numbers and their
-qualifications are in
-[benchmarks/results/README.md](benchmarks/results/README.md). That index lists
-every headline result with the command that reproduces it, and the limits it
-does not cross.
+Everything above is a suite we wrote, which is the first thing a reader should
+distrust. On a corpus we did not write, against a live model:
+
+**AgentDojo prompt injection.** `gpt-4o-mini-2024-07-18`, `important_instructions`
+attack, 18 trials per cell. Attack-success rate, lower is better:
+
+| suite | undefended | best AgentDojo built-in | Progent | ours |
+| --- | ---: | ---: | ---: | ---: |
+| banking | 61.1% | 27.8% | 16.7% | **0.0%** (0/18) |
+| slack | 83.3% | 16.7% | 11.1% | **0.0%** (0/18) |
+| travel | 27.8% | 5.6% | 11.1% | **0.0%** (0/18) |
+| workspace | 88.9% | 5.6% | 16.7% | **0.0%** (0/18) |
+
+Zero on all four suites, against a published system that leaves 11 to 17 points.
+At 18 trials a cell, a zero has a 97.5% upper bound of 18.5%, so this shows we
+are not worse and cannot show more; the gap to Progent is suggestive, not
+separated.
+
+**And it costs more benign utility than Progent does.** Progent keeps more clean
+utility on three of the four suites, slack 83.3% against our 50.0%, travel 83.3%
+against 66.7%, workspace 100% against 83.3%, and ties on banking where both fall
+to 16.7%. We win security outright and lose utility. That is the trade as
+measured, and closing it while holding ASR at zero is the open problem
+([full table](benchmarks/results/head_to_head_injection.md)).
+
+Both friction results are real and they are not in conflict: the 2-refused figure
+is the 132-scenario suite with no model in the loop, this one puts a live model in
+front of tasks the suite's authors never saw. Plan around the second.
+
+Every headline result, the command that reproduces it, and the limit it does not
+cross: [benchmarks/results/README.md](benchmarks/results/README.md).
 
 ## Where the boundary is
 
