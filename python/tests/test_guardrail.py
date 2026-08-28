@@ -162,7 +162,7 @@ def test_an_async_tool_is_guarded_and_stays_async():
         return {"paid": amount}
 
     guarded = guard.wrap("pay_vendor", pay_vendor)
-    assert asyncio.iscoroutinefunction(guarded)
+    assert inspect.iscoroutinefunction(guarded)
 
     async def run():
         with pytest.raises(Refused):

@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-2300%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-2900%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![PyPI](https://img.shields.io/badge/pip-clayseal-orange.svg)](https://pypi.org/project/clayseal/)
 
 **A policy gateway for AI agents. It stops the attack where every single call

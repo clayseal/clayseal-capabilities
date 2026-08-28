@@ -7,6 +7,7 @@ module is to be reachable from an async runtime, not to add a third to test it.
 from __future__ import annotations
 
 import asyncio
+import inspect
 
 import pytest
 
@@ -93,9 +94,9 @@ def test_the_awaitables_are_not_shadowed_by_the_wrapped_object():
     """`__getattr__` runs only for names this class does not define, so
     `authorize` stays async even though the wrapped stack has a sync one."""
     stack = _stack()
-    assert asyncio.iscoroutinefunction(stack.authorize)
-    assert asyncio.iscoroutinefunction(stack.authorize_all)
-    assert asyncio.iscoroutinefunction(stack.resolve_step_up)
+    assert inspect.iscoroutinefunction(stack.authorize)
+    assert inspect.iscoroutinefunction(stack.authorize_all)
+    assert inspect.iscoroutinefunction(stack.resolve_step_up)
 
 
 def test_everything_else_passes_through_unchanged():
