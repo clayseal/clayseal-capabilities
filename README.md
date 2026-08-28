@@ -374,17 +374,23 @@ Containment at whatever false-block rate an engine picked for itself is not a
 headline, and this repo's own review rules forbid quoting it as one. At a
 **fixed 1% benign-block rate**, with a deny-all control that must score zero:
 
-| corpus | scorer | detection @1% FPR | AUC | lift |
-| --- | --- | ---: | ---: | ---: |
-| redcode | deny-all control | 0.0% | 0.500 | 0.00 |
-| redcode | ours | **100.0%** | **1.000** | 61.2 |
-| ipi_coding | ours | **100.0%** | **1.000** | 53.2 |
-| agentharm | ours | not reached | 0.628 | n/a |
-| sleight | ours | not reached | 0.511 | n/a |
+| corpus | scorer | detection @1% FPR | AUC |
+| --- | --- | ---: | ---: |
+| redcode | deny-all control | 0.0% | 0.500 |
+| redcode | `ngram`, the shipped detector | 0.0% | 0.425 |
+| redcode | `target`, **not wired into the gateway** | 100.0% | 1.000 |
+| ipi_coding | `target`, not wired | 100.0% | 1.000 |
+| agentharm | `target`, not wired | not reached | 0.628 |
+| sleight | `target`, not wired | not reached | 0.511 |
 
-Same split, at an operating point an operator chose. On the content-defined
-corpora, 0.511 AUC is chance ([opeval.md](benchmarks/results/opeval.md), five
-seeds).
+Read the second and third rows together. The behavioural channel that separates
+these corpora cleanly is a **research scorer that the shipped gateway does not
+run**; the detector it does run scores 0.0% here, at an AUC below chance. That
+gap is tracked in
+[docs/INTEGRATION.md](docs/INTEGRATION.md) and it is the honest reason the
+containment table above rests on the floor and content tiers rather than on
+behaviour. On the content-defined corpora even the research scorer is at chance
+([opeval.md](benchmarks/results/opeval.md), five seeds).
 
 **Against a live model.** AgentDojo prompt injection, `gpt-4o-mini`,
 `important_instructions`, deployable configuration, **three sweeps per suite**:

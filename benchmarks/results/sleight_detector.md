@@ -15,6 +15,32 @@ scorer=ngram, alpha=0.05, train 25 / test 18 / attack trajectories 18.
 | attack trajectories contained | 17 of 18 (94.4%) |
 | benign trajectories blocked | 0 of 18, upper bound 18.5% at n=18 |
 
+## What produces this number, which is not the scorer
+
+The header above says `scorer=ngram`, and that is what was configured. It is not
+what decides the outcome. Holding everything else fixed and swapping only the
+scorer:
+
+| scorer | twin corridor on | twin corridor off |
+| --- | ---: | ---: |
+| `ngram` | 17 of 18 | 2 of 18 |
+| `target` | 17 of 18 | 2 of 18 |
+| **random, carries no information** | **17 of 18** | **2 of 18** |
+
+A scorer emitting uniform noise scores exactly what the fitted n-gram scores.
+**This is a twin-corridor result**, and disabling that single structural tier
+takes containment to 11.1% whatever is installed in the scorer slot.
+
+A constant scorer would have proved nothing, and was the first control tried:
+under conformal calibration nothing is unusual relative to a distribution of
+identical values, so any constant is inert by construction. The finding rests on
+scorers that vary.
+
+The 94.4% is still real, and so is the 0 of 18 false-block rate. Only the
+attribution changes. Pinned by
+[`test_integration_surface.py`](../../python/tests/test_integration_surface.py),
+and the wider audit is in [docs/INTEGRATION.md](../../docs/INTEGRATION.md).
+
 ## What this file said before, and why it was wrong
 
 It said, in full, `containment 83.3% | false-block 0.0%`, with no command, no
