@@ -32,6 +32,16 @@ zero.
 
 ## Clean utility (higher is better), the honest tradeoff
 
+> **STATUS: superseded, this section only.** The table below is *unpaired*: it
+> charges the whole gap between undefended and defended utility to the defense,
+> including tasks the agent fails on its own. Pairing per task shows 3 of these 8
+> banking tasks fail with no defense present, so the real figure is a 12.5%
+> false-block, roughly a quarter of what this section implies. It is also a
+> single weak model chosen for injectability; the deployable cost is 3 points on
+> `grok-4-1-fast`. Use the 4x4 in [live_ladder.md](live_ladder.md) for any
+> utility claim. The ASR table above is unaffected and remains current.
+
+
 | suite | undefended | Progent | ours |
 |---|--:|--:|--:|
 | banking | 50.0% | 16.7% | 16.7% |
