@@ -7,7 +7,7 @@ git clone https://github.com/pberlizov/clayseal.git
 cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest python/tests -q          # 2,500+ tests, under a minute
+pytest python/tests -q          # 2900+ tests, under a minute
 ruff check .                    # the whole repo, not just the library
 python scripts/mypy_ratchet.py  # type findings may fall, not rise
 ```
