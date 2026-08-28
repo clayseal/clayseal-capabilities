@@ -650,6 +650,8 @@ session = get_identity_provider("oidc").build_session(
 [docs/README.md](docs/README.md) is the index. The four you are most likely to
 want:
 
+- [API reference](docs/API.md) for the 57 exported names, tiered by what
+  most integrations actually use
 - [Developer guide](docs/DEV_GUIDE.md) to install it and wire it in
 - [Policy reference](docs/POLICY.md) for what a policy file can say
 - [Threat model](docs/THREAT_MODEL.md) for what it defends against and what it does not
