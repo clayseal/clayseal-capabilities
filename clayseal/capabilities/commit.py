@@ -30,6 +30,7 @@ from clayseal.core import env
 from clayseal.core.hash_util import hash_canonical_json
 from clayseal.core.runtime import ExecutionContext
 from clayseal.core.signing import SigningKey, signature_key_id_matches, verify
+from clayseal.core.timestamps import parse_iso8601
 
 COMMIT_TOKEN_SCHEMA = "agent-receipts.commit-token.v1"
 COMMIT_TOKEN_TRUSTED_KEYS_ENV = "CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS"
@@ -135,7 +136,7 @@ def _parse_dt(value: str) -> datetime | None:
     if not isinstance(value, str) or not value:
         return None
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = parse_iso8601(value)
     except ValueError:
         return None
     if parsed.tzinfo is None:

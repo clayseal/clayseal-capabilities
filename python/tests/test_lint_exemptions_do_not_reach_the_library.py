@@ -21,7 +21,12 @@ import fnmatch
 from pathlib import Path
 
 import pytest
-import tomllib
+
+# `tomllib` is 3.11+. The CI matrix includes 3.10, where this file would fail to
+# COLLECT and take the whole suite with it, so it degrades to a skip there. The
+# guard still runs on 3.13 and 3.14, which is where the matrix keeps it honest.
+tomllib = pytest.importorskip(
+    "tomllib", reason="tomllib is 3.11+; this guard runs on the newer matrix legs")
 
 ROOT = Path(__file__).resolve().parents[2]
 

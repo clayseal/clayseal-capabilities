@@ -19,6 +19,8 @@ from clayseal.core.hash_util import hash_canonical_json
 from clayseal.core.runtime import ActionDescriptor
 from clayseal.core.signing import SigningKey, verify
 
+from .timestamps import parse_iso8601
+
 MANDATE_SCHEMA = "agent-receipts.mandate.v1"
 REQUIRE_MANDATE_FOR_BUDGETS_ENV = "AGENT_RECEIPTS_REQUIRE_MANDATE_FOR_BUDGETS"
 REQUIRE_MANDATE_ACTIONS_ENV = "AGENT_RECEIPTS_REQUIRE_MANDATE_ACTIONS"
@@ -61,8 +63,8 @@ class Mandate:
         return cls(
             grant_id=str(raw["grant_id"]),
             issuer=str(raw["issuer"]),
-            issued_at=datetime.fromisoformat(raw["issued_at"]),
-            expires_at=datetime.fromisoformat(raw["expires_at"]),
+            issued_at=parse_iso8601(raw["issued_at"]),
+            expires_at=parse_iso8601(raw["expires_at"]),
             delegate=raw.get("delegate"),
             allowed_actions=[str(item) for item in raw.get("allowed_actions", [])],
             allowed_resources=[str(item) for item in raw.get("allowed_resources", [])],
@@ -469,7 +471,7 @@ def verify_bundle_mandate(
     proof = bundle.get("execution_proof", {})
     action_at = at
     if action_at is None and proof.get("created_at"):
-        action_at = datetime.fromisoformat(proof["created_at"])
+        action_at = parse_iso8601(proof["created_at"])
     if action_at is None:
         action_at = datetime.now(timezone.utc)
 

@@ -10,6 +10,8 @@ from typing import Any
 
 from clayseal.core.mandate import MANDATE_SCHEMA, Mandate
 
+from .timestamps import parse_iso8601
+
 HUMAN_AUTHORIZATION_SCHEMA = "agentauth.human_authorization.v1"
 
 
@@ -55,7 +57,7 @@ class TaskScope:
             return False
         moment = now or datetime.now(timezone.utc)
         try:
-            deadline = datetime.fromisoformat(str(self.expires_at))
+            deadline = parse_iso8601(str(self.expires_at))
         except ValueError:
             return True
         if deadline.tzinfo is None:

@@ -32,6 +32,8 @@ from clayseal.core.operations import (
 from clayseal.core.runtime import ActionDescriptor
 from clayseal.core.signing import SigningKey, verify
 
+from .timestamps import parse_iso8601
+
 DELEGATION_SCHEMA = "agent-receipts.delegation.v1"
 
 
@@ -89,8 +91,8 @@ class DelegationToken:
             delegate_agent_id=UUID(str(raw["delegate_agent_id"])),
             capabilities=_capabilities_from_raw(raw),
             depth=int(raw.get("depth", 0)),
-            issued_at=datetime.fromisoformat(raw["issued_at"]),
-            expires_at=datetime.fromisoformat(raw["expires_at"]),
+            issued_at=parse_iso8601(raw["issued_at"]),
+            expires_at=parse_iso8601(raw["expires_at"]),
             parent=parent,
             principal_id=raw.get("principal_id"),
             organization=raw.get("organization"),
