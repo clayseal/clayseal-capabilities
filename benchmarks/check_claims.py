@@ -150,6 +150,73 @@ def reports_containment_without_cost(text: str) -> bool:
     return bool(_CONTAINMENT.search(text)) and not _COST.search(text)
 
 
+#: A markdown table row, and its separator.
+_TABLE_ROW = re.compile(r"^\s*\|.*\|\s*$")
+_TABLE_SEP = re.compile(r"^\s*\|[\s:|-]+\|\s*$")
+#: How far above a table to look for the sentence that states its denominator.
+_CAPTION_LOOKBACK = 4
+#: A DENOMINATOR, which is stricter than `HAS_BOUND`. `HAS_BOUND` accepts `n/a`
+#: and a bare `±`, which are fine as an in-line qualifier on the same rate and
+#: are not a sample size for a whole table.
+#:
+#: The first version of this used `HAS_BOUND` and exempted a table because a row
+#: of the PREVIOUS table, four lines up, contained `n/a`. That is a linter
+#: weakened by a spurious match, which is the exact failure the rest of this file
+#: exists to catch, so the window below also stops at the previous table rather
+#: than reading across it.
+#: `of 9` with no leading count is a form the headers here really use
+#: (`| staging evasions contained (of 9) |`), so it is accepted; `n=3,532` and
+#: `12/200` are the others.
+_TABLE_DENOMINATOR = re.compile(
+    r"n\s*=\s*[\d,]+|\d+\s*/\s*\d+|\bof\s+[\d,]{1,}|upper bound|97\.5%|95% CI",
+    re.IGNORECASE)
+
+
+def _table_contexts(lines: list[str]) -> set[int]:
+    """Line numbers (1-based) inside a table whose denominator is stated nearby.
+
+    The bare-zero rule is about an UNCONTEXTUALISED zero, and it was reading
+    every cell of every table as one. A results table states its `n` once, in
+    the header row or the sentence above it, and then reports a grid of rates:
+
+        Measured on 1,694 benign sink writes, one tracker per session:
+
+        | BFCL, false block | len 4 | len 25 | len 100 |
+        | --- | --: | --: | --: |
+        | credit card digits | 0.00% | 0.00% | 0.00% |
+
+    Every zero there is bounded, by a denominator a reader can see. Counting
+    them as debt put 354 findings on a ratchet, most of which were not the sin
+    the rule describes — and a debt counter that mostly counts false positives
+    is one nobody acts on, which hides the ones that are real.
+
+    Conservative on purpose: the denominator must appear in the table's own
+    header or within four lines above it. A table that states its `n` nowhere
+    near itself is exactly the case worth flagging.
+    """
+    contextualised: set[int] = set()
+    i = 0
+    while i < len(lines):
+        if not _TABLE_ROW.match(lines[i]):
+            i += 1
+            continue
+        start = i
+        while i < len(lines) and (_TABLE_ROW.match(lines[i]) or _TABLE_SEP.match(lines[i])):
+            i += 1
+        # Walk back for the caption, stopping at the previous table so a row of
+        # a DIFFERENT table cannot vouch for this one.
+        caption: list[str] = []
+        for back in range(start - 1, max(-1, start - 1 - _CAPTION_LOOKBACK), -1):
+            if _TABLE_ROW.match(lines[back]) or _TABLE_SEP.match(lines[back]):
+                break
+            caption.append(lines[back])
+        # The header row itself may carry the denominator; the separator cannot.
+        window = [*caption, lines[start]]
+        if any(_TABLE_DENOMINATOR.search(line) for line in window):
+            contextualised.update(range(start + 1, i + 1))
+    return contextualised
+
+
 def scan(path: Path) -> dict:
     text = path.read_text(errors="ignore")
     status = status_of(text)
@@ -161,8 +228,11 @@ def scan(path: Path) -> dict:
     qualified = "counterfactual" in text[:1500].lower()
     bare: list[tuple[int, str]] = []
     forbidden: list[tuple[int, str]] = []
-    for i, line in enumerate(text.splitlines(), start=1):
-        if BARE_ZERO.search(line) and not HAS_BOUND.search(line):
+    lines = text.splitlines()
+    in_bounded_table = _table_contexts(lines)
+    for i, line in enumerate(lines, start=1):
+        if (BARE_ZERO.search(line) and not HAS_BOUND.search(line)
+                and i not in in_bounded_table):
             bare.append((i, line.strip()[:90]))
         low = line.lower()
         if qualified or "forbidden" in low:
