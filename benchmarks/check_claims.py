@@ -234,7 +234,13 @@ def _table_contexts(lines: list[str]) -> set[int]:
             caption.append(lines[back])
         # The header row itself may carry the denominator; the separator cannot.
         window = [*caption, lines[start]]
-        if any(_TABLE_DENOMINATOR.search(line) for line in window):
+        # A header cell that is exactly `n` declares a PER-ROW denominator, so
+        # every rate in that row is bounded by a count the reader can see in the
+        # row itself. Matched as a whole cell rather than as a substring: `n` is
+        # one letter and appears inside most words.
+        header_cells = [c.strip().lower() for c in lines[start].strip().strip("|").split("|")]
+        per_row_n = "n" in header_cells
+        if per_row_n or any(_TABLE_DENOMINATOR.search(line) for line in window):
             contextualised.update(range(start + 1, i + 1))
     return contextualised
 
