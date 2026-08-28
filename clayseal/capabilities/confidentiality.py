@@ -77,7 +77,6 @@ import threading
 import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Any
 
 from clayseal.capabilities.parameter_provenance import ParameterProvenance
@@ -485,21 +484,25 @@ _CONFUSABLES = str.maketrans({
 })
 
 
-#: How many folded spellings to keep. Cached for the reason `_normalize_scope_path`
-#: in `task_scope.py` is: this sits in the enforcement hot path, and the inputs
-#: repeat exactly. `_reconstructed_from_stream` folds EVERY sensitive token the
-#: session has ever seen on EVERY decision, though the tokens do not change
-#: between decisions — profiled at 327,180 calls to the generator inside
-#: `_compact_fold` over 30 checks against 50 tokens.
+#: How many folded spellings one SESSION keeps.
 #:
-#: Both functions are pure transforms of one string, so the cache costs nothing in
-#: correctness. Bounded because the keys are attacker-influenced: a payload can
-#: introduce a new spelling on every call, and an unbounded cache on that input is
-#: a memory leak reachable from a tool argument.
+#: `_reconstructed_from_stream` folds every sensitive token the session has seen
+#: on every decision, though the tokens do not change between decisions —
+#: profiled at 327,180 calls to the generator inside `_compact_fold` over 30
+#: checks against 50 tokens. Memoising that is worth 5.6x at 400 tokens.
+#:
+#: It is memoised PER TRACKER, not with an `lru_cache` on the function, and the
+#: difference is not style. The cache keys here ARE the sensitive values. A
+#: process-global cache keeps a secret read by one session resident after that
+#: session is gone and shares it with every later one, which is a worse property
+#: than the cost it saves. Verified before this was changed: the secret was still
+#: cached after the tracker was deleted and garbage collected.
+#:
+#: Bounded because the keys are attacker-influenced: a payload can introduce a
+#: new spelling on every call.
 _FOLD_CACHE = 4096
 
 
-@lru_cache(maxsize=_FOLD_CACHE)
 def _fold(text: str) -> str:
     """One canonical spelling, so a cosmetic change is not a new string.
 
@@ -510,7 +513,6 @@ def _fold(text: str) -> str:
     return unicodedata.normalize("NFKC", text).translate(_CONFUSABLES).casefold()
 
 
-@lru_cache(maxsize=_FOLD_CACHE)
 def _compact_fold(text: str) -> str:
     return "".join(ch for ch in _fold(text) if ch.isalnum())
 
@@ -866,6 +868,10 @@ class FlowTracker:
     provenance: ParameterProvenance = field(default_factory=ParameterProvenance)
     # token -> the sensitive resources that emitted it.
     _sensitive_tokens: dict[str, set[str]] = field(default_factory=dict)
+    # token -> its compact fold, memoised for the life of THIS session only.
+    # See `_FOLD_CACHE`: these keys are the sensitive values, so the memo dies
+    # with the tracker rather than living in a process-global cache.
+    _fold_memo: dict[str, str] = field(default_factory=dict, repr=False)
     # sink -> the alphanumeric content ALLOWED out to it this session.
     #
     # Without this, splitting a secret across two writes defeated the whole
@@ -918,6 +924,23 @@ class FlowTracker:
     # ----------------------------------------------------------------- #
     # Observing
     # ----------------------------------------------------------------- #
+    def _folded(self, token: str) -> str:
+        """`_compact_fold(token)`, memoised for this session.
+
+        Bounded, because a payload can introduce a new spelling on every call and
+        an unbounded memo on attacker-influenced input is a leak reachable from a
+        tool argument. Cleared oldest-first is not worth the bookkeeping at this
+        size: past the bound the memo simply stops growing and the folds are
+        recomputed, which is the pre-memo behaviour.
+        """
+        hit = self._fold_memo.get(token)
+        if hit is not None:
+            return hit
+        value = _compact_fold(token)
+        if len(self._fold_memo) < _FOLD_CACHE:
+            self._fold_memo[token] = value
+        return value
+
     def observe(self, tool: str, resource: str, payload: Any, *,
                 policy: SensitivityPolicy, path: str | None = None,
                 structured_fields: Mapping[str, Any] | None = None) -> None:
@@ -1096,7 +1119,7 @@ class FlowTracker:
             tokens = list(self._sensitive_tokens.items())
         found: set[str] = set()
         for token, origins in tokens:
-            target = _compact_fold(token)
+            target = self._folded(token)
             if len(target) < _MIN_RECONSTRUCTED:
                 continue
             if _assemblable(target, _recent(blocks, target)):
@@ -1142,7 +1165,7 @@ class FlowTracker:
             tokens = list(self._sensitive_tokens.items())
         found: set[str] = set()
         for token, origins in tokens:
-            compact_token = _compact_fold(token)
+            compact_token = self._folded(token)
             if len(compact_token) < _MIN_RECONSTRUCTED:
                 continue
             target = min(len(compact_token), _MAX_NEEDLE)
@@ -1205,7 +1228,7 @@ class FlowTracker:
             for token, origins in self._sensitive_tokens.items():
                 if len(token) < _MIN_RECONSTRUCTED:
                     continue
-                compact_token = _compact_fold(token)
+                compact_token = self._folded(token)
                 folded = _fold(token)
                 if not compact_token:
                     continue
