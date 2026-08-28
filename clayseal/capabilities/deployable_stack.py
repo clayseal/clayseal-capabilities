@@ -186,6 +186,8 @@ class DeployableStack:
         detector=None,
         entailment_judge: Any | None = ...,
         scope_is_advisory: bool = False,
+        grant_is_observed: bool = False,
+        tool_catalog: frozenset[str] | None = None,
         value_budget=None,
         call_budget=None,
         graduated: bool = False,
@@ -285,7 +287,11 @@ class DeployableStack:
             from clayseal.capabilities.replan import PlanExtender, catalog_shape_judge
             from clayseal.capabilities.replan import verb_class as _verb_class
 
-            catalog = sorted(allowed_tools or ())
+            # A grant derived from observed traffic enumerates only what the
+            # observation happened to contain, so the judge must be shown the
+            # deployment's real catalogue or it will refuse every tool for not
+            # being in a list that is itself the problem.
+            catalog = sorted(tool_catalog or allowed_tools or ())
             if not catalog and capabilities:
                 catalog = sorted({
                     str(c.get("resource") or c.get("tool") or "")
@@ -324,7 +330,9 @@ class DeployableStack:
             "detector": detector,
             "detector_advisory": True,
             "entailment_judge": entailment_judge,
-            "scope_is_advisory": scope_is_advisory,
+            "scope_is_advisory": scope_is_advisory or grant_is_observed,
+            "tools_are_advisory": grant_is_observed,
+            "tool_catalog": tool_catalog,
             "value_budget": value_budget,
             "call_budget": call_budget,
             "graduated": graduated,
