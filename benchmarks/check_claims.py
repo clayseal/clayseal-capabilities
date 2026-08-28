@@ -133,9 +133,17 @@ _COST = re.compile(
     # matched neither: a section headed "What the extraction costs" read as
     # having no cost column at all. A linter that misses the plural of its own
     # keyword sends people to reword around it instead of answering it.
-    r"\b(false[- ]?(?:block|alarm|positive)|benign|interrupt(?:ed|ion|s)?|"
-    r"utility|completion|completed|friction|over[- ]?block|costs?|costly|"
-    r"step[- ]?up|deny[- ]?all|precision|false positive)\b", re.IGNORECASE)
+    #
+    # The same defect survived one word further along. `false[- ]?alarm\b` does
+    # not match "false alarms", because the trailing boundary falls before the
+    # `s`, so `burst.md` was reported as having no cost column while printing one
+    # headed `clean false alarms`. `FB` is the other miss: `cross_stack.md` and
+    # `agentharm_content.md` head their cost column with the abbreviation, and a
+    # rule that only knows the spelled-out form sends an author to reword a table
+    # rather than to answer the question.
+    r"\b(false[- ]?(?:block|alarm|positive)s?|\bFB\b|benign|interrupt(?:ed|ion|s)?|"
+    r"utility|completion|completed|friction|over[- ]?block(?:s|ed)?|costs?|costly|"
+    r"step[- ]?up|deny[- ]?all|precision)\b", re.IGNORECASE)
 
 
 def reports_containment_without_cost(text: str) -> bool:
