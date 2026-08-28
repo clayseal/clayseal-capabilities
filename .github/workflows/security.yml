@@ -2,8 +2,9 @@ name: security
 
 # Supply-chain scanning, additive to ci.yml (lint/test/layering).
 on:
+  # Every branch, for the reason ci.yml gives: a contributor's first push should
+  # say whether the supply-chain scan is clean, not only a maintainer's merge.
   push:
-    branches: [main, master]
   pull_request:
   schedule:
     - cron: "0 6 * * 1" # weekly: catch newly-disclosed CVEs in already-pinned deps
