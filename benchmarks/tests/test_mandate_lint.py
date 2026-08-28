@@ -152,7 +152,7 @@ def test_require_clean_raises_on_an_error_and_names_the_tool():
         catalog=["payments.wire"],
         value_tracked={"payments.transfer": ("amount", "p")},
         ceilings={"p": 100}, principal_scoped=True)
-    with pytest.raises(ValueError, match="payments.wire"):
+    with pytest.raises(ValueError, match=r"payments\.wire"):
         require_clean(findings)
 
 

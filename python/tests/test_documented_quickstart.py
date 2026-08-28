@@ -80,7 +80,7 @@ def test_documented_block_executes(label: str, source: str):
         exec(code, namespace)  # noqa: S102 - that is the point
     except NameError as exc:
         pytest.skip(f"{label} is an illustrative fragment ({exc})")
-    except Exception as exc:  # noqa: BLE001 - report which block and why
+    except Exception as exc:
         pytest.fail(f"{label} does not run: {type(exc).__name__}: {exc}\n\n{source}")
 
 

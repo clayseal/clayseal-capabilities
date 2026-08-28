@@ -45,7 +45,7 @@ def test_the_check_is_advisory_by_default():
 
 
 def test_strict_mandate_refuses_to_construct():
-    with pytest.raises(ValueError, match="payments.wire"):
+    with pytest.raises(ValueError, match=r"payments\.wire"):
         _stack({"payments.transfer", "payments.wire"}, strict_mandate=True)
 
 

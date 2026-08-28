@@ -141,7 +141,7 @@ def run() -> dict:
                 # cannot exist, so there is nothing for the verifier to mishandle.
                 checks += 1
                 continue
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 findings["NEVER_RAISES"].append(
                     {"where": f"token.{field}", "value": repr(value)[:40],
                      "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -179,7 +179,7 @@ def run() -> dict:
             try:
                 ok, _ = _verify(signed, mutated_ctx, trusted)
                 checks += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 findings["NEVER_RAISES"].append(
                     {"where": f"ctx.{name}", "value": repr(value)[:40],
                      "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -257,7 +257,7 @@ def run() -> dict:
         try:
             token, reason = parse_signed_commit_token(raw)
             checks += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             findings["NEVER_RAISES"].append(
                 {"where": "parse_signed_commit_token", "value": "hostile wire JSON",
                  "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -269,7 +269,7 @@ def run() -> dict:
         try:
             token, reason = parse_signed_commit_token(junk)
             checks += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             findings["NEVER_RAISES"].append(
                 {"where": "parse_signed_commit_token", "value": repr(junk),
                  "error": f"{type(exc).__name__}: {str(exc)[:70]}"})

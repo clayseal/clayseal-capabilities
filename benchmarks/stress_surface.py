@@ -104,7 +104,7 @@ def check(resource: str, path: str | None, surface: frozenset[str]
         # `names_a_readable_target` and `false_positives.md`, where refusing on
         # exactly that took 46.5% of sleight's benign sessions with it.
         named = names_a_readable_target(action)
-    except Exception as exc:  # noqa: BLE001 - a raise IS the failure here
+    except Exception as exc:
         return [f"TOTAL({type(exc).__name__}: {exc})"]
 
     # NO-SILENT-PASS: naming a target and passing requires a real match.
@@ -162,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--show", type=int, default=8)
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
 
-    rng = random.Random(args.seed)  # noqa: S311 - reproducible, not secret
+    rng = random.Random(args.seed)
     failures: Counter[str] = Counter()
     examples: dict[str, list[str]] = {}
     fs_mismatch: list[str] = []

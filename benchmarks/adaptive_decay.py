@@ -187,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
             done += 1
             try:
                 grid.cells.extend(future.result())
-            except Exception as exc:  # noqa: BLE001 - one cell must not kill the grid
+            except Exception as exc:
                 print(f"  cell failed: {dataset} r={round_count} s={seed}: "
                       f"{type(exc).__name__}: {exc}", file=sys.stderr)
             print(f"  {done}/{len(jobs)} done "

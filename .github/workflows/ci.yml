@@ -117,11 +117,19 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install ruff
-      # Scoped to the shipped package. The benchmark tree carries a larger,
-      # separately-tracked backlog and is not on the deployment path; gating the
-      # library on a clean lint is what keeps that backlog from growing into it.
-      - name: Lint the shipped package
-        run: ruff check clayseal
+      # The whole repository, not just the shipped package.
+      #
+      # This used to be `ruff check clayseal`, on the reasoning that the
+      # benchmark tree is not on the deployment path. That was defensible for
+      # `benchmarks/`, and it also left `python/tests/` ungated, which is the
+      # test suite for the library itself. `ruff check .` is the first command a
+      # contributor runs, and a repository where it fails teaches them that lint
+      # output is noise.
+      #
+      # The exemptions live in `[tool.ruff.lint.per-file-ignores]` with a reason
+      # written against each one. The correctness families are exempted nowhere.
+      - name: Lint everything
+        run: ruff check .
 
   # Performance as a PROPERTY, not a stopwatch.
   #

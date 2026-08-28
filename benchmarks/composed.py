@@ -222,7 +222,7 @@ def measure(tasks: list[BenchmarkTask], *, alphas=DEFAULT_ALPHAS,
             train_frac: float = 0.6, seed: int = 7) -> tuple[list[ArmResult], dict]:
     order = list(tasks)
     # Seeded shuffle for a reproducible split, not for anything secret.
-    random.Random(seed).shuffle(order)  # noqa: S311
+    random.Random(seed).shuffle(order)
     split = max(1, int(len(order) * train_frac))
     train_tasks, test_tasks = order[:split], order[split:]
 

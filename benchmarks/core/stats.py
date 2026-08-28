@@ -120,7 +120,7 @@ def cluster_bootstrap_ci(
         # event-level interval rather than reporting a zero-width fiction.
         return proportion_ci(total_s, total_n, level)
 
-    rng = random.Random(seed)  # noqa: S311 - a bootstrap resampler, not a keystream
+    rng = random.Random(seed)
     k = len(clusters)
     rates = []
     for _ in range(resamples):
@@ -249,7 +249,7 @@ def paired_difference_ci(
     if not pairs:
         return Interval(0.0, -1.0, 1.0, 0, level, "paired-bootstrap")
     point = (sum(a for a, _ in pairs) - sum(b for _, b in pairs)) / len(pairs)
-    rng = random.Random(seed)  # noqa: S311 - a bootstrap resampler, not a keystream
+    rng = random.Random(seed)
     k = len(pairs)
     diffs = []
     for _ in range(resamples):

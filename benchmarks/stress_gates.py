@@ -258,7 +258,7 @@ def run_gate(name: str, verbose: bool = False) -> dict:
         except declared:  # a denial the gate documents; not a defect
             ok += 1
             continue
-        except Exception as exc:  # noqa: BLE001 - cataloguing is the point
+        except Exception as exc:
             raises.append({"value": repr(value)[:60],
                            "error": f"{type(exc).__name__}: {str(exc)[:80]}",
                            "trace": traceback.format_exc(limit=2)[-200:]

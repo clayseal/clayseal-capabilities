@@ -65,7 +65,7 @@ def fire_rate(clean, dirty, *, share: float, trials: int, seed0: int = 0) -> int
     fired = 0
     for seed in range(seed0, seed0 + trials):
         index = list(range(len(clean)))
-        random.Random(seed).shuffle(index)  # noqa: S311 - reproducible split
+        random.Random(seed).shuffle(index)
         half = len(index) // 2
         baseline = profile_from([clean[i] for i in index[:half]],
                                 policy_digest="p")
@@ -91,7 +91,7 @@ def ramp(clean, dirty, *, step: float, periods: int, seed: int = 0):
     period, the per-period verdicts).
     """
     index = list(range(len(clean)))
-    random.Random(seed).shuffle(index)  # noqa: S311 - reproducible
+    random.Random(seed).shuffle(index)
 
     def at(period: int):
         contaminated = set(index[:int(len(index) * step * period)])

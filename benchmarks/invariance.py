@@ -94,7 +94,7 @@ def _land(budget, calls) -> Decimal:
             res.commit()
             try:
                 landed += Decimal(str(args.get("amount", "0")))
-            except Exception:                              # noqa: BLE001
+            except Exception:
                 pass
     return landed
 

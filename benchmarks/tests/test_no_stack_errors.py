@@ -19,7 +19,7 @@ def test_no_decision_in_the_corpus_ends_in_an_exception(corpus):
 
     try:
         tasks = get_loader(corpus).load(limit=4000)
-    except Exception as exc:  # noqa: BLE001 - corpus not fetched in this checkout
+    except Exception as exc:
         pytest.skip(f"{corpus} unavailable: {str(exc)[:60]}")
     if not tasks:
         pytest.skip(f"{corpus} loaded no tasks")

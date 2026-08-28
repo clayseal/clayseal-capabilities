@@ -83,7 +83,7 @@ def test_translate_matches_the_reference_on_random_input():
     )
     # Seeded on purpose: a differential over two implementations has to be
     # reproducible when it fails, and nothing here is cryptographic.
-    rng = random.Random(20260827)  # noqa: S311
+    rng = random.Random(20260827)
     for _ in range(3000):
         text = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 300)))
         assert _current(text) == _reference(text), repr(text[:80])

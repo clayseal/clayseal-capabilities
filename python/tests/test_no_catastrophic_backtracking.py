@@ -84,7 +84,7 @@ def test_a_whole_authorization_is_bounded_on_an_adversarial_argument():
         start = time.process_time()
         try:
             tools["issue_refund"](invoice=payload, amount=1.0, note=payload)
-        except Exception:  # noqa: BLE001 - a refusal is a fine outcome here
+        except Exception:
             pass
         worst = max(worst, (time.process_time() - start) * 1000)
     assert worst < BUDGET_MS, f"{worst:.0f} ms"
@@ -117,7 +117,7 @@ def test_no_pattern_in_the_library_is_super_linear():
         for mod in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."):
             try:
                 loaded = importlib.import_module(mod.name)
-            except Exception:  # noqa: BLE001 - optional extras may be absent
+            except Exception:
                 continue
             for attr, value in vars(loaded).items():
                 if isinstance(value, re.Pattern):
@@ -166,7 +166,7 @@ def _tracker(token_count: int):
 
     from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 
-    rng = random.Random(20260827)  # noqa: S311 - a fixture, not a credential
+    rng = random.Random(20260827)
     policy = SensitivityPolicy(sensitive=("secrets/**",), argument_sinks=("net:**",))
     tracker = FlowTracker()
     for _ in range(token_count):
