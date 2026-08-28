@@ -9,7 +9,7 @@ python -m benchmarks.scoreboard
 Derived against this commit. The previous revision was stamped `unverified` and
 had drifted materially low: it carried `agentharm` at 21.6% and `sleight` at
 4.7%, which are **ladder-ablation** figures sitting where the product belongs.
-The shippable stack scores 55.3% and 30.2% on the same corpora. Quoting a ladder
+The shippable stack scores 55.3% and 31.0% on the same corpora. Quoting a ladder
 row as the product claim is the error that stale table encoded, and it is why
 the ablation numbers now live behind the command rather than in this table.
 
@@ -38,7 +38,7 @@ the other half, and it is reported per corpus by the command.
 | mind2web_sc | 98.0% | H98/S0 | 100 / 100 | web agent, safety-critical steps |
 | b3 | 66.7% | H67/S0 | 9 / 8 | backbone breaking benchmark |
 | **agentharm** | **55.3%** | H31/S24 | 696 / 729 | harmful *intent*, content-defined |
-| **sleight** | **30.2%** | H7/S23 | 129 / 311 | covert sabotage, content-defined |
+| **sleight** | **31.0%** | H8/S23 | 129 / 311 | covert sabotage, content-defined |
 | asb | saturated | — | 2040 / 102 | every attack uses an ungranted tool |
 | injecagent | saturated | — | 1598 / 1054 | ditto, and the corpus grants the attacker tools |
 
@@ -50,8 +50,8 @@ number that a trivial baseline also earns is not evidence about this system.
 The spread is not noise, and it is the same dividing line every other tier in
 this repository finds. Where harm is defined by a **target** the gateway can
 bind to, a path, a destination, a tool, containment is 98 to 100%. Where harm is
-defined by the **content** of an otherwise authorized action, it falls to 30 to
-55%, and the ladder floor beneath it to 5 to 27%.
+defined by the **content** of an otherwise authorized action, it falls to 31 to
+55%, and the ladder floor beneath it to 6 to 27%.
 
 [opeval.md](opeval.md) shows the same split at a fixed operating point, which is
 the form that survives review: at a 1% benign-block rate, detection is 100% on
