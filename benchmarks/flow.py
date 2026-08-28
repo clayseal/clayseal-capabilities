@@ -235,20 +235,62 @@ class SplitTally:
     sessions: int = 0
     fragments_allowed: int = 0
     fragments_total: int = 0
+    #: trial index -> [whole values out, sessions], for arms whose outcome is
+    #: NOT a function of the seed.
+    #:
+    #: The concurrent arms race writers through a thread pool, and thread
+    #: interleaving is not seedable. Pooling their trials into one count
+    #: publishes a draw from a distribution as though it were a measurement:
+    #: two runs of this file on the same machine and the same commit give
+    #: 170/200 and 155/200 for the same cell. Anyone comparing a before and an
+    #: after on a single run of each reads a 15-point swing as a result, which
+    #: is a mistake this benchmark was previously able to cause and did.
+    per_trial: dict[int, list[int]] = field(default_factory=dict)
 
-    def add(self, allowed_flags: list[bool]) -> None:
+    def add(self, allowed_flags: list[bool], *, trial: int | None = None) -> None:
         self.sessions += 1
         self.whole_out += all(allowed_flags)
         self.fragments_allowed += sum(allowed_flags)
         self.fragments_total += len(allowed_flags)
+        if trial is not None:
+            slot = self.per_trial.setdefault(trial, [0, 0])
+            slot[0] += all(allowed_flags)
+            slot[1] += 1
+
+    @property
+    def is_stochastic(self) -> bool:
+        """True when this arm's outcome varies for reasons the seed does not fix."""
+        return len(self.per_trial) > 1
+
+    @property
+    def trial_rates(self) -> list[float]:
+        """Whole-value-out rate per trial, ascending. Empty for a seeded arm."""
+        return sorted(out / n for out, n in self.per_trial.values() if n)
+
+    def spread_note(self) -> str:
+        """`min-max of n per trial` for a stochastic arm, else the empty string."""
+        rates = self.trial_rates
+        if len(rates) < 2:
+            return ""
+        counts = sorted(out for out, _ in self.per_trial.values())
+        per = next(iter(self.per_trial.values()))[1]
+        return (f"  [NOT SEEDED: {counts[0]}-{counts[-1]} of {per} per trial "
+                f"across {len(counts)} trials; compare distributions, not runs]")
 
     def as_dict(self) -> dict:
-        return {
+        out = {
             "whole_value_out": self.whole_out,
             "sessions": self.sessions,
             "fragments_allowed": self.fragments_allowed,
             "fragments_total": self.fragments_total,
         }
+        if self.is_stochastic:
+            # Named so a reader of the JSON cannot mistake the pooled count for
+            # a repeatable one.
+            out["stochastic"] = True
+            out["per_trial_whole_out"] = [c for c, _ in self.per_trial.values()]
+            out["per_trial_sessions"] = next(iter(self.per_trial.values()))[1]
+        return out
 
 
 @dataclass
@@ -604,9 +646,12 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0,
             for k in _WIDTHS:
                 for arm in ("concurrent chunked", "concurrent fan-out"):
                     evs = split_events[(arm, k)]
-                    for _ in range(concurrent_trials):
+                    for trial in range(concurrent_trials):
+                        # Tagged by trial so the spread can be reported. See
+                        # `SplitTally.per_trial`: pooling these hides that the
+                        # arm is not a function of the seed.
                         result.split(arm, k).add(
-                            _race(_tracker(), evs, policy))
+                            _race(_tracker(), evs, policy), trial=trial)
 
     return result
 
@@ -834,7 +879,8 @@ def _print_split(result: FlowResult, arm: str, title: str) -> None:
         print(f"    {k:>3} fragments        whole value out in "
               f"{tally.whole_out}/{tally.sessions} runs, "
               f"{tally.fragments_allowed}/{tally.fragments_total} fragments allowed"
-              f"   [{result.ladder.line(f'{arm} k={k}')}]")
+              f"   [{result.ladder.line(f'{arm} k={k}')}]"
+              f"{tally.spread_note()}")
 
 
 def main(argv: list[str] | None = None) -> int:
