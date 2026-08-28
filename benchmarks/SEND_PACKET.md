@@ -7,7 +7,7 @@ contract from `docs/benchmark_program.md`.
 ## Reproduce (deterministic)
 
 ```bash
-git -C /path/to/agentauth-capabilities rev-parse HEAD   # record SHA
+git -C /path/to/clayseal rev-parse HEAD   # record SHA
 benchmarks/fetch_corpora.sh
 python -m benchmarks.verify_corpus
 benchmarks/run_all.sh                 # or --quick for smoke
@@ -55,7 +55,7 @@ switches change it materially and both are now explicit rather than implied.
 
 | switch | measured setting | what it means |
 | --- | --- | --- |
-| `session_rules` | **on** | Five corpus-derived pattern rules (`agentauth/capabilities/session_rules.py`) matching shell command text — `ln -s` then `zip`, `awk $N` vs an observed CSV header, absolute-line `sed` after an expanding edit — one of which carries a corpus's own project name as a literal. They were inlined in the broker and unswitchable; they are now named and default OFF on the raw `SessionBroker` and ON in `DeployableStack.from_goal`, which is the profile every published number came from. STEP_UP only, never DENY. **Any containment claim for a workload unlike these corpora should be re-measured with `session_rules=False`.** |
+| `session_rules` | **on** | Five corpus-derived pattern rules (`clayseal/capabilities/session_rules.py`) matching shell command text — `ln -s` then `zip`, `awk $N` vs an observed CSV header, absolute-line `sed` after an expanding edit — one of which carries a corpus's own project name as a literal. They were inlined in the broker and unswitchable; they are now named and default OFF on the raw `SessionBroker` and ON in `DeployableStack.from_goal`, which is the profile every published number came from. STEP_UP only, never DENY. **Any containment claim for a workload unlike these corpora should be re-measured with `session_rules=False`.** |
 | `detector` | **off** | The trajectory detector does not ship enabled. On SLEIGHT it reaches 100% containment by refusing 13 of 18 benign trajectories. |
 
 ## Forbidden claims (auto-fail review)

@@ -14,9 +14,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
-from agentauth.capabilities.replan import (
+from clayseal.capabilities.replan import (
     ActionShape,
     PlanExtender,
     deterministic_judge,
@@ -181,9 +179,9 @@ def test_extensions_are_observable():
 # Broker integration: the extender must sit in front of the deny, not replace it
 # --------------------------------------------------------------------------- #
 def _broker(**kw):
-    from agentauth.capabilities.broker import SessionBroker
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import SessionBroker
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     return SessionBroker(
         goal=GoalSpec(query_id="q", summary="summarise the inbox"),
@@ -192,7 +190,7 @@ def _broker(**kw):
 
 
 def _action(tool="send_email", verb="send"):
-    from agentauth.capabilities.monitor import Action
+    from clayseal.capabilities.monitor import Action
 
     return Action(step=0, tool=tool, resource=f"mcp:tool:{tool}", verb=verb,
                   args={"to": "someone@example.com"})
@@ -200,7 +198,7 @@ def _action(tool="send_email", verb="send"):
 
 def test_broker_without_an_extender_is_unchanged():
     """Default behaviour must not move: this is opt-in."""
-    from agentauth.capabilities.broker import Outcome
+    from clayseal.capabilities.broker import Outcome
 
     assert _broker().authorize(_action()).outcome is not Outcome.ALLOW
 
@@ -213,8 +211,8 @@ def test_a_floor_denial_never_reaches_the_extender():
     refused whatever the extender would have said. Verified by giving the
     extender an unconditional yes and checking it is never even asked.
     """
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.replan import ReplanVerdict
 
     consulted = []
 
@@ -233,8 +231,8 @@ def test_a_floor_denial_never_reaches_the_extender():
 
 
 def test_a_refused_extension_leaves_the_denial_intact():
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.replan import ReplanVerdict
 
     class Refuse:
         def consider(self, tool, verb):
@@ -271,8 +269,8 @@ def test_an_advisory_scope_may_be_widened_but_a_mandate_may_not():
     above caught the ambiguity, so it is now an explicit flag that defaults to
     the safe reading.
     """
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.replan import ReplanVerdict
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -289,9 +287,9 @@ def test_an_advisory_scope_may_be_widened_but_a_mandate_may_not():
 
 def test_widening_the_scope_does_not_disable_the_other_floor_checks():
     """Extending which TOOL may be used must not extend where it may point."""
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.monitor import Action
-    from agentauth.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -320,13 +318,13 @@ def test_an_extended_action_still_spends_its_budget():
     Nothing above caught it because no test built a broker with both a budget
     and an extender.
     """
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
-    from agentauth.capabilities.monitor import Action
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+    from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -337,7 +335,7 @@ def test_an_extended_action_still_spends_its_budget():
             goal=GoalSpec(query_id="q", summary="pay the invoices"),
             scope=TaskScope(allowed_resources=["mcp:tool:read_email"], allowed_actions=[]),
             value_budget=SessionValueBudget(config=ValueBudgetConfig(
-                ceilings={"usd": Decimal("1000")},
+                ceilings={"usd": Decimal(1000)},
                 tracked={"transfer_money": ("amount", "usd")})),
             call_budget=SessionCallBudget(config=CallBudgetConfig(
                 ceilings={"transfers": 10},
@@ -363,11 +361,11 @@ def test_an_extended_action_stays_on_the_trajectory():
     """The other half: a rolled-back action is invisible to the behavioural
     layer, so an attacker whose actions are all extension-approved leaves no
     trace for the detector or for any later feasibility check."""
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.monitor import Action
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import SessionBroker
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -393,11 +391,11 @@ def test_replanning_cannot_rescue_an_infeasible_goal():
     shape plausibility restores a goal condition that can no longer be met, so
     the extender is consulted for the first and not the second.
     """
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.monitor import Action
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     consulted = []
 
@@ -438,11 +436,10 @@ def test_scope_extension_does_not_mutate_the_callers_scope():
     TaskScope object, so authority granted by one session's replanning outlived
     the broker and leaked into every other session sharing that instance.
     """
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.monitor import Action
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -467,11 +464,11 @@ def test_one_cleared_shape_does_not_admit_unlimited_resources():
     Without an independent cap, a single "this goal may write" verdict let every
     write target in the catalog through.
     """
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.monitor import Action
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
         def consider(self, tool, verb):
@@ -504,12 +501,12 @@ def test_a_consequential_off_plan_action_needs_a_bound_destination_to_be_replann
     goal implies AND a destination the floor accepts, and dropping either leaves
     the shape check solely responsible for containment, which it cannot carry.
     """
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-    from agentauth.capabilities.monitor import Action
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     consulted = []
 
@@ -560,11 +557,11 @@ def test_a_consequential_off_plan_action_needs_a_bound_destination_to_be_replann
 def test_replanning_without_any_egress_policy_cannot_pass_a_consequential_action():
     """With no binding floor the intent envelope is the only thing between an
     injected send and the attacker's address."""
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.monitor import Action
-    from agentauth.capabilities.replan import ReplanVerdict
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.replan import ReplanVerdict
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     class AlwaysYes:
         def consider(self, tool, verb):

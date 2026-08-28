@@ -17,7 +17,7 @@ AgentDojo's Python API has shifted across releases, so suite discovery and
 ground-truth extraction each try a few known call conventions and fail loudly
 with an actionable message. Validated end-to-end on the Azure VM run (see
 ``benchmarks/azure/run_benchmark.sh``); install with
-``pip install 'agentauth-capabilities[benchmarks]'``.
+``pip install 'clayseal[benchmarks]'``.
 """
 from __future__ import annotations
 
@@ -83,7 +83,7 @@ def _load_suites() -> dict[str, Any]:
     except ImportError as exc:
         raise RuntimeError(
             "agentdojo is not installed. Install the benchmark extra: "
-            "pip install 'agentauth-capabilities[benchmarks]'."
+            "pip install 'clayseal[benchmarks]'."
         ) from exc
     # API confirmed against agentdojo 0.1.35 (benchmark versions up to v1.2.2):
     #   get_suites(version) -> dict[str, TaskSuite]
@@ -118,7 +118,7 @@ def _ground_truth(task: Any, environment: Any) -> list[Any]:
     try:
         result = gt(environment)
         return list(result) if result else []
-    except Exception:  # noqa: BLE001 - task can't produce a trace; skip it
+    except Exception:
         return []
 
 
@@ -132,7 +132,7 @@ def _value_annotation(suite_name: str,
         return {}, []
     money = [e for e in benign if e.tool_name in _MONEY_TOOLS]
     tools = {e.tool_name for e in money} or {"send_money"}
-    value_tracked = {t: ("amount", "usd_payout") for t in tools}
+    value_tracked = dict.fromkeys(tools, ("amount", "usd_payout"))
     benign_sum = sum(
         float(e.args.get("amount") or 0.0)
         for e in money if isinstance(e.args, dict)
@@ -240,5 +240,5 @@ def _make_environment(suite: Any) -> Any:
     """
     try:
         return suite.load_and_inject_default_environment({})
-    except Exception:  # noqa: BLE001 - extraction tolerates a missing env
+    except Exception:
         return None

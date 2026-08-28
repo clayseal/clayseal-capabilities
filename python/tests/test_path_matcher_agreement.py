@@ -16,9 +16,9 @@ import random
 
 import pytest
 
-from agentauth.core import path_matching as canonical
-from agentauth.core import task_scope as live
-from agentauth.core.task_scope import TaskScope, task_scope_allows_path
+from clayseal.core import path_matching as canonical
+from clayseal.core import task_scope as live
+from clayseal.core.task_scope import TaskScope, task_scope_allows_path
 
 
 # --------------------------------------------------------------------------- #
@@ -67,7 +67,7 @@ def test_a_deny_pattern_covers_the_directory_it_names():
     exclude a directory did not exclude the directory itself, and most
     infrastructure tooling takes a directory.
     """
-    from agentauth.capabilities.policy import compile_policy
+    from clayseal.capabilities.policy import compile_policy
 
     policy = compile_policy({
         "version": 1, "goal": {"id": "q", "summary": "s"},
@@ -81,7 +81,7 @@ def test_a_deny_pattern_covers_the_directory_it_names():
 def test_closing_deny_patterns_does_not_touch_the_allow_list():
     """Widening an allow-list over a pattern-syntax detail is the opposite of
     what an author means."""
-    from agentauth.capabilities.policy import compile_policy
+    from clayseal.capabilities.policy import compile_policy
 
     policy = compile_policy({
         "version": 1, "goal": {"id": "q", "summary": "s"},
@@ -204,7 +204,7 @@ def test_a_directly_constructed_scope_closes_its_own_deny_list():
 
 
 def test_closing_a_deny_list_twice_is_the_same_deny_list():
-    from agentauth.core.task_scope import close_deny_patterns
+    from clayseal.core.task_scope import close_deny_patterns
 
     once = close_deny_patterns(["a/**", "b/*"])
     assert close_deny_patterns(once) == once
@@ -226,7 +226,7 @@ def test_the_floor_holds_under_randomized_stress():
 
     scope = TaskScope(allowed_paths=[f"{p}/**" for p in ALLOWED_PREFIXES],
                       denied_paths=[f"{p}/**" for p in DENIED_PREFIXES])
-    rng = random.Random(5)  # noqa: S311 - reproducible sweep, not a secret
+    rng = random.Random(5)
     unsafe = []
     for _ in range(30_000):
         path = generate(rng)

@@ -1,7 +1,7 @@
 """iVisor config rendering and fail-closed allowlist validation."""
 import pytest
 
-from agentauth.capabilities.sandbox.config import (
+from clayseal.capabilities.sandbox.config import (
     KNOWN_KEYS,
     AllowEntryError,
     IVisorConfig,

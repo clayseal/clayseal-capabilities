@@ -22,8 +22,8 @@ import json
 import threading
 import time
 
-from agentauth.capabilities.mcp_proxy import MAX_BATCH, McpProxy
-from agentauth.capabilities.policy import compile_policy
+from clayseal.capabilities.mcp_proxy import MAX_BATCH, McpProxy
+from clayseal.capabilities.policy import compile_policy
 
 
 def _proxy(doc_over=None, **kw):

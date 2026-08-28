@@ -29,10 +29,10 @@ import math
 import sys
 import time
 
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.generation import compile_envelope
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.generation import compile_envelope
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 DEFAULT_LENGTHS = (100, 250, 500, 1000, 2000)
 

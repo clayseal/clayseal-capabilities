@@ -69,7 +69,7 @@ class TaskSurface:
     path_patterns: list[str] = field(default_factory=list)
 
     @classmethod
-    def of(cls, task: BenchmarkTask) -> "TaskSurface":
+    def of(cls, task: BenchmarkTask) -> TaskSurface:
         surface = cls()
         # The granted mandate, which is authorization the user actually issued.
         surface.tools |= set(task.allowed_tools)
@@ -80,7 +80,7 @@ class TaskSurface:
         # RedCode's entire finding: its attacks are the textbook surface-leaving
         # case, granted tool aimed at an ungranted target.
         try:
-            from agentauth.core.task_scope import compile_task_scope
+            from clayseal.core.task_scope import compile_task_scope
 
             surface.path_patterns = list(compile_task_scope(task.mandate).allowed_paths)
         except Exception:
@@ -117,7 +117,7 @@ class TaskSurface:
             in_observed = bool(self.path_prefixes) and prefix in self.path_prefixes
             in_granted = False
             if self.path_patterns:
-                from agentauth.core.task_scope import path_matches_any
+                from clayseal.core.task_scope import path_matches_any
 
                 in_granted = path_matches_any(event.path, self.path_patterns)
             # Only judge the target when the task establishes a surface at all,

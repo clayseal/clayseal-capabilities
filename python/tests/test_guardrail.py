@@ -13,8 +13,8 @@ import inspect
 
 import pytest
 
-from agentauth.capabilities.guardrail import Guardrail, Refused, StepUpRequired
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.guardrail import Guardrail, Refused, StepUpRequired
+from clayseal.capabilities.policy import load_policy_text
 
 DOC = """
 version: 1
@@ -94,10 +94,15 @@ def test_the_budget_and_once_per_object_both_hold(tools):
     _guard, wrapped, _ran = tools
     wrapped["get_order"](order_id="O-1")
     wrapped["pay_vendor"](amount="30000", invoice="INV-1")
-    with pytest.raises(Refused, match="duplicate_effect"):
+    # Match on `.reasons`, the stable code surface, not on the message. The
+    # message carries the explained form now (see reasons.py) and is meant to
+    # change as the wording improves; the codes are what integrations pin to.
+    with pytest.raises(Refused) as dup:
         wrapped["pay_vendor"](amount="10", invoice="INV-1")
-    with pytest.raises(Refused, match="exceeded"):
+    assert any("duplicate_effect" in r for r in dup.value.reasons), dup.value.reasons
+    with pytest.raises(Refused) as over:
         wrapped["pay_vendor"](amount="30000", invoice="INV-2")
+    assert any("exceeded" in r for r in over.value.reasons), over.value.reasons
 
 
 # ------------------------------------------------- what a framework reads ---
@@ -157,7 +162,7 @@ def test_an_async_tool_is_guarded_and_stays_async():
         return {"paid": amount}
 
     guarded = guard.wrap("pay_vendor", pay_vendor)
-    assert asyncio.iscoroutinefunction(guarded)
+    assert inspect.iscoroutinefunction(guarded)
 
     async def run():
         with pytest.raises(Refused):

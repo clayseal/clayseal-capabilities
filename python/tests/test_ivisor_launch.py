@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.sandbox.ivisor import IVisorLaunch, launch_from_envelope
+from clayseal.capabilities.sandbox.ivisor import IVisorLaunch, launch_from_envelope
 
 
 def test_command_maps_envelope_to_flags():

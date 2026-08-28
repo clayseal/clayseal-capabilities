@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.decision_sinks import (
+from clayseal.capabilities.decision_sinks import (
     PRIVATE_DIR_MODE,
     PRIVATE_FILE_MODE,
     JsonlFileSink,
@@ -72,7 +72,7 @@ def test_appending_to_a_file_that_exists_does_not_widen_it(tmp_path):
 def test_neither_evidence_writer_still_uses_a_umask_default_open():
     """The two modules that persist evidence, checked at the source."""
     for name in ("decision_sinks", "principal_ledger"):
-        src = Path("agentauth/capabilities") / f"{name}.py"
+        src = Path("clayseal/capabilities") / f"{name}.py"
         if not src.exists():          # installed rather than in-tree
             pytest.skip("source tree not available")
         text = src.read_text()
@@ -86,7 +86,7 @@ def test_a_non_loopback_bind_is_recognised_as_exposed():
     """The gateway authorizes the calls it is handed; it does not authenticate
     whoever hands them over. Binding off loopback puts that authority on the
     network, so the CLI has to be able to tell the difference."""
-    from agentauth.capabilities.cli import _is_loopback
+    from clayseal.capabilities.cli import _is_loopback
 
     for local in ("127.0.0.1", "127.0.0.53", "::1", "[::1]", "localhost"):
         assert _is_loopback(local), local

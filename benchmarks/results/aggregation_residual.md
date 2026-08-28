@@ -101,7 +101,7 @@ escape closed that way reappears under the next name.
 
 ## The linter, and what it actually buys
 
-`agentauth/capabilities/mandate_lint.py` now answers them. It is static and
+`clayseal/capabilities/mandate_lint.py` now answers them. It is static and
 offline, no model, no traffic, no learning, in the same style as
 `hardening/object_class.py`, which compiles its patterns in rather than inferring
 them. `lint_mandate()` reports; `require_clean()` raises, for a deployment that

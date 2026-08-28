@@ -11,19 +11,17 @@ from __future__ import annotations
 import threading
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
-from agentauth.capabilities.commit import (
-    InMemoryUsedTokenStore,
-    verify_commit_token,
-)
+from benchmarks.stress_commit import _pair
 from benchmarks.stress_replay import (
     FlakyStore,
     attack_hostile_input,
     attack_race,
     attack_scaling,
 )
-from benchmarks.stress_commit import _pair
+from clayseal.capabilities.commit import (
+    InMemoryUsedTokenStore,
+    verify_commit_token,
+)
 
 FUTURE = datetime.now(timezone.utc) + timedelta(hours=1)
 

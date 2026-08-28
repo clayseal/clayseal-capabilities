@@ -17,12 +17,12 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.value_budget import (
     EffectSpec,
     SessionValueBudget,
     ValueBudgetConfig,
 )
-from agentauth.capabilities.windowed_budget import WindowedValueBudget
+from clayseal.capabilities.windowed_budget import WindowedValueBudget
 
 HOUR = 3600.0
 
@@ -145,7 +145,7 @@ def test_remaining_reflects_the_window():
     _pay(budget, 2000)
     assert budget.remaining("roll") == Decimal("1000.00")
     clock.advance(25)
-    assert budget.remaining("roll") == Decimal("3000")
+    assert budget.remaining("roll") == Decimal(3000)
 
 
 # --------------------------------------------------------------------------- #

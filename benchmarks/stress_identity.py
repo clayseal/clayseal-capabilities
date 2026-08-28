@@ -5,7 +5,7 @@
 Every other input boundary in this library has been fuzzed and each one gave up a
 fail-open: `1e999` as a transfer amount returned `allowed=True`, a `NaN` compute
 ceiling granted 1,000,000 seconds as `ok`, `is_protected_path` raised on a list.
-The adapters in `agentauth/capabilities/identity_adapters/` take an attacker- or
+The adapters in `clayseal/capabilities/identity_adapters/` take an attacker- or
 third-party-shaped claims dict and turn it into an `AuthorityBinding`, and nothing
 had ever handed them a malformed one.
 
@@ -43,14 +43,14 @@ import json
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.identity_adapters import (
+from clayseal.capabilities.identity_adapters import (
     auth0,
     aws_sts,
     azure_ad,
     gcp,
     oidc,
 )
-from agentauth.capabilities.principal_ledger import principal_key
+from clayseal.capabilities.principal_ledger import principal_key
 
 ADAPTERS = {
     "oidc": oidc.provider,
@@ -106,7 +106,7 @@ def probe_totality() -> list[dict]:
             try:
                 _binding(provider, raw)
                 rows.append({"adapter": name, "input": label, "outcome": "ok"})
-            except Exception as exc:  # noqa: BLE001 - the point is to catch all
+            except Exception as exc:
                 rows.append({"adapter": name, "input": label,
                              "outcome": "RAISED",
                              "detail": f"{type(exc).__name__}: {exc}"[:120]})
@@ -137,14 +137,14 @@ def probe_authority_inflation() -> list[dict]:
     for name, provider in ADAPTERS.items():
         try:
             clean = _binding(provider, dict(base))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             rows.append({"adapter": name, "field": "(baseline)",
                          "inflated": None, "note": type(exc).__name__})
             continue
         for field, value in inflating:
             try:
                 dirty = _binding(provider, {**base, field: value})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 rows.append({"adapter": name, "field": field,
                              "inflated": None, "note": type(exc).__name__})
                 continue
@@ -162,7 +162,7 @@ def probe_principal_identity() -> list[dict]:
         def sid(raw, provider=provider):
             try:
                 return getattr(_binding(provider, raw), "subject_id", None)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 return "<raised>"
 
         # Collision: one `sub`, two issuers. `sub` is unique only within an
@@ -186,7 +186,7 @@ def probe_principal_identity() -> list[dict]:
         def pk(raw, provider=provider):
             try:
                 return principal_key(_binding(provider, raw))
-            except Exception:  # noqa: BLE001
+            except Exception:
                 return "<raised>"
 
         ka = pk({"sub": "alice", "iss": "https://good.example"})

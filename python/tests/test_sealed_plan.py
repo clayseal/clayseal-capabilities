@@ -1,16 +1,16 @@
 """Sealed-plan argv + callee/body-dest checks (no LLM at enforce)."""
 from __future__ import annotations
 
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.sealed_plan import (
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.sealed_plan import (
     check_sealed_plan,
     compile_sealed_plan,
     extract_callees,
     extract_destinations,
     parse_bash_features,
 )
-from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor.twin_corridor import assess_twin_structural
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _goal() -> GoalSpec:
@@ -146,8 +146,11 @@ def test_ssh_remote_body_dest_and_digest():
 
 
 def test_sed_inplace_mode_and_rm_mode_sealed():
-    from agentauth.capabilities.monitor.sealed_plan import (
-        compile_sealed_plan, check_sealed_plan, sed_inplace_mode, rm_delete_mode,
+    from clayseal.capabilities.monitor.sealed_plan import (
+        check_sealed_plan,
+        compile_sealed_plan,
+        rm_delete_mode,
+        sed_inplace_mode,
     )
     g = _goal()
     ref = Trajectory(g, [

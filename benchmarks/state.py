@@ -79,14 +79,19 @@ import random
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
-from agentauth.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
-from agentauth.capabilities.staleness import (
-    CONSEQUENTIAL_VERBS, OBSERVING_VERBS, ObservationLedger, StalenessPolicy,
-    content_version)
 from benchmarks.core.engines import VelocityLadderEngine, build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.parameter_provenance import MIN_ATTRIBUTABLE, ParameterProvenance
+from clayseal.capabilities.staleness import (
+    CONSEQUENTIAL_VERBS,
+    OBSERVING_VERBS,
+    ObservationLedger,
+    StalenessPolicy,
+    content_version,
+)
 
 # The object namespace. The corpora encode `resource` as the tool name, so object
 # identity has to come from the argument that names the object, which is exactly
@@ -646,7 +651,7 @@ def _cross_axis(scenarios: list[Scenario], rng: random.Random) -> dict:
     read's object sensitive, the sink the goal named declassified, and then with
     declassification withheld, which is the strictest setting available.
     """
-    from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+    from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 
     out = {"declassified": {"stale_refused": 0, "fresh_refused": 0, "total": 0},
            "strict": {"stale_refused": 0, "fresh_refused": 0, "total": 0}}

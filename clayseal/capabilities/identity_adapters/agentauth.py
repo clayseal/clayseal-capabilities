@@ -1,0 +1,44 @@
+"""AgentAuth native identity (reference provider).
+
+
+This is a CLAIM-MAPPING adapter: it maps an already-verified token's claims onto
+an `IdentitySession` and verifies nothing itself. The caller must have checked
+the signature, the audience and the expiry before calling it. Pass
+`evidence_verified=True` only when that is true — the verifying adapters
+(`oidc_discovery`, `spiffe_workload`, `entra_agent_id`) are the ones that do the
+checking themselves.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from clayseal.core.authority_binding import AuthorityBinding
+from clayseal.core.identity_protocol import CapabilityAuthorizer, IdentitySession
+
+
+@dataclass
+class AgentAuthIdentityProvider:
+    name: str = "agentauth"
+
+    def to_binding(self, raw: dict[str, Any], *, evidence_verified: bool = True) -> AuthorityBinding:
+        binding = AuthorityBinding.from_agentauth_credential(raw)
+        binding.evidence_verified = evidence_verified
+        return binding
+
+    def build_session(
+        self,
+        raw: dict[str, Any],
+        *,
+        capability_authorizer: CapabilityAuthorizer | None = None,
+        evidence_verified: bool = True,
+    ) -> IdentitySession:
+        return IdentitySession(
+            binding=self.to_binding(raw, evidence_verified=evidence_verified),
+            provider=self.name,
+            capability_authorizer=capability_authorizer,
+            raw_credential=raw,
+        )
+
+
+provider = AgentAuthIdentityProvider()

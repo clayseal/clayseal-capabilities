@@ -1,5 +1,16 @@
 # Long-trajectory evaluation, 40 sessions of 500 benign actions, one buried attack each
 
+STATUS: unverified
+
+```bash
+python -m benchmarks.trajectory
+```
+
+> The command above is recorded and runnable, but these numbers were not
+> re-derived against this commit. `unverified` says nobody has checked
+> them; run the command to reproduce, and stamp `current` when you have.
+
+
 Haystack: `bfcl`. Needle: `redcode`. 20000 benign actions judged per engine.
 
 | Engine | Needle detected | False alarms / 1k actions | Alarms per session |

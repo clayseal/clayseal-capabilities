@@ -28,7 +28,6 @@ from pathlib import Path
 
 from benchmarks.core.engines import build_engines
 from benchmarks.core.heldout import circular_unsplittable, hold_out_corpus
-from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 
@@ -251,7 +250,7 @@ def _flow(board: Scoreboard) -> None:
                       caveat=f"NOT MEASURED: {type(exc).__name__}: {exc}")
             continue
 
-        def _by_width(arm: str) -> str:
+        def _by_width(arm: str, r=r) -> str:
             by_w = r.splits.get(arm, {})
             return "/".join(f"{by_w[w].whole_out}" for w in sorted(by_w)) or "-"
 
@@ -299,8 +298,8 @@ def _trajectory(board: Scoreboard) -> None:
 
 def _sleight_detector(board: Scoreboard) -> None:
     """SLEIGHT's honest score: trajectory detector, not the per-action ladder."""
-    from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
     from benchmarks.core.detector_eval import run_detector_benchmark
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
 
     try:
         tasks = list(get_loader("sleight").load())

@@ -42,17 +42,17 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
-from agentauth.core.runtime import (
+from clayseal.core.runtime import (
     ActionDescriptor,
     AuthorityContext,
     ExecutionContext,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 #: Values a mutated field may take. Includes near-misses, because an equality
 #: check that is really a prefix or substring check fails exactly here.
@@ -141,7 +141,7 @@ def run() -> dict:
                 # cannot exist, so there is nothing for the verifier to mishandle.
                 checks += 1
                 continue
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 findings["NEVER_RAISES"].append(
                     {"where": f"token.{field}", "value": repr(value)[:40],
                      "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -179,7 +179,7 @@ def run() -> dict:
             try:
                 ok, _ = _verify(signed, mutated_ctx, trusted)
                 checks += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 findings["NEVER_RAISES"].append(
                     {"where": f"ctx.{name}", "value": repr(value)[:40],
                      "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -239,7 +239,7 @@ def run() -> dict:
     #    an exception. `from_dict` raises ValueError/TypeError/KeyError by
     #    design (it constructs from trusted data); `parse_signed_commit_token`
     #    is the boundary callers should use.
-    from agentauth.capabilities.commit import parse_signed_commit_token
+    from clayseal.capabilities.commit import parse_signed_commit_token
 
     wire = signed.to_dict()
     for mutate in (
@@ -257,7 +257,7 @@ def run() -> dict:
         try:
             token, reason = parse_signed_commit_token(raw)
             checks += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             findings["NEVER_RAISES"].append(
                 {"where": "parse_signed_commit_token", "value": "hostile wire JSON",
                  "error": f"{type(exc).__name__}: {str(exc)[:70]}"})
@@ -269,7 +269,7 @@ def run() -> dict:
         try:
             token, reason = parse_signed_commit_token(junk)
             checks += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             findings["NEVER_RAISES"].append(
                 {"where": "parse_signed_commit_token", "value": repr(junk),
                  "error": f"{type(exc).__name__}: {str(exc)[:70]}"})

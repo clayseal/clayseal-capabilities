@@ -1,6 +1,6 @@
 """Does the behavioural baseline fire when nothing changed, and when it did?
 
-`agentauth/capabilities/behavior_baseline.py` answers the longitudinal question
+`clayseal/capabilities/behavior_baseline.py` answers the longitudinal question
 an enterprise risk function asks: has this agent moved toward the edge of its
 grant since we approved it. Any monitor can claim to detect drift. The two
 numbers that decide whether it is deployable are what it does when NOTHING has
@@ -23,15 +23,15 @@ import random
 import sys
 from collections import Counter
 
-from agentauth.capabilities.behavior_baseline import (
+from benchmarks.core.events import EventLabel
+from clayseal.capabilities.behavior_baseline import (
     APPROACHING,
     SessionSummary,
     action_token,
     compare,
     profile_from,
 )
-from agentauth.capabilities.monitor.surface import surface_class
-from benchmarks.core.events import EventLabel
+from clayseal.capabilities.monitor.surface import surface_class
 
 DEFAULT_SHARES = (0.10, 0.25, 0.50, 1.00)
 
@@ -65,7 +65,7 @@ def fire_rate(clean, dirty, *, share: float, trials: int, seed0: int = 0) -> int
     fired = 0
     for seed in range(seed0, seed0 + trials):
         index = list(range(len(clean)))
-        random.Random(seed).shuffle(index)  # noqa: S311 - reproducible split
+        random.Random(seed).shuffle(index)
         half = len(index) // 2
         baseline = profile_from([clean[i] for i in index[:half]],
                                 policy_digest="p")
@@ -91,7 +91,7 @@ def ramp(clean, dirty, *, step: float, periods: int, seed: int = 0):
     period, the per-period verdicts).
     """
     index = list(range(len(clean)))
-    random.Random(seed).shuffle(index)  # noqa: S311 - reproducible
+    random.Random(seed).shuffle(index)
 
     def at(period: int):
         contaminated = set(index[:int(len(index) * step * period)])

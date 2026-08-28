@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import re
 
-from agentauth.capabilities.confidentiality import SensitivityPolicy
+from clayseal.capabilities.confidentiality import SensitivityPolicy
 
 #: An email address, a bare domain, or a path-looking token.
 _DESTINATION = re.compile(

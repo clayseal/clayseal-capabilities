@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
 
     if not CORPUS.exists():
-        print(f"corpus not fetched: run benchmarks/fetch_corpora.sh", file=sys.stderr)
+        print("corpus not fetched: run benchmarks/fetch_corpora.sh", file=sys.stderr)
         return 2
 
     current = {}

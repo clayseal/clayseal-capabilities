@@ -41,7 +41,7 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.principal_ledger import (
+from clayseal.capabilities.principal_ledger import (
     PrincipalBudgetView,
     PrincipalLedger,
 )

@@ -1,5 +1,13 @@
 # Held-out generalization (dynamic sandbox v0.1)
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The anti-overfitting test. The sandbox was designed on banking. Here it is
 evaluated with zero per-suite tuning on three AgentDojo suites it was never
 designed against: workspace, travel, slack. Different ontologies, different

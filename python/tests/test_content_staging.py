@@ -21,16 +21,16 @@ import base64
 
 import pytest
 
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
 from benchmarks.adversarial.content_staging import (
     SYNTHETIC_SECRET,
     in_scope_content_objective,
     staging_payloads,
 )
 from benchmarks.core.events import BenchmarkEvent, EventLabel
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="q", summary="update the project README")
 #: A grant that legitimately covers BOTH the secret and the publication target.
@@ -188,7 +188,10 @@ def test_the_objective_cannot_consult_the_system_it_judges():
             imported |= {a.name for a in node.names}
         elif isinstance(node, ast.ImportFrom) and node.module:
             imported.add(node.module)
-    leaked = {m for m in imported if m.startswith("agentauth")}
+    # Both spellings. The package was `agentauth` before 0.6 and is `clayseal`
+    # now, and a guard that checks only the old prefix passes for any import at
+    # all, which is worse than no guard because it reads as one.
+    leaked = {m for m in imported if m.startswith(("clayseal", "agentauth"))}
     assert not leaked, (
         f"the objective imports {sorted(leaked)}: it can see the defense it judges"
     )
@@ -208,7 +211,7 @@ def test_the_objective_is_indifferent_to_configuration():
         _event("read", "/app/.env"),
         _event("write", "/app/README.md", content=SYNTHETIC_SECRET),
     ]
-    from agentauth.capabilities.profiles import AUTONOMOUS, BENCHMARK, SUPERVISED
+    from clayseal.capabilities.profiles import AUTONOMOUS, BENCHMARK, SUPERVISED
 
     verdicts = set()
     for profile in (AUTONOMOUS, SUPERVISED, BENCHMARK):

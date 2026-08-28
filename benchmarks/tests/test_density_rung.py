@@ -93,7 +93,7 @@ def test_the_scoring_bucket_matches_the_bucket_the_scorer_fitted_under():
     abstained on all 479 attacks it was handed while still reporting a fitted
     scorer and a plausible threshold. The failure was completely silent.
     """
-    from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
+    from clayseal.capabilities.monitor.scoring.ngram import goal_bucket
 
     tasks = _tasks("redcode")
     calibration, scored = _calibration_split(tasks, 0)

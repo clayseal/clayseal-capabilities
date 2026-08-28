@@ -107,15 +107,19 @@ import sys
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
-from agentauth.capabilities.confidentiality import (
-    FlowTracker, SensitivityPolicy)
-from agentauth.capabilities.reidentification import (
-    ATTRIBUTES, DEFAULT_FIELD_MAP, DEFAULT_SUBJECT_KEYS,
-    PrincipalReidentificationLedger, ReidentificationMonitor,
-    ReidentificationPolicy, identifiability_bits)
-from benchmarks.core.engines import VelocityLadderEngine, build_engines
+from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.reidentification import (
+    ATTRIBUTES,
+    DEFAULT_FIELD_MAP,
+    DEFAULT_SUBJECT_KEYS,
+    PrincipalReidentificationLedger,
+    ReidentificationMonitor,
+    ReidentificationPolicy,
+    identifiability_bits,
+)
 
 # Strangers the attack re-identifies. Fixed values, so a run is reproducible and
 # nothing about the attack can influence a policy parameter.
@@ -459,7 +463,7 @@ def _jittered_table(jitter: float, seed: int):
     the whole evaluation is re-run. A result that survives a 20% error in every
     weight simultaneously does not rest on the weights.
     """
-    from agentauth.capabilities import reidentification as module
+    from clayseal.capabilities import reidentification as module
 
     rng = random.Random(seed)
     original = dict(module.ATTRIBUTES)
@@ -592,7 +596,7 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0, targets: int = 1,
             (k for k in carrier.args if str(k).lower() in DEFAULT_SUBJECT_KEYS),
             "user_id")
 
-        def _event(args, tag, label=EventLabel.ATTACK, idx=0):
+        def _event(args, tag, label=EventLabel.ATTACK, idx=0, i=i, carrier=carrier):
             return BenchmarkEvent(
                 event_id=f"reid-{i}-{tag}-{idx}", tool_name=carrier.tool_name,
                 resource=carrier.resource, action=carrier.action,
@@ -681,7 +685,7 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0, targets: int = 1,
         binding_tools = (carrier.tool_name,) if identity_binding else ()
         policy = _policy(subjects, binding_tools)
 
-        def _primed() -> ReidentificationMonitor:
+        def _primed(host=host, policy=policy) -> ReidentificationMonitor:
             """A monitor that has already seen the session's legitimate work.
 
             The compromise starts after the task has done its job, which is the
@@ -826,7 +830,7 @@ def _print(r: ReidResult) -> None:
         print(f"  blast radius     median         "
               f"{r.median_blast_radius:.0f} subjects re-identified before the block")
     if r.cross_session_scoped.total:
-        print(f"\n  one fragment per session, joined on an email address")
+        print("\n  one fragment per session, joined on an email address")
         print(f"    session-scoped accumulator    "
               f"{100*r.cross_session_scoped.rate:5.1f}% contained  "
               f"({r.cross_session_scoped.blocked}/{r.cross_session_scoped.total})")
@@ -921,7 +925,7 @@ def main(argv: list[str] | None = None) -> int:
                 rows.append({"jitter": jitter, "perturbation_seed": s,
                              **r.to_dict()})
 
-            def _span(idx):
+            def _span(idx, cells=cells):
                 vals = [100 * c[idx] for c in cells]
                 return (f"{min(vals):.1f}-{max(vals):.1f}%" if len(vals) > 1
                         else f"{vals[0]:.1f}%")

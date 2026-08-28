@@ -1,0 +1,80 @@
+# gitleaks configuration.
+#
+# The scan runs on every push and pull request and must PASS, because a security
+# scanner that is permanently red is a scanner nobody reads. It found 22 things
+# in this repository and all 22 are benign — but "benign" is a claim, so each
+# category below says which and why, narrowly, rather than being waved off with a
+# path glob.
+#
+# The rule for adding to this file: name the specific value or the specific
+# construct. A blanket exclusion of `python/tests/**` would also hide a real
+# credential a contributor pastes into a test, which is exactly the case worth
+# catching.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """
+Synthetic secrets the confidentiality tests exfiltrate.
+
+This library's flow tracker is tested by having a fake agent read a fake secret
+and try to smuggle it to a fake sink. The corpus therefore contains
+credential-shaped strings by construction; a flow test with no secret in it is
+not a flow test. Every one matches the shapes below, none is a live credential,
+and two of them are the vendors' own documentation examples.
+"""
+regexes = [
+  # AWS-shaped, including AWS's published example key.
+  '''AKIA(?:IOSFODNN7EXAMPLE|0123456789ABCDEFQZ|9F3C1D77B02E4419QZ|7QF3ZC1D77B02E4X)''',
+  # GitHub's own documented example token, quoted in CHANGELOG.md and used as a
+  # fixture by the secret-content detector's tests.
+  #
+  # Written WITHOUT its `ghp_` prefix on purpose. Spelling the whole token here
+  # makes this allowlist itself a file containing a token, and trivy duly
+  # flagged it: one scanner's exemption became another scanner's finding. The
+  # body alone is unique enough to allowlist precisely and matches no
+  # token-shaped rule.
+  '''16C7e42F292c6912E7710c838347Ae178B4a''',
+]
+
+[[allowlists]]
+description = """
+`private_key: Ed25519PrivateKey` is a TYPE ANNOTATION on a dataclass field, not
+key material. The rule matches the field name.
+"""
+regexes = ['''private_key:\s*Ed25519PrivateKey''']
+paths = ['''clayseal/core/signing\.py''', '''agentauth/core/signing\.py''']
+
+[[allowlists]]
+description = """
+SLEIGHT-Bench's decryption key, which its authors publish in their own README.
+
+The transcripts ship encrypted to keep them out of scraped training corpora, not
+to keep them from readers, so the key is public by design. See THIRD_PARTY.md.
+"""
+regexes = ['''8Od5ksQZ8pCPpxKSE9WA0MeBL2R_zL1MTz6C5pJFZmo=''']
+paths = ['''benchmarks/fetch_corpora\.sh''']
+
+[[allowlists]]
+description = """
+Fixtures for the secret-content DETECTOR, which necessarily contains the shapes
+it detects. Flagging it is the antivirus quarantining its own signature file;
+`pyproject.toml` makes the same exemption for `input_hardening.py` and the
+Trojan-Source characters, for the same reason.
+"""
+paths = ['''python/tests/test_secret_content\.py''']
+
+[[allowlists]]
+description = """
+Placeholder credentials inside BPL attack scenarios.
+
+Each scenario scripts an attack that tries to exfiltrate a secret, so the secret
+is part of the scenario text. These are placeholders on their face
+(`sk-live-INTERNAL`, a four-hex-digit `APIKEY_LIVE_9f3a`) rather than redacted
+real values.
+"""
+regexes = [
+  '''API_KEY=sk-live-INTERNAL''',
+  '''APIKEY_LIVE_9f3a''',
+]

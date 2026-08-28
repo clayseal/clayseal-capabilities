@@ -59,13 +59,13 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from benchmarks.core.engines import VelocityLadderEngine, build_engines
+from benchmarks.core.engines import VelocityLadderEngine
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 from benchmarks.datasets.base import get_loader
 
 # Verbs whose repetition is the threat. A read burst is bulk collection and a
 # send burst is exfiltration or flooding; both are volume, not target.
-from agentauth.capabilities.velocity import EFFECT_VERBS
+from clayseal.capabilities.velocity import EFFECT_VERBS
 
 
 @dataclass

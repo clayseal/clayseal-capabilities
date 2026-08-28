@@ -19,19 +19,17 @@ see only benign trajectories, matching the one-class threat model.
 from __future__ import annotations
 
 import random
-
 from dataclasses import dataclass
 
-from agentauth.capabilities.monitor import (
+from benchmarks.core.events import BenchmarkTask, EventLabel
+from clayseal.capabilities.monitor import (
     Action,
     ContextItem,
     Trajectory,
     TrajectoryDetector,
     TrustLevel,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
-
-from benchmarks.core.events import BenchmarkTask, EventLabel
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _goal_for(task: BenchmarkTask) -> GoalSpec:
@@ -50,7 +48,7 @@ def _goal_for(task: BenchmarkTask) -> GoalSpec:
         )
     # Corpus-agnostic backfill: destinations mentioned in benign event bodies
     # belong on the sealed goal even when the loader only recorded file paths.
-    from agentauth.capabilities.monitor.sealed_plan import extract_destinations
+    from clayseal.capabilities.monitor.sealed_plan import extract_destinations
     for event in task.events:
         if event.label is not EventLabel.BENIGN:
             continue

@@ -34,9 +34,9 @@ import string
 import sys
 from collections import Counter
 
-from agentauth.capabilities.http_gateway import HttpGateway
-from agentauth.capabilities.mcp_proxy import McpProxy
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.http_gateway import HttpGateway
+from clayseal.capabilities.mcp_proxy import McpProxy
+from clayseal.capabilities.policy import load_policy_text
 
 POLICY = """
 version: 1
@@ -112,7 +112,7 @@ def check(gateway: HttpGateway, forwarded: list, headers: dict,
     forwarded.clear()
     try:
         response = gateway.handle(headers, body)
-    except Exception as exc:  # noqa: BLE001 - a raise IS the failure here
+    except Exception as exc:
         return [f"TOTAL({type(exc).__name__}: {exc})"]
 
     failures: list[str] = []
@@ -138,7 +138,7 @@ def check(gateway: HttpGateway, forwarded: list, headers: dict,
             json.loads(sent)
         except ValueError:
             failures.append("NO-BYPASS(forwarded text is not JSON)")
-        from agentauth.capabilities.http_gateway import check_headers
+        from clayseal.capabilities.http_gateway import check_headers
 
         try:
             if not check_headers(headers, json.loads(sent), require=False).ok:
@@ -155,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--show", type=int, default=6)
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
 
-    rng = random.Random(args.seed)  # noqa: S311 - reproducible, not secret
+    rng = random.Random(args.seed)
     failures: Counter[str] = Counter()
     examples: dict[str, list[str]] = {}
     forwarded: list[str] = []

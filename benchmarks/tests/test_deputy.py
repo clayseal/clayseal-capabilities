@@ -13,15 +13,23 @@ from copy import copy
 
 import pytest
 
-from agentauth.capabilities.deputy import (
-    DelegationBoundary, DelegationPolicy, shipped_primitive_allows)
-from benchmarks.core.engines import (
-    DelegationLadderEngine, VelocityLadderEngine, build_engines)
+from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine, build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
+from clayseal.capabilities.deputy import (
+    DelegationBoundary,
+    DelegationPolicy,
+    shipped_primitive_allows,
+)
 
 pytest.importorskip("benchmarks.deputy")
-from benchmarks.deputy import (  # noqa: E402
-    _ATTACK_ARMS, MAX_DEPTH, _attributed, _replay_task, build_sessions, evaluate)
+from benchmarks.deputy import (
+    _ATTACK_ARMS,
+    MAX_DEPTH,
+    _attributed,
+    _replay_task,
+    build_sessions,
+    evaluate,
+)
 
 
 def _available(corpus: str):
@@ -190,7 +198,7 @@ SHIPPED_FAILS = {"parent's own token", "sibling sub-agent's token",
 
 @pytest.mark.parametrize("corpus", ["tau2"])
 def test_the_shipped_primitive_holds_attenuation_and_expiry(corpus):
-    """Pinned so a change in `agentauth.core.delegation` is noticed here."""
+    """Pinned so a change in `clayseal.core.delegation` is noticed here."""
     _available(corpus)
     r = evaluate(corpus, split="verb", count=60, seed=0)
     for arm in SHIPPED_HOLDS:
@@ -343,8 +351,8 @@ def test_the_rung_is_a_pass_through_without_a_delegation_policy():
 def _fixture():
     from uuid import uuid4
 
-    from agentauth.core.delegation import issue_delegation, sign_delegation
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.delegation import issue_delegation, sign_delegation
+    from clayseal.core.signing import generate_keypair
 
     operator = generate_keypair()
     caps = [{"resource": "db", "action": "read"}, {"resource": "db", "action": "write"}]
@@ -363,7 +371,7 @@ def _fixture():
 def test_attenuation_refuses_a_widened_child():
     from uuid import uuid4
 
-    from agentauth.core.delegation import issue_delegation
+    from clayseal.core.delegation import issue_delegation
 
     _op, caps, _p, _s, _root_env, _child, child_env, _policy = _fixture()
     with pytest.raises(ValueError):
@@ -393,8 +401,8 @@ def test_absence_of_a_delegation_is_a_denial():
 def test_an_unpinned_signer_is_refused():
     from uuid import UUID
 
-    from agentauth.core.delegation import issue_delegation, sign_delegation
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.delegation import issue_delegation, sign_delegation
+    from clayseal.core.signing import generate_keypair
 
     _op, caps, _p, sub, _root_env, _child, _child_env, policy = _fixture()
     outsider = generate_keypair()
@@ -422,7 +430,7 @@ def test_revocation_stops_the_next_action_and_spares_the_parent():
 def test_revoking_a_parent_takes_its_children_with_it():
     from uuid import uuid4
 
-    from agentauth.core.delegation import issue_delegation, sign_delegation
+    from clayseal.core.delegation import issue_delegation, sign_delegation
 
     operator, _caps, _p, _sub, _root_env, child, child_env, policy = _fixture()
     grand = uuid4()
@@ -442,7 +450,7 @@ def _deep_chain(operator, child_env, links: int):
     """``links`` further re-delegations of the sub-scope, each properly issued."""
     from uuid import uuid4
 
-    from agentauth.core.delegation import issue_delegation, sign_delegation
+    from clayseal.core.delegation import issue_delegation, sign_delegation
 
     env = child_env
     holder = None
@@ -466,8 +474,7 @@ def test_the_depth_bound_reads_the_chain_not_the_number_the_leaf_declares():
     from datetime import datetime, timedelta, timezone
     from uuid import uuid4
 
-    from agentauth.core.delegation import (
-        DelegationToken, delegation_from_envelope, sign_delegation)
+    from clayseal.core.delegation import DelegationToken, delegation_from_envelope, sign_delegation
 
     operator, _caps, _p, _sub, _root_env, _child, child_env, policy = _fixture()
     boundary = DelegationBoundary(policy)
@@ -510,9 +517,8 @@ def test_a_delegation_does_not_outlive_the_authority_it_derives_from():
     from datetime import datetime, timedelta, timezone
     from uuid import uuid4
 
-    from agentauth.core.delegation import (
-        DelegationToken, issue_delegation, sign_delegation)
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.delegation import DelegationToken, issue_delegation, sign_delegation
+    from clayseal.core.signing import generate_keypair
 
     operator = generate_keypair()
     caps = [{"resource": "db", "action": "read"}]

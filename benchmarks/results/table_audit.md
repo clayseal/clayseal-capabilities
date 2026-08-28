@@ -199,7 +199,7 @@ approximately 98%. `benchmarks/results/scoreboard.json` at the same commit print
   drift half to a labelled roadmap figure.
 - **Evidence:** `python -m benchmarks.drift --actions 2000 --target {12,13,14}`
   gives anchored 15.0%, 47.3% and 82.1%, so 82% is a knob setting; and no anchored
-  monitor exists in `agentauth/` (`agentauth/capabilities/monitor/drift.py` is
+  monitor exists in `agentauth/` (`clayseal/capabilities/monitor/drift.py` is
   CusumDrift with no anchored-versus-rolling distinction, and `notes/moonshots.md`
   line 34 lists anchored baselines as Moonshot 1, unbuilt).
 

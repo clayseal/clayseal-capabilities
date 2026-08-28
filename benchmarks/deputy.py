@@ -54,23 +54,22 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
-from agentauth.capabilities.deputy import (
+from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine
+from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
+from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.deputy import (
     DelegationBoundary,
     DelegationPolicy,
     shipped_primitive_allows,
 )
-from agentauth.capabilities.velocity import EFFECT_VERBS
-from agentauth.core.delegation import (
+from clayseal.capabilities.velocity import EFFECT_VERBS
+from clayseal.core.delegation import (
     DelegationToken,
     delegation_from_envelope,
     issue_delegation,
     sign_delegation,
 )
-from agentauth.core.signing import generate_keypair
-
-from benchmarks.core.engines import DelegationLadderEngine, VelocityLadderEngine
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
-from benchmarks.datasets.base import get_loader
+from clayseal.core.signing import generate_keypair
 
 # Re-delegation depth the mandate declares. A constant, not a fitted parameter:
 # it never sees traffic of any kind.

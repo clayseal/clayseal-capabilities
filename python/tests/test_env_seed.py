@@ -15,7 +15,7 @@ import pytest
 pytest.importorskip(
     "agentdojo",
     reason="needs the optional benchmarks extra: pip install "
-           "'agentauth-capabilities[benchmarks]' (Python 3.10-3.12)",
+           "'clayseal[benchmarks]' (Python 3.10-3.12)",
 )
 
 from benchmarks.live.broker_defense import (

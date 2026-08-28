@@ -15,12 +15,12 @@ never inherits a benchmark's fingerprints.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.session_memory import SessionMemory
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.session_memory import SessionMemory
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="t", summary="package eval results")
 SCOPE = TaskScope(
@@ -94,12 +94,12 @@ def test_every_rule_only_ever_asks():
     """No rule in the pack may hard-deny. They are heuristics about intent."""
     import inspect
 
-    from agentauth.capabilities import session_rules
+    from clayseal.capabilities import session_rules
 
     source = inspect.getsource(session_rules)
     assert "Outcome.DENY" not in source
     # The broker's dispatch site is the other half of the guarantee.
-    from agentauth.capabilities import broker as broker_mod
+    from clayseal.capabilities import broker as broker_mod
 
     # The dispatch lives in the locked implementation; `authorize` is the
     # concurrency facade over it.
@@ -130,7 +130,7 @@ def test_no_rule_is_keyed_on_a_corpus_project_name():
 
     This asserts the absence, so the class cannot come back unnoticed.
     """
-    from agentauth.capabilities import session_rules
+    from clayseal.capabilities import session_rules
 
     codenames = {"ocelot"}
     for name in dir(session_rules):

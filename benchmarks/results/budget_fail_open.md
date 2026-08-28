@@ -2,6 +2,12 @@
 
 STATUS: current
 
+**This is a defect report, not a measurement.** It reports four bugs and their
+fixes; it makes no containment claim, so it has no cost column to put beside one.
+The rungs it describes are priced where they are measured, in
+`bpl_sweep --suite full` (2 benign twins refused of 132, no work lost) and in
+`burst.md` (clean false alarms 0 of 200 tau2 sessions).
+
 Four defects in the enforcement floor, found by fuzzing rather than by corpus
 evaluation, all of the same shape: **a control that stops applying precisely when
 its input is absurd, while reporting that it passed.** All four are fixed; all
@@ -150,7 +156,7 @@ sells, "bring verified claims from your IdP and build your own gateway":
 
 ### One finding referred rather than patched
 
-`agentauth.core.task_scope_allows_path` raises `TypeError` / `AttributeError` on
+`clayseal.core.task_scope_allows_path` raises `TypeError` / `AttributeError` on
 `None`, `0`, `[1]`, `{}` and `True`. It lives in the sibling **clay-seal-core**
 repository, so it is reported here rather than edited from this one. The fix is
 the same shape as the two above: a non-string path is malformed, never

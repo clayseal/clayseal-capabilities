@@ -25,18 +25,16 @@ from __future__ import annotations
 
 import argparse
 import json
-import statistics
 import sys
-from collections import Counter, defaultdict
-
 import tempfile
+from collections import Counter, defaultdict
 
 from agentdojo.benchmark import get_suite, run_task_without_injection_tasks
 from agentdojo.logging import OutputLogger
 
-from benchmarks.live.run_agentdojo import build_pipeline, _oracle_map, _recipient_map
-from benchmarks.live.planner import LLMPlanner
 from benchmarks.live.diagnose import _gt_map, _label
+from benchmarks.live.planner import LLMPlanner
+from benchmarks.live.run_agentdojo import _oracle_map, _recipient_map, build_pipeline
 
 
 def run(suite_name, model, n_user, ablations, out_path):

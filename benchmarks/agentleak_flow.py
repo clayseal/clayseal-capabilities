@@ -120,16 +120,16 @@ import sys
 from collections import Counter
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.confidentiality import (
+from benchmarks.core.events import EventLabel
+from clayseal.capabilities.confidentiality import (
     SINK_VERBS,
     FlowTracker,
     SensitivityPolicy,
 )
-from agentauth.capabilities.parameter_provenance import (
+from clayseal.capabilities.parameter_provenance import (
     MIN_ATTRIBUTABLE,
     ParameterProvenance,
 )
-from benchmarks.core.events import EventLabel
 
 
 @dataclass

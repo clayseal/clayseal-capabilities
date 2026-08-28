@@ -13,7 +13,7 @@ WHAT THIS DOES AND DOES NOT PROVE
 They run against `fakeredis`, an in-process double. That is honest for what is
 being tested, the ledger's own logic, which is where every bug in the file
 backend was, and it is NOT a test of a real Redis under partition or failover.
-Set `AGENTAUTH_TEST_REDIS_URL` to run the identical suite against a live server;
+Set `CLAYSEAL_TEST_REDIS_URL` to run the identical suite against a live server;
 without it those parametrisations skip rather than passing silently.
 """
 from __future__ import annotations
@@ -24,20 +24,20 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.ledger_backends import RedisPrincipalLedger
-from agentauth.capabilities.principal_ledger import LedgerUnavailable
+from clayseal.capabilities.ledger_backends import RedisPrincipalLedger
+from clayseal.capabilities.principal_ledger import LedgerUnavailable
 
 fakeredis = pytest.importorskip("fakeredis")
 
 PRINCIPAL = "mandate:payroll-agent"
 BUDGET = "usd-transfers"
-CEILING = Decimal("100")
+CEILING = Decimal(100)
 
 
 @pytest.fixture
 def server():
     """One Redis, shared by every 'node' in a test."""
-    live = os.environ.get("AGENTAUTH_TEST_REDIS_URL", "").strip()
+    live = os.environ.get("CLAYSEAL_TEST_REDIS_URL", "").strip()
     if live:
         import redis
 
@@ -82,12 +82,12 @@ def test_four_nodes_against_one_ceiling_land_the_ceiling(server):
     def spend(ledger: RedisPrincipalLedger) -> None:
         nonlocal landed
         for _ in range(25):
-            hold = ledger.reserve(PRINCIPAL, BUDGET, Decimal("4"), CEILING)
+            hold = ledger.reserve(PRINCIPAL, BUDGET, Decimal(4), CEILING)
             if hold is None:
                 continue
             ledger.commit_hold(hold, session="w")
             with lock:
-                landed += Decimal("4")
+                landed += Decimal(4)
 
     threads = [threading.Thread(target=spend, args=(n,)) for n in nodes]
     for t in threads:
@@ -107,12 +107,12 @@ def test_committed_spend_on_one_node_is_visible_on_another(server):
     is the same bug as not sharing at all, it just takes longer to show up.
     """
     a, b = node(server), node(server)
-    hold = a.reserve(PRINCIPAL, BUDGET, Decimal("90"), CEILING)
+    hold = a.reserve(PRINCIPAL, BUDGET, Decimal(90), CEILING)
     assert hold is not None
     a.commit_hold(hold, session="node-a")
 
-    assert b.spent(PRINCIPAL, BUDGET) == Decimal("90")
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("20"), CEILING) is None
+    assert b.spent(PRINCIPAL, BUDGET) == Decimal(90)
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(20), CEILING) is None
 
 
 def test_an_outstanding_hold_on_one_node_blocks_another(server):
@@ -122,24 +122,24 @@ def test_an_outstanding_hold_on_one_node_blocks_another(server):
     the ceiling check and both commit later.
     """
     a, b = node(server), node(server)
-    hold = a.reserve(PRINCIPAL, BUDGET, Decimal("80"), CEILING)
+    hold = a.reserve(PRINCIPAL, BUDGET, Decimal(80), CEILING)
     assert hold is not None
 
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("30"), CEILING) is None, (
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(30), CEILING) is None, (
         "the second node could not see the first node's outstanding hold"
     )
 
     a.release(hold)
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("30"), CEILING) is not None
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(30), CEILING) is not None
 
 
 def test_a_release_on_one_node_frees_headroom_on_another(server):
     a, b = node(server), node(server)
-    hold = a.reserve(PRINCIPAL, BUDGET, Decimal("100"), CEILING)
+    hold = a.reserve(PRINCIPAL, BUDGET, Decimal(100), CEILING)
     assert hold is not None
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING) is None
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING) is None
     a.release(hold)
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING) is not None
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING) is not None
 
 
 def test_a_hold_released_on_another_node_is_not_resurrected(server):
@@ -152,13 +152,13 @@ def test_a_hold_released_on_another_node_is_not_resurrected(server):
     the system quietly refuses honest work, and every decision looks correct.
     """
     a, b = node(server), node(server)
-    holds = [a.reserve(PRINCIPAL, BUDGET, Decimal("10"), CEILING) for _ in range(5)]
+    holds = [a.reserve(PRINCIPAL, BUDGET, Decimal(10), CEILING) for _ in range(5)]
     assert all(h is not None for h in holds)
     for h in holds:
         a.release(h)
 
     # `b` now syncs, and must not bring the released holds back.
-    assert b.reserve(PRINCIPAL, BUDGET, Decimal("100"), CEILING) is not None
+    assert b.reserve(PRINCIPAL, BUDGET, Decimal(100), CEILING) is not None
 
 
 # --------------------------------------------------------------------------- #
@@ -200,7 +200,7 @@ def test_the_transaction_is_reentrant(server):
         with a._transaction():
             pass
     # Still usable afterwards: the inner exit did not release the outer lock.
-    assert a.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING) is not None
+    assert a.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING) is not None
 
 
 # --------------------------------------------------------------------------- #
@@ -219,7 +219,7 @@ class _Broken:
 def test_an_unreachable_backend_denies_by_default_and_counts_it():
     ledger = RedisPrincipalLedger(client=_Broken(), prefix="x")
     with pytest.raises(LedgerUnavailable, match="cannot reach the shared ledger"):
-        ledger.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING)
+        ledger.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING)
     assert ledger.unavailable_count >= 1
 
 
@@ -228,7 +228,7 @@ def test_allow_on_unavailable_is_opt_in_and_counted():
     ledger = RedisPrincipalLedger(
         client=_Broken(), prefix="x", on_unavailable="allow"
     )
-    hold = ledger.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING)
+    hold = ledger.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING)
     assert hold is not None                      # proceeded on this node's view
     assert ledger.unavailable_count >= 1         # and said so
 
@@ -243,7 +243,7 @@ def test_one_refused_action_counts_as_one_outage():
     ledger = RedisPrincipalLedger(
         client=_Broken(), prefix="x", on_unavailable="allow"
     )
-    ledger.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING)
+    ledger.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING)
     assert ledger.unavailable_count == 1
 
 
@@ -255,7 +255,7 @@ def test_a_missing_client_is_refused_at_construction():
 
 def test_health_reports_the_backend_and_its_outages(server):
     a = node(server)
-    a.reserve(PRINCIPAL, BUDGET, Decimal("1"), CEILING)
+    a.reserve(PRINCIPAL, BUDGET, Decimal(1), CEILING)
     health = a.health()
     assert health["backend"] == "redis"
     assert health["cross_host"] is True

@@ -2,10 +2,8 @@
 ATC-style re-clearance loop."""
 from __future__ import annotations
 
-from agentauth.core.signing import generate_keypair
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import (
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import (
     Action,
     IntentEnvelope,
     Trajectory,
@@ -17,8 +15,9 @@ from agentauth.capabilities.monitor import (
     sequence,
     sign_intent_envelope,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
-
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.signing import generate_keypair
+from clayseal.core.task_scope import TaskScope
 
 # Two genuinely different plans for "resolve the ticket":
 #   mode A: investigate -> patch -> verify
@@ -114,7 +113,7 @@ def test_reclearance_rejects_untrusted_signer():
 
 
 def test_nfa_handles_nested_selectors_and_loops():
-    from agentauth.capabilities.monitor import envelope_from_tree
+    from clayseal.capabilities.monitor import envelope_from_tree
     # A loop of reads, then either (design->build) or (buy), then deploy.
     tree = sequence(
         loop(leaf(tools=["read"]), min=1),

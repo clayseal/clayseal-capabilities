@@ -4,16 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.compute_budget import SessionComputeBudget
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.sandbox.driver import SandboxUnsupported
-from agentauth.capabilities.sandbox.session import (
+from clayseal.capabilities.compute_budget import SessionComputeBudget
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.sandbox.driver import SandboxUnsupported
+from clayseal.capabilities.sandbox.session import (
     ComputeBudgetExhausted,
     SandboxRunSpec,
     run_sandboxed,
 )
-from agentauth.capabilities.scoping.models import CapabilityLease
+from clayseal.capabilities.scoping.models import CapabilityLease
 
 FAKE = Path(__file__).parent / "fakes" / "fake_ivisor.py"
 

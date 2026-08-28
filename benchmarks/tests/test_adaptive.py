@@ -21,8 +21,8 @@ from benchmarks.adversarial.adaptive import (
     destructive_objective,
     exfiltration_objective,
     persistence_objective,
-    side_channel_objective,
     run_adaptive,
+    side_channel_objective,
 )
 from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel

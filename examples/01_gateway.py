@@ -10,9 +10,9 @@ granted the tool for; the fourth one is refused anyway.
 This is the shape of the thing. Nothing here is mocked: the decisions come from
 the same `SessionBroker` the benchmarks measure and the MCP proxy runs.
 """
-from agentauth.capabilities.monitor.action import Action, ContextItem, TrustLevel
-from agentauth.capabilities.policy import compile_policy
-from agentauth.capabilities.tool_verbs import classify_verb
+from clayseal.capabilities.monitor.action import Action, ContextItem, TrustLevel
+from clayseal.capabilities.policy import compile_policy
+from clayseal.capabilities.tool_verbs import classify_verb
 
 # 1. The authority. In a deployment this is a reviewed YAML file loaded with
 #    `load_policy`; inline here so the example is one file.

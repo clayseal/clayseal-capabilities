@@ -28,7 +28,7 @@ import threading
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.principal_ledger import PrincipalLedger
+from clayseal.capabilities.principal_ledger import PrincipalLedger
 
 CEILING = Decimal(100)
 TOOL_MONEY = "payments.transfer"
@@ -196,7 +196,7 @@ def axis_absurd_amounts() -> dict:
                 survived = False          # granted an absurd reservation
         except (ValueError, ArithmeticError):
             pass                          # refusing is correct
-        except Exception:                 # noqa: BLE001
+        except Exception:
             survived = False              # raising something else is not
     return {"axis": "absurd reservation amounts", "landed": 0,
             "escaped": not survived,
@@ -222,13 +222,12 @@ def axis_delegation_splitting() -> dict:
     a ceiling of 100 for a parent plus five delegates. A per-delegate ceiling is
     not a ceiling, anyone who can spawn sub-agents mints headroom.
     """
-    from agentauth.core.authority_binding import AuthorityBinding
-
-    from agentauth.capabilities.principal_ledger import (
+    from clayseal.capabilities.principal_ledger import (
         PrincipalBudgetView,
         principal_chain,
         principal_key,
     )
+    from clayseal.core.authority_binding import AuthorityBinding
 
     led = _fresh()
 
@@ -262,8 +261,8 @@ def axis_forged_delegation_chain() -> dict:
     an attack on someone ELSE's ceiling: name the victim as parent and exhaust
     it. `delegation_chain` is in `AUTHORITY_FIELDS` so an adapter strips it.
     """
-    from agentauth.capabilities.identity_adapters import oidc
-    from agentauth.capabilities.principal_ledger import principal_chain
+    from clayseal.capabilities.identity_adapters import oidc
+    from clayseal.capabilities.principal_ledger import principal_chain
 
     forged = oidc.provider.to_binding(
         {"subject_id": "attacker", "iss": "https://corp.example",

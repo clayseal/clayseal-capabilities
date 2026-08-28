@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.scoping import (
+from clayseal.capabilities.scoping import (
     build_capability_lease,
     build_repo_chunk_index,
     check_repo_path_allowed,
     compute_file_closure,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.scoping.models import CapabilityLease, SensitivityLabel
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.models import CapabilityLease, SensitivityLabel
 
 
 @pytest.fixture()

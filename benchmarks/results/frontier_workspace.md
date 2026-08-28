@@ -1,5 +1,13 @@
 # Safety/usefulness frontier, workspace, gpt-4o-mini-2024-07-18, 6x3 runs per config
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 | Configuration | ASR | clean utility | utility under attack | friction/task | |
 | --- | --: | --: | --: | --: | --- |
 | none | 83.3% | 100.0% | 27.8% | 0.00 | **frontier** |

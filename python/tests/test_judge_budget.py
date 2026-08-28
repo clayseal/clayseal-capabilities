@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import time
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.llm_clients import bounded
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.llm_clients import bounded
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def test_a_hung_judge_returns_within_the_budget():

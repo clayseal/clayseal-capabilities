@@ -107,6 +107,32 @@ repository comes from a single sweep, and the Wilson upper bound on 0 of 18 is
 17.6%. The security claim was supported to roughly one significant figure while
 being quoted to three.
 
+**11. A regression that was a coin flip.** During a performance pass, a change to
+the confidentiality tracker was checked against `benchmarks/flow.py` before and
+after. The 22-fragment concurrent arm went from 150 of 200 to 158 of 200, which
+reads as containment getting worse and is the kind of number a careful person
+stops on.
+
+It was noise. That arm races writers through a thread pool, so it is not a
+function of the seed, and two runs of the *same* commit give 170 of 200 and 155
+of 200. Five runs a side put the means at 152.4 and 152.6 with fully overlapping
+ranges. The change had no effect on containment at all.
+
+Two things were wrong and only one of them was the reading. The benchmark
+published a draw from a distribution as though it were a measurement: a single
+pooled count, no spread, and the only hint anywhere was a line of prose in
+`flow.md` saying the tail moves between draws. Anyone doing what we did would
+have reached the same wrong answer, and the alternative failure is worse — a real
+regression of 8 points would have been dismissed as noise by someone who had
+learned to distrust the arm.
+
+Fixed at the instrument rather than in the reader's head. The stochastic arms
+now print `NOT SEEDED` with their per-trial spread, carry `"stochastic": true` in
+the JSON, and `docs/benchmark_program.md` states the comparison rule: establish
+the noise floor by running the same code twice BEFORE reading any before-and-after.
+That step is the one that gets skipped, and it is the one that decides whether
+the comparison means anything.
+
 ## The strongest results, with what each is not allowed to claim
 
 Reproduce the deterministic tiers with `benchmarks/run_all.sh` against the
@@ -151,8 +177,13 @@ none of that class. Pooled over all 3,410 events the full stack contains 82.1%,
 not the 100% the surface-leaving column alone suggests. Publishing the weighted
 number pre-empts the objection rather than waiting for it.
 
-**Cost.** 35us at p50 and 60us at p99 for the full stack, four orders of
-magnitude below the LLM round trip it gates.
+**Cost.** 34us at p50 at the `Guardrail` boundary, four orders of magnitude below
+the LLM round trip it gates. The median is the least interesting number here: the
+argument-size dependence, the confidentiality tail and the unbounded per-session
+memory all matter more, and all three are in the one place these figures now live,
+[benchmarks/results/performance.md](../benchmarks/results/performance.md). This
+line used to quote 35us/60us with no statement of which measurement point it came
+from, which is how four different p50s ended up in four different files.
 
 **Enforcement ladder on RedCode.** All 717 attacks leave the surface via the
 target alone, so `tool-allowlist` and `capability-token` contain **zero** while

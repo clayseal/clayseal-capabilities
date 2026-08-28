@@ -1,4 +1,4 @@
-# ruff: noqa: PLW1510  # these calls inspect returncode deliberately
+# these calls inspect returncode deliberately
 """CLI smoke tests.
 
 These exist because the rest of the suite imports demo modules directly, so a

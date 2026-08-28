@@ -4,8 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-2%2C244%20passing-brightgreen.svg)](.github/workflows/ci.yml)
-[![PyPI](https://img.shields.io/badge/pip-agentauth--capabilities-orange.svg)](https://pypi.org/project/agentauth-capabilities/)
+[![Tests](https://img.shields.io/badge/tests-2900%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![PyPI](https://img.shields.io/badge/pip-clayseal-orange.svg)](https://pypi.org/project/clayseal/)
 
 **A policy gateway for AI agents. It stops the attack where every single call
 is legitimate and the sequence is not.**
@@ -21,7 +21,7 @@ the agent has already done.
 ## Install
 
 ```bash
-pip install agentauth-capabilities
+pip install clayseal
 ```
 
 Python 3.10 to 3.14. Two dependencies: `cryptography` and `pyyaml`.
@@ -31,7 +31,7 @@ Python 3.10 to 3.14. Two dependencies: `cryptography` and `pyyaml`.
 Wrap the tools you already have. Nothing else about your agent changes.
 
 ```python
-from agentauth.capabilities import Guardrail, Refused, StepUpRequired
+from clayseal.capabilities import Guardrail, Refused, StepUpRequired
 
 def list_open_refunds():
     return [{"invoice": "INV-001", "amount": 900.0},
@@ -302,11 +302,34 @@ assume anybody is at the console to answer a question. `--step-up allow` prices
 the other end of it and produces an identical table, because this suite never
 produces a step-up at all.
 
+### What it costs in time
+
+```bash
+python -m benchmarks.gateway_cost
+```
+
+**34 µs per decision** (29,000/sec), flat in session length: the median cost at
+call 3,500 is the same as at call 0. An agent acts at 1 to 10 actions per second
+and the LLM round trip this gates is hundreds of milliseconds, so the median is
+four orders of magnitude below it.
+
+The median is the least interesting number, so the same file publishes the three
+that are: a 16 KB argument costs 206 µs, because the egress floor scans argument
+text and that text is attacker-influenced; the confidentiality tracker's p99
+reaches 10.7 ms and one run peaked at 219 ms, which is the open performance
+problem; and memory per session is unbounded at 1,182 bytes per decision.
+
+[benchmarks/results/performance.md](benchmarks/results/performance.md) is the one
+place these live, including which measurement point each number is from. That
+matters more than it sounds: four different documents here used to quote four
+different p50s for "the full stack", all correct for what they measured and none
+of them saying which.
+
 ### The rest of the evidence
 
 The two mechanisms catch different things: 32 scenarios are contained by this
 layer only, 20 by dataflow taint only, 22 by both. Stacking them is still a bad
-trade, because the taint layer refuses 46 benign scripts this one completes.
+trade, because the taint layer refuses 47 benign scripts this one completes.
 
 Against a live model, and on prompt injection, the numbers and their
 qualifications are in
@@ -510,6 +533,30 @@ file, and a write outside `/finance/ap/`. One of those TODOs is
 this layer does not express, and it appears as a comment in the output, not a
 silence.
 
+## Adding a rule for your own workload
+
+Every knob above tunes behaviour someone else chose. This is where "in our shop
+X is also forbidden" goes, without forking:
+
+```python
+from clayseal.capabilities.session_rules import SessionRuleHit
+
+def no_competitor_domains(action, session, *, goal_summary, egress_verbs):
+    if "competitor.test" in str(action.args or {}):
+        return SessionRuleHit("house-rules", "destination is a competitor domain")
+    return None      # None means "this rule has nothing to say"
+
+stack = DeployableStack.from_goal(goal, house_rules=(no_competitor_domains,))
+```
+
+A hit becomes a **step-up, never a denial**. A rule written against your
+workload has not been measured against the traffic it will refuse, and a
+step-up halts an autonomous attacker just as hard while leaving a person able
+to say yes. Your rules run after the shipped ones, so a house rule cannot mask
+one that ships. A rule that raises is skipped and counted in
+`session_rules.RULE_FAILURES` rather than failing the decision: a gateway that
+stops authorizing because a regex threw is worse than one that misses a rule.
+
 ## The lower-level API
 
 `Guardrail` above is the wrapper most integrations want. If you are building
@@ -517,9 +564,9 @@ your own loop and would rather call the gateway directly, the decision API is
 one method:
 
 ```python
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy
-from agentauth.capabilities.tool_verbs import classify_verb
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy
+from clayseal.capabilities.tool_verbs import classify_verb
 
 gateway = load_policy("examples/policy.yaml").build()
 
@@ -550,7 +597,7 @@ from the sealed goal.
 The guards fail closed unless the environment names itself development.
 
 ```bash
-AGENTAUTH_ENV=development    # relaxes them, and says so once per process
+CLAYSEAL_ENV=development    # relaxes them, and says so once per process
 ```
 
 Unset, or set to production, means an unpinned commit-token minting key is
@@ -565,8 +612,8 @@ it, and what is out of scope.
 ## Build from source
 
 ```bash
-git clone https://github.com/pberlizov/clay-seal-capabilities.git
-cd clay-seal-capabilities
+git clone https://github.com/pberlizov/clayseal.git
+cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest python/tests -q
@@ -576,10 +623,10 @@ python examples/01_gateway.py
 Optional extras:
 
 ```bash
-pip install "agentauth-capabilities[oidc]"     # live OIDC/JWKS verification
-pip install "agentauth-capabilities[spiffe]"   # SPIFFE Workload API
-pip install "agentauth-capabilities[redis]"    # shared replay and ledger stores
-pip install "agentauth-capabilities[monitor]"  # the learned trajectory scorer
+pip install "clayseal[oidc]"     # live OIDC/JWKS verification
+pip install "clayseal[spiffe]"   # SPIFFE Workload API
+pip install "clayseal[redis]"    # shared replay and ledger stores
+pip install "clayseal[monitor]"  # the learned trajectory scorer
 ```
 
 ## Identity
@@ -590,7 +637,7 @@ ship for SPIFFE JWT-SVID, OIDC, Auth0, AWS STS, Entra Agent ID, Azure AD, GCP,
 and A2A signed agent cards.
 
 ```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.identity_adapters import get_identity_provider
 
 session = get_identity_provider("oidc").build_session(
     verified_claims,          # your IdP already checked signature, aud, exp
@@ -603,21 +650,37 @@ session = get_identity_provider("oidc").build_session(
 [docs/README.md](docs/README.md) is the index. The four you are most likely to
 want:
 
+- [API reference](docs/API.md) for the 57 exported names, tiered by what
+  most integrations actually use
 - [Developer guide](docs/DEV_GUIDE.md) to install it and wire it in
 - [Policy reference](docs/POLICY.md) for what a policy file can say
 - [Threat model](docs/THREAT_MODEL.md) for what it defends against and what it does not
 - [Privacy and data handling](docs/PRIVACY.md) for what it stores and what leaves the process
 
 For reporting a vulnerability see [SECURITY.md](SECURITY.md); to contribute see
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md). Upgrading from `agentauth-capabilities`:
+[docs/MIGRATION.md](docs/MIGRATION.md). Corpora and their licences:
+[THIRD_PARTY.md](THIRD_PARTY.md). Cutting a release:
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Naming
 
-The product is Clay Seal. The distribution is still published as
-`agentauth-capabilities` and imports from `agentauth.capabilities`, so existing
-integrations keep working. The `clayseal` command is the CLI for both.
+The product, the distribution, the import root and the CLI are all `clayseal`.
 
-`agentauth.core`, the shared contracts and crypto helpers, used to be a separate
+Before 0.6 this shipped to design partners on a private feed as
+`agentauth-capabilities`, importing from `agentauth.capabilities`. Those import
+paths still resolve and emit a `DeprecationWarning`; they are removed in 0.7.
+The aliased module is the same object as the real one, so a plugin registered
+through the old path is visible through the new one. Migration is a search and
+replace: [docs/MIGRATION.md](docs/MIGRATION.md).
+
+Storage keys and wire identifiers were deliberately **not** renamed. The replay
+store still keys commit tokens under `agentauth:commit:`, because a gateway that
+silently stopped recognising the tokens it had already spent would reopen the
+replay window it exists to close.
+
+`clayseal.core`, the shared contracts and crypto helpers, used to be a separate
 private distribution and now lives in this repository. The identity and receipts
 layers remain separate distributions and neither is required here.
 

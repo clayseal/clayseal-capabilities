@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import json
 
-from agentauth.capabilities.broker import BrokerDecision, Outcome
-from agentauth.capabilities.deployable_stack import StackDecision
-from agentauth.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
-from agentauth.capabilities.policy import compile_policy
+from clayseal.capabilities.broker import BrokerDecision, Outcome
+from clayseal.capabilities.deployable_stack import StackDecision
+from clayseal.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
+from clayseal.capabilities.policy import compile_policy
 
 
 def _policy(**over):

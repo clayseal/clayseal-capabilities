@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 
 SECRET = "AKIA9F3C1D77B02E4419QZ"
 
@@ -79,7 +79,7 @@ def test_a_replaced_binary_does_not_attest_under_the_old_hash(tmp_path):
     """
     import time
 
-    from agentauth.capabilities.sandbox.attest import ivisor_binary_identity
+    from clayseal.capabilities.sandbox.attest import ivisor_binary_identity
 
     binary = tmp_path / "ivisor"
     binary.write_bytes(b"BUILD-ONE")
@@ -96,7 +96,7 @@ def test_a_replaced_binary_does_not_attest_under_the_old_hash(tmp_path):
 
 
 def test_an_unreadable_binary_reports_rather_than_raises(tmp_path):
-    from agentauth.capabilities.sandbox.attest import ivisor_binary_identity
+    from clayseal.capabilities.sandbox.attest import ivisor_binary_identity
 
     identity = ivisor_binary_identity(str(tmp_path / "not-there"))
     assert identity["sha256"] is None and identity["error"] == "unreadable"
@@ -119,8 +119,8 @@ def test_ordinary_business_data_is_not_the_authorization_surface(value):
     WRITE, so a false hit turns a step-up into something a rung may refuse
     outright.
     """
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.monitor.consequence import (
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.consequence import (
         ConsequenceLevel,
         classify,
     )
@@ -136,8 +136,8 @@ def test_ordinary_business_data_is_not_the_authorization_surface(value):
     "acl entry",
 ])
 def test_the_real_authorization_surface_is_still_caught(value):
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.monitor.consequence import (
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.consequence import (
         ConsequenceLevel,
         classify,
     )
@@ -148,8 +148,8 @@ def test_the_real_authorization_surface_is_still_caught(value):
 
 
 def test_a_compound_tool_name_still_matches():
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.monitor.consequence import (
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.consequence import (
         ConsequenceLevel,
         classify,
     )

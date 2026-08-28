@@ -11,9 +11,9 @@ Hence: populate always, raise only on `strict_mandate=True`.
 """
 import pytest
 
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
 )
@@ -45,7 +45,7 @@ def test_the_check_is_advisory_by_default():
 
 
 def test_strict_mandate_refuses_to_construct():
-    with pytest.raises(ValueError, match="payments.wire"):
+    with pytest.raises(ValueError, match=r"payments\.wire"):
         _stack({"payments.transfer", "payments.wire"}, strict_mandate=True)
 
 

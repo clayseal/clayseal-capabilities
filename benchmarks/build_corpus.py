@@ -13,9 +13,9 @@ import argparse
 import sys
 from pathlib import Path
 
-from agentauth.capabilities.monitor.training.data import dump_corpus
 from benchmarks.core.detector_eval import task_to_trajectories
 from benchmarks.datasets.base import get_loader
+from clayseal.capabilities.monitor.training.data import dump_corpus
 
 
 def main(argv: list[str] | None = None) -> int:

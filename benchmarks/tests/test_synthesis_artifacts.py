@@ -17,12 +17,28 @@ from benchmarks.core.detector_eval import task_to_trajectories
 from benchmarks.core.opmetrics import partial_auc
 from benchmarks.datasets.base import get_loader
 
+#: Below this, the statistics below are not measuring anything.
+#:
+#: `fetch_corpora.sh` copies a five-trace FIXTURE for ToolEmu when the real
+#: assets are absent, which is the honest fallback for a corpus that cannot be
+#: downloaded. The loader then succeeds, so the `except` below never fires, and
+#: the tests went on to assert a taint gap under 0.05 over five samples. In CI
+#: that read 0.40 and failed the nightly job; locally, with 116 real tasks, it
+#: reads -0.0007 and passes. Neither number was wrong — one of them was noise
+#: from an n nobody checked.
+_MIN_TASKS = 30
+
 
 def _load(corpus, n=300):
     try:
-        return list(get_loader(corpus).load())[:n]
-    except Exception:                                        # noqa: BLE001
+        tasks = list(get_loader(corpus).load())[:n]
+    except Exception:
         pytest.skip(f"{corpus} unavailable")
+    if len(tasks) < _MIN_TASKS:
+        pytest.skip(
+            f"{corpus}: {len(tasks)} tasks, below the {_MIN_TASKS} these "
+            f"statistics need. This is the fixture fallback, not the corpus.")
+    return tasks
 
 
 def _length_auc(tasks, variants):

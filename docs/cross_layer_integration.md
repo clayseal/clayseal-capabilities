@@ -10,11 +10,11 @@ document is that contract.
 
 | Type | Module | Purpose |
 |------|--------|---------|
-| `AuthorityBinding` | `agentauth.core.authority_binding` | Normalized L1 facts → `AuthorityContext` |
-| `IdentitySession` | `agentauth.core.identity_protocol` | Binding + optional capability authorizer |
-| `IdentityProvider` | `agentauth.core.identity_protocol` | Maps provider credentials → `AuthorityBinding` |
-| `CapabilityTokenBackend` | `agentauth.core.identity_protocol` | Pluggable Biscuit/macaroon attenuation |
-| `CapabilityLayer` | `agentauth.core.identity_protocol` | Pluggable L2 surface for L3 |
+| `AuthorityBinding` | `clayseal.core.authority_binding` | Normalized L1 facts → `AuthorityContext` |
+| `IdentitySession` | `clayseal.core.identity_protocol` | Binding + optional capability authorizer |
+| `IdentityProvider` | `clayseal.core.identity_protocol` | Maps provider credentials → `AuthorityBinding` |
+| `CapabilityTokenBackend` | `clayseal.core.identity_protocol` | Pluggable Biscuit/macaroon attenuation |
+| `CapabilityLayer` | `clayseal.core.identity_protocol` | Pluggable L2 surface for L3 |
 
 ## Built-in L1 adapters (5 common stacks)
 
@@ -29,10 +29,10 @@ document is that contract.
 ## Layer 2 example (any provider → commit token)
 
 ```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
-from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
-from agentauth.core.signing import generate_keypair
+from clayseal.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.integration import execution_context_from_session
+from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
+from clayseal.core.signing import generate_keypair
 
 claims = {"sub": "spiffe://example.org/…", "iss": "spiffe://example.org", "scope": "payroll:write"}
 session = get_identity_provider("spiffe_jwt").build_session(claims)
@@ -45,7 +45,7 @@ Run: `python examples/04_cross_provider_commit.py`
 ## Layer 3 example (any provider → receipts)
 
 ```python
-from agentauth.capabilities.identity_adapters import get_identity_provider
+from clayseal.capabilities.identity_adapters import get_identity_provider
 from agentauth.receipts import Policy
 from agentauth.receipts.integration import wrap_with_identity_session
 
@@ -57,8 +57,8 @@ result = wrapper.run({"transaction_id": "t1"})
 ## Adding a custom L1 provider
 
 ```python
-from agentauth.capabilities.identity_adapters.registry import register_identity_provider
-from agentauth.core.authority_binding import AuthorityBinding
+from clayseal.capabilities.identity_adapters.registry import register_identity_provider
+from clayseal.core.authority_binding import AuthorityBinding
 
 class MyProvider:
     name = "my_idp"

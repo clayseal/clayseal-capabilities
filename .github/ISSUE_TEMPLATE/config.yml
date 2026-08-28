@@ -1,0 +1,12 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/pberlizov/clayseal/security/advisories/new
+    about: >
+      Report privately. Do not open a public issue for anything that would let
+      an agent get past a control. See SECURITY.md for what is in scope.
+  - name: Question about a measurement
+    url: https://github.com/pberlizov/clayseal/blob/main/benchmarks/results/README.md
+    about: >
+      Every headline number lists the command that reproduces it and the limits
+      it does not cross. Start there; open a bug if the command disagrees.

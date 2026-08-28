@@ -48,7 +48,7 @@ import string
 import sys
 from collections import Counter
 
-from agentauth.core.task_scope import TaskScope, task_scope_allows_path
+from clayseal.core.task_scope import TaskScope, task_scope_allows_path
 
 ALLOWED_PREFIXES = ("data", "finance/ap", "out")
 DENIED_PREFIXES = ("infra/prod", "data/secrets")
@@ -93,7 +93,7 @@ def under(prefix: str, path: str) -> bool:
 def check(path: str, scope: TaskScope) -> list[str]:
     try:
         allowed = task_scope_allows_path(scope, path)
-    except Exception as exc:  # noqa: BLE001 - a raise IS the failure here
+    except Exception as exc:
         return [f"TOTAL({type(exc).__name__}: {exc})"]
 
     inside_allow = any(under(p, path) for p in ALLOWED_PREFIXES)
@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
         allowed_paths=[f"{p}/**" for p in ALLOWED_PREFIXES],
         denied_paths=[f"{p}/**" for p in DENIED_PREFIXES],
     )
-    rng = random.Random(args.seed)  # noqa: S311 - reproducible, not secret
+    rng = random.Random(args.seed)
     failures: Counter[str] = Counter()
     examples: dict[str, list[str]] = {}
 

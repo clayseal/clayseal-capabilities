@@ -35,8 +35,8 @@ import argparse
 import sys
 from collections import Counter
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy_text
 
 POLICY = """
 version: 1
@@ -137,7 +137,7 @@ def outcome_with_fault(holder: str, attribute: str, action: Action) -> str:
         return stack.authorize(action).outcome
     except Boom:
         return "raised"
-    except Exception as exc:  # noqa: BLE001 - any raise is a reportable outcome
+    except Exception as exc:
         return f"raised:{type(exc).__name__}"
 
 

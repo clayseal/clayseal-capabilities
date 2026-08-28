@@ -23,15 +23,15 @@ _MONEY = re.compile(r"\$?\d{1,3}(?:,\d{3})+(?:\.\d+)?|\$\d+(?:\.\d+)?|\b\d+(?:\.
 _CRITICAL = re.compile(
     r"(pay|send|transfer|delete|grant|approve|execute|ship|operate|export|"
     r"release|wire|refund|post_message|write_file)",
-    re.I,
+    re.IGNORECASE,
 )
 _OBSERVE = re.compile(
     r"^(list_|read_|get_|search_|load_|fetch_|check_|lookup_|find_|query_)",
-    re.I,
+    re.IGNORECASE,
 )
 _EGRESS_KEYS = re.compile(
     r"^(to|recipient|email|destination|address|url|payee|iban|account)$",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -98,7 +98,7 @@ class AuthGraphGate:
     authorized_sources: set[str] = field(default_factory=set)
 
     @classmethod
-    def from_scenario(cls, user_prompt: str, tools: list[dict]) -> "AuthGraphGate":
+    def from_scenario(cls, user_prompt: str, tools: list[dict]) -> AuthGraphGate:
         names = _tool_names(tools)
         prompt_l = user_prompt.lower()
         # AG planner (deterministic stand-in for the clean-context LLM planner):

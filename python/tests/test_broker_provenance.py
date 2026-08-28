@@ -6,12 +6,12 @@ lock the wiring that closes that gap, plus trusted-candidate hints on deny.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.parameter_provenance import ParameterProvenance
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.parameter_provenance import ParameterProvenance
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _broker(**kwargs) -> SessionBroker:

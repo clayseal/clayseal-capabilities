@@ -2,6 +2,12 @@
 
 STATUS: current
 
+**No containment figure here is a result.** Both findings are about the harness
+being wrong, so every rate below is a number this file argues should NOT be
+quoted. There is no cost column because there is no claim to price; where a
+corrected figure exists it is in the tier's own results file with its benign
+arm beside it.
+
 Two findings from running `benchmarks/adaptive.py` against the density rung. The
 first is a bug in the harness. The second is about what the existing published
 adaptive tables actually show, and it is the more consequential of the two.

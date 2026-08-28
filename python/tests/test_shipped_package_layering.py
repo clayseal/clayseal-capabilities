@@ -1,7 +1,7 @@
 """The wheel must be importable from the wheel alone.
 
 ``pyproject.toml`` ships
-``only-include = ["agentauth/capabilities", "agentauth/core"]``. Anything the
+``only-include = ["clayseal/capabilities", "clayseal/core"]``. Anything the
 library reaches for outside those trees, the ``benchmarks`` harness, the
 ``demo`` package, the optional identity layer at module scope, is present in
 the development checkout and absent in every real install, so the failure never
@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-PACKAGE = Path(__file__).resolve().parents[2] / "agentauth" / "capabilities"
+PACKAGE = Path(__file__).resolve().parents[2] / "clayseal" / "capabilities"
 
 #: Top-level module names the shipped package may never depend on, at any depth.
 #: `agentauth.identity` is handled separately below: it is a real optional extra
@@ -77,25 +77,25 @@ def test_there_are_core_sources_to_check():
 
 @pytest.mark.parametrize("path", CORE_SOURCES, ids=lambda p: f"core/{p.name}")
 def test_core_does_not_import_the_layer_above_it(path: Path):
-    """`agentauth.core` is the bottom of the stack and has to stay there.
+    """`clayseal.core` is the bottom of the stack and has to stay there.
 
     It was a separate distribution, so this was enforced by the fact that the
     package it would have imported was not installed. Vendoring it into this
-    repository removes that enforcement: `agentauth.capabilities` is now one
+    repository removes that enforcement: `clayseal.capabilities` is now one
     directory away, and an import in the wrong direction would build cleanly, run
     cleanly, and make the two impossible to separate again.
     """
     tree = ast.parse(path.read_text(), filename=str(path))
     offenders = {
         name for name in _dotted_imports(tree)
-        if name.startswith("agentauth.capabilities")
+        if name.startswith("clayseal.capabilities")
     }
     assert not offenders, (
-        f"agentauth/core/{path.name} imports {sorted(offenders)}. Core is the "
+        f"clayseal/core/{path.name} imports {sorted(offenders)}. Core is the "
         f"contracts layer and nothing in it may depend on the layer above."
     )
     leaked = _imported_roots(tree) & FORBIDDEN_ROOTS
-    assert not leaked, f"agentauth/core/{path.name} imports {sorted(leaked)}"
+    assert not leaked, f"clayseal/core/{path.name} imports {sorted(leaked)}"
 
 
 def _dotted_imports(tree: ast.AST) -> set[str]:
@@ -136,7 +136,7 @@ def _module_level_imports(tree: ast.AST) -> set[str]:
 def test_optional_layers_are_imported_lazily(path: Path):
     """An optional extra imported at module scope is not optional.
 
-    This replaces the CI step `python -m agentauth.core.layering ...`, which
+    This replaces the CI step `python -m clayseal.core.layering ...`, which
     referenced a module that does not exist in `agentauth-core` at all, a dead
     reference left by the repo split, and one that could only be discovered by
     CI actually running, which it had never done.

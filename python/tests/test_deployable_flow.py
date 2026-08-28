@@ -15,10 +15,10 @@ secret was read this session" to "this write carries it".
 """
 from __future__ import annotations
 
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.capabilities.broker import Outcome
+from clayseal.capabilities.broker import Outcome
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 SECRET = "AKIA0123456789ABCDEFQZ"
 
@@ -76,7 +76,7 @@ def test_it_can_be_switched_off():
 def test_a_declared_mandate_policy_wins_over_the_default_taxonomy():
     """The static patterns are a fallback, never an override: an operator who
     enumerated their own secrets gets exactly those."""
-    from agentauth.capabilities.confidentiality import SensitivityPolicy
+    from clayseal.capabilities.confidentiality import SensitivityPolicy
 
     declared = SensitivityPolicy(sensitive=("db:only-this",))
     broker = _stack(sensitivity=declared).broker

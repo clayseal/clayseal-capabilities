@@ -17,16 +17,16 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.generation import compile_envelope
-from agentauth.capabilities.monitor.intent_envelope import Deviation, Phase
-from agentauth.capabilities.monitor.multiplicity import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.generation import compile_envelope
+from clayseal.capabilities.monitor.intent_envelope import Deviation, Phase
+from clayseal.capabilities.monitor.multiplicity import (
     apply_multiplicity,
     multiplicity_for,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 # --------------------------------------------------------------------------- #
@@ -198,7 +198,7 @@ def test_the_count_is_read_before_any_untrusted_content_exists():
     import ast
     import inspect
 
-    from agentauth.capabilities.monitor import multiplicity
+    from clayseal.capabilities.monitor import multiplicity
 
     # The AST, not the source text. The docstrings legitimately NAME the things
     # this module must not touch while explaining why it does not touch them, and
@@ -227,7 +227,7 @@ def test_the_deviation_is_its_own_kind():
 # --------------------------------------------------------------------------- #
 # The optional inferrer
 # --------------------------------------------------------------------------- #
-from agentauth.capabilities.monitor.multiplicity import (  # noqa: E402
+from clayseal.capabilities.monitor.multiplicity import (
     bounded_multiplicity,
     default_multiplicity_inferrer,
     llm_multiplicity_inferrer,
@@ -318,7 +318,7 @@ def test_the_bound_carries_its_provenance_into_the_step_up():
     phase = next(p for p in envelope.phases if "send" in p.verbs)
     assert (phase.max, phase.max_source) == (1, "inferred")
 
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 
     broker = SessionBroker(goal=goal, intent_envelope=envelope,
                            egress=EgressPolicy(allowed_domains={"acme-internal.com"}))

@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import random
 
-from agentauth.capabilities.monitor import (
+from clayseal.capabilities.monitor import (
     Action,
-    ContextItem,
     ConformalCalibrator,
-    Decision,
+    ContextItem,
     NGramScorer,
     TaintTracker,
     Trajectory,
@@ -20,7 +19,7 @@ from agentauth.capabilities.monitor import (
     TrustLevel,
     TypedGoalEnvelope,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 # --------------------------------------------------------------------------- #
@@ -131,7 +130,7 @@ def test_structural_tiers_catch_in_scope_attacks_on_long_trajectories():
     # per-action floor allows, using only trajectory shape (injection-resistant).
     import random
 
-    from agentauth.capabilities.monitor.training.synth_corpus import (
+    from clayseal.capabilities.monitor.training.synth_corpus import (
         IN_SCOPE_ATTACKS,
         generate,
     )
@@ -162,7 +161,7 @@ def test_structural_tiers_catch_in_scope_attacks_on_long_trajectories():
 
 def test_detector_has_no_llm_adjudicator():
     # The trust boundary must not contain a content-reading judge (injectable).
-    import agentauth.capabilities.monitor as m
+    import clayseal.capabilities.monitor as m
 
     assert not hasattr(m, "Adjudicator") and not hasattr(m, "StubAdjudicator")
     assert "AmlAnalytics" in m.__all__ and "PathEnvelope" in m.__all__
@@ -172,7 +171,7 @@ def test_trajectory_conformal_bounds_heldout_false_block():
     # Split-conformal + trajectory-level aggregation must keep the benign block
     # rate near alpha on HELD-OUT data (the per-step OR previously inflated it to
     # ~1-(1-alpha)^length on long trajectories).
-    from agentauth.capabilities.monitor.training.synth_corpus import generate
+    from clayseal.capabilities.monitor.training.synth_corpus import generate
 
     trajs = generate(2000, seed=5)
     train, test = trajs[:1400], trajs[1400:]
@@ -204,7 +203,7 @@ def test_cusum_accumulates_sustained_drift_beyond_a_single_point():
     # (max) check of the same magnitude misses. Honest scope for the drift tier.
     import random
 
-    from agentauth.capabilities.monitor.drift import CusumDrift
+    from clayseal.capabilities.monitor.drift import CusumDrift
 
     rng = random.Random(0)
     benign = [("b", [rng.gauss(0.0, 1.0) for _ in range(12)]) for _ in range(400)]

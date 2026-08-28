@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from benchmarks.adversarial.attacks import ATTACK_CLASSES, synthesize
 from benchmarks.core.engines import build_engines
-from benchmarks.core.leaderboard import run_leaderboard
 from benchmarks.core.events import EventLabel
+from benchmarks.core.leaderboard import run_leaderboard
 from benchmarks.datasets.fixture import FixtureLoader
 
 
@@ -52,7 +52,6 @@ def test_all_attack_classes_registered():
 
 def test_in_scope_burst_evades_floor_by_construction():
     from benchmarks.adversarial.attacks import synthesize
-    from benchmarks.core.engines import build_engines
     from benchmarks.core.events import EventLabel
 
     tasks = FixtureLoader().load()
@@ -79,9 +78,10 @@ def test_atif_loader_produces_real_long_trajectories():
 
 def test_delegated_trust_and_ensemble():
     import random
-    from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
-    from agentauth.capabilities.monitor.scoring.ensemble import EnsembleScorer
-    from agentauth.capabilities.monitor.training.synth_corpus import generate, inject_delegated_trust
+
+    from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
+    from clayseal.capabilities.monitor.scoring.ensemble import EnsembleScorer
+    from clayseal.capabilities.monitor.training.synth_corpus import generate, inject_delegated_trust
 
     benign = generate(800, seed=3)
     det = TrajectoryDetector(scorer=EnsembleScorer([NGramScorer(), NGramScorer()]), alpha=0.02)

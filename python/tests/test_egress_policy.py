@@ -3,7 +3,7 @@
 A mandate can name exact recipients and a domain at once. The domain is the
 broader grant, and it used to win, so declaring the narrower policy did nothing.
 """
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 
 
 # --------------------------------------------------------------------------- #
@@ -66,7 +66,7 @@ def test_the_recipient_check_ignores_addresses_in_the_body():
     them. Asserted directly rather than through `check`, because the DOMAIN loop
     has a separate and pre-existing behaviour, see the test below.
     """
-    from agentauth.capabilities.hardening.egress_policy import (
+    from clayseal.capabilities.hardening.egress_policy import (
         extract_email_addresses,
     )
 

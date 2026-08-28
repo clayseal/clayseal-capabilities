@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None) -> int:
     for name in sorted(available_datasets()):
         try:
             row = measure(name, limit=args.limit)
-        except Exception as exc:                           # noqa: BLE001
+        except Exception as exc:
             # Almost always an unfetched external corpus, but SAY which and why.
             # A screen that silently covers eleven corpora and reports on three
             # reads exactly like one that covered all fourteen.

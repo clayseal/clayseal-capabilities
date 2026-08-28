@@ -1,12 +1,12 @@
 """Intent advisory: digΔ vs declaration escalates; never hard-blocks alone."""
 from __future__ import annotations
 
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.detector import Decision, TrajectoryDetector
-from agentauth.capabilities.monitor.egress_slots import egress_templates_for_tools
-from agentauth.capabilities.monitor.intent_advisory import assess_intent_advisory
-from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.detector import Decision, TrajectoryDetector
+from clayseal.capabilities.monitor.egress_slots import egress_templates_for_tools
+from clayseal.capabilities.monitor.intent_advisory import assess_intent_advisory
+from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _traj(commands: list[str], *, summary: str = "backup weights") -> Trajectory:
@@ -56,10 +56,10 @@ def test_egress_templates_cover_send_tools():
 
 
 def test_broker_slot_denies_ungrounded_send():
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.core.task_scope import TaskScope
 
     templates = egress_templates_for_tools(["send_email"])
     env = IntentEnvelope(
@@ -86,10 +86,10 @@ def test_broker_slot_denies_ungrounded_send():
 
 
 def test_broker_slot_allows_goal_seeded_recipient():
-    from agentauth.capabilities.broker import Outcome, SessionBroker
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.core.task_scope import TaskScope
 
     templates = egress_templates_for_tools(["send_email"])
     env = IntentEnvelope(

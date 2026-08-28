@@ -12,20 +12,20 @@ import pytest
 jwt = pytest.importorskip("jwt")
 rfc8785 = pytest.importorskip("rfc8785")
 
-from cryptography.hazmat.primitives import serialization  # noqa: E402
-from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
-from agentauth.capabilities.identity_adapters import (  # noqa: E402
+from clayseal.capabilities.identity_adapters import (
     A2AAgentCardProvider,
     SpiffeWorkloadProvider,
     get_identity_provider,
     verify_agent_card,
 )
-from agentauth.capabilities.identity_adapters.a2a_agentcard import (  # noqa: E402
+from clayseal.capabilities.identity_adapters.a2a_agentcard import (
     canonical_card_bytes,
 )
-from agentauth.core.conformance import check_identity_provider  # noqa: E402
-from agentauth.core.schemas import validate_binding  # noqa: E402
+from clayseal.core.conformance import check_identity_provider
+from clayseal.core.schemas import validate_binding
 
 # --- SPIFFE Workload API live-fetch ----------------------------------------- #
 

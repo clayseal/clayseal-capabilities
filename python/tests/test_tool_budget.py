@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import threading
 
-from agentauth.core.runtime import SideEffectLevel
-from agentauth.capabilities.scoping.tools.models import ToolCapabilityLease
-from agentauth.capabilities.scoping.tools.tool_call_budget import (
+from clayseal.capabilities.scoping.tools.models import ToolCapabilityLease
+from clayseal.capabilities.scoping.tools.tool_call_budget import (
     ToolCallBudget,
     ToolCallBudgetConfig,
 )
-from agentauth.capabilities.scoping.tools.tool_enforcement import check_tool_call_allowed
-from agentauth.capabilities.scoping.tools.tool_lease_enforcement import (
+from clayseal.capabilities.scoping.tools.tool_enforcement import check_tool_call_allowed
+from clayseal.capabilities.scoping.tools.tool_lease_enforcement import (
     commit_tool_call_budget,
     release_tool_call_budget,
     reserve_tool_call_budget,
     tool_capability_lease_violations,
 )
+from clayseal.core.runtime import SideEffectLevel
 
 
 def _budget(limit: int = 1) -> ToolCallBudget:

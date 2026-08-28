@@ -8,7 +8,7 @@ for the chunked and fan-out arms at every width, it published a single
 false-block figure for a rate that moves with session length, and it listed
 eight evasion transforms as though they were a closed set.
 
-The module under test is `agentauth/capabilities/confidentiality.py`. It is
+The module under test is `clayseal/capabilities/confidentiality.py`. It is
 carrying uncommitted changes, and where those changes moved a number the
 attribution is measured and printed rather than asserted.
 
@@ -711,6 +711,30 @@ buffer of up to 64 writes.
 The tail also has an attacker on it. See the lock section above: one write can
 hold the tracker lock for seconds.
 
+## The concurrent arms are not seeded, and now say so
+
+The concurrent rows race writers through a thread pool. Thread interleaving is
+not a function of `--seed`, and the arm exists to catch a lost update, so making
+it deterministic would delete what it measures.
+
+Two runs of this file on the same machine at the same commit give **170/200 and
+155/200** for the same cell. That is a 15-point spread with no code change.
+
+Those rows used to be a single pooled count with no spread attached, which is a
+draw from a distribution published as a measurement. It caused a false regression
+during the 0.6 performance pass: a change to the confidentiality tracker moved
+the 22-fragment concurrent arm from 150/200 to 158/200 and read as containment
+getting worse. Five runs a side put the means at 152.4 and 152.6 with fully
+overlapping ranges; the change had no effect on containment. The mirror failure
+is the worse one — a real 8-point regression waved away by somebody who had
+learned the arm was unreliable.
+
+Each such row now prints `NOT SEEDED` with its per-trial spread and carries
+`"stochastic": true` in the JSON. The comparison rule is in
+[docs/benchmark_program.md](../../docs/benchmark_program.md): diff the
+deterministic cells first, and establish the noise floor by running the same code
+twice before reading any before-and-after.
+
 ---
 
 ## What is open
@@ -808,7 +832,7 @@ python -m pytest python/tests/test_flow_order_independence.py \
 The attribution table, which runs the split arms against the module as
 committed at `9bd0ec0` alongside the working tree, is a probe rather than a
 committed entry point. It extracts the old module with
-`git show 9bd0ec0:agentauth/capabilities/confidentiality.py`, loads it under a
+`git show 9bd0ec0:clayseal/capabilities/confidentiality.py`, loads it under a
 second name with `importlib`, and drives both modules over the same sessions
 from `benchmarks.flow.build_sessions` with the same ladder accounting
 `flow_probes.py` uses.

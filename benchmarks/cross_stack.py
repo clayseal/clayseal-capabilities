@@ -65,7 +65,7 @@ def evaluate(
     entailment: bool = True,
     require_declaration_for_egress: bool | None = None,
 ) -> dict:
-    from agentauth.capabilities.monitor.llm_clients import default_entailment_judge
+    from clayseal.capabilities.monitor.llm_clients import default_entailment_judge
 
     judge = default_entailment_judge() if entailment else None
     rows = []

@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
-from agentauth.capabilities.identity_adapters import get_identity_provider, list_identity_providers
-from agentauth.capabilities.integration import execution_context_from_session
-from agentauth.core.signing import generate_keypair
+from clayseal.capabilities.identity_adapters import get_identity_provider, list_identity_providers
+from clayseal.capabilities.integration import execution_context_from_session
+from clayseal.core.signing import generate_keypair
 
 PROVIDER_FIXTURES = {
     "agentauth": {

@@ -1,5 +1,13 @@
 # Rigor pass: adaptive red-team, uncertainty, and three vulnerabilities
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Everything below reproduces with `benchmarks/run_all.sh` against the pinned
 corpus in `benchmarks/corpus_manifest.json`. No LLM is involved; a full pass is
 CPU-only and takes under a minute.
@@ -12,7 +20,7 @@ none of which any static corpus in the suite had surfaced.
 
 ### 1. Path traversal defeats scope matching (core, high)
 
-`agentauth.core.task_scope.path_matches_any` fnmatched the raw string. Given a
+`clayseal.core.task_scope.path_matches_any` fnmatched the raw string. Given a
 workspace grant of `/app/**`:
 
 ```
