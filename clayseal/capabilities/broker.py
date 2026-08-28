@@ -33,7 +33,7 @@ def _utcnow():
 
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -825,7 +825,7 @@ class SessionBroker:
             # set and level 0 restates the exact instances, so union and
             # replacement agree there. A policy document means both: `allow`
             # names tools, `patterns` names families.
-            granted = bool(self.allowed_tools) and action.tool in self.allowed_tools
+            granted = bool(self.allowed_tools and action.tool in self.allowed_tools)
             if not granted and self.tool_patterns:
                 import fnmatch
                 granted = any(fnmatch.fnmatch(action.tool, p)
@@ -1752,7 +1752,7 @@ class SessionBroker:
         broker and leaked into every other session sharing that instance.
         """
         if getattr(self, "_extended_pairs", None) is None:
-            self._extended_pairs = set()
+            self._extended_pairs: set[Any] = set()
         return self._extended_pairs
 
     def _telemetry(self, call, /, **kwargs) -> None:
@@ -1769,7 +1769,7 @@ class SessionBroker:
         except Exception:  # noqa: BLE001 - telemetry is never load-bearing
             self.telemetry_failures += 1
 
-    def _record_triggers(self, reasons: list[str]) -> None:
+    def _record_triggers(self, reasons: Sequence[str]) -> None:
         joined = " ".join(reasons).lower()
         self._telemetry(
             self.metrics.record_monitor_trigger,

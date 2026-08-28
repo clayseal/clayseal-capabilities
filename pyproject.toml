@@ -24,12 +24,14 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Topic :: Security",
   "Topic :: Software Development :: Libraries :: Python Modules",
-  # `Typing :: Typed` is NOT claimed and `py.typed` is NOT shipped. 98% of the
-  # library's functions carry annotations, but mypy has never gated them and
-  # reports 92 findings across 32 files, a sample of which are narrowing false
-  # positives and none of which have been triaged. Shipping the marker would
-  # make those annotations authoritative for every downstream type-checker on
-  # the strength of a claim nobody here has checked.
+  # `Typing :: Typed` is NOT claimed and `py.typed` is NOT shipped. 93% of the
+  # library's functions are fully annotated, and mypy now runs and is ratcheted
+  # (see [tool.mypy] and scripts/mypy_ratchet.py), but the findings it reports
+  # have not been triaged. Shipping the marker would make these annotations
+  # authoritative for every downstream type-checker on the strength of a claim
+  # nobody here has checked. The current count lives in
+  # scripts/mypy_baseline.json rather than in this comment: the number that used
+  # to be written here had drifted from 92 to 98 with nothing to notice.
 ]
 # The CORE library and CLI are stdlib plus two packages and run anywhere in this
 # range: 2,156 tests pass on 3.14 with no failures and no library deprecation.
@@ -106,7 +108,7 @@ benchmarks = ["agentdojo>=0.1.35,<0.2"]
 monitor = ["torch>=2.2"]
 # `fakeredis` backs the cross-host ledger tests. It is a double, not a Redis:
 # set CLAYSEAL_TEST_REDIS_URL to run the same suite against a live server.
-dev = ["pytest>=8.0", "ruff>=0.4", "fakeredis>=2.21", "redis>=5.0",
+dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.10", "fakeredis>=2.21", "redis>=5.0",
        "clayseal[oidc,a2a]"]
 
 # Ship both subpackages of the `clayseal` PEP 420 namespace, plus the `agentauth`
@@ -118,7 +120,7 @@ dev = ["pytest>=8.0", "ruff>=0.4", "fakeredis>=2.21", "redis>=5.0",
 only-include = ["clayseal/capabilities", "clayseal/core", "agentauth"]
 
 # Lint rules are PINNED rather than inherited from ruff's defaults, because
-# `ruff check clayseal` is now a CI gate and an implicit rule set makes that
+# `ruff check .` is now a CI gate and an implicit rule set makes that
 # gate change meaning whenever ruff releases. The families below are the ones
 # already firing on this tree plus the correctness core.
 [tool.ruff]
@@ -244,6 +246,26 @@ ignore = [
 # statement of what is being checked.
 "python/tests/test_decision_sinks.py" = ["RUF007"]
 "python/tests/test_suite_is_collectable.py" = ["FURB192"]
+
+[tool.mypy]
+# Without these three, `mypy clayseal` does not run at all: it stops on "Source
+# file found twice under different module names", because `clayseal/` is a PEP
+# 420 namespace package with no `__init__.py`. A contributor following the
+# obvious command got an error rather than a report, which is why there was no
+# type gate here despite 93% of the library's functions carrying annotations.
+files = ["clayseal"]
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "."
+# The optional extras (torch, jwt, spiffe, redis, boto3, httpx) are absent by
+# design in a default install, and the layering test already asserts they are
+# imported lazily. Their absence is not a type error.
+ignore_missing_imports = true
+# Deliberately NOT strict yet. There are 98 findings and none has been triaged;
+# turning on `disallow_untyped_defs` would bury them under thousands more and
+# guarantee nobody reads either. `scripts/mypy_ratchet.py` is the mechanism: the
+# count may shrink and may not grow, which is the same shape `check_claims` uses
+# for benchmark debt.
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
