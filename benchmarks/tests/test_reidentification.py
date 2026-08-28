@@ -309,7 +309,13 @@ def test_every_arm_clears_the_ladder_below(corpus):
     """
     from benchmarks.reidentification import evaluate
 
-    result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    # Guarded like `_load`: these call `evaluate` directly, so without this a
+    # missing corpus raised RuntimeError out of the nightly job instead of
+    # skipping, which is what that job's own CI comment promises it does.
+    try:
+        result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    except (RuntimeError, FileNotFoundError, SystemExit) as exc:
+        pytest.skip(f"{corpus}: {str(exc).splitlines()[0]}")
     assert result.ladder_allowed > 0
     assert result.ladder_blocked == 0, (
         f"{corpus}: {result.ladder_blocked} arm events were refused by a rung "
@@ -338,7 +344,11 @@ def test_flow_control_is_blind_to_the_aggregation_attack(corpus):
     """
     from benchmarks.reidentification import evaluate
 
-    result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    # Guarded for the reason above: a direct `evaluate` bypasses `_load`.
+    try:
+        result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    except (RuntimeError, FileNotFoundError, SystemExit) as exc:
+        pytest.skip(f"{corpus}: {str(exc).splitlines()[0]}")
     assert result.flow_checked > 0
     assert result.flow_blocked < result.flow_checked, (
         "flow control now refuses the whole read arm; if that is real rather "
