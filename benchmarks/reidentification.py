@@ -596,7 +596,7 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0, targets: int = 1,
             (k for k in carrier.args if str(k).lower() in DEFAULT_SUBJECT_KEYS),
             "user_id")
 
-        def _event(args, tag, label=EventLabel.ATTACK, idx=0):
+        def _event(args, tag, label=EventLabel.ATTACK, idx=0, i=i, carrier=carrier):
             return BenchmarkEvent(
                 event_id=f"reid-{i}-{tag}-{idx}", tool_name=carrier.tool_name,
                 resource=carrier.resource, action=carrier.action,
@@ -685,7 +685,7 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0, targets: int = 1,
         binding_tools = (carrier.tool_name,) if identity_binding else ()
         policy = _policy(subjects, binding_tools)
 
-        def _primed() -> ReidentificationMonitor:
+        def _primed(host=host, policy=policy) -> ReidentificationMonitor:
             """A monitor that has already seen the session's legitimate work.
 
             The compromise starts after the task has done its job, which is the
@@ -925,7 +925,7 @@ def main(argv: list[str] | None = None) -> int:
                 rows.append({"jitter": jitter, "perturbation_seed": s,
                              **r.to_dict()})
 
-            def _span(idx):
+            def _span(idx, cells=cells):
                 vals = [100 * c[idx] for c in cells]
                 return (f"{min(vals):.1f}-{max(vals):.1f}%" if len(vals) > 1
                         else f"{vals[0]:.1f}%")

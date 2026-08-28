@@ -122,8 +122,8 @@ def test_shuffling_the_unrelated_reads_does_not_move_a_verdict(corpus):
                 tool=scn.write.tool_name, verb=scn.write.action,
                 resource=scn.write.resource, args=dict(scn.write.args),
                 policy=policy, path=key,
-                revalidate=lambda k: content_version(base, _scalars(base))
-                if k == key else None).allowed)
+                revalidate=lambda k, base=base, key=key: content_version(
+                    base, _scalars(base)) if k == key else None).allowed)
         assert verdicts[0] == verdicts[1], (
             f"{scn.host.task_id}: the verdict moved when unrelated observations "
             f"were reordered")

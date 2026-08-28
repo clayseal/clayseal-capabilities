@@ -399,7 +399,11 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0,
             declassified_sinks=(good_sink.resource,),
         )
 
-        def _write(sink, value, tag, resource=None):
+        # `i` bound at definition, not at call. Both closures here are
+        # consumed inside this iteration today, so this changes nothing;
+        # it stops a future caller that collects them from silently
+        # attributing every arm to the last session.
+        def _write(sink, value, tag, resource=None, i=i):
             return BenchmarkEvent(
                 event_id=f"flow-{i}-{tag}", tool_name=sink.tool_name,
                 resource=resource or sink.resource, action=sink.action,
@@ -512,14 +516,14 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0,
         for arm, ev in every_event:
             result.ladder.record(arm, lower.decide(probe_task, ev))
 
-        def _tracker():
+        def _tracker(source_ev=source_ev, secret=secret, policy=policy):
             t = FlowTracker()
             t.observe(source_ev.tool_name, source_ev.resource,
                       secret, policy=policy, path=source_ev.path,
                       structured_fields={"value": secret})
             return t
 
-        def _allow(tracker, ev) -> bool:
+        def _allow(tracker, ev, policy=policy) -> bool:
             return tracker.check(
                 tool=ev.tool_name, verb=ev.action, resource=ev.resource,
                 args=ev.args, policy=policy, path=ev.path).allowed

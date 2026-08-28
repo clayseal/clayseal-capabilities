@@ -250,7 +250,7 @@ def _flow(board: Scoreboard) -> None:
                       caveat=f"NOT MEASURED: {type(exc).__name__}: {exc}")
             continue
 
-        def _by_width(arm: str) -> str:
+        def _by_width(arm: str, r=r) -> str:
             by_w = r.splits.get(arm, {})
             return "/".join(f"{by_w[w].whole_out}" for w in sorted(by_w)) or "-"
 
