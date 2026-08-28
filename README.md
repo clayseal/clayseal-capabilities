@@ -355,16 +355,40 @@ At 18 trials a cell, a zero has a 97.5% upper bound of 18.5%, so this shows we
 are not worse and cannot show more; the gap to Progent is suggestive, not
 separated.
 
-**And it costs more benign utility than Progent does.** Progent keeps more clean
-utility on three of the four suites, slack 83.3% against our 50.0%, travel 83.3%
-against 66.7%, workspace 100% against 83.3%, and ties on banking where both fall
-to 16.7%. We win security outright and lose utility. That is the trade as
-measured, and closing it while holding ASR at zero is the open problem
-([full table](benchmarks/results/head_to_head_injection.md)).
+**What that costs, measured separately and paired.** Those runs use
+`gpt-4o-mini` because it is reliably injectable, which makes it the right model
+for a security test and the wrong one for a utility test. Utility is measured on
+its own, **paired per task so only defense-caused losses count**, across four
+models and 32 clean tasks each:
 
-Both friction results are real and they are not in conflict: the 2-refused figure
-is the 132-scenario suite with no model in the loop, this one puts a live model in
-front of tasks the suite's authors never saw. Plan around the second.
+| model | undefended | with Clay Seal | cost | false-block |
+| --- | ---: | ---: | ---: | ---: |
+| gpt-4o-mini | 84% | 59% | −25 pts | 12.5% [5.0, 28.1] |
+| gpt-oss-120b | 84% | 66% | −19 pts | 9.4% [3.2, 24.2] |
+| **grok-4-1-fast** | 81% | **78%** | **−3 pts** | **6.2%** [1.7, 20.1] |
+| llama-4-maverick | 12% | 12% | 0 pts | 0.0% [0.0, 13.8] |
+
+The cost falls monotonically with model strength, and on the strongest model
+measured the **shippable** path costs 3 points where CaMeL's published cost is 7.
+**Most of what looks like the cost of enforcement is the cost of a weak agent**,
+and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
+fail with no defense present at all. The llama row is a null, not a win, a 12%
+baseline leaves nothing for a defense to cost, and it is kept here rather than
+dropped.
+
+n=32 per model, so the interval around a 3-point difference is wide. The monotone
+trend across four models carries that claim, not any single cell
+([the 4x4](benchmarks/results/live_ladder.md)).
+
+**One limit outranks all of it.** These are AgentDojo numbers, and AgentDojo
+tasks are mostly specified in the prompt. On
+[AgentDyn](benchmarks/results/agentdyn.md), where the correct next step cannot be
+known until the agent looks at what is actually there, every such step deviates
+from the sealed plan and the cost is total: 21.67 interruptions per task, which
+is not friction but a system asking permission for nearly every action. Runtime
+replanning is the fix, `SessionBroker.reclear` exists for it, and it is called
+from nowhere today. **Until that ships, this suits work whose shape is known up
+front.**
 
 Every headline result, the command that reproduces it, and the limit it does not
 cross: [benchmarks/results/README.md](benchmarks/results/README.md).

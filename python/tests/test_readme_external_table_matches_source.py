@@ -90,3 +90,75 @@ def test_the_comparison_would_notice_a_wrong_number(tables) -> None:
     bad = {s: list(cells) for s, cells in readme.items()}
     bad["banking"][3] = "99.9%"
     assert _pct(bad["banking"][3]) != _pct(source["banking"][5])
+
+
+# --- the utility 4x4, pinned to live_ladder.md -----------------------------
+
+LADDER = ROOT / "benchmarks" / "results" / "live_ladder.md"
+MODELS = ("gpt-4o-mini", "gpt-oss-120b", "grok-4-1-fast", "llama-4-maverick")
+
+
+def _model_rows(text: str, header_probe: str) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    in_table = False
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            if in_table and out:
+                break
+            continue
+        if header_probe in line:
+            in_table = True
+            continue
+        if not in_table or set(line) <= set("|-: "):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        name = cells[0].strip("* `")
+        if name in MODELS:
+            out[name] = cells
+    return out
+
+
+@pytest.fixture(scope="module")
+def utility_tables() -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    readme = _model_rows(README.read_text(), "with Clay Seal")
+    ladder = _model_rows(LADDER.read_text(), "endorse/task")
+    return readme, ladder
+
+
+def test_both_utility_tables_were_found(utility_tables) -> None:
+    """Control: an empty parse would make every assertion below vacuous."""
+    readme, ladder = utility_tables
+    assert set(readme) == set(MODELS), f"README 4x4 not parsed: {sorted(readme)}"
+    assert set(ladder) == set(MODELS), f"ladder 4x4 not parsed: {sorted(ladder)}"
+
+
+def test_readme_utility_numbers_match_the_ladder(utility_tables) -> None:
+    readme, ladder = utility_tables
+    for m in MODELS:
+        # README: model | undefended | with Clay Seal | cost | false-block
+        # ladder: Model | baseline | envelope | taint | oracle | cost | fb | endorse
+        assert _pct(readme[m][1]) == _pct(ladder[m][1]), f"{m} baseline"
+        assert _pct(readme[m][2]) == _pct(ladder[m][2]), f"{m} envelope utility"
+        assert _pct(readme[m][4]) == _pct(ladder[m][6]), f"{m} false-block"
+
+
+def test_the_quoted_cost_is_the_measured_difference(utility_tables) -> None:
+    """The cost column must be baseline minus defended, not an independent number.
+
+    Tolerance is one point, and it is not slack. Both percentages are rounded to
+    whole numbers over 32 tasks, so their printed difference can sit up to a
+    point away from the difference of the underlying fractions. gpt-oss-120b is
+    the live case: 27/32 and 21/32 differ by 18.75, printed as 84 and 66, whose
+    difference reads as 18 and whose true cost rounds to 19. A tolerance of zero
+    fails a correct table; anything above one stops catching a wrong one.
+    """
+    readme, _ = utility_tables
+    for m in MODELS:
+        stated = re.search(r"(-|−)?\s*(\d+)\s*pts", readme[m][3])
+        assert stated, f"{m}: no 'pts' figure in {readme[m][3]!r}"
+        magnitude = int(stated.group(2))
+        derived = _pct(readme[m][1]) - _pct(readme[m][2])
+        assert abs(magnitude - derived) <= 1.0, (
+            f"{m}: README states {magnitude} pts but "
+            f"{readme[m][1]} - {readme[m][2]} is {derived}"
+        )
