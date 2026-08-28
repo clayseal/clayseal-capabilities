@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Every branch, not only the default one. Scoping this to `main` meant a
+  # contributor pushing a branch got no signal until they opened a pull request,
+  # and it meant a red 3.10 leg on main was the only place anything was reported.
   push:
-    branches: [main, master]
   pull_request:
   # Lets the slow invariant job be triggered by hand without waiting for the cron.
   workflow_dispatch:
