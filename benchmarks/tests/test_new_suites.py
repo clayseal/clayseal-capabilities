@@ -347,8 +347,17 @@ def test_toolemu_emits_no_attack_events_and_says_why():
     so DeleteTask is the AUTHORIZED action we were labelling the attack. The same
     call is correct or harmful depending on which task it names.
     """
-    tasks = _load("toolemu")
+    tasks = list(_load("toolemu"))
     assert tasks
+    # `fetch_corpora.sh` copies a five-trace FIXTURE when the real ToolEmu assets
+    # are absent, and the fixture predates the `uncontained_reason` /
+    # `benign_side_synthetic` metadata this asserts. The loader succeeds either
+    # way, so the skip above never fires; without this guard the nightly job
+    # failed on the fallback rather than on the corpus.
+    if len(tasks) < 30:
+        pytest.skip(
+            f"toolemu: {len(tasks)} tasks, the fixture fallback rather than the "
+            "corpus; this asserts a property of the corpus")
     assert not any(e.label is EventLabel.ATTACK for t in tasks for e in t.events)
     assert all(t.meta.get("uncontained_reason") for t in tasks)
     assert all(t.meta.get("benign_side_synthetic") for t in tasks)
