@@ -84,7 +84,20 @@ class MondrianConformal:
     defensible p-value instead of a degenerate one.
     """
 
+    #: A bucket must hold at least this many points to be used on its own.
+    #: Kept as a floor on statistical sanity; `alpha` below is what makes the
+    #: choice correct rather than merely conventional.
     min_per_bucket: int = 20
+    #: The alpha this calibrator's tier will be gated at, when known.
+    #:
+    #: Without it the fallback is a bare count, and 20 is only right by
+    #: coincidence: alpha=0.05 needs 19 points to be reachable at all, so 20
+    #: clears it. At alpha=0.01 the requirement is 99, a bucket of 20 would
+    #: still be preferred over a larger pool, and the tier would be silently
+    #: incapable of firing. Setting this makes the fallback ask the question
+    #: that matters, "can this calibration set reach the alpha it is judged
+    #: against", instead of a question that happens to correlate with it.
+    alpha: float | None = None
     _buckets: dict[str, ConformalCalibrator] = field(default_factory=dict)
     _pooled: ConformalCalibrator = field(default_factory=ConformalCalibrator)
 
@@ -102,6 +115,12 @@ class MondrianConformal:
     def _calibrator(self, bucket: str) -> ConformalCalibrator:
         cal = self._buckets.get(bucket)
         if cal is None or cal.n < self.min_per_bucket:
+            return self._pooled
+        if self.alpha is not None and not cal.can_reach(self.alpha):
+            # The bucket is big enough by count and still cannot produce a
+            # p-value at this alpha. Prefer the pool, which is never smaller.
+            # If the pool cannot reach it either the tier is inert, and that is
+            # reported rather than hidden: see TrajectoryDetector.inert_tiers.
             return self._pooled
         return cal
 

@@ -127,3 +127,28 @@ def test_foreign_structured_destination_hard_denies():
     b = _broker(provenance=p, goal_named_objects={"payees.json"})
     d = b.authorize(_send("collector@evil.test"))
     assert d.outcome is Outcome.DENY
+
+
+def test_the_enumerated_recipient_list_binds_on_the_provenance_path_too():
+    """`broker.py` picks ONE egress path, so a rule on the other is unenforced.
+
+    `_egress_floor` calls `check_with_provenance` when provenance is present and
+    `check` when it is not. They are alternatives, not layers. The enumerated
+    address block existed only in `check`, so every deployment with provenance
+    on, which is what `DeployableStack` builds, fell back to the domain grant
+    and delivered payroll to the wrong mailbox on the right domain.
+
+    The gap survived a dedicated test file and a named BPL scenario because both
+    constructed a broker WITHOUT provenance. This asserts the verdict is the
+    same whichever path the dispatch takes.
+    """
+    args = {"to": "all-hands@corp.example", "body": "PAYROLL: Ada=..."}
+    action = Action(step=0, tool="send_email", resource="mcp:tool:send_email",
+                    verb="send", args=args)
+
+    without = _broker().authorize(action)
+    with_provenance = _broker(provenance=ParameterProvenance()).authorize(action)
+
+    assert without.outcome is Outcome.DENY
+    assert with_provenance.outcome is Outcome.DENY, (
+        "the provenance path allowed a mailbox the policy did not enumerate")

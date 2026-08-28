@@ -100,3 +100,98 @@ def test_the_domain_check_does_read_the_body_and_this_is_pre_existing():
          "body": "Ada <ada@personal.example>"})
     assert not ok
     assert "personal.example" in reason
+
+
+# --------------------------------------------------------------------------- #
+# The same declaration must bind on BOTH paths
+#
+# `check` and `check_with_provenance` are alternatives, not layers: `broker.py`
+# calls the second whenever provenance is enabled and the first otherwise, so
+# whichever one is missing a rule is missing it for that whole deployment. The
+# enumerated-recipient block above lived only in `check`, which is the path a
+# deployment takes when it has NO provenance. `DeployableStack` enables
+# provenance, so the product path dropped the narrower declaration and fell back
+# to the domain. On identical arguments the two disagreed outright:
+#
+#     check()                 deny: recipient 'all-hands@...' not on allow-list
+#     check_with_provenance() allow: egress within policy
+#
+# The BPL scenario named for this, `same-domain-wrong-mailbox`, constructs
+# `SessionBroker(goal=..., scope=None, egress=egress)` with no provenance, so it
+# exercised the path that was already correct and reported containment for a
+# configuration the product does not run. That is the whole reason the gap
+# survived having a test and a benchmark scenario both pointed at it.
+#
+# These tests take the verdict from both paths on one input, so a rule that
+# reaches only one of them fails here rather than in a deployment.
+# --------------------------------------------------------------------------- #
+def _both_paths(policy, args, *, goal_named=frozenset()):
+    """(check verdict, check_with_provenance verdict), normalised to allow/deny."""
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
+
+    ok, _ = policy.check("mcp:tool:send_email", args)
+    verdict, _ = policy.check_with_provenance(
+        "mcp:tool:send_email", args,
+        provenance=ParameterProvenance(), goal_named_objects=set(goal_named))
+    return ("allow" if ok else "deny"), verdict
+
+
+def test_the_named_mailbox_is_allowed_on_both_paths():
+    assert _both_paths(
+        _mailbox_policy(),
+        {"to": "finance-reports@acme-internal.com", "body": "payroll"},
+    ) == ("allow", "allow")
+
+
+def test_the_wrong_mailbox_is_refused_on_both_paths():
+    """The regression this section exists for.
+
+    An ungrounded address, which is what an injected recipient is before the
+    agent has read anything, must not reach a send on either path.
+    """
+    assert _both_paths(
+        _mailbox_policy(),
+        {"to": "all-hands@acme-internal.com", "body": "PAYROLL: Ada=..."},
+    ) == ("deny", "deny")
+
+
+def test_a_policy_naming_no_addresses_is_unchanged_on_both_paths():
+    """The gate stays where it was: enumerate no address and nothing narrows.
+
+    Pinned on both paths so the fix above cannot tighten a deployment that never
+    declared a recipient list.
+    """
+    policy = EgressPolicy(bind_recipients=True, allow_all=False,
+                          allowed_domains={"acme-internal.com"},
+                          allowed_recipients=set())
+    assert _both_paths(
+        policy, {"to": "anyone@acme-internal.com", "body": "x"},
+    ) == ("allow", "allow")
+
+
+def test_a_grounded_wrong_mailbox_steps_up_rather_than_denying():
+    """Provenance earns supervision on the address path too.
+
+    The point of the provenance path is that a recipient the agent legitimately
+    discovered at runtime is recoverable under a person rather than refused
+    outright. That has to hold for an enumerated-address miss as well, otherwise
+    turning on the narrower declaration would convert every runtime-discovered
+    recipient into a hard denial.
+    """
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
+
+    provenance = ParameterProvenance()
+    provenance.record_observation(
+        "lookup_directory",
+        "Finance AP contact",
+        structured_fields={"email": "finance-ap@acme-internal.com"},
+        goal_named=True,
+        containing_object="directory",
+    )
+    verdict, reason = _mailbox_policy().check_with_provenance(
+        "mcp:tool:send_email",
+        {"to": "finance-ap@acme-internal.com", "body": "payroll"},
+        provenance=provenance,
+        goal_named_objects={"directory"},
+    )
+    assert verdict == "step_up", reason

@@ -108,6 +108,28 @@ this alpha. The arithmetic floor needs 19; `fit` is split-conformal and Mondrian
 partitions per bucket, so reaching it takes between 40 and 60. The benchmark
 harness fits on 25 to 30.
 
+**The per-bucket fallback was asking the wrong question, and it is fixed.**
+`MondrianConformal` prefers a bucket's own calibrator once it holds
+`min_per_bucket = 20` points. That count is right only at `alpha = 0.05`, where
+19 points make the alpha reachable, and it is right by coincidence. At
+`alpha = 0.01` the requirement is 99, so a bucket of 20 was still preferred over
+a much larger pool and the tier could never fire **at any corpus size**. The
+fallback now consults the alpha the tier will be judged at and defers to the
+pool, which is never smaller, whenever the bucket cannot reach it. The detector
+sets `alpha` on all three calibrators at fit time.
+
+Measured effect, benign trajectories needed before the scorer tier is live:
+
+| alpha | before | after |
+| --- | --- | --- |
+| 0.05 | ~60 | ~60 |
+| 0.01 | never | ~400 |
+
+Nothing published moves: at the corpus sizes these results were produced on the
+tier was inert before and is inert now, and the full scoreboard is byte-identical.
+What changes is that a deployment tightening alpha is told its behavioural tier
+went dark instead of discovering it during an incident.
+
 **The scorer slot contributes nothing to the detector's published result.**
 Measured on SLEIGHT trajectories, holding everything else fixed:
 
