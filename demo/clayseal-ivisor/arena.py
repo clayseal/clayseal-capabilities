@@ -26,7 +26,6 @@ import re
 import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 
 import engine
@@ -270,7 +269,7 @@ def summary(run: LiveRun) -> None:
     # scenarios whose win is a non-event rather than a verdict line
     if run.scen.id == "06-audit-evasion":
         forged = any("6.6.6.6" in ln for ln in run.raw)
-        print(f"  unforgeability          : "
+        print("  unforgeability          : "
               + (RED("FAILED, forged verdict entered the stream") if forged
                  else GRN("HELD") + DIM("  (guest fd 3 = OSError; forged verdict absent from the channel)")))
     if c["clayseal_only"]:
@@ -370,7 +369,7 @@ def list_roster() -> None:
     for s in S.ROSTER:
         print(f"  {BOLD(s.id):<28} {s.name}")
         print(f"  {'':<20} {DIM(' · '.join(s.attack))}")
-    print(DIM(f"\n  run:  python arena.py run <id> [--audit]   ·   all:  python arena.py all\n"))
+    print(DIM("\n  run:  python arena.py run <id> [--audit]   ·   all:  python arena.py all\n"))
 
 
 def main() -> None:

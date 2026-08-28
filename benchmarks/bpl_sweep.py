@@ -78,8 +78,8 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
         # why it is stated before it is measured.
-        from agentauth.capabilities.confidentiality import FlowTracker
         from benchmarks.bpl.sensitivity import derive
+        from clayseal.capabilities.confidentiality import FlowTracker
 
         broker.sensitivity = derive(scen)
         broker.flow = FlowTracker()
@@ -93,7 +93,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
                 name, dict(args or {}), step, verb_fn=verb_fn,
                 step_up=step_up, outcomes=outcomes,
                 observe_results=observe_results)
-        except Exception as exc:                       # noqa: BLE001
+        except Exception as exc:
             # A gate that raises has not contained anything; it has crashed. It
             # must never be scored as a block, which would make an exception
             # look like a defense, the exact shape of the six fail-opens this
@@ -538,7 +538,7 @@ def _label_free(rows: list[dict]) -> None:
         scen = get_scenario(name)
         try:
             src = inspect.getsource(scen.make_broker)
-        except Exception:  # noqa: BLE001 - a scenario without a readable builder
+        except Exception:
             return False
         return any(k in src for k in ("SessionValueBudget", "SessionCallBudget",
                                       "value_budget", "call_budget"))
@@ -682,7 +682,7 @@ def main(argv=None) -> int:
         # Re-expressing the same intent in the vocabulary the classifier emits
         # separates containment that DISCRIMINATES from containment that is a
         # blanket refusal of everything write-shaped.
-        from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
+        from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
 
         _canon = frozenset({"read", "call", "write", "transfer", "send"})
         _orig = IntentEnvelope.__init__

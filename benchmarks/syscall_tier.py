@@ -30,7 +30,7 @@ from scenarios import ROSTER
 
 
 def _action_from_event(event):
-    from agentauth.capabilities.monitor import Action
+    from clayseal.capabilities.monitor import Action
     return Action(
         step=0,
         tool=event.tool,

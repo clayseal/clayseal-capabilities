@@ -32,7 +32,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-from agentauth.capabilities.monitor.aml import peer_z_score
+from clayseal.capabilities.monitor.aml import peer_z_score
 
 # Columns in IBM AML *_Trans.csv: Timestamp, From Bank, Account(from), To Bank,
 # Account(to), Amount Received, Receiving Currency, Amount Paid, Payment Currency,

@@ -15,12 +15,14 @@ import random
 
 import pytest
 
-from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
-from agentauth.capabilities.reidentification import (
-    PrincipalReidentificationLedger, ReidentificationMonitor,
-    ReidentificationPolicy, identifiability_bits)
-from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, EventLabel
+from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+from clayseal.capabilities.reidentification import (
+    PrincipalReidentificationLedger,
+    ReidentificationMonitor,
+    ReidentificationPolicy,
+    identifiability_bits,
+)
 
 CORPORA = ["tau2", "bfcl"]
 
@@ -307,7 +309,13 @@ def test_every_arm_clears_the_ladder_below(corpus):
     """
     from benchmarks.reidentification import evaluate
 
-    result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    # Guarded like `_load`: these call `evaluate` directly, so without this a
+    # missing corpus raised RuntimeError out of the nightly job instead of
+    # skipping, which is what that job's own CI comment promises it does.
+    try:
+        result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    except (RuntimeError, FileNotFoundError, SystemExit) as exc:
+        pytest.skip(f"{corpus}: {str(exc).splitlines()[0]}")
     assert result.ladder_allowed > 0
     assert result.ladder_blocked == 0, (
         f"{corpus}: {result.ladder_blocked} arm events were refused by a rung "
@@ -336,7 +344,11 @@ def test_flow_control_is_blind_to_the_aggregation_attack(corpus):
     """
     from benchmarks.reidentification import evaluate
 
-    result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    # Guarded for the reason above: a direct `evaluate` bypasses `_load`.
+    try:
+        result = evaluate(corpus, count=250, seed=0, run_evasions=False)
+    except (RuntimeError, FileNotFoundError, SystemExit) as exc:
+        pytest.skip(f"{corpus}: {str(exc).splitlines()[0]}")
     assert result.flow_checked > 0
     assert result.flow_blocked < result.flow_checked, (
         "flow control now refuses the whole read arm; if that is real rather "
@@ -396,7 +408,12 @@ def test_session_containment_does_not_depend_on_event_order(corpus):
     must not.
     """
     from benchmarks.reidentification import (
-        _STRANGERS, _TRIPLE, _carrier, _person_args, _subject_values)
+        _STRANGERS,
+        _TRIPLE,
+        _carrier,
+        _person_args,
+        _subject_values,
+    )
 
     _, carriers = _load(corpus)
     rnd = random.Random(20260809)
@@ -412,7 +429,7 @@ def test_session_containment_does_not_depend_on_event_order(corpus):
                                 subject_value=p["subject"]))
                   for p in _STRANGERS[:3]]
 
-        def _blocked(calls):
+        def _blocked(calls, policy=policy):
             monitor = ReidentificationMonitor()
             return any(not monitor.check(tool=t, args=a, policy=policy).allowed
                        for t, a in calls)

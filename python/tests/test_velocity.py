@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.velocity import (
+from clayseal.capabilities.velocity import (
     EFFECT_VERBS,
     SessionVelocity,
     VelocityConfig,
@@ -24,7 +24,7 @@ from agentauth.capabilities.velocity import (
 
 def _limiter(max_actions: int, window: float = 3600.0) -> SessionVelocity:
     return SessionVelocity(config=VelocityConfig(
-        limits={verb: (max_actions, window) for verb in EFFECT_VERBS}))
+        limits=dict.fromkeys(EFFECT_VERBS, (max_actions, window))))
 
 
 def _run(limiter: SessionVelocity, n: int, verb: str = "send", now: float = 0.0) -> int:
@@ -236,8 +236,7 @@ def test_a_session_scoped_cap_is_reset_by_opening_another_session():
 
 
 def test_a_principal_scoped_cap_survives_new_sessions():
-    from agentauth.capabilities.velocity import (
-        PrincipalVelocity, PrincipalVelocityView)
+    from clayseal.capabilities.velocity import PrincipalVelocity, PrincipalVelocityView
 
     mandate = {"velocity": {"effect": {"max": 7, "window_seconds": 3600}}}
     ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
@@ -249,8 +248,7 @@ def test_a_principal_scoped_cap_survives_new_sessions():
 
 
 def test_one_principal_does_not_consume_another_principals_rate():
-    from agentauth.capabilities.velocity import (
-        PrincipalVelocity, PrincipalVelocityView)
+    from clayseal.capabilities.velocity import PrincipalVelocity, PrincipalVelocityView
 
     mandate = {"velocity": {"effect": {"max": 3, "window_seconds": 3600}}}
     ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
@@ -261,8 +259,7 @@ def test_one_principal_does_not_consume_another_principals_rate():
 
 
 def test_the_principal_window_still_slides():
-    from agentauth.capabilities.velocity import (
-        PrincipalVelocity, PrincipalVelocityView)
+    from clayseal.capabilities.velocity import PrincipalVelocity, PrincipalVelocityView
 
     mandate = {"velocity": {"effect": {"max": 2, "window_seconds": 100}}}
     ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)
@@ -280,8 +277,7 @@ def test_a_patient_attacker_below_the_declared_rate_is_not_contained():
     100% means 100% of bursts ABOVE the declared rate, and quoting it without
     this sentence would overstate it.
     """
-    from agentauth.capabilities.velocity import (
-        PrincipalVelocity, PrincipalVelocityView)
+    from clayseal.capabilities.velocity import PrincipalVelocity, PrincipalVelocityView
 
     mandate = {"velocity": {"effect": {"max": 7, "window_seconds": 3600}}}
     ledger = PrincipalVelocity(config=velocity_from_mandate(mandate).config)

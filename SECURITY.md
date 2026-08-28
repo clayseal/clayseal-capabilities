@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report privately through [GitHub Security
-Advisories](https://github.com/pberlizov/clay-seal-capabilities/security/advisories/new).
+Advisories](https://github.com/pberlizov/clayseal/security/advisories/new).
 Please do not open a public issue for anything that would let an agent get past
 a control.
 
@@ -70,7 +70,7 @@ model rather than by an external report:
 
 - The intent envelope accepted any keyholder when `trusted_keys` was unset, and
   the envelope is the object `reclear` swaps mid-session.
-- The step-up approval honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1`, so one
+- The step-up approval honoured `CLAYSEAL_STEP_UP_ALLOW_UNSIGNED=1`, so one
   environment variable turned a refusal into a grant.
 
 Both are fixed and both are in [CHANGELOG.md](CHANGELOG.md). We publish these

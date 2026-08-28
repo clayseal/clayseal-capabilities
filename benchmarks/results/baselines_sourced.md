@@ -1,5 +1,13 @@
 # Published baselines, sourced
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Every figure here was read from the paper or from one of our own results files.
 Nothing is estimated. Where a cell is still unsourced it says so, because a
 mis-attributed competitor number is worse than a missing one.
@@ -162,7 +170,7 @@ ground-truth pattern labels) fan-out recall is Multi-GIN+EU 95.42, Multi-PNA
 
 **We lose, and the first refutation is our own data.** The draft cell rested on
 a version of `benchmarks/results/flow.md` that predated both `benchmarks/flow.py`
-and `agentauth/capabilities/confidentiality.py`. That file tested 8 evasion
+and `clayseal/capabilities/confidentiality.py`. That file tested 8 evasion
 shapes and 2 split families. It has since been rewritten from a full
 re-measurement and now agrees with the runs below; the counts here stand.
 The current runs test 22 evasion shapes and 7 split families and disagree with

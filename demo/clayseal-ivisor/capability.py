@@ -16,10 +16,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
-from agentauth.capabilities.monitor import TypedGoalEnvelope
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope, task_scope_allows_path
+from clayseal.capabilities.call_budget import CallBudgetConfig, SessionCallBudget
+from clayseal.capabilities.monitor import TypedGoalEnvelope
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope, task_scope_allows_path
 
 
 @dataclass

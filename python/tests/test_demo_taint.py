@@ -1,6 +1,6 @@
 """Taint links destinations, not payloads, and why that distinction matters."""
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.provenance import TaintTracker
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.provenance import TaintTracker
 from demo.taint import derive_sources, destinations_in_args, untrusted_return
 
 SEALED = ("Triage the open support tickets and email a summary to "

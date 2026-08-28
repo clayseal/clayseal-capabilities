@@ -2,9 +2,8 @@
 and demotion of the statistical detector to a sensor."""
 from __future__ import annotations
 
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import (
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import (
     Action,
     Deviation,
     IntentEnvelope,
@@ -12,7 +11,8 @@ from agentauth.capabilities.monitor import (
     is_consequential,
     is_effectful,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _pay_flow_goal() -> GoalSpec:
@@ -70,7 +70,7 @@ def test_off_tool_is_flagged():
 def _partial_order_env() -> IntentEnvelope:
     """Three phases: read_balance (0) and read_iban (1) are independent; pay (2)
     genuinely requires read_iban. The only real edge is 1 -> 2."""
-    from agentauth.capabilities.monitor import Phase
+    from clayseal.capabilities.monitor import Phase
     return IntentEnvelope(
         allowed_tools=frozenset({"read_balance", "read_iban", "pay"}),
         allowed_verbs=frozenset(), allowed_resource_classes=frozenset(),

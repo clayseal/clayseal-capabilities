@@ -6,7 +6,7 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     ignore:
-      - dependency-name: "agentauth-*"
+      - dependency-name: "agentauth-identity"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

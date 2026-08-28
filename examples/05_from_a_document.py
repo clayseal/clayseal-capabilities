@@ -17,10 +17,10 @@ The command-line version of the same thing, against a server you actually run:
 """
 from __future__ import annotations
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy_text
-from agentauth.capabilities.policy_draft import extract, to_yaml
-from agentauth.capabilities.policy_scaffold import read_catalog
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy_text
+from clayseal.capabilities.policy_draft import extract, to_yaml
+from clayseal.capabilities.policy_scaffold import read_catalog
 
 # What the organisation permits. Nobody wrote this for an agent.
 DOCUMENT = """\

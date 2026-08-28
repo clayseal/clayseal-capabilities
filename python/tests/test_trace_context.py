@@ -14,11 +14,11 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.http_gateway import HttpGateway
-from agentauth.capabilities.mcp_proxy import McpProxy
-from agentauth.capabilities.policy import load_policy_text
-from agentauth.capabilities.trace import MAX_TRACESTATE, TraceContext
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.http_gateway import HttpGateway
+from clayseal.capabilities.mcp_proxy import McpProxy
+from clayseal.capabilities.policy import load_policy_text
+from clayseal.capabilities.trace import MAX_TRACESTATE, TraceContext
 
 VALID = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 
@@ -125,7 +125,7 @@ def test_a_malformed_header_leaves_the_receipt_honest():
 
 
 def test_the_in_process_adapter_takes_one_too():
-    from agentauth.capabilities.guardrail import Guardrail
+    from clayseal.capabilities.guardrail import Guardrail
 
     guard = Guardrail.from_policy(load_policy_text(
         "version: 1\ngoal: {id: g, summary: s}\n"

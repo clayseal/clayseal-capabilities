@@ -9,7 +9,7 @@ observation produced the value, not what kind of field it sat in.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.parameter_provenance import ParameterProvenance
+from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
 
 def _prov() -> ParameterProvenance:
@@ -126,7 +126,7 @@ def test_trusted_candidates_are_structured_values_only():
 # DestinationTrust product matrix
 # --------------------------------------------------------------------------- #
 def test_check_destination_trusted_structured_allows():
-    from agentauth.capabilities.parameter_provenance import DestinationTrust
+    from clayseal.capabilities.parameter_provenance import DestinationTrust
 
     p = _prov()
     p.record_observation(
@@ -140,7 +140,7 @@ def test_check_destination_trusted_structured_allows():
 
 
 def test_check_destination_free_text_goal_named_steps_up():
-    from agentauth.capabilities.parameter_provenance import DestinationTrust
+    from clayseal.capabilities.parameter_provenance import DestinationTrust
 
     p = _prov()
     p.record_observation(
@@ -154,7 +154,7 @@ def test_check_destination_free_text_goal_named_steps_up():
 
 def test_check_destination_foreign_structured_denies():
     """Structured on a foreign page is not slot-ALLOW (correct-tool, wrong source)."""
-    from agentauth.capabilities.parameter_provenance import DestinationTrust
+    from clayseal.capabilities.parameter_provenance import DestinationTrust
 
     p = _prov()
     p.record_observation(
@@ -168,7 +168,7 @@ def test_check_destination_foreign_structured_denies():
 
 
 def test_check_destination_ungrounded_denies():
-    from agentauth.capabilities.parameter_provenance import DestinationTrust
+    from clayseal.capabilities.parameter_provenance import DestinationTrust
 
     trust, reason = _prov().check_destination("invented@nowhere.test")
     assert trust is DestinationTrust.DENY

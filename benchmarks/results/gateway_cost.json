@@ -1,0 +1,39 @@
+{
+  "throughput": {
+    "small": {
+      "n": 20000,
+      "per_call_us": 34.1,
+      "per_second": 29331
+    },
+    "16kb": {
+      "n": 2000,
+      "per_call_us": 206.5,
+      "per_second": 4842
+    }
+  },
+  "scaling": {
+    "calls": 4000,
+    "bucket_size": 500,
+    "median_us_per_bucket": [
+      31.08,
+      31.04,
+      31.0,
+      31.04,
+      31.13,
+      31.08,
+      31.04,
+      31.08
+    ],
+    "last_over_first": 1.0
+  },
+  "cold_start": {
+    "bare_interpreter_ms": 19.4,
+    "import_ms": 21.9,
+    "package_cost_ms": 2.5
+  },
+  "memory": {
+    "per_idle_session_kb": 11.7,
+    "calls": 2000,
+    "bytes_per_call": 1182
+  }
+}

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.core.task_scope import normalize_scope_path, path_matches_any
+from clayseal.core.task_scope import normalize_scope_path, path_matches_any
 
 WORKSPACE = ["app/**", "/app/**"]
 

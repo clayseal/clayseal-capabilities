@@ -20,7 +20,7 @@ running session's plan is WIDENED, so a self-signed envelope replaced the sealed
 plan wholesale, and every later conformance check then measured the agent against
 the attacker's plan.
 
-**The step-up approval** honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1` in
+**The step-up approval** honoured `CLAYSEAL_STEP_UP_ALLOW_UNSIGNED=1` in
 production. An approval is the one object in the protocol whose whole job is to
 grant something the floor refused, and one environment variable turned off its
 authentication. Its siblings were already in the production deny-list; this one
@@ -32,13 +32,13 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
-from agentauth.capabilities.monitor.intent_envelope import (
+from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
+from clayseal.capabilities.monitor.intent_envelope import (
     IntentEnvelope,
     sign_intent_envelope,
     verify_intent_envelope,
 )
-from agentauth.capabilities.step_up import (
+from clayseal.capabilities.step_up import (
     ALLOW_UNSIGNED_ENV,
     StepUpApproval,
     apply_step_up,
@@ -46,12 +46,12 @@ from agentauth.capabilities.step_up import (
     build_step_up_request,
     sign_step_up_approval,
 )
-from agentauth.core.runtime import (
+from clayseal.core.runtime import (
     ActionDescriptor,
     AuthorityContext,
     ExecutionContext,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 
 @pytest.fixture
@@ -61,14 +61,14 @@ def production(monkeypatch):
     Named `production` because that is the posture it produces. The point of the
     fixture is that it sets nothing.
     """
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
 
 
 @pytest.fixture
 def named_production(monkeypatch):
     """An explicitly named production environment behaves identically."""
-    monkeypatch.setenv("AGENTAUTH_ENV", "production")
+    monkeypatch.setenv("CLAYSEAL_ENV", "production")
 
 
 def _envelope():
@@ -135,8 +135,8 @@ def test_reclear_refuses_an_unpinned_envelope_in_production(production):
     any keyholder means an attacker who reaches it replaces the sealed goal's
     plan, and every later conformance check measures against theirs.
     """
-    from agentauth.capabilities.broker import SessionBroker
-    from agentauth.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.broker import SessionBroker
+    from clayseal.capabilities.scoping.goal import GoalSpec
 
     broker = SessionBroker(goal=GoalSpec(query_id="q", summary="pay invoices"))
     before = broker.intent_envelope
@@ -158,7 +158,7 @@ def test_development_still_accepts_an_unpinned_envelope(monkeypatch):
     posture; the relaxed one has to be asked for by name, and `fail_closed()`
     warns once per process when it is.
     """
-    monkeypatch.setenv("AGENTAUTH_ENV", "development")
+    monkeypatch.setenv("CLAYSEAL_ENV", "development")
     signed = sign_intent_envelope(_envelope(), key=generate_keypair())
     assert verify_intent_envelope(signed) == (True, None)
 

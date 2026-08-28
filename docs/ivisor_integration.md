@@ -89,7 +89,7 @@ pure decision function; one tool call yields hundreds of syscalls, and those are
 *evidence about an authorized action*, not new authorization requests. Feeding
 them back through `authorize()` would double-count the trajectory.
 
-Modules (`agentauth/capabilities/sandbox/`):
+Modules (`clayseal/capabilities/sandbox/`):
 
 | Module | Role |
 |---|---|

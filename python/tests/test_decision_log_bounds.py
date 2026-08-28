@@ -10,7 +10,7 @@ does not, and the head hash still covers everything ever appended.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.decision_log import DEFAULT_MAX_RECORDS, DecisionLog
+from clayseal.capabilities.decision_log import DEFAULT_MAX_RECORDS, DecisionLog
 
 
 def _append(log: DecisionLog, n: int, start: int = 0) -> None:

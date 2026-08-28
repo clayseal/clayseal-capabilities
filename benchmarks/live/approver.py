@@ -17,7 +17,7 @@ human is another sampling problem.
 
 Every approver signs with a real key and goes through
 `SessionBroker.resolve_step_up`. The harness must **not** set
-`AGENTAUTH_STEP_UP_ALLOW_UNSIGNED`, or the measured path stops being the deployed
+`CLAYSEAL_STEP_UP_ALLOW_UNSIGNED`, or the measured path stops being the deployed
 path and the numbers describe a system nobody ships.
 
 ## The one that matters
@@ -31,20 +31,26 @@ into a security column, which is the point of pricing attention at all.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
-from agentauth.capabilities.step_up import (
+from clayseal.capabilities.step_up import (
     SignedStepUpApproval,
     StepUpApproval,
     StepUpRequest,
     sign_step_up_approval,
 )
-from agentauth.core.signing import generate_keypair
+from clayseal.core.signing import generate_keypair
 
 __all__ = [
-    "Approver", "NeverApprove", "AlwaysApprove", "OracleApprover",
-    "FatiguedApprover", "GullibleApprover", "BudgetedApprover", "build_approver",
+    "AlwaysApprove",
+    "Approver",
+    "BudgetedApprover",
+    "FatiguedApprover",
+    "GullibleApprover",
+    "NeverApprove",
+    "OracleApprover",
+    "build_approver",
 ]
 
 

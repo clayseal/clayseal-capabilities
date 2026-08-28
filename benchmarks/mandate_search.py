@@ -39,8 +39,8 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.mandate_lint import lint_mandate
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.mandate_lint import lint_mandate
+from clayseal.capabilities.value_budget import (
     EffectSpec,
     SessionValueBudget,
     ValueBudgetConfig,

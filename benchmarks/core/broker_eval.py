@@ -12,14 +12,12 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from agentauth.capabilities.deployable_stack import DeployableStack, StackDecision
-
-from benchmarks.core.stack_factory import stack_from_benchmark_task
-from agentauth.capabilities.monitor.action import Action
 from benchmarks.core.detector_eval import _goal_for, task_to_trajectories
 from benchmarks.core.events import EventLabel
-from benchmarks.core.runner import EngineResult, _EGRESS_ACTIONS, _WRITE_ACTIONS
-
+from benchmarks.core.runner import _EGRESS_ACTIONS, _WRITE_ACTIONS, EngineResult
+from benchmarks.core.stack_factory import stack_from_benchmark_task
+from clayseal.capabilities.deployable_stack import DeployableStack, StackDecision
+from clayseal.capabilities.monitor.action import Action
 
 STACK_NAME = "deployable-stack"
 
@@ -173,7 +171,7 @@ def run_broker_benchmark(
     # Cross-task session memory (multi_session SLEIGHT): model→results symlinks
     # harvested from attack plans persist so a later zip-without--y STEP_UPs.
     # Shared packaging taints across tasks (multi-session coding corpora).
-    from agentauth.capabilities.session_memory import SessionMemory
+    from clayseal.capabilities.session_memory import SessionMemory
 
     shared_session = SessionMemory()
     for task in tasks:

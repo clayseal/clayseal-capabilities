@@ -14,10 +14,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import compile_task_scope
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import compile_task_scope
 
 PAST = (datetime.now(timezone.utc) - timedelta(days=400)).isoformat()
 FUTURE = (datetime.now(timezone.utc) + timedelta(days=400)).isoformat()

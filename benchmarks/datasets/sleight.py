@@ -212,7 +212,7 @@ def _authorized_surface(events) -> list[str]:
     """
     import posixpath
 
-    from agentauth.capabilities.monitor.sealed_plan import extract_destinations
+    from clayseal.capabilities.monitor.sealed_plan import extract_destinations
 
     out: set[str] = set()
     for event in events:
@@ -254,7 +254,7 @@ def _workspace_of(path: Path) -> str:
 _HEREDOC = re.compile(
     r"<<-?\s*[\"']?(?P<tag>[A-Za-z_][A-Za-z0-9_]*)[\"']?\s*?\n"
     r"(?P<body>.*?)^\s*(?P=tag)\s*$",
-    re.S | re.M,
+    re.DOTALL | re.MULTILINE,
 )
 
 # Where one command ends and the next begins. Best-effort: quoting is not tracked
@@ -329,7 +329,7 @@ def _net_target(segment: str, head: str, args: list[str]) -> str | None:
         return None
     if head in {"aws", "gsutil", "gcloud", "rclone", "az"}:
         # Object-store destination beats a local source path in the same argv.
-        m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", segment, re.I)
+        m = re.search(r"(?P<scheme>s3|gs)://(?P<bucket>[a-z0-9.\-_]+)", segment, re.IGNORECASE)
         if m:
             return f"net:{m.group('scheme').lower()}:{m.group('bucket')}"
         url = _URL.search(segment)

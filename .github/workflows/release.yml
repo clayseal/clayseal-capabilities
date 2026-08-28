@@ -1,0 +1,142 @@
+name: Release
+
+# Publishes to PyPI when a version tag is pushed.
+#
+# There is no API token anywhere in this repository or in its secrets. PyPI's
+# trusted publishing exchanges the workflow's OIDC identity for a short-lived
+# upload token, so the credential does not exist between releases and cannot be
+# copied out of a settings page. For a library whose whole job is authority,
+# holding a long-lived upload token would be the wrong example to set.
+#
+# One-time setup on pypi.org, under the project's Publishing settings:
+#   owner:       pberlizov
+#   repository:  clayseal
+#   workflow:    release.yml
+#   environment: pypi
+# See docs/RELEASING.md.
+
+on:
+  push:
+    tags: ["v*"]
+  # Lets a release be re-run against TestPyPI without moving a tag.
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Where to publish"
+        required: true
+        default: testpypi
+        type: choice
+        options: [testpypi, pypi]
+
+jobs:
+  # The tag is not evidence. Build first, and refuse to publish anything the
+  # test suite and the tag itself do not agree on.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: pip install -e ".[dev,redis]"
+
+      - name: Tests must pass on the exact commit being released
+        run: pytest python/tests -q
+
+      - name: Lint
+        run: |
+          pip install ruff
+          ruff check clayseal agentauth
+
+      - name: Build
+        run: |
+          pip install build
+          python -m build --outdir dist/ .
+
+      # A tag that disagrees with pyproject ships a version nobody can reproduce
+      # from the source tree. Fail here rather than after upload, which cannot be
+      # undone: PyPI does not allow re-uploading a version, only yanking it.
+      - name: The tag and pyproject must name the same version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          DIST=$(ls dist/*.whl | sed -E 's/.*clayseal-([^-]+)-py3.*/\1/')
+          echo "tag=$TAG  built=$DIST"
+          test "$TAG" = "$DIST" || {
+            echo "::error::tag $TAG does not match built version $DIST"; exit 1; }
+
+      - name: The wheel has to work as a wheel
+        run: |
+          mkdir -p /tmp/clean && cd /tmp/clean
+          pip install "$GITHUB_WORKSPACE"/dist/*.whl
+          python - <<'PY'
+          import importlib, pkgutil, sys
+          import clayseal.capabilities, clayseal.core
+          failed = []
+          mods = []
+          for pkg in (clayseal.core, clayseal.capabilities):
+              mods += list(pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."))
+          for mod in mods:
+              try:
+                  importlib.import_module(mod.name)
+              except ImportError as exc:
+                  if any(x in str(exc) for x in ("torch", "jwt", "spiffe", "redis",
+                                                 "boto3", "rfc8785", "httpx",
+                                                 "agentauth.identity")):
+                      continue
+                  failed.append((mod.name, exc))
+              except Exception as exc:
+                  failed.append((mod.name, exc))
+          for name, exc in failed:
+              print(f"FAIL {name}: {type(exc).__name__}: {exc}", file=sys.stderr)
+          sys.exit(1 if failed else 0)
+          PY
+          # And the deprecation shim, which only exists in the built artifact.
+          python -c "
+          import warnings
+          with warnings.catch_warnings(record=True) as w:
+              warnings.simplefilter('always')
+              import agentauth.capabilities
+              assert any(issubclass(x.category, DeprecationWarning) for x in w), w
+          import clayseal.capabilities as r, agentauth.capabilities as s
+          assert r is s, 'the alias is a copy, not the module'
+          print('shim ok')
+          "
+
+      - name: Check the distribution's metadata
+        run: |
+          pip install twine
+          twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  testpypi:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {name: dist, path: dist/}
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+    environment: pypi
+    permissions:
+      id-token: write          # the OIDC token; nothing else is needed
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {name: dist, path: dist/}
+      - uses: pypa/gh-action-pypi-publish@release/v1

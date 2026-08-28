@@ -12,7 +12,7 @@ import base64
 
 import pytest
 
-from agentauth.capabilities.confidentiality import (
+from clayseal.capabilities.confidentiality import (
     FlowTracker,
     SensitivityPolicy,
     declassified_sinks_from_goal,
@@ -173,7 +173,7 @@ def test_policy_comes_from_the_mandate_not_from_runtime():
 def test_deeply_nested_tool_output_does_not_crash_the_authorization_path():
     """A RecursionError inside the thing that decides whether actions are
     allowed is a denial of service on the authorization layer itself."""
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     payload = SECRET
     for _ in range(5000):
@@ -182,7 +182,7 @@ def test_deeply_nested_tool_output_does_not_crash_the_authorization_path():
 
 
 def test_a_self_referential_payload_terminates():
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     cycle = []
     cycle.append(cycle)
@@ -191,7 +191,7 @@ def test_a_self_referential_payload_terminates():
 
 
 def test_ordinary_nesting_is_still_walked():
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     tokens = ParameterProvenance._tokens(
         {"to": "alice@corp.example", "cc": [{"addr": "bob@corp.example"}]})
@@ -202,7 +202,7 @@ def test_ordinary_nesting_is_still_walked():
 def test_an_unwalkable_payload_grounds_less_rather_than_more():
     """Failing toward refusal. A payload we cannot fully traverse must not come
     back grounded."""
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     p = ParameterProvenance()
     p.record_observation("read", "x", structured_fields={"v": SECRET})
@@ -457,8 +457,8 @@ def test_a_grounded_destination_cannot_allow_an_injected_send():
     DENIED. Indirect prompt injection is precisely an attacker writing into the
     resource the goal named.
     """
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     provenance = ParameterProvenance()
     provenance.record_observation(
@@ -481,8 +481,8 @@ def test_a_grounded_recipient_earns_a_step_up_and_does_not_widen_the_list():
     It must not add the recipient to the allow-list, because that let one
     grounded address authorize every later send in the session.
     """
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-    from agentauth.capabilities.parameter_provenance import ParameterProvenance
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
 
     # An OPAQUE identifier, because `extract_recipients` deliberately handles
     # only destinations with no domain (IBANs, account numbers, usernames) and

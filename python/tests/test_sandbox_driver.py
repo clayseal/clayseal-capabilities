@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from agentauth.capabilities.sandbox.config import IVisorConfig
-from agentauth.capabilities.sandbox.driver import (
+from clayseal.capabilities.sandbox.config import IVisorConfig
+from clayseal.capabilities.sandbox.driver import (
     ExitKind,
     SandboxUnsupported,
     run_ivisor,
 )
-from agentauth.capabilities.sandbox.verdicts import Verdict
+from clayseal.capabilities.sandbox.verdicts import Verdict
 
 FAKE = Path(__file__).parent / "fakes" / "fake_ivisor.py"
 

@@ -8,8 +8,12 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.staleness import (
-    CONSEQUENTIAL_VERBS, ObservationLedger, StalenessPolicy, content_version)
+from clayseal.capabilities.staleness import (
+    CONSEQUENTIAL_VERBS,
+    ObservationLedger,
+    StalenessPolicy,
+    content_version,
+)
 
 POLICY = StalenessPolicy(volatile=("record:*",), revalidate=True)
 FREE = StalenessPolicy(volatile=("record:*",), revalidate=False)

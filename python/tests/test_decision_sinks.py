@@ -15,9 +15,9 @@ import json
 
 import pytest
 
-from agentauth.capabilities.broker import SessionBroker
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.decision_sinks import (
+from clayseal.capabilities.broker import SessionBroker
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.decision_sinks import (
     CompositeSink,
     JsonlFileSink,
     NullSink,
@@ -25,9 +25,9 @@ from agentauth.capabilities.decision_sinks import (
     RotatingJsonlSink,
     sink_from_env,
 )
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 GOAL = GoalSpec(query_id="q", summary="do the work")
 SCOPE = TaskScope(allowed_resources=["in-scope"], allowed_actions=["read", "write"])
@@ -200,20 +200,20 @@ def test_env_configuration_never_returns_none(monkeypatch):
     import tempfile
     from pathlib import Path
 
-    monkeypatch.delenv("AGENTAUTH_DECISION_LOG_PATH", raising=False)
-    monkeypatch.delenv("AGENTAUTH_DECISION_LOG_REDIS_URL", raising=False)
+    monkeypatch.delenv("CLAYSEAL_DECISION_LOG_PATH", raising=False)
+    monkeypatch.delenv("CLAYSEAL_DECISION_LOG_REDIS_URL", raising=False)
     assert isinstance(sink_from_env(), NullSink)
 
     path = Path(tempfile.mkdtemp()) / "d.jsonl"
-    monkeypatch.setenv("AGENTAUTH_DECISION_LOG_PATH", str(path))
+    monkeypatch.setenv("CLAYSEAL_DECISION_LOG_PATH", str(path))
     assert isinstance(sink_from_env(), JsonlFileSink)
 
 
 def test_the_deployable_profile_always_has_a_sink(monkeypatch):
-    from agentauth.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.deployable_stack import DeployableStack
 
-    monkeypatch.delenv("AGENTAUTH_DECISION_LOG_PATH", raising=False)
-    monkeypatch.delenv("AGENTAUTH_DECISION_LOG_REDIS_URL", raising=False)
+    monkeypatch.delenv("CLAYSEAL_DECISION_LOG_PATH", raising=False)
+    monkeypatch.delenv("CLAYSEAL_DECISION_LOG_REDIS_URL", raising=False)
     stack = DeployableStack.from_goal(GOAL, scope=SCOPE, entailment_judge=None)
     assert stack.broker.receipt_sink is not None
     assert isinstance(stack.broker.receipt_sink, NullSink)
@@ -221,8 +221,8 @@ def test_the_deployable_profile_always_has_a_sink(monkeypatch):
 
 # ------------------------------------ where a security team already looks ---
 def _record(outcome="deny", reasons=("value_budget_exceeded",)):
-    from agentauth.capabilities.decision_log import DecisionLog
-    from agentauth.capabilities.trace import TraceContext
+    from clayseal.capabilities.decision_log import DecisionLog
+    from clayseal.capabilities.trace import TraceContext
 
     log = DecisionLog()
     return log.append(
@@ -238,7 +238,7 @@ def test_a_decision_maps_to_an_ocsf_api_activity_event():
     """The release audit closed with "decisions do not reach the systems that
     watch for incidents", and shipping JSONL did not fix it: a security team
     does not write a bespoke parser for one vendor's log."""
-    from agentauth.capabilities.decision_sinks import OCSF_API_ACTIVITY, to_ocsf
+    from clayseal.capabilities.decision_sinks import OCSF_API_ACTIVITY, to_ocsf
 
     event = to_ocsf(_record())
     assert event["class_uid"] == OCSF_API_ACTIVITY
@@ -249,7 +249,7 @@ def test_a_decision_maps_to_an_ocsf_api_activity_event():
 def test_severity_and_status_separate_the_control_from_the_attempt():
     """A refusal is a SUCCESS of the control and a FAILURE of the attempt, and
     the status field describes the attempt."""
-    from agentauth.capabilities.decision_sinks import to_ocsf
+    from clayseal.capabilities.decision_sinks import to_ocsf
 
     assert to_ocsf(_record("allow", ()))["status_id"] == 1
     assert to_ocsf(_record("deny"))["status_id"] == 2
@@ -260,7 +260,7 @@ def test_severity_and_status_separate_the_control_from_the_attempt():
 def test_the_event_carries_the_chain_and_the_trace():
     """A SIEM event that cannot be tied back to the receipt it came from is a
     rumour."""
-    from agentauth.capabilities.decision_sinks import to_ocsf
+    from clayseal.capabilities.decision_sinks import to_ocsf
 
     event = to_ocsf(_record())
     assert event["unmapped"]["receipt_hash"].startswith("sha256:")
@@ -272,7 +272,7 @@ def test_the_mapping_adds_nothing_the_record_did_not_carry():
     """Arguments stay hashed. A SIEM is not a place to start leaking them."""
     import json
 
-    from agentauth.capabilities.decision_sinks import to_ocsf
+    from clayseal.capabilities.decision_sinks import to_ocsf
 
     rendered = json.dumps(to_ocsf(_record()))
     assert "sha256:abc" in rendered
@@ -280,7 +280,7 @@ def test_the_mapping_adds_nothing_the_record_did_not_carry():
 
 
 def test_the_ocsf_sink_composes_and_counts_its_own_failures():
-    from agentauth.capabilities.decision_sinks import OcsfSink
+    from clayseal.capabilities.decision_sinks import OcsfSink
 
     seen: list = []
     OcsfSink(inner=seen.append)(_record())
@@ -295,7 +295,7 @@ def test_the_otel_sink_counts_absence_instead_of_crashing():
     """Optional by construction: two runtime dependencies is a large part of why
     this library installs at all, so the SDK is imported lazily and its absence
     is a number rather than an error at the first decision."""
-    from agentauth.capabilities.decision_sinks import OtelSpanSink
+    from clayseal.capabilities.decision_sinks import OtelSpanSink
 
     sink = OtelSpanSink()
     sink(_record())

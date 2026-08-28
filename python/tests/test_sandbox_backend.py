@@ -1,7 +1,7 @@
 """Sandbox backend resolution, the substrate is a deployment choice."""
 import pytest
 
-from agentauth.capabilities.sandbox.backend import (
+from clayseal.capabilities.sandbox.backend import (
     PLUGIN_GROUP,
     IVisorBackend,
     SandboxBackend,
@@ -11,7 +11,7 @@ from agentauth.capabilities.sandbox.backend import (
 
 @pytest.fixture
 def clean_registry():
-    from agentauth.core import plugins
+    from clayseal.core import plugins
     before = dict(getattr(plugins, "_REGISTRY", {}).get(PLUGIN_GROUP, {}))
     yield
     registry = getattr(plugins, "_REGISTRY", {})
@@ -31,7 +31,7 @@ def test_builtin_satisfies_the_protocol():
 
 
 def test_registered_plugin_shadows_the_builtin(clean_registry):
-    from agentauth.core.plugins import register_plugin
+    from clayseal.core.plugins import register_plugin
 
     class FakeBackend:
         name = "ivisor"
@@ -44,7 +44,7 @@ def test_registered_plugin_shadows_the_builtin(clean_registry):
 
 
 def test_alternative_substrate_can_register_under_its_own_name(clean_registry):
-    from agentauth.core.plugins import register_plugin
+    from clayseal.core.plugins import register_plugin
 
     class GvisorBackend:
         name = "gvisor"
@@ -64,7 +64,7 @@ def test_unknown_backend_raises_with_registration_guidance():
 def test_a_plugin_registered_as_a_class_is_instantiated(clean_registry):
     # Entry points conventionally name a class, and importlib hands back the
     # class itself. Both registration routes must yield a usable backend.
-    from agentauth.core.plugins import register_plugin
+    from clayseal.core.plugins import register_plugin
 
     class ClassBackend:
         name = "gvisor"

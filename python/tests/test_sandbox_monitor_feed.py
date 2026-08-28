@@ -1,11 +1,11 @@
 """Lifting verified verdicts into the behavioral layer's action stream."""
-from agentauth.capabilities.monitor.action import Trajectory, action_token
-from agentauth.capabilities.sandbox.monitor_feed import (
+from clayseal.capabilities.monitor.action import Trajectory, action_token
+from clayseal.capabilities.sandbox.monitor_feed import (
     actions_from_events,
     extend_trajectory,
 )
-from agentauth.capabilities.sandbox.verdicts import parse_policy_line
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.sandbox.verdicts import parse_policy_line
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _ev(line, *, verified=True):

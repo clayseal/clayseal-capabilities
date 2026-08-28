@@ -1,10 +1,94 @@
 # Changelog
 
-All notable changes to **agentauth-capabilities** are documented here.
+All notable changes to **clayseal** are documented here. The distribution was
+called `agentauth-capabilities` before 0.6.0; see [docs/MIGRATION.md](docs/MIGRATION.md).
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+Nothing yet.
+
+## [0.6.0] - 2026-08-28
+
+The first release intended to be read by people outside this repository.
+
+### Breaking, with one release of compatibility
+
+- **Renamed to `clayseal`**: the distribution, the import root, the CLI and the
+  environment variables. `agentauth.capabilities` and `agentauth.core` still
+  resolve through an import hook and warn; they are removed in 0.7. The alias IS
+  the real module, so a plugin registered through the old path is visible through
+  the new one. `AGENTAUTH_*` is read as a fallback. Storage keys and wire
+  identifiers were deliberately NOT renamed: `agentauth:commit:` stays, because
+  renaming the replay store's prefix makes every already-spent commit token
+  unseen and reopens the replay window. Full list in
+  [docs/MIGRATION.md](docs/MIGRATION.md).
+
+### Fixed: the library did not work on Python 3.10
+
+`datetime.fromisoformat` did not accept a trailing `Z` until 3.11, and
+`requires-python` is `>=3.10`. Since `is_expired` treats an unparseable expiry as
+expired — correctly — **every policy with a `Z` expiry denied every call on
+3.10**, which is every policy this repository documents. Nine call sites parsed
+timestamps and one knew about `Z`; there is one parser now.
+
+### Fixed: five destination spellings the egress allow-list could not see
+
+`http://[2001:db8::1]/`, a Cyrillic homograph, a single-label host, and the
+integer and hexadecimal forms of an IPv4 address were all ALLOWED while the
+dotted form of the same address was refused. A host the parser cannot read is not
+denied, it is invisible. Now canonicalised to one form before matching, so
+allow-listing an address once covers every spelling of it.
+
+### Fixed: two path spellings that open a denied file
+
+`workspace/SECRETS/key.pem` and `workspace/secrets./key.pem` were allowed under
+`denied_paths=["workspace/secrets/**"]`. Both open the same file on a
+case-insensitive or Win32 filesystem. The extra readings widen DENY only, so no
+allow decision became stricter.
+
+### Fixed: `PrincipalBudgetView.reserve` enforced no ceiling
+
+It read an undeclared `config` attribute and returned `ok_untracked` when unset,
+admitting 20 of 20 calls against a ceiling that `would_allow` correctly capped at
+10 — and reporting the calls as untracked. Not reachable through a policy file,
+which sets `config` immediately; reachable by hand-wiring a ledger, which the
+constructor invites. Both gates now read one answer, and a test asserts every
+budget's two gates agree.
+
+### Performance
+
+- Egress argument scanning 24-42x faster on the step, byte-identical output.
+- Confidentiality tail 4.1x at 400 sensitive tokens. The memo is per session, not
+  process-global, because its keys are the secrets.
+- Policy compile 4.5 ms to 0.24 ms (libyaml when present, same safe loader).
+- `import clayseal.capabilities` 85 ms to 2.5 ms (PEP 562 lazy exports).
+- Overhead samples bounded; `summary()` no longer sorts a growing list.
+
+34 us per decision, flat in session length. Memory per session is still
+unbounded: [docs/TRAJECTORY_WINDOW.md](docs/TRAJECTORY_WINDOW.md) has the design
+and says why the BPL suite cannot size the window.
+
+### Usability
+
+- A refusal explains itself. `.reasons` keeps the stable codes; `str(exc)` is now
+  a sentence you can hand to an agent.
+- `with budget.reserve(...) as res:` settles the hold on the way out.
+- `house_rules`: add a rule without forking the gateway.
+- An [API reference](docs/API.md), and a docstring on every shipped module.
+
+### Measurement
+
+- Performance numbers live in one place; four documents had quoted four different
+  p50s for "the full stack".
+- The non-deterministic benchmark arms say so, with their spread.
+- `ruff check .` passes; mypy runs and is ratcheted; CI gained perf and type jobs
+  and runs on every branch.
+
+Containment is unchanged throughout: 39.4% (52/132) on the full BPL suite, with 2
+benign scripts refused and no work lost.
+
 
 ### Documented: what the syscall tier catches that nothing above it can
 
@@ -529,7 +613,7 @@ invalidates, an unchanged file still hits the cache.
 
 ### Integration
 
-- **`Guardrail` is exported from `agentauth.capabilities`** and gains
+- **`Guardrail` is exported from `clayseal.capabilities`** and gains
   `from_policy_file`. Governing an agent is now one import and two lines:
 
   ```python
@@ -623,7 +707,7 @@ Economist's rules on sentences.
   `benchmarks/bpl/schema.verb_for` reached `classify_verb` through
   `benchmarks.live.broker_defense`, which re-exports it from
   `benchmarks.datasets._common`, which re-exports it from
-  `agentauth.capabilities.tool_verbs` where it actually lives, and which
+  `clayseal.capabilities.tool_verbs` where it actually lives, and which
   hard-imports `agentdojo` at module scope. Without that optional extra
   installed, the classifier raised on **every action of every scenario** and the
   sweep scored all 132 Clay Seal cells as errored. It imports from the library
@@ -1130,7 +1214,7 @@ had neither path. Two of the three are closed here.
   compile time**: it dies with the process, a stateless deployment is many
   processes, and the ceiling would still reset.
 
-- **`agentauth.capabilities.aio`.** The decision core stays synchronous and
+- **`clayseal.capabilities.aio`.** The decision core stays synchronous and
   pure, which is what makes it replayable and readable top to bottom. The façade
   dispatches to a worker thread so an advisory tier reaching a model, a person
   or a socket cannot stall every other coroutine in the process. `authorize_all`
@@ -1589,7 +1673,7 @@ interpretation.
 
 ### Added: the release pass
 
-- **`agentauth.core` is vendored into this repository.** It was a separate
+- **`clayseal.core` is vendored into this repository.** It was a separate
   private distribution, and the `agentauth-core` project on PyPI is a reserved
   name holding a `0.0.1.dev0` stub, so `pip install agentauth-capabilities` could
   never resolve the dependency and a stranger who cloned this repo could not
@@ -2386,7 +2470,7 @@ tests exercised the shapes their author had in mind.
   bounded by a deadline rather than an attempt count, and `SessionBroker` wraps
   whatever judge it was handed so the ceiling is a property of the gateway rather
   than of the judge's good manners.
-- **`agentauth.core` reached upward into `agentauth.capabilities`.**
+- **`clayseal.core` reached upward into `clayseal.capabilities`.**
   `task_scope.attenuate_biscuit_for_scope` imported the layer above it to resolve
   a default backend. It was invisible while the two were separate distributions,
   because the lazy import simply resolved at call time in an environment holding
@@ -2401,7 +2485,7 @@ tests exercised the shapes their author had in mind.
 - **Two signed objects did not fail closed in production.** The intent envelope
   accepted any keyholder when `trusted_keys` was unset, and it is the object
   `reclear` swaps mid-session, so a self-signed envelope replaced the sealed plan
-  wholesale. The step-up approval honoured `AGENTAUTH_STEP_UP_ALLOW_UNSIGNED=1`
+  wholesale. The step-up approval honoured `CLAYSEAL_STEP_UP_ALLOW_UNSIGNED=1`
   in production, so one environment variable turned a refusal into a grant. Found
   by writing the threat model; both now match the commit-token posture.
 - **Five encoding evasions in the confidentiality flow tracker.**
@@ -2477,7 +2561,7 @@ below shipped unrecorded.
 
 - **The package did not import on Python 3.10 or 3.11.** `value_budget.py` put a
   backslash escape inside an f-string expression, a syntax error before 3.12,
-  in a module `agentauth/capabilities/__init__.py` imports. `requires-python`
+  in a module `clayseal/capabilities/__init__.py` imports. `requires-python`
   claimed `>=3.10`. CI never caught it because CI has never run.
 - **`issue_commit_token` returned a tuple** instead of a token when
   `action_name` was not a string, a guard copy-pasted from the verifier, which
@@ -2531,11 +2615,11 @@ below shipped unrecorded.
 
 - **Cross-provider identity integration**, layer 2 works with five built-in L1 adapters:
   - `agentauth`, `spiffe_jwt`, `oidc`, `auth0`, `aws_sts`
-- Shared authority contract in `agentauth.core`:
+- Shared authority contract in `clayseal.core`:
   - `AuthorityBinding`, `IdentityProvider`, `IdentitySession`, `CapabilityTokenBackend`, `CapabilityLayer`
-- `agentauth.capabilities.identity_adapters` registry with `get_identity_provider(name)`.
-- `agentauth.capabilities.integration`, `execution_context_from_session`, `default_biscuit_backend()`.
-- `AgentAuthCapabilityLayer` in `agentauth.capabilities.layer`.
+- `clayseal.capabilities.identity_adapters` registry with `get_identity_provider(name)`.
+- `clayseal.capabilities.integration`, `execution_context_from_session`, `default_biscuit_backend()`.
+- `AgentAuthCapabilityLayer` in `clayseal.capabilities.layer`.
 - `docs/cross_layer_integration.md` and `examples/04_cross_provider_commit.py`.
 - `docs/DEV_GUIDE.md`, comprehensive developer guide.
 - GitHub Actions CI (installs identity from sibling repo, runs `python/tests`).

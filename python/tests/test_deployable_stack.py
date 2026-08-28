@@ -1,14 +1,21 @@
 """Parity: DeployableStack floor matches ladder top on mandate corpora."""
 from __future__ import annotations
 
+from conftest import requires_corpus
+
 from benchmarks.core.broker_eval import run_broker_benchmark
 from benchmarks.core.engines import build_engines
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets import get_loader
-from conftest import requires_corpus
 
 
-@requires_corpus("RedCode", "InjecAgent")
+# Names every corpus the body loads, which it did not: the marker said
+# `RedCode, InjecAgent` while the loop below loads `redcode`, `ipi_coding` and
+# `mcp_attack`. `fetch_corpora.sh` fetches RedCode and InjecAgent and neither of
+# the other two, so in the nightly job the guard passed and the test then raised
+# `RuntimeError: IPI-Coding-Agent not found`. A guard that names some of what it
+# needs is the shape this repository keeps finding.
+@requires_corpus("RedCode", "InjecAgent", "inspect_evals")
 def test_stack_matches_ladder_on_redcode_and_ipi():
     for name in ("redcode", "ipi_coding", "mcp_attack"):
         tasks = list(get_loader(name).load())
@@ -35,11 +42,11 @@ def test_from_benchmark_task_pins_expired_mandate_clock():
 
 
 def test_session_memory_shared_across_stack_authorize():
-    from agentauth.capabilities.deployable_stack import DeployableStack
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.capabilities.session_memory import SessionMemory
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.session_memory import SessionMemory
+    from clayseal.core.task_scope import TaskScope
 
     shared = SessionMemory()
     shared.symlink_taints.add(("/data/models/x", "results/x/link"))
@@ -67,11 +74,11 @@ def test_session_memory_shared_across_stack_authorize():
 
 def test_require_declaration_for_egress_surprise_only():
     """Surprise egress STEPs UP; goal that already requests email does not."""
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.deployable_stack import DeployableStack
-    from agentauth.capabilities.monitor.action import Action
-    from agentauth.capabilities.scoping.goal import GoalSpec
-    from agentauth.core.task_scope import TaskScope
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.deployable_stack import DeployableStack
+    from clayseal.capabilities.monitor.action import Action
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
 
     coding = GoalSpec(query_id="c", summary="fix indentation in gateway.py")
     stack = DeployableStack.from_goal(

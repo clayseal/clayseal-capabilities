@@ -1,4 +1,10 @@
-"""Shared pytest fixtures for agent-receipts."""
+"""Shared pytest fixtures for the Clay Seal library suite.
+
+The `AGENT_RECEIPTS_*` variables the fixtures below set are not a leftover from
+the rename: they belong to the separate receipts distribution and were
+deliberately left alone when this package became `clayseal`. See
+`docs/MIGRATION.md` for which names moved and which did not.
+"""
 
 from __future__ import annotations
 
@@ -39,7 +45,7 @@ def allow_stub_proofs(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def trusted_signer(monkeypatch: pytest.MonkeyPatch):
     """Pin a generated Ed25519 key as a trusted envelope signer."""
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     key = generate_keypair()
     monkeypatch.setenv("AGENT_RECEIPTS_TRUSTED_SIGNER_PUBLIC_KEYS", key.public_key_hex)

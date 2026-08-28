@@ -65,7 +65,7 @@ pins it. Without that line this benchmark would be re-measuring scope.
 
 ## What the shipped primitive holds, honestly, before anything was built
 
-`agentauth.core.delegation` is a delegation-token contract, and four properties
+`clayseal.core.delegation` is a delegation-token contract, and four properties
 hold. Measured per session across all four cells, never fewer than 100%:
 
 | Property | Held |
@@ -250,7 +250,7 @@ in the table rather than left out of it:
 | a sub-agent that claims to be the parent | **0.0%** |
 
 Authentication is upstream and is a different layer:
-`agentauth.capabilities.identity_adapters` (SPIFFE, workload identity, signed
+`clayseal.capabilities.identity_adapters` (SPIFFE, workload identity, signed
 A2A AgentCards) is what binds a principal string to a party. This boundary
 assumes that binding and enforces what follows from it.
 

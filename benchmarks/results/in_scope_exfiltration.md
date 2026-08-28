@@ -85,7 +85,7 @@ Not another scope check. The signal is not *where* the actions went, it is
 **that a read of a secret-classed object was followed by a write of that
 object's content to a publication-classed object**. That is a data-flow
 property, and the layer for it already exists in the repo but is not wired into
-this path: `agentauth/capabilities/confidentiality.py` tracks values across
+this path: `clayseal/capabilities/confidentiality.py` tracks values across
 writes, and `monitor/provenance.py` tracks taint.
 
 Two concrete steps, in order:

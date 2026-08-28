@@ -1,17 +1,17 @@
 """Compute-seconds ledger, and the honesty boundary around data_export_bytes."""
 import pytest
-from agentauth.core.mandate import Mandate
 
-from agentauth.capabilities.budget import BudgetType, CapabilityBudget
-from agentauth.capabilities.compute_budget import (
+from clayseal.capabilities.budget import BudgetType, CapabilityBudget
+from clayseal.capabilities.compute_budget import (
     SessionComputeBudget,
     session_compute_budget_from_mandate,
 )
-from agentauth.capabilities.mandate_budgets import (
+from clayseal.capabilities.mandate_budgets import (
     SUPPORTED_BUDGET_TYPES,
     UnsupportedBudgetType,
     session_budgets_from_mandate,
 )
+from clayseal.core.mandate import Mandate
 
 TRACKED = {"run_code": "b-compute"}
 

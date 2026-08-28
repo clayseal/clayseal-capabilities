@@ -1,5 +1,16 @@
 # Attack-class coverage: what an authorization layer can and cannot decide
 
+STATUS: unverified
+
+```bash
+python -m benchmarks.coverage --datasets agentharm,sleight,redcode,asb,injecagent,tau2,agentleak --limit 4000 --engines deployable-stack
+```
+
+> The command above is recorded and runnable, but these numbers were not
+> re-derived against this commit. `unverified` says nobody has checked
+> them; run the command to reproduce, and stamp `current` when you have.
+
+
 Attacks are partitioned without consulting any engine. `surface-leaving` means at least one field (tool, resource, action, target) falls outside what the task's own mandate and benign trajectory establish. `in-surface` means every field is one the task legitimately uses, so a per-call authorization layer has nothing to object to.
 
 ## Class mix per corpus

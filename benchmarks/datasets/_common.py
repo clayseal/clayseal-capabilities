@@ -15,7 +15,7 @@ from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 # that every integration needs and the benchmark tree is not installable. Re-
 # exported here so the loaders keep their existing import and the two cannot
 # drift apart, because they are now the same function.
-from agentauth.capabilities.tool_verbs import classify_verb  # noqa: E402
+from clayseal.capabilities.tool_verbs import classify_verb
 
 
 def benign_task_from_calls(

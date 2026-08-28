@@ -60,7 +60,7 @@ class Monitor:
     terminal_alarms: int = 0
     terminal_actions: int = 0
 
-    def fit(self, sample: list[float]) -> "Monitor":
+    def fit(self, sample: list[float]) -> Monitor:
         self.mu = statistics.fmean(sample)
         self.sigma = statistics.pstdev(sample) or 1.0
         self.anchor_mu = self.mu

@@ -1,5 +1,13 @@
 # Business-process-logic: aggregate abuse on real data
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 The threat class most prompt-injection benchmarks do not measure: a sequence
 where every individual action is authorized (right tool, right action, in-scope
 path, argument that matches an authorized call) but the composite violates a

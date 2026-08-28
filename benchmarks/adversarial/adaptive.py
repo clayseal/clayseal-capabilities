@@ -42,9 +42,9 @@ result reproduces exactly, runs in seconds, and belongs in CI.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Iterable
 
 from benchmarks.core.engines import DecisionEngine
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
@@ -690,7 +690,7 @@ class AdaptiveAttacker:
         #    inside it. If anything survives here, it is a real gap in the
         #    policy language rather than a guessing failure.
         if self.knowledge in (Knowledge.ORACLE, Knowledge.POISONED_GOAL):
-            from agentauth.core.task_scope import compile_task_scope
+            from clayseal.core.task_scope import compile_task_scope
 
             try:
                 scope = compile_task_scope(task.mandate)

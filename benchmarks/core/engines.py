@@ -15,7 +15,7 @@ false blocks:
   deny-all             blocks everything (friction ceiling)
 
 Engine-integration family, the SAME compiled policy carried across pluggable
-external authorization engines via ``agentauth.capabilities.authorizers``. Holds
+external authorization engines via ``clayseal.capabilities.authorizers``. Holds
 policy fixed to expose per-engine decision parity and overhead, answering "which
 authz engine should we integrate?" rather than "which scoping strategy wins?".
 """
@@ -25,25 +25,22 @@ import math
 import random
 from typing import Protocol, runtime_checkable
 
-from agentauth.core.hash_util import hash_canonical_json
-from agentauth.core.operations import capability_allows, normalize_capabilities
-from agentauth.capabilities.hardening.protected_zones import is_protected_path, protected_reason
-from agentauth.core.task_scope import (
-    TaskScope,
-    compile_task_scope,
-    task_scope_allows_path,
-)
-
-from agentauth.capabilities.authorizers import (
+from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel
+from clayseal.capabilities.authorizers import (
     cedar_authorizer,
     opa_authorizer,
     openfga_authorizer,
 )
-from agentauth.capabilities.call_budget import session_call_budget_from_mandate
-from agentauth.capabilities.value_budget import session_value_budget_from_mandate
-
-from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, Decision, EventLabel
-
+from clayseal.capabilities.call_budget import session_call_budget_from_mandate
+from clayseal.capabilities.hardening.protected_zones import is_protected_path, protected_reason
+from clayseal.capabilities.value_budget import session_value_budget_from_mandate
+from clayseal.core.hash_util import hash_canonical_json
+from clayseal.core.operations import capability_allows, normalize_capabilities
+from clayseal.core.task_scope import (
+    TaskScope,
+    compile_task_scope,
+    task_scope_allows_path,
+)
 
 # Verbs that change external state. Deliberately wider than runner._WRITE_ACTIONS,
 # which classifies protected *writes* for metrics: an `execute` or a `send` is an
@@ -426,7 +423,7 @@ class VelocityLadderEngine(BudgetLadderEngine):
     A single cap shared across corpora is not viable either: RedCode's clean side
     runs to 32 effect actions per task and loses 17.4% of its benign traffic at
     the cap AgentHarm wants. The limit belongs in the mandate, per class of work
-    (`agentauth.capabilities.velocity.velocity_from_mandate`), which is where
+    (`clayseal.capabilities.velocity.velocity_from_mandate`), which is where
     production reads it from.
     """
 
@@ -471,7 +468,7 @@ class VelocityLadderEngine(BudgetLadderEngine):
         benign prefix. Returning the provenance is what lets the report say so
         instead of printing a number that looks learned.
         """
-        from agentauth.capabilities.velocity import EFFECT_VERBS
+        from clayseal.capabilities.velocity import EFFECT_VERBS
 
         volumes = [
             sum(1 for e in t.events if e.action in EFFECT_VERBS)
@@ -490,8 +487,7 @@ class VelocityLadderEngine(BudgetLadderEngine):
         self._velocity.clear()
 
     def _limiter(self, task: BenchmarkTask):
-        from agentauth.capabilities.velocity import (
-            EFFECT_CLASS, SessionVelocity, VelocityConfig)
+        from clayseal.capabilities.velocity import EFFECT_CLASS, SessionVelocity, VelocityConfig
 
         limiter = self._velocity.get(task.task_id)
         if limiter is None:
@@ -806,7 +802,7 @@ class DensityLadderEngine(VelocityLadderEngine):
 
     @staticmethod
     def _actions(task: BenchmarkTask, *, benign_only: bool = True):
-        from agentauth.capabilities.monitor.action import Action
+        from clayseal.capabilities.monitor.action import Action
 
         out = []
         for i, event in enumerate(task.events):
@@ -819,8 +815,8 @@ class DensityLadderEngine(VelocityLadderEngine):
         return out
 
     def _trajectory(self, task: BenchmarkTask, actions):
-        from agentauth.capabilities.monitor.action import Trajectory
-        from agentauth.capabilities.scoping.goal import GoalSpec
+        from clayseal.capabilities.monitor.action import Trajectory
+        from clayseal.capabilities.scoping.goal import GoalSpec
 
         return Trajectory(
             goal=GoalSpec(query_id=task.task_id, summary="",
@@ -830,7 +826,7 @@ class DensityLadderEngine(VelocityLadderEngine):
         )
 
     def observe_corpus(self, tasks: list[BenchmarkTask]) -> None:
-        from agentauth.capabilities.monitor.scoring.target import TargetDensityScorer
+        from clayseal.capabilities.monitor.scoring.target import TargetDensityScorer
 
         # The rung below calibrates through the SAME hook. Overriding it without
         # delegating leaves the velocity cap unset, and an uncalibrated cap
@@ -909,7 +905,7 @@ class DensityLadderEngine(VelocityLadderEngine):
         # abstained on all 479 attacks it was handed while still reporting a
         # fitted scorer and a plausible threshold. A key derived two ways is a
         # key derived wrongly.
-        from agentauth.capabilities.monitor.scoring.ngram import goal_bucket
+        from clayseal.capabilities.monitor.scoring.ngram import goal_bucket
 
         bucket = goal_bucket(traj)
         # Readiness is enforced inside ``segment_surprises`` as a DEPTH, not as a
@@ -984,8 +980,7 @@ class StagingLadderEngine(DensityLadderEngine):
         if not below.allowed:
             return below
 
-        from agentauth.capabilities.hardening.object_class import (
-            ObjectClass, classify)
+        from clayseal.capabilities.hardening.object_class import ObjectClass, classify
 
         target = self._target(event)
         kind = classify(target)

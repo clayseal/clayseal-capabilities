@@ -245,7 +245,7 @@ def run_tui(config, state: AppState, *, recorder=None) -> int:
     def _drive() -> None:
         try:
             run_demo(config, emit)
-        except BaseException as exc:      # noqa: BLE001 - re-raised to the caller
+        except BaseException as exc:
             failure.append(exc)
 
     worker = threading.Thread(target=_drive, daemon=True)

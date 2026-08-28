@@ -13,7 +13,7 @@ prose fire on "reset your password". These tests pin both directions.
 """
 import pytest
 
-from agentauth.capabilities.hardening.secret_content import (
+from clayseal.capabilities.hardening.secret_content import (
     ENTROPY_FLOOR,
     contains_credential,
     credential_findings,
@@ -102,8 +102,8 @@ def test_reasons_are_deduplicated():
 # Wiring
 # --------------------------------------------------------------------------- #
 def _broker(flag):
-    from agentauth.capabilities.broker import SessionBroker
-    from agentauth.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.broker import SessionBroker
+    from clayseal.capabilities.scoping.goal import GoalSpec
 
     return SessionBroker(
         goal=GoalSpec(query_id="q", summary="s", allow_resources=[]),
@@ -111,14 +111,14 @@ def _broker(flag):
 
 
 def _act(body):
-    from agentauth.capabilities.monitor.action import Action
+    from clayseal.capabilities.monitor.action import Action
 
     return Action(step=0, tool="attach_doc", resource="mcp:tool:attach_doc",
                   verb="write", args={"body": body})
 
 
 def test_the_broker_refuses_a_credential_payload_when_enabled():
-    from agentauth.capabilities.broker import Outcome
+    from clayseal.capabilities.broker import Outcome
 
     decision = _broker(True).authorize(_act("API_KEY=sk-live-INTERNAL"))
     assert decision.outcome is Outcome.DENY
@@ -126,14 +126,14 @@ def test_the_broker_refuses_a_credential_payload_when_enabled():
 
 
 def test_the_check_is_off_by_default():
-    from agentauth.capabilities.broker import Outcome
+    from clayseal.capabilities.broker import Outcome
 
     assert _broker(False).authorize(
         _act("API_KEY=sk-live-INTERNAL")).outcome is Outcome.ALLOW
 
 
 def test_an_ordinary_payload_passes_with_the_check_on():
-    from agentauth.capabilities.broker import Outcome
+    from clayseal.capabilities.broker import Outcome
 
     assert _broker(True).authorize(
         _act("PO-9 total=100")).outcome is Outcome.ALLOW
@@ -142,8 +142,8 @@ def test_an_ordinary_payload_passes_with_the_check_on():
 def test_a_read_is_not_subject_to_the_check():
     """Only consequential actions. Reading a config that contains a key is not
     exfiltration; sending one is."""
-    from agentauth.capabilities.broker import Outcome
-    from agentauth.capabilities.monitor.action import Action
+    from clayseal.capabilities.broker import Outcome
+    from clayseal.capabilities.monitor.action import Action
 
     read = Action(step=0, tool="read_file", resource="mcp:tool:read_file",
                   verb="read", args={"body": "API_KEY=sk-live-INTERNAL"})

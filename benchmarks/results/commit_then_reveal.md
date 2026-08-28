@@ -1,5 +1,16 @@
 # Commit-then-reveal on SLEIGHT
 
+STATUS: unverified
+
+```bash
+python -m benchmarks.commit_then_reveal
+```
+
+> The command above is recorded and runnable, but these numbers were not
+> re-derived against this commit. `unverified` says nobody has checked
+> them; run the command to reproduce, and stamp `current` when you have.
+
+
 Deployable twin-corridor protocol: the reference is a **declaration**, not a corpus-gifted clean twin.
 
 n = 43 paired tasks

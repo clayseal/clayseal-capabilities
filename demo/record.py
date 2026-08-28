@@ -61,7 +61,7 @@ class Recorder:
         if not self._handle.closed:
             self._handle.close()
 
-    def __enter__(self) -> Recorder:  # noqa: PYI034 - typing.Self needs 3.11;
+    def __enter__(self) -> Recorder:
         # this repo supports 3.10 and typing_extensions is not a dependency.
         return self
 

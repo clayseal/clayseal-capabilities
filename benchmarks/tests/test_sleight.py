@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.capabilities.monitor import NGramScorer, TrajectoryDetector
-from agentauth.capabilities.monitor.twin_corridor import assess_twin_structural
 from benchmarks.core.detector_eval import (
     run_detector_benchmark,
     task_to_trajectories,
@@ -14,6 +12,8 @@ from benchmarks.core.events import EventLabel
 from benchmarks.core.runner import run_benchmark
 from benchmarks.datasets.base import get_loader
 from benchmarks.datasets.sleight import SleightLoader
+from clayseal.capabilities.monitor import NGramScorer, TrajectoryDetector
+from clayseal.capabilities.monitor.twin_corridor import assess_twin_structural
 
 
 def _require_corpus() -> None:

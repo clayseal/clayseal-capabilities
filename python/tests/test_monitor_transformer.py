@@ -14,11 +14,17 @@ import pytest
 
 pytest.importorskip("torch")
 
-from agentauth.capabilities.monitor import Action, ContextItem, Trajectory, TrajectoryDetector, TrustLevel
-from agentauth.capabilities.monitor.scoring.transformer import TransformerScorer
-from agentauth.capabilities.monitor.training.data import dump_corpus
-from agentauth.capabilities.monitor.training.train import train
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.monitor import (
+    Action,
+    ContextItem,
+    Trajectory,
+    TrajectoryDetector,
+    TrustLevel,
+)
+from clayseal.capabilities.monitor.scoring.transformer import TransformerScorer
+from clayseal.capabilities.monitor.training.data import dump_corpus
+from clayseal.capabilities.monitor.training.train import train
+from clayseal.capabilities.scoping.goal import GoalSpec
 
 
 def _goal() -> GoalSpec:

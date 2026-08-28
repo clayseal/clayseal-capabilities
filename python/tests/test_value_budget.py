@@ -4,9 +4,9 @@ import threading
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from agentauth.capabilities.budget import BudgetType, CapabilityBudget
-from agentauth.capabilities.mandate import Mandate
-from agentauth.capabilities.value_budget import (
+from clayseal.capabilities.budget import BudgetType, CapabilityBudget
+from clayseal.capabilities.mandate import Mandate
+from clayseal.capabilities.value_budget import (
     SessionValueBudget,
     ValueBudgetConfig,
     session_value_budget_from_mandate,
@@ -297,7 +297,7 @@ def test_value_helper_ignores_non_usd_budgets():
 # Once-per-object: a predicate the value ceiling structurally cannot express
 # --------------------------------------------------------------------------- #
 def _identity_budget(ceiling="5000"):
-    from agentauth.capabilities.value_budget import EffectSpec
+    from clayseal.capabilities.value_budget import EffectSpec
 
     return SessionValueBudget(config=ValueBudgetConfig(
         tracked={"pay_invoice": EffectSpec(

@@ -23,11 +23,11 @@ mechanisms, two threat shapes; neither is asked to do the other's job.
 """
 from __future__ import annotations
 
-from agentauth.capabilities.hardening.egress_policy import (
+from clayseal.capabilities.hardening.egress_policy import (
     extract_destinations,
     extract_recipients,
 )
-from agentauth.capabilities.monitor.action import ContextItem, TrustLevel
+from clayseal.capabilities.monitor.action import ContextItem, TrustLevel
 
 
 def _norm(text: str) -> str:

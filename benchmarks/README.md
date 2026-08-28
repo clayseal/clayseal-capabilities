@@ -16,7 +16,7 @@ and CPU-only.
 
 ## The enforcement ladder
 
-Each engine wraps a real primitive from `agentauth.core` / `agentauth.capabilities`
+Each engine wraps a real primitive from `clayseal.core` / `clayseal.capabilities`
 (no reimplemented policy). The rungs add authority granularity; on a sound
 system containment is monotone up the ladder at flat, near-zero false-block:
 
@@ -68,7 +68,7 @@ inside a task share a template, so an event-level interval is roughly
 sqrt(events-per-task) too narrow; see [core/stats.py](core/stats.py).
 
 **Engine-integration family**, `opa`, `cedar`, `openfga` carry the *same*
-compiled policy across the pluggable `agentauth.capabilities.authorizers` seam.
+compiled policy across the pluggable `clayseal.capabilities.authorizers` seam.
 Holding policy fixed isolates the engine integration (decision parity + overhead)
 and answers "which external authz engine should we adopt?" separately from
 "which scoping strategy wins?".
@@ -185,9 +185,9 @@ python -m benchmarks.leaderboard --dataset fixture --classes path-exfiltration,g
 ## Behavioral detector mode
 
 `--mode detector` scores the trajectory-level behavioral layer
-(`agentauth.capabilities.monitor`): it fits the goal-conditioned detector on
+(`clayseal.capabilities.monitor`): it fits the goal-conditioned detector on
 benign trajectories and reports containment vs a conformally-bounded false-block
-rate. See `agentauth/capabilities/monitor/README.md`.
+rate. See `clayseal/capabilities/monitor/README.md`.
 
 ```bash
 python -m benchmarks.build_corpus --dataset agentdojo --limit 3000 --out benign.jsonl

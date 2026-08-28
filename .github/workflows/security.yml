@@ -2,21 +2,28 @@ name: security
 
 # Supply-chain scanning, additive to ci.yml (lint/test/layering).
 on:
+  # Every branch, for the reason ci.yml gives: a contributor's first push should
+  # say whether the supply-chain scan is clean, not only a maintainer's merge.
   push:
-    branches: [main, master]
   pull_request:
   schedule:
     - cron: "0 6 * * 1" # weekly: catch newly-disclosed CVEs in already-pinned deps
 
 permissions:
   contents: read
+  # gitleaks-action enumerates the commits on a pull request to scan its range.
+  # Without this it gets `403 Resource not accessible by integration` and the
+  # job fails — which reads as "secret found" and is in fact "the scan never
+  # ran". A secret scanner that cannot run is worse than a red one, because the
+  # red one gets looked at.
+  pull-requests: read
 
 jobs:
   pip-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install self editable, so --skip-editable audits only third-party deps
@@ -30,17 +37,25 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # `.gitleaks.toml` allowlists 22 findings, every one of which is a
+          # synthetic secret this repository needs in order to test a secret
+          # detector, plus a type annotation the rule reads as a key and one
+          # decryption key its upstream publishes on purpose. Each is allowlisted
+          # by VALUE with its reason, not by excluding a directory, so a real
+          # credential pasted into a test still fails the build. Verified: a
+          # real-shaped AWS key is caught with this config in place.
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
   trivy-fs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Trivy filesystem scan (vulns + misconfig + secrets)
         # v-prefixed: the bare `0.28.0` tag this used to name does not exist in the
         # action's repo, so every scheduled run failed at 'unable to resolve action'

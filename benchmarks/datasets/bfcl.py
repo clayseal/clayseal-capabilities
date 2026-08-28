@@ -44,7 +44,7 @@ def _parse_call_string(text: str) -> tuple[str, dict] | None:
             for kw in getattr(call, "keywords", []):
                 try:
                     args[kw.arg] = ast.literal_eval(kw.value)
-                except Exception:  # noqa: BLE001 - non-literal arg; keep the name only
+                except Exception:
                     args[kw.arg] = "<expr>"
         except SyntaxError:
             return (name, {})

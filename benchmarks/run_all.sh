@@ -64,10 +64,23 @@ echo "==> slow drift (does the DEFENSE's baseline move?)"
 "${PY}" -m benchmarks.drift --actions "$([ -n "${QUICK}" ] && echo 2000 || echo 10000)" \
   --json "${RESULTS}/drift.json" | tee "${RESULTS}/drift.md"
 
-echo "==> enforcement latency"
+echo "==> enforcement latency (engine ladder)"
 "${PY}" -m benchmarks.latency --dataset redcode --limit 200 --repeats 20 \
   --json "${RESULTS}/latency_redcode.json" \
   | tee "${RESULTS}/latency_redcode.md"
+
+# The ladder above is one rung at a time. These two are the other measurement
+# points, and they were reachable only by hand until now, which is how the
+# repository came to publish four contradictory p50 figures. All three are
+# reconciled in results/performance.md.
+echo "==> gateway cost (Guardrail boundary: throughput, scaling, cold start, memory)"
+"${PY}" -m benchmarks.gateway_cost \
+  --json "${RESULTS}/gateway_cost.json" \
+  | tee "${RESULTS}/gateway_cost.md"
+
+echo "==> session scaling (does per-call cost grow with session length?)"
+"${PY}" -m benchmarks.session_scaling \
+  | tee "${RESULTS}/session_scaling.md" || true
 
 echo "==> new product-shaped loaders (mcp_attack, advbench_agent, toolemu fixture)"
 for dataset in mcp_attack advbench_agent toolemu; do

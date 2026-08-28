@@ -24,7 +24,7 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.principal_ledger import SharedPrincipalLedger
+from clayseal.capabilities.principal_ledger import SharedPrincipalLedger
 
 pytestmark = pytest.mark.skipif(
     not hasattr(__import__("fcntl", fromlist=["flock"]), "flock"),
@@ -37,7 +37,7 @@ def _run_workers(path, n_procs: int, per_proc: int, amount: str,
     script = textwrap.dedent(f"""
         from decimal import Decimal
         from pathlib import Path
-        from agentauth.capabilities.principal_ledger import SharedPrincipalLedger
+        from clayseal.capabilities.principal_ledger import SharedPrincipalLedger
         led = SharedPrincipalLedger(path=Path({str(path)!r}))
         for _ in range({per_proc}):
             h = led.reserve("p", "usd", Decimal({amount!r}), Decimal({ceiling!r}))
@@ -150,7 +150,7 @@ def test_it_refuses_to_be_built_without_a_path():
 import os
 import stat
 
-from agentauth.capabilities.principal_ledger import (
+from clayseal.capabilities.principal_ledger import (
     LedgerUnavailable,
     PrincipalBudgetView,
 )

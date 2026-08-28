@@ -16,6 +16,8 @@ replays with no LLM in the loop.
 the attack uses tools the agent *legitimately holds* and violates only the
 target, and it separates the ladder cleanly:
 
+RedCode, n=718 attack events and 344 benign events (the counts in the table above):
+
 | Engine | Attack prevented | False-block | Benign utility |
 | --- | --: | --: | --: |
 | allow-all | 0.0% | 0.0% | 100.0% |
@@ -99,7 +101,8 @@ cited as evidence that the upper rungs work.
 
 ## Adversarial leaderboard (synthesized classes over the new benign corpora)
 
-RedCode benign corpus, containment per attack class:
+RedCode benign corpus, containment per attack class, n=344 benign events with
+synthesized attacks per class:
 
 | Engine | Overall | arg-tamper | path-exfil | unauth-tool | action-esc | connector-sub | goal-drift |
 | --- | --: | --: | --: | --: | --: | --: | --: |

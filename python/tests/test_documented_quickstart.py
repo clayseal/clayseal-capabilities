@@ -80,7 +80,7 @@ def test_documented_block_executes(label: str, source: str):
         exec(code, namespace)  # noqa: S102 - that is the point
     except NameError as exc:
         pytest.skip(f"{label} is an illustrative fragment ({exc})")
-    except Exception as exc:  # noqa: BLE001 - report which block and why
+    except Exception as exc:
         pytest.fail(f"{label} does not run: {type(exc).__name__}: {exc}\n\n{source}")
 
 
@@ -109,17 +109,17 @@ def test_quickstart_verification_is_bound_to_the_arguments():
     true when the tool call changes. Without this, a quickstart that passed a
     context with no binding at all would still be green.
     """
-    from agentauth.capabilities.commit import (
+    from clayseal.capabilities.commit import (
         InMemoryUsedTokenStore,
         issue_commit_token,
         verify_commit_token,
     )
-    from agentauth.core.runtime import (
+    from clayseal.core.runtime import (
         ActionDescriptor,
         AuthorityContext,
         ExecutionContext,
     )
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     def ctx_for(amount: int) -> ExecutionContext:
         return ExecutionContext(
@@ -162,13 +162,13 @@ def test_minting_raises_and_verifying_returns_a_verdict():
     so the caller failed with an `AttributeError` one frame out, the exact
     failure the guard exists to prevent.
     """
-    from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
-    from agentauth.core.runtime import (
+    from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
+    from clayseal.core.runtime import (
         ActionDescriptor,
         AuthorityContext,
         ExecutionContext,
     )
-    from agentauth.core.signing import generate_keypair
+    from clayseal.core.signing import generate_keypair
 
     bad = ExecutionContext(
         action=ActionDescriptor(action_name=123, resource_ref="r"),  # type: ignore[arg-type]

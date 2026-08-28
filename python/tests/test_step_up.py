@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from agentauth.core.runtime import AuthorityContext
-from agentauth.core.signing import generate_keypair
-from agentauth.capabilities.step_up import (
+from clayseal.capabilities.step_up import (
     StepUpApproval,
     apply_step_up,
     build_step_up_request,
     sign_step_up_approval,
     verify_step_up_approval,
 )
+from clayseal.core.runtime import AuthorityContext
+from clayseal.core.signing import generate_keypair
 
 
 def _request():
@@ -62,14 +62,14 @@ def test_unsigned_allowed_via_explicit_escape_hatch(monkeypatch):
     # The escape hatch is now development-only. Unset, or set to production, the
     # same call raises: an approval grants authority the floor already refused,
     # so an unsigned one is a grant nobody made.
-    monkeypatch.setenv("AGENTAUTH_ENV", "development")
+    monkeypatch.setenv("CLAYSEAL_ENV", "development")
     authority = AuthorityContext(authority_id="t", authority_version=1)
     apply_step_up(authority, _approval("sha256:abc"), allow_unsigned=True)
     assert "repo://deploy/prod.yaml" in authority.resource_scope
 
 
 def test_unsigned_escape_hatch_is_refused_by_default(monkeypatch):
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
     authority = AuthorityContext(authority_id="t", authority_version=1)
     with pytest.raises(ValueError, match="unsigned step-up approvals are refused"):

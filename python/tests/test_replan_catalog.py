@@ -1,14 +1,13 @@
 """Trusted catalog shape judge + DeployableStack default replan wiring."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.deployable_stack import DeployableStack
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.monitor.intent_envelope import IntentEnvelope
-from agentauth.capabilities.parameter_provenance import ParameterProvenance
-from agentauth.capabilities.replan import ActionShape, PlanExtender, catalog_shape_judge
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.deployable_stack import DeployableStack
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.monitor.intent_envelope import IntentEnvelope
+from clayseal.capabilities.parameter_provenance import ParameterProvenance
+from clayseal.capabilities.replan import ActionShape, catalog_shape_judge
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def test_catalog_shape_judge_admits_goal_implied_tool():
@@ -48,7 +47,7 @@ def test_deployable_stack_default_provenance():
 
 def test_envelope_replan_extends_bound_off_plan_step():
     """Destination-bound off-plan shape → plan extends (not hard deny)."""
-    from agentauth.capabilities.hardening.egress_policy import EgressPolicy
+    from clayseal.capabilities.hardening.egress_policy import EgressPolicy
 
     goal = GoalSpec(
         query_id="t",

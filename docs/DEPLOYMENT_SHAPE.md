@@ -83,7 +83,7 @@ gateway and the server read different arguments from one message. A header that
 disagrees with the body is the same defect promoted to the transport layer, and
 it is now a documented part of the protocol rather than a quirk.
 
-**Fixed.** `agentauth/capabilities/http_gateway.py` is the front end, and
+**Fixed.** `clayseal/capabilities/http_gateway.py` is the front end, and
 `clayseal serve --policy p.yaml --upstream https://...` runs it. It wraps
 `McpProxy` rather than re-implementing the decision path, so the duplicate-key,
 near-match and batch refusals already measured there apply unchanged, and it
@@ -112,7 +112,7 @@ With sessions removed, the migration guidance is explicit that **W3C Trace
 Context is "the correlation spine that replaces the session for audit"**, and
 that "correlation is manufactured now, budget for it".
 
-**Fixed.** `agentauth/capabilities/trace.py` parses a `traceparent`, the HTTP
+**Fixed.** `clayseal/capabilities/trace.py` parses a `traceparent`, the HTTP
 gateway reads one per request, `Guardrail.trace()` takes one in process, and the
 `trace_id` lands on every decision record as the join key.
 

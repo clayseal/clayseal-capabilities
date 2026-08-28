@@ -20,7 +20,6 @@ import sys
 from pathlib import Path
 
 from benchmarks.core.engines import build_engines
-from benchmarks.core.events import EventLabel
 from benchmarks.core.heldout import circular_unsplittable, hold_out_corpus
 from benchmarks.core.patterns import LEVELS, generalize_corpus
 from benchmarks.core.runner import run_benchmark

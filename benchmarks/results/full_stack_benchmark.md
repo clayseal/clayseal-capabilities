@@ -1,5 +1,13 @@
 # Full-stack benchmark
 
+STATUS: unverified
+
+> No command was recorded for this file, so its numbers cannot be
+> re-derived from it. `unverified` says that nobody has checked them, which
+> is the honest claim; `current` would be vouching for a run nobody can
+> reproduce. See the provenance section of [README.md](README.md).
+
+
 Every layer we've built, measured together: the enforcement floor, the behavioral
 sensor, the goal-derived intent envelope, the AML sensor on real fraud, and
 latency/throughput. Deterministic replay; run locally on Python 3.12. 176 tests
@@ -71,6 +79,14 @@ The full stack, hard floor, goal-derived intent envelope, behavioral sensor, and
 a tamper-evident receipt per action, runs at **10,000 authorized actions/second**
 (94 µs median). Agents act at roughly 1–10 actions/second, so the entire defense
 adds imperceptible latency with about a thousandfold headroom.
+
+> **Which number this is.** 94 µs is `broker.authorize()` *including receipt
+> emission*, on this run's configuration. It is not comparable to the 18.9 µs in
+> [latency_redcode.md](latency_redcode.md), which is one engine rung, nor to the
+> 34.1 µs in [performance.md](performance.md), which is the `Guardrail` wrapper.
+> All three are correct for what they measure and none of them used to say so.
+> [performance.md](performance.md) is the one place these are reconciled; quote
+> from there.
 
 ## A2. Complete adversarial matrix, every dataset × all 8 attack classes
 

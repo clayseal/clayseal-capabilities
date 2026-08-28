@@ -19,21 +19,21 @@ def _first_yaml_block() -> str:
     readme = ROOT / "README.md"
     if not readme.exists():
         pytest.skip("README.md not present")
-    blocks = re.findall(r"```yaml\n(.*?)```", readme.read_text(), re.S)
+    blocks = re.findall(r"```yaml\n(.*?)```", readme.read_text(), re.DOTALL)
     if not blocks:
         pytest.skip("no yaml block in README.md")
     return blocks[0]
 
 
 def test_the_readme_policy_loads():
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
 
     policy = load_policy_text(_first_yaml_block())
     assert policy.allowed_tools == {"list_open_refunds", "issue_refund"}
 
 
 def test_the_readme_policy_lints_without_errors():
-    from agentauth.capabilities.policy import load_policy_text
+    from clayseal.capabilities.policy import load_policy_text
 
     findings = load_policy_text(_first_yaml_block()).lint()
     errors = [f for f in findings if f.level == "error"]
@@ -42,7 +42,7 @@ def test_the_readme_policy_lints_without_errors():
 
 def test_the_readme_policy_builds_a_working_gateway():
     """A policy that parses but cannot enforce is still a broken example."""
-    from agentauth.capabilities.guardrail import Guardrail, Refused
+    from clayseal.capabilities.guardrail import Guardrail, Refused
 
     with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as fh:
         fh.write(_first_yaml_block())

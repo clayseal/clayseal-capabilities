@@ -16,14 +16,14 @@ import json
 
 import pytest
 
-from agentauth.capabilities.http_gateway import (
+from clayseal.capabilities.http_gateway import (
     HEADER_MISMATCH,
     MCP_PROTOCOL_VERSION,
     HttpGateway,
     check_headers,
 )
-from agentauth.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
-from agentauth.capabilities.policy import load_policy_text
+from clayseal.capabilities.mcp_proxy import POLICY_DENIED, McpProxy
+from clayseal.capabilities.policy import load_policy_text
 
 BASE = """
 version: 1
@@ -253,7 +253,7 @@ def test_the_gateway_holds_under_randomized_stress(tmp_path):
 
     gateway = _gateway(tmp_path / "l.jsonl", upstream=upstream,
                        require_headers=False)
-    rng = random.Random(11)  # noqa: S311 - reproducible sweep, not a secret
+    rng = random.Random(11)
     violations: list[str] = []
     for _ in range(3000):
         body = _body(rng)

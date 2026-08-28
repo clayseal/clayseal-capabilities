@@ -19,7 +19,7 @@ import csv
 import random
 from pathlib import Path
 
-from agentauth.capabilities.monitor.aml import peer_z_score
+from clayseal.capabilities.monitor.aml import peer_z_score
 
 
 def _default_ulb() -> Path:

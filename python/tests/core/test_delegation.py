@@ -12,7 +12,7 @@ def test_an_absent_token_is_a_violation_by_default():
     containment for exactly this reason: containment is measured at the
     attacker's best presentation, and the best presentation was silence.
     """
-    from agentauth.core.delegation import verify_delegation_chain
+    from clayseal.core.delegation import verify_delegation_chain
 
     assert verify_delegation_chain(None) == ["no delegation token presented"]
 
@@ -20,6 +20,6 @@ def test_an_absent_token_is_a_violation_by_default():
 def test_a_caller_may_opt_into_treating_absence_as_undelegated():
     """Some callers legitimately mean "this action is not delegated". That has
     to be an explicit choice rather than the default."""
-    from agentauth.core.delegation import verify_delegation_chain
+    from clayseal.core.delegation import verify_delegation_chain
 
     assert verify_delegation_chain(None, require_token=False) == []

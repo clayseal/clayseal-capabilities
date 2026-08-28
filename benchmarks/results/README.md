@@ -72,9 +72,75 @@ are the independent half.
 reviews every automatic binding against the sentence it came from, because an
 extracted rule naming the wrong tool is worse than a TODO: a TODO asks a
 reviewer a question and a wrong binding answers it.
+## What it costs
+
+Performance numbers live in one place, [performance.md](performance.md), and
+every other document links there. Before it existed, four files quoted four
+different p50 latencies for "the full stack" — all correct for what they
+measured, none of them saying which — and `baselines_audit.md` had flagged the
+contradiction against us before anyone outside could.
+
+| question | answer | reproduce |
+| --- | --- | --- |
+| What does one decision cost? | **34.1 µs** at the `Guardrail` boundary, 29,331/sec | `python -m benchmarks.gateway_cost` |
+| Does it get slower as a session runs? | **No.** Cost at call 3,500 over cost at call 0 is a ratio of 1.0 over 4,000 calls | same command |
+| What is the worst case? | **10.7 ms p99** in the confidentiality tracker, one run peaking at 219 ms. The open problem | `python -m benchmarks.flow` |
+| What does it hold? | 11.7 KB per idle session, **1,182 bytes per decision, unbounded** | `python -m benchmarks.gateway_cost` |
+
 ## Provenance
 
-`python -m benchmarks.check_claims` is a CI gate. Every result file carries a
-`STATUS:` line and the command that regenerates it, and the gate gives a
-containment figure no standing without the cost beside it. `SEND_PACKET.md` is a
+`python -m benchmarks.check_claims` is a CI gate. It gives a containment figure
+no standing without the cost beside it, and `SEND_PACKET.md` is a
 forbidden-claims list checked literally.
+
+### What is NOT reproducible from a command
+
+This section used to say every result file carries a `STATUS:` line and the
+command that regenerates it. That is not true, and the gate has been counting
+the exceptions the whole time:
+
+```
+$ python -m benchmarks.check_claims
+results files          107
+stamped with STATUS    90
+enforced this run      63
+bare zeros (total)     337   baseline 337
+neither cmd nor status 0   baseline 0
+stamped unverified    22   (numbers nobody has re-derived)
+containment, no cost   0   baseline 0
+```
+
+**22 files carry numbers nobody has re-derived, and they now say so.** Each is
+stamped `STATUS: unverified`, which was added to the vocabulary for them: the
+three existing values are `current`, `superseded` and `retracted`, and none of
+them can express "this was measured once and no command was recorded". Stamping
+`current` would have been vouching for a run nobody can reproduce.
+
+They are kept because deleting a measurement for being inconvenient to re-derive
+is worse than publishing it with a caveat. They are not evidence you can check.
+`why_we_fail.md` is the one to know about, because THREAT_MODEL.md cites it for
+the 6.3% content-defined-harm figure.
+
+`unverified` is not a way to clear the debt, and the gate is built so it cannot
+be. The count is printed on its own line, so stamping a file moves it between two
+visible buckets rather than out of sight, and an `unverified` file is never
+strictly enforced. Five of the original 23 gained a real command instead and left
+the set on merit.
+
+The **five headline results at the top of this file are not in that set.** Each
+lists the command beside it, and those commands were re-run against this commit.
+
+The `baseline` numbers are a ratchet: `check_claims` fails if either count goes
+up, so the debt can shrink and cannot grow. That is the mechanism, and it is
+weaker than "everything reproduces". Read the gate's output rather than this
+paragraph if the two ever disagree again.
+
+**337 bare zeros** are zeros printed without the upper bound or denominator that
+belongs beside them. A zero over 12 trials and a zero over 132 are different
+evidence, and the headline tables write both (`0/132, 97.5% upper bound 2.8%`).
+
+It was 354. The 17 that went are ones the rule should never have counted: a
+results table states its `n` once, in the caption or the header, and the cells
+below it are bounded by a denominator the reader can see. Counting those put
+findings on the ratchet that were not the sin the rule describes, and a debt
+counter that mostly cries wolf is one nobody acts on.

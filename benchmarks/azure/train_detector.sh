@@ -42,7 +42,7 @@ log "building benign corpus"
 python -m benchmarks.build_corpus --dataset "$DATASET" --limit "$LIMIT" --out "$CORPUS"
 
 log "training transformer scorer"
-python -m agentauth.capabilities.monitor.training.train \
+python -m clayseal.capabilities.monitor.training.train \
     --corpus "$CORPUS" --out "$MODEL" --epochs "$EPOCHS" --device "$DEVICE" \
     | tee "$OUT_DIR/train.log"
 

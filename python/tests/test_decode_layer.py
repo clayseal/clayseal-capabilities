@@ -24,7 +24,7 @@ import zlib
 
 import pytest
 
-from agentauth.capabilities.confidentiality import _decode_layer, _plausible
+from clayseal.capabilities.confidentiality import _decode_layer, _plausible
 
 SECRET = "AKIA7QF3ZC1D77B02E4X"
 
@@ -100,7 +100,7 @@ def test_the_fix_costs_no_false_blocks_on_benign_traffic():
     benign events blocked, unchanged from before the fix. This is the cheap
     version, the shapes that would break first if the decoder became greedy.
     """
-    from agentauth.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+    from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
 
     benign_bodies = [
         "commit 5f2a1c9e8b7d3a4f6c0e1b2d",           # a git sha

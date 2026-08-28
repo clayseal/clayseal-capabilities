@@ -15,9 +15,20 @@ from benchmarks.core.engines import build_engines
 from benchmarks.core.events import BenchmarkEvent, BenchmarkTask, EventLabel
 
 pytest.importorskip("benchmarks.state")
-from benchmarks.state import (  # noqa: E402
-    ATTACK_ARMS, CONTROL_ARMS, EVASION_MODES, MODES, OBJECT_NS, _evasion,
-    _ladder_check, _policy, _record, _run_arm, build_sessions, evaluate)
+from benchmarks.state import (
+    ATTACK_ARMS,
+    CONTROL_ARMS,
+    EVASION_MODES,
+    MODES,
+    OBJECT_NS,
+    _evasion,
+    _ladder_check,
+    _policy,
+    _record,
+    _run_arm,
+    build_sessions,
+    evaluate,
+)
 
 CORPORA = ["tau2", "bfcl"]
 
@@ -90,9 +101,8 @@ def test_shuffling_the_unrelated_reads_does_not_move_a_verdict(corpus):
     """
     _available(corpus)
     policy = _policy(**MODES["value+effects+reread"])
-    from agentauth.capabilities.staleness import ObservationLedger, content_version
-
     from benchmarks.state import _scalars
+    from clayseal.capabilities.staleness import ObservationLedger, content_version
 
     for scn in build_sessions(corpus, count=30, seed=0):
         rng = random.Random(11)
@@ -112,8 +122,8 @@ def test_shuffling_the_unrelated_reads_does_not_move_a_verdict(corpus):
                 tool=scn.write.tool_name, verb=scn.write.action,
                 resource=scn.write.resource, args=dict(scn.write.args),
                 policy=policy, path=key,
-                revalidate=lambda k: content_version(base, _scalars(base))
-                if k == key else None).allowed)
+                revalidate=lambda k, base=base, key=key: content_version(
+                    base, _scalars(base)) if k == key else None).allowed)
         assert verdicts[0] == verdicts[1], (
             f"{scn.host.task_id}: the verdict moved when unrelated observations "
             f"were reordered")

@@ -17,16 +17,16 @@ import json
 import re
 from pathlib import Path
 
-from agentauth.capabilities.monitor.entailment import _HARM_CUES
 from benchmarks.datasets.agentharm import _default_root, _read_split
+from clayseal.capabilities.monitor.entailment import _HARM_CUES
 
 
 def _heuristic_reasons(benign_prompt: str, harmful_prompt: str) -> list[str]:
     # Shared cue list with SessionBroker online soft (entailment.py).
     reasons = []
     for pat in _HARM_CUES:
-        if re.search(pat, harmful_prompt or "", re.I) and not re.search(
-            pat, benign_prompt or "", re.I
+        if re.search(pat, harmful_prompt or "", re.IGNORECASE) and not re.search(
+            pat, benign_prompt or "", re.IGNORECASE
         ):
             reasons.append(f"content: harmful cue {pat!r} absent from sealed goal")
             break
@@ -68,7 +68,7 @@ def _pair_prompts() -> list[tuple[str, str, str, str]]:
 
 
 def _maybe_llm_judge():
-    from agentauth.capabilities.monitor.llm_clients import make_chat_client
+    from clayseal.capabilities.monitor.llm_clients import make_chat_client
 
     client, label = make_chat_client()
     if client is None:

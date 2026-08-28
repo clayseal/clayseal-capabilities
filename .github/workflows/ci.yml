@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Every branch, not only the default one. Scoping this to `main` meant a
+  # contributor pushing a branch got no signal until they opened a pull request,
+  # and it meant a red 3.10 leg on main was the only place anything was reported.
   push:
-    branches: [main, master]
   pull_request:
   # Lets the slow invariant job be triggered by hand without waiting for the cron.
   workflow_dispatch:
@@ -23,18 +25,18 @@ jobs:
         # The floor and the ceiling of `requires-python` in pyproject.toml. Both
         # ends are tested on purpose: a backslash inside an f-string expression
         # is a SyntaxError before 3.12 and shipped undetected in
-        # `value_budget.py`, which `agentauth/capabilities/__init__.py` imports
+        # `value_budget.py`, which `clayseal/capabilities/__init__.py` imports
         # so the package was unimportable on 3.10 and 3.11 while every local
         # interpreter was 3.13.
         # 3.14 is tested because the distribution now admits it. The old
         # <3.14 ceiling came from an optional extra, not the library.
         python-version: ["3.10", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      # One install, from a clean index. `agentauth.core` is vendored in this
+      # One install, from a clean index. `clayseal.core` is vendored in this
       # repo, so there is no sibling checkout and no PAT. The optional identity
       # layer is a separate distribution; the tests that want it skip via
       # importorskip when it is absent, which is what "optional" has to mean for
@@ -43,8 +45,8 @@ jobs:
         run: pip install -e ".[dev,redis]"
       # The layering contract is now `python/tests/test_shipped_package_layering.py`
       # rather than a CLI step. The step this replaces invoked
-      # `python -m agentauth.core.layering`, a module that does not exist in
-      # agentauth-core at all, a dead reference from the repo split that only
+      # `python -m clayseal.core.layering`, a module that does not exist in
+      # clayseal core at all, a dead reference from the repo split that only
       # surfaced when CI ran for the first time. The test is also stronger: it
       # reads the AST, so a LAZY import inside a function is distinguished from a
       # module-scope one, which is exactly the distinction an optional extra
@@ -52,18 +54,25 @@ jobs:
       - name: Run tests
         run: pytest python/tests -q
 
+      # `demo/` is the first thing a new reader runs, and its 39 tests were in no
+      # gate at all. They take twelve seconds. The demo's pure modules must also
+      # import with `rich` absent, which installing only [dev] is what enforces,
+      # so running them here rather than under [demo] is deliberate.
+      - name: Run the demo tests
+        run: pytest demo/tests -q
+
   # The wheel has to work as a wheel. `deployable_stack.py` imported
   # `benchmarks.core.detector_eval` from inside a method, fine in the checkout,
   # ModuleNotFoundError in every real install, and invisible to the layering step
-  # above, which only knows about sibling agentauth packages. Build the artifact,
+  # above, which only knows about sibling clayseal packages. Build the artifact,
   # install it into a clean environment with NO source tree on the path, and
   # import every shipped module.
   wheel:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
       - name: Build the wheel
@@ -79,10 +88,10 @@ jobs:
         run: |
           python - <<'PY'
           import importlib, pkgutil, sys
-          import agentauth.capabilities, agentauth.core
+          import clayseal.capabilities, clayseal.core
           failed = []
           mods = []
-          for pkg in (agentauth.core, agentauth.capabilities):
+          for pkg in (clayseal.core, clayseal.capabilities):
               mods += list(pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."))
           for mod in mods:
               try:
@@ -105,16 +114,75 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'schedule'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - run: pip install ruff
-      # Scoped to the shipped package. The benchmark tree carries a larger,
-      # separately-tracked backlog and is not on the deployment path; gating the
-      # library on a clean lint is what keeps that backlog from growing into it.
-      - name: Lint the shipped package
-        run: ruff check agentauth
+      # The whole repository, not just the shipped package.
+      #
+      # This used to be `ruff check clayseal`, on the reasoning that the
+      # benchmark tree is not on the deployment path. That was defensible for
+      # `benchmarks/`, and it also left `python/tests/` ungated, which is the
+      # test suite for the library itself. `ruff check .` is the first command a
+      # contributor runs, and a repository where it fails teaches them that lint
+      # output is noise.
+      #
+      # The exemptions live in `[tool.ruff.lint.per-file-ignores]` with a reason
+      # written against each one. The correctness families are exempted nowhere.
+      - name: Lint everything
+        run: ruff check .
+
+  # Types, as a ratchet rather than a wall.
+  #
+  # 93% of the library's functions carry annotations and nothing checked them,
+  # so they were decoration. Turning mypy on as a hard failure would block every
+  # change behind 94 untriaged findings; leaving it off let a hand-written count
+  # in pyproject.toml drift from 92 to 98 unnoticed. The ratchet is the same
+  # mechanism `check_claims` uses for measurement debt: the count may fall and
+  # may not rise, per file as well as in total.
+  types:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e ".[dev]" mypy
+      - name: Type findings have not grown
+        run: python scripts/mypy_ratchet.py
+
+  # Performance as a PROPERTY, not a stopwatch.
+  #
+  # A wall-clock threshold on a shared runner is a flaky test that gets muted,
+  # and a muted gate is worse than none. What this asserts instead are the two
+  # things that must hold on any machine, both of which are invariants rather
+  # than measurements:
+  #
+  #   * per-call cost does not grow with session length. A session-scoped
+  #     gateway is always one mistake away from an O(N) term on the decision
+  #     path, and this repository has already shipped that once: 13.1 s for
+  #     2,000 actions before it was found.
+  #   * memory retained per decision stays under a ceiling, so a new unbounded
+  #     structure on the hot path fails here rather than in someone's long-lived
+  #     deployment.
+  #
+  # The adversarial-argument budget lives in the test suite
+  # (test_no_catastrophic_backtracking.py, BUDGET_MS) and runs in the fast gate.
+  perf:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Cost properties hold
+        run: python -m benchmarks.gateway_cost --check
 
   # The slow gate: ladder monotonicity, confidentiality flow windows, gate
   # totality, commit-token mutation stress, replay defense, corpus adequacy.
@@ -124,8 +192,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install

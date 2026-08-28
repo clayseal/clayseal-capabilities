@@ -1,13 +1,13 @@
 import threading
 from datetime import datetime, timedelta, timezone
 
-from agentauth.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
-from agentauth.core.signing import generate_keypair
-from agentauth.capabilities.commit import (
+from clayseal.capabilities.commit import (
     InMemoryUsedTokenStore,
     issue_commit_token,
     verify_commit_token,
 )
+from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
+from clayseal.core.signing import generate_keypair
 
 
 def _ctx(args=None):
@@ -142,7 +142,7 @@ def test_commit_token_trusted_keys_from_env(monkeypatch):
     ctx = _ctx()
     signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
     monkeypatch.setenv(
-        "AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS", f"ed25519:{key.public_key_hex}"
+        "CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS", f"ed25519:{key.public_key_hex}"
     )
     store = InMemoryUsedTokenStore()
     ok, reason = verify_commit_token(signed, ctx=ctx, used_token_store=store)
@@ -157,13 +157,13 @@ def test_commit_token_trusted_keys_from_env(monkeypatch):
 def test_commit_token_requires_minting_key_pin_by_default(monkeypatch):
     """An UNSET environment is the fail-closed one, which is the whole change.
 
-    This test used to set AGENTAUTH_ENV=production, because without it the same
+    This test used to set CLAYSEAL_ENV=production, because without it the same
     call succeeded. A deployment that never set the variable therefore accepted a
     token signed by any key at all, and nothing in the process said so.
     """
-    monkeypatch.delenv("AGENTAUTH_ENV", raising=False)
+    monkeypatch.delenv("CLAYSEAL_ENV", raising=False)
     monkeypatch.delenv("AGENT_RECEIPTS_ENV", raising=False)
-    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS", raising=False)
+    monkeypatch.delenv("CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS", raising=False)
     key = generate_keypair()
     ctx = _ctx()
     signed = issue_commit_token(ctx, key=key, ttl_seconds=300)
@@ -174,11 +174,11 @@ def test_commit_token_requires_minting_key_pin_by_default(monkeypatch):
 
 def test_commit_token_pin_can_be_relaxed_for_development(monkeypatch, recwarn):
     """The relaxed path still exists, has to be named, and announces itself."""
-    from agentauth.core.production import reset_relaxed_warning
+    from clayseal.core.production import reset_relaxed_warning
 
     reset_relaxed_warning()
-    monkeypatch.setenv("AGENTAUTH_ENV", "development")
-    monkeypatch.delenv("AGENTAUTH_COMMIT_TOKEN_TRUSTED_KEYS", raising=False)
+    monkeypatch.setenv("CLAYSEAL_ENV", "development")
+    monkeypatch.delenv("CLAYSEAL_COMMIT_TOKEN_TRUSTED_KEYS", raising=False)
     key = generate_keypair()
     ctx = _ctx()
     signed = issue_commit_token(ctx, key=key, ttl_seconds=300)

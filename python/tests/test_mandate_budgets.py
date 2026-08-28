@@ -4,9 +4,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from agentauth.capabilities.budget import BudgetType, CapabilityBudget
-from agentauth.capabilities.mandate import Mandate
-from agentauth.capabilities.mandate_budgets import (
+from clayseal.capabilities.budget import BudgetType, CapabilityBudget
+from clayseal.capabilities.mandate import Mandate
+from clayseal.capabilities.mandate_budgets import (
     UnsupportedBudgetType,
     session_budgets_from_mandate,
 )

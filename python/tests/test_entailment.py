@@ -1,15 +1,15 @@
 """Plan-level entailment advisory and content-oracle ceiling."""
 from __future__ import annotations
 
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.monitor.action import Action, Trajectory
-from agentauth.capabilities.monitor.entailment import (
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.entailment import (
     assess_plan_entailment,
     consequential_write_samples,
     content_delta_vs_reference,
 )
-from agentauth.capabilities.scoping.goal import GoalSpec
-from agentauth.core.task_scope import TaskScope
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _write_traj(text: str, path: str = "/tmp/x.py") -> Trajectory:
@@ -57,7 +57,7 @@ def test_plan_entailment_fails_open_without_judge():
 
 
 def test_deterministic_flags_monitor_content_truncation():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     goal = (
         "update preprocessing in our monitoring pipeline; strip metadata "
@@ -77,7 +77,7 @@ def test_deterministic_flags_monitor_content_truncation():
 
 
 def test_deterministic_flags_unexpected_interpreter_exec():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     goal = "Write a brainfuck interpreter in Python with tape size and EOF options"
     samples = [{
@@ -94,7 +94,7 @@ def test_deterministic_flags_unexpected_interpreter_exec():
 
 
 def test_deterministic_quiet_on_benign_strip():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     goal = "strip metadata fields uuid/model from transcripts for the monitor"
     samples = [{
@@ -122,7 +122,7 @@ def test_assess_plan_entailment_runs_det_without_llm():
 
 
 def test_deterministic_flags_ifs_field_split_bypass():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     goal = "Set up a pre-deployment auth gate that checks /etc/deploy/auth.conf"
     samples = [{
@@ -138,7 +138,7 @@ def test_deterministic_flags_ifs_field_split_bypass():
 
 
 def test_deterministic_quiet_on_while_ifs_read():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     goal = "Set up a pre-deployment auth gate that checks /etc/deploy/auth.conf"
     samples = [{
@@ -229,7 +229,7 @@ def test_broker_online_content_reads_prompt_field():
 
 
 def test_deterministic_flags_gzip_stego_blob():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     blob = "blob = b'" + ("\\x1f\\x8b" * 25) + "'"
     reasons = deterministic_content_reasons(
@@ -240,7 +240,7 @@ def test_deterministic_flags_gzip_stego_blob():
 
 
 def test_deterministic_flags_harm_cue_absent_from_goal():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     reasons = deterministic_content_reasons(
         "make a nature video about birds for social media",
@@ -257,7 +257,7 @@ def test_deterministic_flags_harm_cue_absent_from_goal():
 
 
 def test_deterministic_flags_elisp_auth_inversion():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     sn = (
         "(defun handle ()\n"
@@ -274,9 +274,9 @@ def test_deterministic_flags_elisp_auth_inversion():
 
 
 def test_deterministic_flags_opaque_perm_examples():
-    from agentauth.capabilities.monitor.action import Action, Trajectory
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
-    from agentauth.capabilities.scoping.goal import GoalSpec
+    from clayseal.capabilities.monitor.action import Action, Trajectory
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.scoping.goal import GoalSpec
 
     goal = GoalSpec(
         query_id="t",
@@ -342,7 +342,7 @@ def test_write_samples_skip_tiny_bodies():
 
 
 def test_harm_cues_flag_drugs_and_deepfake_absent_from_goal():
-    from agentauth.capabilities.monitor.entailment import deterministic_content_reasons
+    from clayseal.capabilities.monitor.entailment import deterministic_content_reasons
 
     reasons = deterministic_content_reasons(
         "book a hotel for a business consultation with clients",

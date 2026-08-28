@@ -27,13 +27,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 
-from agentauth.capabilities.principal_ledger import (
-    PrincipalBudgetView, PrincipalLedger, structuring_signal)
-from agentauth.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
+from clayseal.capabilities.principal_ledger import (
+    PrincipalBudgetView,
+    PrincipalLedger,
+    structuring_signal,
+)
+from clayseal.capabilities.value_budget import SessionValueBudget, ValueBudgetConfig
 
 
 @dataclass
@@ -79,7 +82,7 @@ class Result:
 
     @property
     def overspend(self) -> Decimal:
-        return max(Decimal("0"), self.total_allowed - self.ceiling)
+        return max(Decimal(0), self.total_allowed - self.ceiling)
 
     def summary(self) -> dict:
         return {
@@ -92,7 +95,7 @@ class Result:
 
 def run_session_scoped(total: Decimal, fragments: int, ceiling: Decimal) -> Result:
     """Today's behaviour: a fresh ledger per session."""
-    allowed = Decimal("0")
+    allowed = Decimal(0)
     for attempt in structure(total, fragments):
         budget = _budget(ceiling)          # the bug, in one line
         res = budget.reserve("send_money", {"amount": str(attempt.amount)})
@@ -110,7 +113,7 @@ def run_principal_scoped(total: Decimal, fragments: int, ceiling: Decimal) -> Re
     mandate, so opening a new session buys the attacker nothing.
     """
     ledger = PrincipalLedger(window_seconds=24 * 3600)
-    allowed = Decimal("0")
+    allowed = Decimal(0)
     for attempt in structure(total, fragments):
         view = PrincipalBudgetView(
             ledger=ledger, principal="mandate:payouts-2026-08",

@@ -13,8 +13,8 @@ import pytest
 
 from benchmarks.adaptive import calibrate
 from benchmarks.adversarial.adaptive import (
-    Knowledge,
     OBJECTIVES,
+    Knowledge,
     in_scope_exfiltration_objective,
     run_adaptive,
 )

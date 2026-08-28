@@ -54,8 +54,9 @@ from __future__ import annotations
 
 import fnmatch
 import random
+from collections.abc import Iterable
 from dataclasses import replace
-from typing import Any, Iterable
+from typing import Any
 
 from benchmarks.core.events import BenchmarkTask, EventLabel
 
@@ -215,7 +216,7 @@ def capability_allows_patterns(caps: list[dict[str, str]], resource: str,
                                action: str) -> bool:
     """``capability_allows`` with a pattern resource.
 
-    ``agentauth.core.operations.capability_allows`` compares the resource with
+    ``clayseal.core.operations.capability_allows`` compares the resource with
     ``!=``, mirroring the Biscuit authorizer. A pattern grant needs a matcher,
     and it lives here rather than in the shipping primitive because a wildcard
     resource is a benchmark question until it is a token format.

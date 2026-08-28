@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from agentauth.capabilities.commit import issue_commit_token, verify_commit_token
-from agentauth.capabilities.used_token_store import InMemoryUsedTokenStore, set_default_used_token_store
-from agentauth.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
-from agentauth.core.signing import generate_keypair
+from clayseal.capabilities.commit import issue_commit_token, verify_commit_token
+from clayseal.capabilities.used_token_store import (
+    InMemoryUsedTokenStore,
+    set_default_used_token_store,
+)
+from clayseal.core.runtime import ActionDescriptor, AuthorityContext, ExecutionContext
+from clayseal.core.signing import generate_keypair
 
 
 def _ctx() -> ExecutionContext:

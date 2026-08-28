@@ -68,6 +68,23 @@ done
     -o "${BF}/multi_turn_func_doc/gorilla_file_system.json"
 
 # --------------------------------------------------------------------------- #
+# IPI-Coding-Agent, from UK AISI's inspect_evals. Not fetched before, which is
+# why `test_stack_matches_ladder_on_redcode_and_ipi` raised in the nightly job
+# instead of running: its guard named RedCode and InjecAgent, both of which WERE
+# fetched, so the guard passed and the loader then failed.
+# Sparse checkout: the eval package only, not the whole repository.
+# --------------------------------------------------------------------------- #
+if [ ! -d "${CORPUS}/inspect_evals/src" ]; then
+  echo "==> inspect_evals (IPI-Coding-Agent)"
+  rm -rf "${CORPUS}/inspect_evals"
+  git clone --depth 1 --filter=blob:none --sparse \
+    https://github.com/UKGovernmentBEIS/inspect_evals.git "${CORPUS}/inspect_evals"
+  git -C "${CORPUS}/inspect_evals" sparse-checkout set src/inspect_evals
+else
+  echo "==> inspect_evals already present"
+fi
+
+# --------------------------------------------------------------------------- #
 # InjecAgent, indirect prompt-injection tool-attack JSON (pinned for replay)
 # --------------------------------------------------------------------------- #
 if [ ! -d "${CORPUS}/InjecAgent/data" ]; then

@@ -94,7 +94,7 @@ def _decodings(blob: str) -> set[str]:
     ):
         try:
             out.add(decoder(blob.strip()))
-        except Exception:  # noqa: BLE001, S110 - a failed decode is not a decoding
+        except Exception:
             # Silent by design: the question is "could an observer recover the
             # secret", and a decoder that does not apply is simply not one of
             # the ways they could.

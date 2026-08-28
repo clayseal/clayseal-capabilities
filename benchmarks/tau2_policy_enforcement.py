@@ -41,9 +41,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import load_policy_text
-from agentauth.capabilities.policy_draft import extract, to_yaml
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import load_policy_text
+from clayseal.capabilities.policy_draft import extract, to_yaml
 
 DOMAINS = ("retail", "airline", "telecom")
 

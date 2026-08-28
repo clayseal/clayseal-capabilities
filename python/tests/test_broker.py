@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import random
 
-from agentauth.core.task_scope import TaskScope
-from agentauth.capabilities.broker import Outcome, SessionBroker
-from agentauth.capabilities.hardening.egress_policy import EgressPolicy
-from agentauth.capabilities.monitor import Action, NGramScorer, TrajectoryDetector
-from agentauth.capabilities.monitor.training.synth_corpus import generate, workflow_for
-from agentauth.capabilities.scoping.goal import GoalSpec
+from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.hardening.egress_policy import EgressPolicy
+from clayseal.capabilities.monitor import Action, NGramScorer, TrajectoryDetector
+from clayseal.capabilities.monitor.training.synth_corpus import generate, workflow_for
+from clayseal.capabilities.scoping.goal import GoalSpec
+from clayseal.core.task_scope import TaskScope
 
 
 def _fitted_detector():
@@ -120,7 +120,7 @@ def test_observe_context_records_untrusted_provenance():
     Replaces a dead hook: `authorize` used to read `Action._context`, which a
     frozen Action never has, so provenance could not reach the broker at all.
     """
-    from agentauth.capabilities.monitor.action import ContextItem, TrustLevel
+    from clayseal.capabilities.monitor.action import ContextItem, TrustLevel
 
     broker = SessionBroker(goal=GoalSpec(query_id="q", summary="triage"))
     assert broker._trajectory.context == []
@@ -137,8 +137,8 @@ def test_observe_context_records_untrusted_provenance():
 
 
 def test_observed_context_is_visible_to_the_taint_tracker():
-    from agentauth.capabilities.monitor.action import ContextItem, TrustLevel
-    from agentauth.capabilities.monitor.provenance import TaintTracker
+    from clayseal.capabilities.monitor.action import ContextItem, TrustLevel
+    from clayseal.capabilities.monitor.provenance import TaintTracker
 
     broker = SessionBroker(goal=GoalSpec(query_id="q", summary="triage"))
     broker.observe_context(ContextItem(item_id="ret:0",

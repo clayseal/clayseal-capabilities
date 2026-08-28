@@ -12,12 +12,12 @@ change to either file has to reckon with the other.
 """
 import pytest
 
-from agentauth.capabilities.mandate_lint import (
+from clayseal.capabilities.mandate_lint import (
     Finding,
     lint_mandate,
     require_clean,
 )
-from agentauth.capabilities.value_budget import EffectSpec
+from clayseal.capabilities.value_budget import EffectSpec
 
 CLEAN_CATALOG = ["payments.transfer", "reports.get_balance",
                  "search.query", "files.read", "calendar.list_events"]
@@ -152,7 +152,7 @@ def test_require_clean_raises_on_an_error_and_names_the_tool():
         catalog=["payments.wire"],
         value_tracked={"payments.transfer": ("amount", "p")},
         ceilings={"p": 100}, principal_scoped=True)
-    with pytest.raises(ValueError, match="payments.wire"):
+    with pytest.raises(ValueError, match=r"payments\.wire"):
         require_clean(findings)
 
 

@@ -13,9 +13,9 @@ from decimal import Decimal
 
 import pytest
 
-from agentauth.capabilities.monitor.action import Action
-from agentauth.capabilities.policy import PolicyError, load_policy_text
-from agentauth.capabilities.principal_ledger import PrincipalLedger
+from clayseal.capabilities.monitor.action import Action
+from clayseal.capabilities.policy import PolicyError, load_policy_text
+from clayseal.capabilities.principal_ledger import PrincipalLedger
 
 BUDGET = """
 budgets:
@@ -44,7 +44,7 @@ def _pay(stack, step, amount, invoice):
 
 # ------------------------------------------------------- the substitution ---
 def test_a_declared_principal_moves_the_ceiling_off_the_session(tmp_path):
-    from agentauth.capabilities.principal_ledger import PrincipalBudgetView
+    from clayseal.capabilities.principal_ledger import PrincipalBudgetView
 
     policy = load_policy_text(_document(tmp_path / "l.jsonl"))
     assert isinstance(policy.value_budget, PrincipalBudgetView)

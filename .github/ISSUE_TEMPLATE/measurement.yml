@@ -1,0 +1,39 @@
+name: A number does not reproduce
+description: A published result disagrees with what the command prints
+labels: [measurement]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Every headline number in the README and in `benchmarks/results/` is
+        supposed to carry the command that reproduces it. If it does not
+        reproduce, that is a bug in the claim, and it is one we want to know
+        about before anyone else finds it.
+
+  - type: input
+    id: claim
+    attributes:
+      label: The claim
+      placeholder: "README: 39.4% (52/132) on the full BPL suite"
+    validations: {required: true}
+
+  - type: input
+    id: command
+    attributes:
+      label: The command you ran
+      placeholder: "python -m benchmarks.bpl_sweep --suite full"
+    validations: {required: true}
+
+  - type: textarea
+    id: got
+    attributes:
+      label: What it printed
+      render: text
+    validations: {required: true}
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit SHA
+      description: "`git rev-parse HEAD`. Numbers move; the SHA says which one you have."
+    validations: {required: true}

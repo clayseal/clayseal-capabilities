@@ -20,10 +20,10 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 
-from agentauth.capabilities.decision_log import DecisionLog
-from agentauth.capabilities.monitor import Action
-
 from capability import Capability
+
+from clayseal.capabilities.decision_log import DecisionLog
+from clayseal.capabilities.monitor import Action
 
 _LINE = re.compile(r"^(?:ivisor:\s*)?policy\s+(\S+)\s+verdict=(\w+)(.*)$")
 _KV = re.compile(r"(\w+)=(\S+)")
