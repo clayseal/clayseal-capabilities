@@ -11,6 +11,12 @@ on:
 
 permissions:
   contents: read
+  # gitleaks-action enumerates the commits on a pull request to scan its range.
+  # Without this it gets `403 Resource not accessible by integration` and the
+  # job fails — which reads as "secret found" and is in fact "the scan never
+  # ran". A secret scanner that cannot run is worse than a red one, because the
+  # red one gets looked at.
+  pull-requests: read
 
 jobs:
   pip-audit:
@@ -37,6 +43,14 @@ jobs:
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # `.gitleaks.toml` allowlists 22 findings, every one of which is a
+          # synthetic secret this repository needs in order to test a secret
+          # detector, plus a type annotation the rule reads as a key and one
+          # decryption key its upstream publishes on purpose. Each is allowlisted
+          # by VALUE with its reason, not by excluding a directory, so a real
+          # credential pasted into a test still fails the build. Verified: a
+          # real-shaped AWS key is caught with this config in place.
+          GITLEAKS_CONFIG: ${{ github.workspace }}/.gitleaks.toml
 
   trivy-fs:
     runs-on: ubuntu-latest
