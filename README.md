@@ -337,29 +337,76 @@ The two mechanisms catch different things: 32 scenarios are contained by this
 layer only, 20 by dataflow taint only, 22 by both. Stacking them is still a bad
 trade, because the taint layer refuses 47 benign scripts this one completes.
 
-Everything above is a suite we wrote, which is the first thing a reader should
-distrust. On a corpus we did not write, against a live model:
+Everything above is a suite we wrote, which is the first thing to distrust. The
+deterministic tiers replay **eleven external corpora** nobody here authored:
 
-**AgentDojo prompt injection.** `gpt-4o-mini-2024-07-18`, `important_instructions`
-attack, 18 trials per cell. Attack-success rate, lower is better:
+```bash
+python -m benchmarks.scoreboard
+```
 
-| suite | undefended | best AgentDojo built-in | Progent | ours |
-| --- | ---: | ---: | ---: | ---: |
-| banking | 61.1% | 27.8% | 16.7% | **0.0%** (0/18) |
-| slack | 83.3% | 16.7% | 11.1% | **0.0%** (0/18) |
-| travel | 27.8% | 5.6% | 11.1% | **0.0%** (0/18) |
-| workspace | 88.9% | 5.6% | 16.7% | **0.0%** (0/18) |
+| corpus | contained | n (attack / benign) | harm is defined by |
+| --- | ---: | ---: | --- |
+| redcode | 99.9% | 718 / 344 | a path outside the workspace |
+| ipi_coding | 100.0% | 50 / 45 | an out-of-scope target |
+| mcp_attack | 100.0% | 5 / 9 | a poisoned tool or a mutated argument |
+| agent_threat_bench | 100.0% | 6 / 24 | a destination |
+| advbench_agent | 100.0% | 6 / 11 | a target |
+| mind2web_sc | 98.0% | 100 / 100 | a safety-critical step |
+| b3 | 66.7% | 9 / 8 | mixed |
+| **agentharm** | **55.3%** | 696 / 729 | **the content of an allowed action** |
+| **sleight** | **30.2%** | 129 / 311 | **the content of an allowed action** |
 
-Zero on all four suites, against a published system that leaves 11 to 17 points.
-At 18 trials a cell, a zero has a 97.5% upper bound of 18.5%, so this shows we
-are not worse and cannot show more; the gap to Progent is suggestive, not
-separated.
+**Two further corpora, ASB (2,040 attacks) and InjecAgent (1,598), score 100% and
+are excluded from that table rather than counted.** Every attack in them uses a
+tool the grant never issued, so a trivial baseline scores the same. A number a
+naive rung also earns is not evidence about this system, and reporting it would
+add 3,638 attacks to the numerator for nothing.
 
-**What that costs, measured separately and paired.** Those runs use
-`gpt-4o-mini` because it is reliably injectable, which makes it the right model
-for a security test and the wrong one for a utility test. Utility is measured on
-its own, **paired per task so only defense-caused losses count**, across four
-models and 32 clean tasks each:
+**The spread is the finding, and it is not noise.** It is the same line the
+132-scenario suite draws with budgets: where harm is defined by something the
+gateway can *bind to*, containment is 98 to 100%; where harm is defined by the
+meaning of an otherwise authorized action, it falls to 30 to 55%. This is an
+authorization layer, not a harm classifier, and
+[THREAT_MODEL.md](docs/THREAT_MODEL.md) declares content-defined harm out of
+scope for exactly that reason.
+
+Containment at whatever false-block rate an engine picked for itself is not a
+headline, and this repo's own review rules forbid quoting it as one. At a
+**fixed 1% benign-block rate**, with a deny-all control that must score zero:
+
+| corpus | scorer | detection @1% FPR | AUC | lift |
+| --- | --- | ---: | ---: | ---: |
+| redcode | deny-all control | 0.0% | 0.500 | 0.00 |
+| redcode | ours | **100.0%** | **1.000** | 61.2 |
+| ipi_coding | ours | **100.0%** | **1.000** | 53.2 |
+| agentharm | ours | not reached | 0.628 | n/a |
+| sleight | ours | not reached | 0.511 | n/a |
+
+Same split, at an operating point an operator chose. On the content-defined
+corpora, 0.511 AUC is chance ([opeval.md](benchmarks/results/opeval.md), five
+seeds).
+
+**Against a live model.** AgentDojo prompt injection, `gpt-4o-mini`,
+`important_instructions`, deployable configuration, **three sweeps per suite**:
+
+| suite | undefended ASR | defended ASR | runs |
+| --- | ---: | ---: | ---: |
+| banking | 66.7% | 0.0% | 0 / 54 |
+| slack | 81.5% | 0.0% | 0 / 54 |
+| travel | 38.9% | 1.9% | 1 / 54 |
+| workspace | 88.9% | 0.0% | 0 / 54 |
+
+**Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6]**
+([pooled_asr.md](benchmarks/results/pooled_asr.md)). Progent, the closest
+published comparable, leaves 11.1 to 16.7% on the same suites and attack, though
+its figure is a single 18-run sweep. Our own single sweeps were the same size
+until this run, and 0 of 18 justifies nothing tighter than [0, 17.6%], which is
+why the pooled number is the one quoted.
+
+**What that costs, measured separately and paired.** `gpt-4o-mini` is used above
+because it is reliably injectable, which makes it right for a security test and
+wrong for a utility test. Utility is measured on its own, **paired per task so
+only defense-caused losses count**, across four models and 32 clean tasks each:
 
 | model | undefended | with Clay Seal | cost | false-block |
 | --- | ---: | ---: | ---: | ---: |
@@ -372,15 +419,14 @@ The cost falls monotonically with model strength, and on the strongest model
 measured the **shippable** path costs 3 points where CaMeL's published cost is 7.
 **Most of what looks like the cost of enforcement is the cost of a weak agent**,
 and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
-fail with no defense present at all. The llama row is a null, not a win, a 12%
-baseline leaves nothing for a defense to cost, and it is kept here rather than
-dropped.
+fail with no defense present. The llama row is a null, not a win, a 12% baseline
+leaves nothing for a defense to cost, and it is kept rather than dropped.
 
 n=32 per model, so the interval around a 3-point difference is wide. The monotone
 trend across four models carries that claim, not any single cell
 ([the 4x4](benchmarks/results/live_ladder.md)).
 
-**One limit outranks all of it.** These are AgentDojo numbers, and AgentDojo
+**One limit outranks all of it.** Every number above comes from corpora whose
 tasks are mostly specified in the prompt. On
 [AgentDyn](benchmarks/results/agentdyn.md), where the correct next step cannot be
 known until the agent looks at what is actually there, every such step deviates
