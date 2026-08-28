@@ -137,3 +137,41 @@ def test_the_scanner_is_not_simply_off():
     """
     found = _scan_text(UNBOUNDED_PROSE)
     assert found and found[0][0] == 3, found
+
+
+PER_ROW_N = """# probe
+
+| idx | risk class | n | allowlist |
+| --: | --- | --: | --: |
+| 1 | exfiltrate | 60 | 0% |
+| 2 | download | 54 | 0% |
+"""
+
+NO_COUNT_COLUMN = """# probe
+
+| idx | risk class | allowlist |
+| --: | --- | --: |
+| 1 | exfiltrate | 0% |
+"""
+
+N_INSIDE_WORDS = """# probe
+
+| idx | name | notes | allowlist |
+| --: | --- | --- | --: |
+| 1 | exfiltrate | none | 0% |
+"""
+
+
+def test_a_header_column_named_n_bounds_every_row():
+    """`| idx | risk class | n | allowlist |` gives each row its own denominator,
+    so the rates in that row are bounded by a count the reader can see."""
+    assert not _scan_text(PER_ROW_N)
+
+
+def test_a_table_with_no_count_column_is_still_flagged():
+    assert _scan_text(NO_COUNT_COLUMN)
+
+
+def test_the_letter_n_inside_other_words_does_not_count():
+    """`n` is one letter and appears in most words. The cell has to BE `n`."""
+    assert _scan_text(N_INSIDE_WORDS)
