@@ -1,3 +1,18 @@
+"""The shape of an answer, including the answers that are conditional.
+
+A decision is not a boolean. It can be an allow that owes an obligation, an
+allow a reviewer will see afterwards, a hold pending human approval, or a call
+that cannot proceed until a budget reservation exists. `DecisionResult` carries
+the outcome together with what makes it conditional, so a caller cannot act on
+the verdict while dropping the condition attached to it.
+
+The status vocabularies near the top exist because those conditions arrive from
+elsewhere as strings — an approval system says `complete`, a budget says
+`reserved` — and the sets say which spellings count as settled. They are
+deliberately generous in what they accept and exact about what they mean: an
+unrecognised status is NOT treated as fulfilled, because the failure direction of
+guessing is an obligation silently marked done.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

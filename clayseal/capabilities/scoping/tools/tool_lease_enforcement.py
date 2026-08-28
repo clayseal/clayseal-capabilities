@@ -1,3 +1,18 @@
+"""Resolving a call to the entity it acts on, and holding the lease to it.
+
+`target_entity_from_arguments` is the load-bearing part: it turns a tool call's
+arguments into the entity being acted on, which is what a tool lease is written
+against. A call whose target cannot be resolved is `_untargeted`, and strict mode
+(`CLAYSEAL_LEASE_STRICT`) decides whether that is refused or allowed.
+
+Untargeted is the interesting case and the reason the flag exists. Refusing every
+call whose target cannot be read is the safe direction and costs legitimate work;
+allowing them leaves a hole shaped exactly like an argument the resolver does not
+know about. The default is set by deployment posture rather than chosen here.
+
+Write tools are treated more strictly than reads, via `SideEffectLevel` — which
+the mandate declares, not this module.
+"""
 from __future__ import annotations
 
 from typing import Any

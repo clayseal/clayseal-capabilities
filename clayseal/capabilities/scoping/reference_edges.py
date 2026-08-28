@@ -1,3 +1,13 @@
+"""Edges supplied from outside, for what static analysis cannot see.
+
+Dynamic dispatch, dependency injection and configuration-driven wiring produce
+real dependencies with no import to read. `load_reference_edges` takes those as
+input so a lease can include a file the graph could not reach.
+
+Malformed entries are skipped rather than raised on, and this file is an input to
+RANKING rather than to enforcement: an edge here can bring a file into a lease's
+candidate set, and `enforcement.py` still decides whether the path is allowed.
+"""
 from __future__ import annotations
 
 import json

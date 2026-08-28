@@ -1,3 +1,17 @@
+"""What an action IS, and who is asking.
+
+The types every layer passes around. `ActionDescriptor` is one attempted
+operation; `ActorRef` and `ActorKind` say who attempted it; `AuthorityContext`
+carries the grant it is being judged against; `ExecutionContext` is the
+per-session envelope around both.
+
+`SideEffectLevel` is the one to read first. It is the answer to "does this call
+change anything", and it is DECLARED by the mandate rather than inferred from the
+tool name, because a name is not a contract: `get_report` may email it. Several
+controls key off it — budgets debit effectful calls, the content check inspects
+effectful writes — so a wrong level is not a cosmetic mislabel, it removes a call
+from the checks that would have seen it.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

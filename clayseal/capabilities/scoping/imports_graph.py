@@ -1,3 +1,14 @@
+"""Which file pulls in which, so closure has an edge to walk.
+
+`extract_import_edges` reads imports without executing anything —
+`resolve_import_to_repo_path` maps a module name to a path in the repository by
+inspection, never by importing it. Importing to discover imports would run
+arbitrary code from the repository being scoped, at the moment the scoper is
+deciding what that repository is allowed to touch.
+
+Unresolvable imports are dropped. A missing edge costs closure a file, which is a
+utility cost; a wrong edge would add one, which is an authority cost.
+"""
 from __future__ import annotations
 
 from pathlib import Path

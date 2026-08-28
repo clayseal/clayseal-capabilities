@@ -1,3 +1,13 @@
+"""The sealed goal: what the session was asked to do.
+
+`GoalSpec` is the trusted input everything downstream narrows against. It is
+captured before any tool output can reach it, which is the property that makes
+declassification and replanning safe: an injected instruction arriving in a tool
+result cannot nominate a sink or widen a scope, because the goal it would have to
+change was already sealed.
+
+Small on purpose. Anything richer would be a place for untrusted text to enter.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

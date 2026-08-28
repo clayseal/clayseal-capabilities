@@ -1,3 +1,13 @@
+"""What entities exist, and which tools act on them.
+
+`ToolSpec` describes a tool, `EntityRecord` an object it can act on, and
+`ToolEntityIndex` is the catalogue a tool lease is scoped against — the analogue
+of the repository chunk index on the file side.
+
+The index is built from declarations rather than from observed traffic. Scoping
+to what a session has already done would let the first call widen the grant for
+every call after it.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

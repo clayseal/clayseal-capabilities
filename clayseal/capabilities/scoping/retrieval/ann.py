@@ -1,3 +1,13 @@
+"""Approximate nearest neighbours over chunk embeddings.
+
+Semantic ranking, for the goal that describes what it wants without naming it.
+`TextEmbedder` is a Protocol rather than a concrete model: embeddings are the one
+part of scoping with a real dependency, and a deployment that has one should be
+able to bring it without this package choosing which.
+
+Complementary to BM25, not better than it. An embedding finds the file that does
+the thing; BM25 finds the file that says the word.
+"""
 from __future__ import annotations
 
 import hashlib

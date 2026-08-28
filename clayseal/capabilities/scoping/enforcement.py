@@ -1,3 +1,15 @@
+"""Is this repository path inside the lease?
+
+The check the scoping layer exists to perform, plus the normalisation it needs
+first. `normalize_repo_path` and `resource_ref_to_repo_path` bring the many ways
+a path arrives — a bare path, a `repo://` reference, a `file:` reference — to one
+spelling before `check_repo_path_allowed` compares it to the lease.
+
+Normalising before comparing is the whole game. This repository has already
+shipped one deny-list bypass where two matchers disagreed about whether a
+backslash was a separator, so the rule is that a path is canonicalised once and
+compared once, never compared in whatever form it arrived in.
+"""
 from __future__ import annotations
 
 import fnmatch

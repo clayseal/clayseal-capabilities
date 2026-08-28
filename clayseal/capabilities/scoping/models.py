@@ -1,3 +1,15 @@
+"""The types dynamic scoping is made of.
+
+A `RepoChunk` is a piece of a repository with an identity, a kind and a
+sensitivity label; a `RepoChunkIndex` is many of them; a `CapabilityLease` is the
+narrowed grant a session actually runs under.
+
+`SensitivityLabel` is the field with consequences. It is what marks a chunk as
+something a lease should not casually include, and it comes from
+`labels.py` rules over the path rather than from the file's contents, because
+reading contents to decide whether contents are sensitive is a circular
+authority: the read has already happened.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

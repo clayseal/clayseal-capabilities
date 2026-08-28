@@ -1,3 +1,14 @@
+"""Ranking tool targets against the sealed goal.
+
+`score_targets_for_goal` is the tool-side analogue of `score_chunks_for_goal`,
+matched on word tokens rather than on code structure, because a tool target is
+usually a short identifier rather than a body of source.
+
+The token matching is deliberately loose: a target the goal names slightly
+differently should still rank, since the cost of missing it is a refusal of
+legitimate work, and the lease it feeds is still checked by
+`tool_enforcement.py` afterwards.
+"""
 from __future__ import annotations
 
 import re

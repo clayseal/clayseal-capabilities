@@ -1,3 +1,13 @@
+"""Which files the repository itself treats as central.
+
+PageRank over the import graph, used as one ranking signal among several. It
+answers "what does the rest of the codebase depend on", which is a different
+question from "what does this goal mention" and catches the file a task needs
+without naming.
+
+A ranking signal only. It contributes to what a lease is built from, never to
+what a lease permits.
+"""
 from __future__ import annotations
 
 from collections import defaultdict

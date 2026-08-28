@@ -1,3 +1,13 @@
+"""Which paths are sensitive, decided from the path alone.
+
+Glob rules over the repository path, not the file's contents. Deciding
+sensitivity by reading a file means the read has already happened before anything
+judged whether it should, which is the wrong order for a control.
+
+`subsystem_tags_for_path` is the coarser half: it says which part of the system a
+path belongs to, so a lease can be scoped to a subsystem without enumerating
+every file in it.
+"""
 from __future__ import annotations
 
 import fnmatch

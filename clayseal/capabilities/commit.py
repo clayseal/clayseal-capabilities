@@ -1,3 +1,21 @@
+"""The token that binds a decision to the call it authorized.
+
+A gateway that says yes and then hands control back has a gap: between the answer
+and the execution, the arguments can change. A commit token closes it. The token
+carries an `arguments_hash` over the exact arguments that were judged, so
+executing anything else is detectable, and it is single-use, so replaying a past
+yes is detectable too.
+
+Single-use is the part that needs storage, which is what `UsedTokenStore` is.
+`InMemoryUsedTokenStore` is correct for one process and wrong for a deployment
+that runs several: two processes with separate memories each see a token as
+fresh. The Redis and DynamoDB backends in `used_token_store.py` exist for that,
+and `production.py` refuses to start without one when the environment names
+itself production.
+
+`COMMIT_TOKEN_TRUSTED_KEYS_ENV` pins who may mint. Unpinned, any key that can
+sign can mint an authorization, which is not a gate.
+"""
 from __future__ import annotations
 
 import heapq
