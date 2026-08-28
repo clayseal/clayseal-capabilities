@@ -419,7 +419,7 @@ def test_session_containment_does_not_depend_on_event_order(corpus):
                                 subject_value=p["subject"]))
                   for p in _STRANGERS[:3]]
 
-        def _blocked(calls):
+        def _blocked(calls, policy=policy):
             monitor = ReidentificationMonitor()
             return any(not monitor.check(tool=t, args=a, policy=policy).allowed
                        for t, a in calls)

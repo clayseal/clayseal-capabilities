@@ -147,7 +147,7 @@ def evaluate(corpus: str, *, count: int = 200, seed: int = 0) -> dict:
             declassified_sinks=(good_sink.resource,))
         arms = _arms(secret)
 
-        def _event(payload: str, tag: str) -> BenchmarkEvent:
+        def _event(payload: str, tag: str, i=i, bad_sink=bad_sink) -> BenchmarkEvent:
             return BenchmarkEvent(
                 event_id=f"probe-{i}-{tag}", tool_name=bad_sink.tool_name,
                 resource=bad_sink.resource, action=bad_sink.action,
