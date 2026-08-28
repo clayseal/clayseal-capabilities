@@ -31,6 +31,13 @@ PRODUCT_ENTRIES = (
     "clayseal.capabilities.broker",
 )
 PUBLIC_ENTRIES = (
+    # The package __init__ IS the public API: it carries the lazy _EXPORTS map,
+    # so anything a user reaches by `from clayseal.capabilities import X` is
+    # wired even if no other module imports it. Omitting these two overstated
+    # the orphan count by counting the whole public surface as unreachable.
+    "clayseal",
+    "clayseal.capabilities",
+    "clayseal.core",
     "clayseal.capabilities.cli",
     "clayseal.capabilities.guardrail",
     "clayseal.capabilities.mcp_proxy",
@@ -77,6 +84,18 @@ def _import_edges(files: dict[str, pathlib.Path]) -> dict[str, set[str]]:
                     target = node.module or ""
                 out.add(target)
                 out.update(f"{target}.{a.name}" for a in node.names)
+        # Lazy public surface: `capabilities/__init__.py` maps export name ->
+        # submodule as STRINGS, resolved in __getattr__. Those are real edges
+        # and an AST import walk cannot see them, so a lazy re-export reads as
+        # an orphan. Resolve any dict-of-str-to-str against sibling modules.
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Dict):
+                continue
+            for value in node.values:
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    cand = f"{pkg}.{value.value}"
+                    if cand in files:
+                        out.add(cand)
         edges[mod] = {o for o in out if o in files}
     return edges
 

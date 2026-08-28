@@ -88,7 +88,7 @@ NOT_IN_GATE = (
     "benchmarks.leaderboard", "benchmarks.opeval", "benchmarks.aml_sequence",
     "benchmarks.mind2web", "benchmarks.agentharm", "benchmarks.agentleak",
     "benchmarks.commit_then_reveal", "benchmarks.fraud_validation",
-    "benchmarks.reidentification", "benchmarks.cross_stack",
+    "benchmarks.cross_stack",
     "benchmarks.mandate_search", "benchmarks.density", "benchmarks.evade",
 )
 

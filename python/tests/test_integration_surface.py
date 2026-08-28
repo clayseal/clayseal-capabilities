@@ -18,7 +18,7 @@ from conftest import requires_corpus
 
 # --- reachability ratchet ---------------------------------------------------
 
-ORPHAN_BASELINE = 42
+ORPHAN_BASELINE = 31
 
 
 def test_the_orphan_count_does_not_grow() -> None:
