@@ -157,7 +157,7 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
                 try:
                     broker.observe_output(name, str(result),
                                           source_args=dict(args))
-                except Exception:  # noqa: BLE001, S110
+                except Exception:
                     # Observation grants no authority, so a failure here must
                     # never be scored as a block. It is also never silent: the
                     # sweep reports how many observations it managed to make.
@@ -330,7 +330,7 @@ def run(model: str, runs: int, scenario: str, conditions: list[str],
         identity = ModelIdentity(requested=model,
                                  reported=str(getattr(probe, "model", "") or ""),
                                  provider="openai-compatible")
-    except Exception as exc:  # noqa: BLE001 - identity is diagnostic, not a gate
+    except Exception as exc:
         print(f"[model] identity probe failed: {type(exc).__name__}")
     print(f"[model] {identity.label()}")
     if identity.mismatched:

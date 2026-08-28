@@ -226,7 +226,7 @@ def test_the_floor_holds_under_randomized_stress():
 
     scope = TaskScope(allowed_paths=[f"{p}/**" for p in ALLOWED_PREFIXES],
                       denied_paths=[f"{p}/**" for p in DENIED_PREFIXES])
-    rng = random.Random(5)  # noqa: S311 - reproducible sweep, not a secret
+    rng = random.Random(5)
     unsafe = []
     for _ in range(30_000):
         path = generate(rng)

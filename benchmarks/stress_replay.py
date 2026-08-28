@@ -105,7 +105,7 @@ def attack_outage() -> dict:
                 signed, ctx=ctx, trusted_minting_keys=trusted,
                 used_token_store=store)
             outcome = "ALLOWED" if ok else f"denied ({reason})"
-        except Exception as raised:  # noqa: BLE001
+        except Exception as raised:
             outcome = f"raised {type(raised).__name__}"
         findings.append({"backend_error": type(exc).__name__, "verifier": outcome})
     # Fail-open is catastrophic; raising is merely wrong-shaped.
@@ -126,7 +126,7 @@ def attack_hostile_input() -> dict:
     for tid in hostile_ids:
         try:
             store.mark_used(tid, FUTURE)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             problems.append({"token_id": repr(tid)[:40],
                              "error": f"{type(exc).__name__}: {str(exc)[:60]}"})
     past = datetime.now(timezone.utc) - timedelta(hours=1)
@@ -134,7 +134,7 @@ def attack_hostile_input() -> dict:
                        datetime(9999, 1, 1, tzinfo=timezone.utc))):
         try:
             store.mark_used(f"tok-{label}", exp)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             problems.append({"expires_at": label,
                              "error": f"{type(exc).__name__}: {str(exc)[:60]}"})
 

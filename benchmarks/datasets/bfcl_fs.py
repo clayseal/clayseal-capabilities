@@ -47,13 +47,13 @@ def _parse_call(text: str) -> tuple[str, dict[str, Any]] | None:
         for kw in getattr(call, "keywords", []):
             try:
                 args[kw.arg] = ast.literal_eval(kw.value)
-            except Exception:  # noqa: BLE001 - non-literal arg; keep the name
+            except Exception:
                 args[kw.arg] = "<expr>"
         # Positional args appear in a few entries, e.g. sort('report.pdf').
         for i, pos in enumerate(getattr(call, "args", [])):
             try:
                 args[f"arg{i}"] = ast.literal_eval(pos)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 args[f"arg{i}"] = "<expr>"
     return (name, args)
 

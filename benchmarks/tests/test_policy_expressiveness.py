@@ -325,7 +325,7 @@ def test_the_configuration_predicts_the_outcome_without_any_label():
         scen = get_scenario(name)
         try:
             src = inspect.getsource(scen.make_broker)
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
         return any(k in src for k in ("SessionValueBudget", "SessionCallBudget",
                                       "value_budget", "call_budget"))

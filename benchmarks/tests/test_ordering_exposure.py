@@ -27,7 +27,7 @@ def _load(name: str):
 
     try:
         return get_loader(name).load(limit=400)
-    except Exception:  # noqa: BLE001 - external corpus not fetched
+    except Exception:
         pytest.skip(f"{name} corpus unavailable")
 
 

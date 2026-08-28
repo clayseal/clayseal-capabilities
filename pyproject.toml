@@ -187,6 +187,64 @@ ignore = [
 # antivirus quarantining its own signature file.
 "clayseal/capabilities/hardening/input_hardening.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
 
+# ---------------------------------------------------------------------------
+# The harness and the test suite, which are gated on the SAME correctness rules
+# as the library and exempted only where a rule is wrong about this code.
+#
+# `ruff check .` passing matters: it is the first command a contributor runs, and
+# a repository where it fails teaches them that lint output is noise. Every
+# exemption below is a rule that is right in general and wrong here, with the
+# reason attached. The correctness families -- F, E7, E9, B (except B007/B905
+# below), PLE -- are NOT exempted anywhere.
+# ---------------------------------------------------------------------------
+"benchmarks/**" = [
+    # Seeded RNG is the point. Every corpus, every attack variant and every
+    # shuffle here is drawn from `random.Random(seed)` so a failure reproduces.
+    # A CSPRNG would make these benchmarks unrepeatable, which is the opposite
+    # of what they are for.
+    "S311",
+    # A harness must not die because one corpus of nine is malformed; it reports
+    # the row as NOT MEASURED and continues. That is the documented behaviour of
+    # `scoreboard.py`, and narrowing these to specific exception types would be
+    # a guess about what a third-party loader raises.
+    "BLE001", "S110", "S112",
+    # Name heuristics. These fire on fixture values called `api_key` and on
+    # synthetic credentials that exist to be detected.
+    "S105", "S106",
+    # Scratch paths in throwaway harness runs, not deployment configuration.
+    "S108",
+    # Style, deliberately not enforced in a tree whose files are long tables of
+    # scenario data.
+    "C408", "RUF005", "RUF007", "RUF015", "RUF059", "B007", "B905", "E702",
+    "E731", "E741", "C416", "F841", "FURB171", "FURB187", "FURB192", "RUF010",
+    "RUF012", "RUF034", "RUF046", "PLW1510", "TRY004", "B904", "S104", "S603",
+]
+"python/tests/**" = [
+    "S311", "BLE001", "S110", "S112", "S105", "S106", "S108",
+    "C408", "RUF005", "RUF015", "RUF059", "B007", "B905", "E702", "E731",
+    "C416", "F841", "RUF012", "RUF043", "PLW1510", "B904",
+    # The Trojan-Source FIXTURES, for the same reason the detector itself is
+    # exempted above: a test for bidi handling has to contain bidi characters.
+    "PLE2502", "PLE2515", "RUF001", "RUF003",
+]
+"demo/**" = [
+    "S311", "BLE001", "S110", "S112", "S105", "S108",
+    "C408", "RUF005", "RUF015", "RUF059", "B007", "B905", "E702", "E731",
+    "RUF012", "PLW1510", "B904", "S603", "S607",
+]
+# Attack fixtures that carry bidi overrides and zero-width characters, for the
+# same reason `input_hardening.py` does: a corpus of Trojan-Source payloads has
+# to contain Trojan-Source payloads.
+"benchmarks/live/bpl_live.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
+"benchmarks/stress_gates.py" = ["PLE2502", "PLE2515", "RUF001", "RUF003"]
+# Binds 0.0.0.0 to assert that a file written there is NOT world-readable. The
+# bind is the thing under test.
+"python/tests/test_evidence_files_are_private.py" = ["S104"]
+# Two style preferences inside assertions whose current spelling is the clearer
+# statement of what is being checked.
+"python/tests/test_decision_sinks.py" = ["RUF007"]
+"python/tests/test_suite_is_collectable.py" = ["FURB192"]
+
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
 pythonpath = ["."]

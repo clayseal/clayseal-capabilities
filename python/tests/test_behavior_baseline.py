@@ -262,7 +262,7 @@ def test_a_randomized_sweep_stays_total_bounded_and_ordered():
     import random
     import time
 
-    rng = random.Random(11)  # noqa: S311 - a sweep, not a secret
+    rng = random.Random(11)
     start = time.process_time()
     for _ in range(600):
         scale = rng.choice([1, 10, 1000, 100_000])

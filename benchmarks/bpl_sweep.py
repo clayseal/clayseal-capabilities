@@ -93,7 +93,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
                 name, dict(args or {}), step, verb_fn=verb_fn,
                 step_up=step_up, outcomes=outcomes,
                 observe_results=observe_results)
-        except Exception as exc:                       # noqa: BLE001
+        except Exception as exc:
             # A gate that raises has not contained anything; it has crashed. It
             # must never be scored as a block, which would make an exception
             # look like a defense, the exact shape of the six fail-opens this
@@ -538,7 +538,7 @@ def _label_free(rows: list[dict]) -> None:
         scen = get_scenario(name)
         try:
             src = inspect.getsource(scen.make_broker)
-        except Exception:  # noqa: BLE001 - a scenario without a readable builder
+        except Exception:
             return False
         return any(k in src for k in ("SessionValueBudget", "SessionCallBudget",
                                       "value_budget", "call_budget"))

@@ -173,7 +173,7 @@ class DeployableStackEngine:
         )
         try:
             stack.observe_output(event.tool_name, payload, source_path=path)
-        except Exception:  # noqa: BLE001, S110 - observation must never fail a run
+        except Exception:
             # An observation grants no authority, so a tracker that chokes on an
             # unexpected payload must not take down the measurement. Missing one
             # costs precision at the next decision and nothing else.
@@ -185,7 +185,7 @@ class DeployableStackEngine:
         self._step += 1
         try:
             verdict = stack.authorize(action)
-        except Exception as exc:  # noqa: BLE001 - a gate may deny, never crash the run
+        except Exception as exc:
             # A crash is NOT containment. The run continues, because one broken
             # task must not take down a sweep, but the count is kept so a
             # regression cannot quietly raise the containment number by throwing

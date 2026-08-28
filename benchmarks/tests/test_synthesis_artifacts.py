@@ -21,7 +21,7 @@ from benchmarks.datasets.base import get_loader
 def _load(corpus, n=300):
     try:
         return list(get_loader(corpus).load())[:n]
-    except Exception:                                        # noqa: BLE001
+    except Exception:
         pytest.skip(f"{corpus} unavailable")
 
 

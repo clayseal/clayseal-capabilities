@@ -106,7 +106,7 @@ def probe_totality() -> list[dict]:
             try:
                 _binding(provider, raw)
                 rows.append({"adapter": name, "input": label, "outcome": "ok"})
-            except Exception as exc:  # noqa: BLE001 - the point is to catch all
+            except Exception as exc:
                 rows.append({"adapter": name, "input": label,
                              "outcome": "RAISED",
                              "detail": f"{type(exc).__name__}: {exc}"[:120]})
@@ -137,14 +137,14 @@ def probe_authority_inflation() -> list[dict]:
     for name, provider in ADAPTERS.items():
         try:
             clean = _binding(provider, dict(base))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             rows.append({"adapter": name, "field": "(baseline)",
                          "inflated": None, "note": type(exc).__name__})
             continue
         for field, value in inflating:
             try:
                 dirty = _binding(provider, {**base, field: value})
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 rows.append({"adapter": name, "field": field,
                              "inflated": None, "note": type(exc).__name__})
                 continue
@@ -162,7 +162,7 @@ def probe_principal_identity() -> list[dict]:
         def sid(raw, provider=provider):
             try:
                 return getattr(_binding(provider, raw), "subject_id", None)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 return "<raised>"
 
         # Collision: one `sub`, two issuers. `sub` is unique only within an
@@ -186,7 +186,7 @@ def probe_principal_identity() -> list[dict]:
         def pk(raw, provider=provider):
             try:
                 return principal_key(_binding(provider, raw))
-            except Exception:  # noqa: BLE001
+            except Exception:
                 return "<raised>"
 
         ka = pk({"sub": "alice", "iss": "https://good.example"})

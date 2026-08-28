@@ -118,7 +118,7 @@ def _ground_truth(task: Any, environment: Any) -> list[Any]:
     try:
         result = gt(environment)
         return list(result) if result else []
-    except Exception:  # noqa: BLE001 - task can't produce a trace; skip it
+    except Exception:
         return []
 
 
@@ -240,5 +240,5 @@ def _make_environment(suite: Any) -> Any:
     """
     try:
         return suite.load_and_inject_default_environment({})
-    except Exception:  # noqa: BLE001 - extraction tolerates a missing env
+    except Exception:
         return None

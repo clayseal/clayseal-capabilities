@@ -137,7 +137,7 @@ def outcome_with_fault(holder: str, attribute: str, action: Action) -> str:
         return stack.authorize(action).outcome
     except Boom:
         return "raised"
-    except Exception as exc:  # noqa: BLE001 - any raise is a reportable outcome
+    except Exception as exc:
         return f"raised:{type(exc).__name__}"
 
 

@@ -196,7 +196,7 @@ def axis_absurd_amounts() -> dict:
                 survived = False          # granted an absurd reservation
         except (ValueError, ArithmeticError):
             pass                          # refusing is correct
-        except Exception:                 # noqa: BLE001
+        except Exception:
             survived = False              # raising something else is not
     return {"axis": "absurd reservation amounts", "landed": 0,
             "escaped": not survived,

@@ -41,7 +41,6 @@ def _brand() -> Text:
 def _header() -> Panel:
     right = Text("Apple Silicon · Hypervisor.framework · policy channel fd 3", style=MUTED)
     grid = Text.assemble(_brand())
-    body = Layout()
     return Panel(Align.left(grid), style="none", border_style=BORDER,
                  subtitle=right, subtitle_align="right", padding=(0, 1))
 

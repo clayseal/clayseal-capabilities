@@ -55,7 +55,7 @@ def _rendered(conf) -> list[tuple]:
 
 @pytest.mark.parametrize("seed", range(12))
 def test_resuming_equals_recomputing_as_a_session_grows(seed):
-    rng = random.Random(seed)  # noqa: S311 - reproducible sweep, not a secret
+    rng = random.Random(seed)
     envelope = _envelope()
     traj = Trajectory(goal=_goal(), actions=[], context=[])
     for step in range(1, 41):
@@ -73,7 +73,7 @@ def test_a_rollback_invalidates_the_cached_prefix(seed):
     A pop followed by a different push leaves the length equal and the identity
     different, which is exactly the case the prefix check exists for.
     """
-    rng = random.Random(1000 + seed)  # noqa: S311 - reproducible sweep
+    rng = random.Random(1000 + seed)
     envelope = _envelope()
     traj = Trajectory(goal=_goal(), actions=[], context=[])
     for step in range(1, 31):
@@ -114,7 +114,7 @@ def test_two_envelopes_do_not_share_a_memo_on_one_trajectory():
     """`assess` walks every mode, and each mode caches under its own key."""
     envelope = _envelope()
     traj = Trajectory(goal=_goal(), actions=[], context=[])
-    rng = random.Random(7)  # noqa: S311 - reproducible sweep
+    rng = random.Random(7)
     for step in range(1, 16):
         traj.actions.append(_action(rng, step))
         assert _rendered(envelope.assess(traj)) == _rendered(

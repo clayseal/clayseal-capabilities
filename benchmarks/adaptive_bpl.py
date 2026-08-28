@@ -65,7 +65,7 @@ def _run(scen, script, condition="clayseal"):
             result, blocked = apply_call(scen, env, condition, broker, None,
                                          None, returns, tool, dict(args or {}),
                                          step)
-        except Exception:                                  # noqa: BLE001
+        except Exception:
             return None, blocks, reasons
         if blocked:
             blocks += 1

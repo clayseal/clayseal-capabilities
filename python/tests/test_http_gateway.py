@@ -253,7 +253,7 @@ def test_the_gateway_holds_under_randomized_stress(tmp_path):
 
     gateway = _gateway(tmp_path / "l.jsonl", upstream=upstream,
                        require_headers=False)
-    rng = random.Random(11)  # noqa: S311 - reproducible sweep, not a secret
+    rng = random.Random(11)
     violations: list[str] = []
     for _ in range(3000):
         body = _body(rng)
