@@ -7,9 +7,14 @@ git clone https://github.com/pberlizov/clayseal.git
 cd clayseal
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest python/tests -q          # 2,300+ tests, under a minute
-ruff check clayseal
+pytest python/tests -q          # 2,500+ tests, under a minute
+ruff check .                    # the whole repo, not just the library
+python scripts/mypy_ratchet.py  # type findings may fall, not rise
 ```
+
+`mypy` needs the settings in `pyproject.toml` to run at all: `clayseal/` is a
+namespace package, so a bare `mypy clayseal` stops on "Source file found twice
+under different module names". Plain `mypy` picks up the config and works.
 
 There are no private dependencies. If that stops being true, it is a bug.
 

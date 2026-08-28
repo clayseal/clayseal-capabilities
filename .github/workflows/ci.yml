@@ -131,6 +131,27 @@ jobs:
       - name: Lint everything
         run: ruff check .
 
+  # Types, as a ratchet rather than a wall.
+  #
+  # 93% of the library's functions carry annotations and nothing checked them,
+  # so they were decoration. Turning mypy on as a hard failure would block every
+  # change behind 94 untriaged findings; leaving it off let a hand-written count
+  # in pyproject.toml drift from 92 to 98 unnoticed. The ratchet is the same
+  # mechanism `check_claims` uses for measurement debt: the count may fall and
+  # may not rise, per file as well as in total.
+  types:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'schedule'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e ".[dev]" mypy
+      - name: Type findings have not grown
+        run: python scripts/mypy_ratchet.py
+
   # Performance as a PROPERTY, not a stopwatch.
   #
   # A wall-clock threshold on a shared runner is a flaky test that gets muted,
