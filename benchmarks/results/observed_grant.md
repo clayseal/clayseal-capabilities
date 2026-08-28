@@ -49,12 +49,29 @@ tool alone is not enough.
 resource path already used: the deployment's own catalogue, the sealed goal and
 the mandate's verb classes. No argument values, no tool output.
 
-| | held-out false-block, tau2, n=5,441 |
-| --- | ---: |
-| shipped default | 42.99% |
-| `grant_is_observed`, cap 8 | **0 of 5,441**, 97.5% upper bound 0.07% |
+Replicated on every fetched corpus whose grant is observed-derived, at the
+existing default cap of 8:
 
-Cap sweep, showing the default already suffices:
+| corpus | held-out benign | shipped default | `grant_is_observed` |
+| --- | ---: | ---: | ---: |
+| tau2 | 7,177 | 45.00% | **0 of 7,177** |
+| toolemu | 559 | 54.74% | **0 of 559** |
+| atif | 282 | 26.95% | **0 of 282** |
+| asb | 102 | 50.00% | **0 of 102** |
+| agentharm | 729 | 55.56% | **8.37%** |
+| bfcl | 1,523 | 0 of 1,523 | 0 of 1,523 |
+
+**8,849 held-out benign events across five corpora**, refused between 27% and
+56% by the shipped default and not at all by the extension, except on AgentHarm
+where 8.37% survives. That residual is the honest one to look at: AgentHarm's
+grants are only half observed-derived (the benign variants), so its held-out
+half contains work the mandate genuinely does not cover.
+
+BFCL is the null. 1,484 of its 1,500 tasks carry a single benign event each, so
+there is nothing to split and `hold_out_corpus` corrects 16 tasks; its 0 is
+arithmetic, not evidence, and it is listed rather than dropped.
+
+Cap sweep on tau2, showing the default already suffices:
 
 | cap | off | 2 | 4 | **8 (default)** | 16 | 32 | 64 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -99,5 +116,11 @@ were, and they are untouched.
 - **Off by default, and it must stay off wherever a human wrote the tool
   list.** There the list is an authorization and widening it overrides the
   author. The flag is for grants that were transcripts.
-- **One corpus carries the utility claim.** tau2 is the only fetched corpus
-  whose grant is observed-derived and large enough to hold out.
+- **AgentHarm keeps an 8.37% residual**, and it is the corpus where the grant
+  is only half derived from observation. The claim is that an observed grant
+  refuses work its own mandate authorizes, not that every refusal is spurious.
+- **The five corpora are not independent of each other in kind.** All are
+  tool-calling agent traces, and all get their grants from the same loader
+  convention. A deployment whose policy was written by a person is a different
+  population and this says nothing about it, which is why the flag is off by
+  default.

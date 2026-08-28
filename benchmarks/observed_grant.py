@@ -26,7 +26,7 @@ from benchmarks.datasets.base import get_loader
 
 ATTACK_CORPORA = ("redcode", "agentharm", "sleight", "ipi_coding", "mcp_attack",
                   "advbench_agent", "agent_threat_bench", "asb", "injecagent")
-UTILITY_CORPORA = ("tau2", "bfcl")
+UTILITY_CORPORA = ("tau2", "atif", "toolemu", "agentharm", "asb", "bfcl")
 _ORIG = BE.stack_from_benchmark_task
 
 

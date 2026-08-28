@@ -88,13 +88,19 @@ def test_scoreboard_containment_and_n_match(scoreboard) -> None:
 
 
 def test_the_saturated_corpora_are_named_and_excluded() -> None:
-    """ASB and InjecAgent score 100% and must not be counted as evidence."""
+    """ASB and InjecAgent must not be counted as containment evidence.
+
+    Scoped to the containment table specifically. Their *benign* sides are
+    legitimate evidence and appear in the held-out false-block table, so a
+    whole-file substring check would forbid a correct use of them.
+    """
     text = README.read_text()
     assert "excluded from that table rather than counted" in text
     for name in ("ASB", "InjecAgent"):
         assert name in text, f"{name} must be disclosed, not silently dropped"
+    scored = _rows(text, "harm is defined by", CORPORA + ("asb", "injecagent"))
     for c in ("asb", "injecagent"):
-        assert f"| {c} |" not in text, f"{c} must not appear as a scored row"
+        assert c not in scored, f"{c} must not appear as a scored containment row"
 
 
 # --- pooled live ASR --------------------------------------------------------
