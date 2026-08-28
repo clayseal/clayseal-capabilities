@@ -34,18 +34,46 @@ these corpora configure no budgets. Only the pair separates *unwired* from
 
 | | count |
 | --- | ---: |
-| library modules | 172 |
+| library modules | 161 |
 | reachable from `DeployableStack` / `SessionBroker` | 124 |
 | reachable from any public entry point | 130 |
-| **orphaned, no entry point reaches them** | **42** |
+| **orphaned, no entry point reaches them** | **31** |
 
-Most of the 42 are legitimately off the decision path and are listed here so
-that stays a decision rather than an accident: the `sandbox/` subtree (11) is
-the syscall tier that runs beside the gateway rather than inside it,
-`monitor/training/` and `monitor/scoring/transformer` (6) are fit-time code, and
-`scoping/tools/` (9) is a subsystem no entry point has ever called.
+The first run of this audit reported 172 modules and 42 orphans. Two of those
+numbers moved for good reasons and one of them was my error, all recorded in
+"What changed" below.
 
-Three orphans back claims we publish, and those are the ones that matter.
+Most of the 31 are legitimately off the decision path and are listed here so
+that stays a decision rather than an accident: the `sandbox/` subtree (10) is
+the syscall tier that runs beside the gateway rather than inside it, and
+`monitor/training/` plus `monitor/scoring/transformer` (5) are fit-time code.
+
+## What changed since the first run
+
+**`deputy.py` was never an orphan; the audit was wrong.** `SessionBroker` takes
+it as `delegation: Any | None`, duck-typed so a caller can swap the boundary,
+which means no `import` statement points at it and a static closure cannot see
+the edge. The delegation rung has been wired since before this audit. Any
+component injected through one of the broker's `Any` fields will read as
+unreachable, and that is a limitation of the method rather than a finding.
+
+**`velocity.py` is now wired.** It was the one genuine gap among the harm-class
+detectors: 100% containment at burst >= 10 with 0.00% clean false alarms on
+tau2 and BFCL ([burst.md](../benchmarks/results/burst.md)), and nothing on the
+product path constructed it. `SessionBroker.velocity` now runs after the budget
+reservation and before the behavioural layer, releasing any reservation it
+refuses. Absent means unpaced, so no existing number moves. Pinned by
+[`test_broker_velocity.py`](../python/tests/test_broker_velocity.py), including
+the pass-through and the reservation-leak case.
+
+**2,300 lines were deleted rather than wired.** `reidentification.py` (677) and
+`staleness.py` (577) each defined a harm class, had a benchmark harness, and had
+**no results file, no README or docs mention, and no caller**. `scoping/tools/`
+(1,043) had unit tests and nothing else. Speculative code on a security library's
+public surface is a liability, not an asset, so it is gone; the history has it if
+a measurement ever justifies bringing one back.
+
+Two orphans still back claims we publish, and those are the ones that matter.
 
 ## The behavioural tier is not what its numbers say it is
 
@@ -88,12 +116,7 @@ real result from a real mechanism. It says the mechanism is the twin corridor,
 and any sentence attributing it to goal-conditioned behavioural scoring is
 wrong.
 
-## The other two
-
-**`velocity.py`** is imported by `benchmarks/burst.py` and
-`benchmarks/core/engines.py`, never by the library. The `burst[tau2]` and
-`burst[bfcl]` rows sit in the scoreboard's LADDER ABLATION section, which is
-already labelled "not the product claim", and this is why.
+## The other one
 
 **`ledger_backends.py`** (shared and Redis principal ledgers) is reachable only
 by importing it directly. [THREAT_MODEL.md](THREAT_MODEL.md) §5 lists

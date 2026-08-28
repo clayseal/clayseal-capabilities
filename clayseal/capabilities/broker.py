@@ -130,6 +130,17 @@ class SessionBroker:
     egress: EgressPolicy | None = None
     value_budget: SessionValueBudget | None = None
     call_budget: SessionCallBudget | None = None
+    # Session PACE. A budget counts what an action is worth and a scope counts
+    # where it points; neither sees an action that costs nothing and names no
+    # target. Velocity is the only deterministic signal that survives both,
+    # which is why it contains volume-defined harm the rest of the floor cannot:
+    # 100% at burst >= 10 with 0.00% clean false alarms on tau2 and BFCL
+    # (`benchmarks/results/burst.md`).
+    #
+    # Duck-typed like `delegation`, so a caller can install a principal-scoped
+    # limiter instead. Absent means unpaced, so adding this changes nothing for
+    # an existing caller. Construct with `velocity_from_mandate`.
+    velocity: Any | None = None
     escalate_on_soft: bool = True   # detector ESCALATE -> step-up (else allow)
     # Formally scope the statistical detector as ADVISORY: it never hard-blocks on
     # its own, only escalates for review. The sensor is validated (AUC 0.91 on real
@@ -1251,6 +1262,21 @@ class SessionBroker:
                             protected_write=is_write)
             return self._finalize(action, Outcome.DENY, "floor", (reason,), None,
                                   is_write, start, blocked=True)
+
+        # Pace, after the budgets and before anything stateful. `try_acquire`
+        # rather than check-then-record: the two-call form is a race that let
+        # forty concurrent actions through a cap of five. A refusal here has to
+        # release the budgets the lines above reserved.
+        if self.velocity is not None:
+            paced = self.velocity.try_acquire(
+                action.tool, action.verb, now=self.clock().timestamp())
+            if not paced.allowed:
+                self._rollback(action, v_res, c_res)
+                self._telemetry(self.metrics.record_prevented,
+                                protected_write=is_write)
+                return self._finalize(
+                    action, Outcome.DENY, "floor", (paced.reason,), None,
+                    is_write, start, blocked=True)
 
         # Behavioral layer over the running trajectory.
         self._trajectory.actions.append(action)

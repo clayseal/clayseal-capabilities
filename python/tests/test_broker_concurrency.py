@@ -4,7 +4,7 @@ An agent gateway serves one session from several threads: a model that emits
 parallel tool calls, an async runtime, a worker pool behind a request. Nothing in
 `SessionBroker` was synchronised, no lock in `broker.py`, `session_memory.py`,
 `session_grants.py` or `decision_log.py`, while `value_budget`, `call_budget`,
-`velocity`, `staleness` and `principal_ledger` all take one.
+`velocity` and `principal_ledger` both take one.
 
 The findings below are separated by how strong the evidence for each is, because
 "this is a race" and "this race reproduces" are different claims.
