@@ -437,10 +437,22 @@ tasks are mostly specified in the prompt. On
 [AgentDyn](benchmarks/results/agentdyn.md), where the correct next step cannot be
 known until the agent looks at what is actually there, every such step deviates
 from the sealed plan and the cost is total: 21.67 interruptions per task, which
-is not friction but a system asking permission for nearly every action. Runtime
-replanning is the fix, `SessionBroker.reclear` exists for it, and it is called
-from nowhere today. **Until that ships, this suits work whose shape is known up
-front.**
+is not friction but a system asking permission for nearly every action.
+
+**The deterministic form of that failure is now closed.** A grant derived from
+observed traffic enumerates the tools a recording happened to contain, so every
+tool it missed is refused even where the same mandate already authorizes that
+verb class. Measured on held-out mandates, that is **42.99% of 5,441 benign
+tau2 events**, and `grant_is_observed=True` takes it to **0 of 5,441** at the
+existing default cap, with containment unchanged on every attack corpus where
+the mechanism actually fired
+([observed_grant.md](benchmarks/results/observed_grant.md)). It is off by
+default and must stay off wherever a human wrote the tool list, because there
+the list is an authorization rather than a transcript.
+
+That is the same mechanism AgentDyn punishes, measured on replayed traffic
+rather than against a live model. **AgentDyn itself has not been re-run**, so
+the 21.67 stands as the published figure until someone does.
 
 Every headline result, the command that reproduces it, and the limit it does not
 cross: [benchmarks/results/README.md](benchmarks/results/README.md).

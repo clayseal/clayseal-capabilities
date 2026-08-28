@@ -141,6 +141,35 @@ class SessionBroker:
     # limiter instead. Absent means unpaced, so adding this changes nothing for
     # an existing caller. Construct with `velocity_from_mandate`.
     velocity: Any | None = None
+    # Was the TOOL list an authorization, or a transcript of what was observed?
+    #
+    # `scope_is_advisory` already draws this line for resources. The tool list
+    # had no equivalent, so a grant derived from observed traffic refused every
+    # tool the observation happened to miss. On tau2 that is 42.99% of held-out
+    # benign events, and the reason is always "tool X not granted" for a tool
+    # whose VERB CLASS the same mandate already authorizes. It is the
+    # deterministic form of the AgentDyn result, where open-ended tasks lose all
+    # utility because the next step cannot be enumerated in advance.
+    #
+    # When set, a tool outside the grant but inside the deployment's own
+    # `tool_catalog` is put to the same shape judge the resource path uses, and
+    # admitted only if the mandate already permits that verb class or the sealed
+    # goal names the tool. Bounded by `max_scope_extensions` and remembered per
+    # session, never written back to the caller's grant.
+    #
+    # Off by default, and it must stay off wherever a human wrote the tool list:
+    # there it is an authorization, and widening it is overriding the author.
+    tools_are_advisory: bool = False
+    #: The tools this deployment offers at all, which is trusted input (an MCP
+    #: server's catalogue, not anything the agent said). Extension can never
+    #: reach outside it.
+    tool_catalog: frozenset[str] | None = None
+    _extended_tools: set[str] = field(default_factory=set)
+    #: (resource, verb) pairs admitted alongside an advisory tool. A grant built
+    #: from observed traffic enumerates the same tools three times, as tools, as
+    #: capabilities and as resources, so admitting only the first moves the
+    #: denial one gate down rather than allowing the work.
+    _extended_caps: set[tuple[str, str]] = field(default_factory=set)
     escalate_on_soft: bool = True   # detector ESCALATE -> step-up (else allow)
     # Formally scope the statistical detector as ADVISORY: it never hard-blocks on
     # its own, only escalates for review. The sensor is validated (AUC 0.91 on real
@@ -842,6 +871,10 @@ class SessionBroker:
                 import fnmatch
                 granted = any(fnmatch.fnmatch(action.tool, p)
                               for p in self.tool_patterns)
+            if not granted and self.tools_are_advisory:
+                granted, why = self._consider_tool(action)
+                if granted:
+                    self._record_triggers([f"tool admitted: {why}"])
             if not granted:
                 return False, f"tool {action.tool!r} not granted", {}, True
         if self.conditional_tools is not None and \
@@ -854,7 +887,7 @@ class SessionBroker:
             if not capability_allows(
                 normalize_capabilities(self.capabilities),
                 action.resource, action.verb,
-            ):
+            ) and (action.resource, action.verb) not in self._extended_caps:
                 return (
                     False,
                     f"no capability for {action.resource}:{action.verb}",
@@ -1004,6 +1037,40 @@ class SessionBroker:
                         return True, f"scope extended: {verdict.reason}", {}, True
                 return False, f"resource {action.resource!r} out of scope", {}, False
         return True, "within floor", {}, True
+
+    def _consider_tool(self, action: Action) -> tuple[bool, str]:
+        """May the session reach a tool the grant did not enumerate?
+
+        Three bounds, all of which must hold. The tool has to be in the
+        deployment's own catalogue, so this can never reach something the
+        deployment does not offer. The shape judge has to clear it on trusted
+        input only, the sealed goal and the catalogue, never an argument value
+        or a tool result. And the number of distinct tools admitted this
+        session is capped, because an unbounded extender converges on the
+        catalogue given a long enough session.
+
+        Remembered per session and never written back to the caller's
+        ``allowed_tools``: the resource path had exactly that bug, where a
+        mutation outlived the broker and leaked authority into every other
+        session sharing the grant.
+        """
+        if self.plan_extender is None:
+            return False, ""
+        if self.tool_catalog is not None and action.tool not in self.tool_catalog:
+            return False, ""
+        if action.tool in self._extended_tools:
+            return True, "tool already admitted this session"
+        if len(self._extended_tools) >= self.max_scope_extensions:
+            return False, ""
+        verdict = self.plan_extender.consider(action.tool, action.verb)
+        if not verdict.extended:
+            return False, ""
+        self._extended_tools.add(action.tool)
+        # The judge cleared this exact (tool, verb). The capability gate asks
+        # the same question of the same pair, so answering it differently would
+        # just relocate the refusal.
+        self._extended_caps.add((action.resource, action.verb))
+        return True, verdict.reason
 
     # -- public gate ---------------------------------------------------------
     def _authorize_locked(self, action: Action) -> BrokerDecision:
