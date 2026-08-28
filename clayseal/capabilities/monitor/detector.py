@@ -69,6 +69,11 @@ class DetectionReport:
     structural_block: bool = False
     structural_reasons: tuple[str, ...] = ()
     anomaly_p: float = 1.0  # min conformal p-value across trajectory tiers (recomputable)
+    #: Tiers whose calibration set is too small for `alpha` to be reachable at
+    #: all. Such a tier runs, returns a p-value and can never block, so a report
+    #: that did not name it would be indistinguishable from one where the tier
+    #: looked and found nothing. See `TrajectoryDetector.inert_tiers`.
+    inert_tiers: tuple[str, ...] = ()
 
     @property
     def blocked(self) -> bool:
@@ -183,6 +188,25 @@ class TrajectoryDetector:
                              if (dep and dep.out_of_envelope) else 1.0)
         return parts
 
+    def inert_tiers(self, traj: Trajectory) -> tuple[str, ...]:
+        """Blocking tiers that cannot fire at this alpha, whatever they observe.
+
+        A conformal p-value is (1 + #{cal >= score}) / (n + 1), so its smallest
+        possible value is 1/(n+1). A tier gated at an alpha below that floor is
+        arithmetically incapable of blocking, and it fails silently: it still
+        runs, still returns a p-value, and a swap of its scorer for one carrying
+        no information changes nothing. That was measured on the shipped
+        detector, where the floor is 0.0909 against an alpha of 0.05, and it is
+        the reason `ngram`, `target` and a random scorer post identical numbers.
+        """
+        if not self._fitted:
+            return ()
+        bucket = goal_bucket(traj)
+        pairs = (("scorer", self.traj_calibrator), ("path", self.struct_calibrator))
+        out = [name for name, cal in pairs
+               if cal is not None and not cal.can_reach(bucket, self.alpha)]
+        return tuple(out)
+
     def _tier_budget(self, active: list[str]) -> dict[str, float]:
         """Per-tier false-alarm budget. Each blocking tier is a proper per-bucket
         (Mondrian) conformal test, so gating it at ``alpha`` individually bounds
@@ -229,6 +253,7 @@ class TrajectoryDetector:
         budget = self._tier_budget(list(tier_p)) if tier_p else {}
         tier_block = {t: (p <= budget.get(t, 0.0)) for t, p in tier_p.items()}
         combined_block = self._fitted and any(tier_block.values())
+        inert = self.inert_tiers(traj)
         min_p = min(tier_p.values(), default=1.0)
         traj_p = tier_p.get("scorer", 1.0)
         drift_p = tier_p.get("drift", 1.0)
@@ -333,6 +358,7 @@ class TrajectoryDetector:
             structural_block=combined_block or twin_block,
             structural_reasons=tuple(structural_reasons),
             anomaly_p=min(traj_p, drift_p),
+            inert_tiers=inert,
         )
 
     @staticmethod
