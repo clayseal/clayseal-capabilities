@@ -442,11 +442,16 @@ is not friction but a system asking permission for nearly every action.
 **The deterministic form of that failure is now closed.** A grant derived from
 observed traffic enumerates the tools a recording happened to contain, so every
 tool it missed is refused even where the same mandate already authorizes that
-verb class. Measured on held-out mandates, that is **42.99% of 5,441 benign
-tau2 events**, and `grant_is_observed=True` takes it to **0 of 5,441** at the
-existing default cap, with containment unchanged on every attack corpus where
-the mechanism actually fired
-([observed_grant.md](benchmarks/results/observed_grant.md)). It is off by
+verb class. Measured on held-out mandates across **8,849 benign events in five
+corpora**, the shipped default refuses between 27% and 56% of them:
+
+| | tau2 | toolemu | atif | asb | agentharm |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| shipped default | 45.00% | 54.74% | 26.95% | 50.00% | 55.56% |
+| `grant_is_observed` | **0/7177** | **0/559** | **0/282** | **0/102** | 8.37% |
+
+Containment is unchanged on every attack corpus where the mechanism actually
+fired ([observed_grant.md](benchmarks/results/observed_grant.md)). It is off by
 default and must stay off wherever a human wrote the tool list, because there
 the list is an authorization rather than a transcript.
 
