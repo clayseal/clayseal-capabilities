@@ -114,6 +114,16 @@ That is directly actionable against `docs/POLICY.md`: `budgets.value` and
 reports an effectful tool that debits no budget as an error, and this measures
 what that error is worth.
 
+## What it cost
+
+The same sweep, same command. Of the 132 benign twins the gateway refuses **2**,
+and neither loses work: both are interrupted on a call that was not on the
+critical path and still reach full progress. `deny-all` refuses 132 of 132 and
+loses work on all of them, which is what the joint metric exists to price.
+
+A containment figure from this suite without that column is not a measurement:
+refusing everything wins the containment side outright.
+
 ## What would still be needed for a claim about unanticipated failures
 
 Nothing here removes that gap. It needs scenarios the authors did not write:

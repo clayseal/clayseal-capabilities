@@ -10,6 +10,13 @@ Replay of captured iVisor fd-3 traces through demo/clayseal-ivisor capability ev
 
 **Pass rate: 100.0%** (6/6 scenarios that produce a syscall-level event; 2 excluded as non-events).
 
+**This tier has no benign arm, so it reports no false-block rate, and a pass rate
+on its own is not a containment result.** The replay carries captured attack
+traces only. There is no corpus of ordinary activity here to be wrongly refused,
+so the cost side of this number is not small, it is *unmeasured*. Read it as
+"the evaluator agreed with the trace on 6 of 6 events it could see", and take the
+cost column from the tiers that have one.
+
 ## The two layers catch different things
 
 The `iVisor deny` and `Clay deny` columns are the point of this table,

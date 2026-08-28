@@ -6,6 +6,13 @@ STATUS: current
 python -m benchmarks.bpl_sweep --suite full --json /tmp/sweep.json
 ```
 
+**This file prices nothing, and does not need to.** It analyses which scenarios
+the suite fails and why the labels predict that; the containment and cost columns
+both belong to the sweep it reads, `python -m benchmarks.bpl_sweep --suite full`,
+where the gateway refuses 2 of 132 benign twins and loses work on none. Quoted
+here so a reader arriving at this file alone does not take 53 of 132 as a result
+with no price attached.
+
 The question this set out to answer: 79 of 132 scenarios are not contained, and if
 they decompose into a handful of missing mechanisms that is a roadmap. This is the
 attempt, including the parts that did not work, because the parts that did not

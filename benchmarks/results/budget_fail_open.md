@@ -2,6 +2,12 @@
 
 STATUS: current
 
+**This is a defect report, not a measurement.** It reports four bugs and their
+fixes; it makes no containment claim, so it has no cost column to put beside one.
+The rungs it describes are priced where they are measured, in
+`bpl_sweep --suite full` (2 benign twins refused of 132, no work lost) and in
+`burst.md` (clean false alarms 0 of 200 tau2 sessions).
+
 Four defects in the enforcement floor, found by fuzzing rather than by corpus
 evaluation, all of the same shape: **a control that stops applying precisely when
 its input is absurd, while reporting that it passed.** All four are fixed; all
