@@ -1,3 +1,10 @@
+"""`ToolCapabilityLease`: the tool-side analogue of a file lease.
+
+Where a `CapabilityLease` narrows which paths a session may touch, this narrows
+which tools it may call and which entities it may call them against. The two are
+separate types because the questions differ: a path is hierarchical and a tool
+target usually is not.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,4 +1,13 @@
-"""SPIFFE JWT-SVID / SPIRE workload identity."""
+"""SPIFFE JWT-SVID / SPIRE workload identity.
+
+
+This is a CLAIM-MAPPING adapter: it maps an already-verified token's claims onto
+an `IdentitySession` and verifies nothing itself. The caller must have checked
+the signature, the audience and the expiry before calling it. Pass
+`evidence_verified=True` only when that is true — the verifying adapters
+(`oidc_discovery`, `spiffe_workload`, `entra_agent_id`) are the ones that do the
+checking themselves.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

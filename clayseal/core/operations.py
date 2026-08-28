@@ -1,3 +1,15 @@
+"""Turning an action into the capability question it asks.
+
+A capability grant is a set of `(resource, action)` pairs. An incoming call is a
+tool name, or a resource reference plus a verb. This module is the mapping
+between them, and it lives in core because both the capability layer and the
+receipts layer have to agree on it: if they disagreed, a call authorized by one
+would be unverifiable by the other.
+
+`normalize_capabilities` is deliberately total. A malformed grant entry is
+dropped rather than raised on, because the alternative is an exception inside the
+authorization path, and a gate that crashes has not denied anything.
+"""
 from __future__ import annotations
 
 from collections.abc import Callable

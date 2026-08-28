@@ -1,3 +1,11 @@
+"""Building the chunk index for a repository, keyed by content.
+
+`build_repo_chunk_index` walks the source files, chunks them, and stamps the
+result with a content hash of what it read. The hash is the useful part: a lease
+built against one index and evaluated against another is comparing identifiers
+that may no longer mean the same thing, and the stamp is what makes that
+detectable rather than silent.
+"""
 from __future__ import annotations
 
 from pathlib import Path

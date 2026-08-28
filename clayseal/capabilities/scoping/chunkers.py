@@ -1,3 +1,15 @@
+"""Cutting source files into chunks a lease can name.
+
+One chunk per top-level definition where the language makes that cheap to find
+(Python by AST, JS/Go by a coarser scan), falling back to whole files otherwise.
+The unit matters: a lease over whole files is a blunter grant than one over the
+functions a goal actually touches, and the difference is how much of a repository
+a compromised session can read.
+
+Parsing is best-effort and never raises past this module. A file that will not
+parse becomes one chunk rather than an error, because failing to index a file
+must not fail the session that was going to be scoped away from it anyway.
+"""
 from __future__ import annotations
 
 import ast

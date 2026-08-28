@@ -1,3 +1,13 @@
+"""Stopping the shortlist being five copies of one file.
+
+Maximal marginal relevance trades relevance against novelty, so a lease built
+from the top of the list covers the several places a task touches instead of the
+single place it touches most.
+
+This is a utility mechanism. A redundant shortlist does not widen a grant; it
+narrows it in the wrong shape, by spending the budget on one file and leaving out
+another the task also needed.
+"""
 from __future__ import annotations
 
 from clayseal.capabilities.scoping.models import RepoChunk

@@ -1,3 +1,10 @@
+"""Which other entities an operation on one entity implies.
+
+Cancelling an order touches its payment; updating a reservation touches its
+flights. A lease naming only the entity the goal mentioned refuses the second
+call of a legitimate two-call task, so the closure is computed and bounded, the
+same trade `closure.py` makes for files.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

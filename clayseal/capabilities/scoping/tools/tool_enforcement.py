@@ -1,3 +1,9 @@
+"""Is this tool call inside the tool lease?
+
+The tool-side counterpart of `scoping/enforcement.py`: one question, asked after
+the arguments have been normalised into a target by
+`tool_lease_enforcement.target_entity_from_arguments`.
+"""
 from __future__ import annotations
 
 from clayseal.capabilities.scoping.tools.models import ToolCapabilityLease

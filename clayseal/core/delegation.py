@@ -1,3 +1,20 @@
+"""A sub-agent may be given a subset of what its parent holds. Never more.
+
+An agent that spawns a helper hands it authority, and the question this answers
+is what stops the helper from having more than the parent. A `DelegationToken` is
+signed by the parent and names capabilities; `verify_delegation_chain` walks the
+chain to a trusted root and refuses any link that widens.
+
+Attenuation is checked at every hop rather than once at the end. A chain that
+narrows then widens is a chain that widens, and verifying only the endpoints
+would accept exactly the case worth refusing.
+
+Signature verification is separate from envelope verification on purpose:
+`verify_delegation_signature` answers "was this signed by the key it names" and
+`verify_delegation_envelope` answers "and is that key one we trust". Collapsing
+them makes it easy to write code that checks the first and believes it has
+checked the second.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

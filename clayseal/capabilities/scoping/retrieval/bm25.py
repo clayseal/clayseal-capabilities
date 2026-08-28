@@ -1,3 +1,12 @@
+"""Lexical ranking: does this chunk contain the words the goal used?
+
+BM25 over tokenised chunk text. Cheap, needs no model, and catches the case an
+embedding is worst at — a goal naming an exact identifier that appears verbatim
+in one file and nowhere else.
+
+Paired with `ann.py` rather than chosen over it: the two fail on different
+queries, and `rrf.py` combines their rankings.
+"""
 from __future__ import annotations
 
 import math

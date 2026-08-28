@@ -1,3 +1,13 @@
+"""The last ordering, with the features the earlier stages could not see.
+
+`RerankFeatures` gathers what is known about a candidate — its lexical score, its
+graph position, its `SensitivityLabel` — and reorders on all of it at once.
+
+Sensitivity enters HERE rather than earlier on purpose. Excluding sensitive
+chunks during retrieval would hide from the ranking that they exist, and the
+decision about whether a lease may include one belongs to the lease builder,
+which can say so, rather than to a scorer that would silently drop it.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

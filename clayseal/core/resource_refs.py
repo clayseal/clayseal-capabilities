@@ -1,3 +1,14 @@
+"""One spelling for "which thing is this", in two styles.
+
+A resource is named `kind:value` or `kind://value`, and both spellings appear in
+the wild: mandates and policy documents use the scoped form, MCP and URL-shaped
+identifiers use the URI form. Parsing and formatting live here so the two do not
+drift into two different notions of what a resource reference is.
+
+Empty parts are refused rather than normalised away. `file:` names no file, and a
+reference that cannot identify a resource is not a reference that should reach a
+scope check and quietly match nothing.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

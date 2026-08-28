@@ -1,3 +1,16 @@
+"""Building the lease: from a goal to the narrowest grant that still works.
+
+`score_chunks_for_goal` ranks repository chunks against the sealed goal,
+`build_capability_lease` turns the top of that ranking into a grant, and
+`apply_lease_to_authority` installs it.
+
+The failure mode to keep in view is not a lease that is too wide; it is one that
+is too narrow. A lease missing a file the task genuinely needs produces a refusal
+that looks like enforcement working, and the agent cannot tell the difference
+between "not authorized" and "the scoper did not find this". The closure walk in
+`closure.py` exists for that reason, and the exploration budget exists to bound
+what recovering from a bad guess is allowed to cost.
+"""
 from __future__ import annotations
 
 import re

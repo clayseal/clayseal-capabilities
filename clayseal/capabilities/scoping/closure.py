@@ -1,3 +1,14 @@
+"""What else a file drags in.
+
+A grant naming one file is under-specified: editing it usually requires reading
+its imports, and a lease that permits the edit but not the reads produces a
+session that cannot do the work it was authorized for.
+
+`compute_file_closure` walks the import graph to the bound `ClosurePolicy` sets,
+which is where the trade lives. Too small and legitimate work is refused; too
+large and the lease stops being a narrowing. The bound is a policy input rather
+than a constant, because the right depth is a property of the repository.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

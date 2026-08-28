@@ -1,3 +1,10 @@
+"""Combining rankings without inventing a weight between them.
+
+Reciprocal-rank fusion scores a chunk by its POSITION in each ranking rather than
+by each ranking's score. That is the point: a BM25 score and a cosine similarity
+are not on the same scale, and any weighted sum of them encodes a tuning constant
+nobody measured. Ranks are comparable; scores are not.
+"""
 from __future__ import annotations
 
 from collections import defaultdict
