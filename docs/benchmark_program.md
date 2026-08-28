@@ -173,6 +173,39 @@ replayed trace of one.
   disagrees with the corpus label, and the AgentHarm ceiling, are published
   rather than excluded.
 
+### Which results are not deterministic, and how to compare two runs
+
+"Seeds fixed" covers everything a seed can fix. Two things it cannot:
+
+- **The concurrent arms of `benchmarks/flow.py`** race writers through a thread
+  pool. Thread interleaving is not seedable, and the arm exists precisely to
+  catch a lost update, so making it deterministic would delete the thing it
+  measures. Two runs on the same machine at the same commit give 170/200 and
+  155/200 for the same cell.
+- **Transforms with non-deterministic encoders**, `gzip+base64` among them.
+
+Both now print `NOT SEEDED` with their per-trial spread, and carry
+`"stochastic": true` in the JSON, so a reader cannot mistake a pooled count for a
+repeatable one.
+
+**The rule this exists to enforce: never compare a stochastic arm across single
+runs.** A before-and-after on one run of each is a comparison of two draws, and
+on this benchmark those draws differ by up to 15 points of 200 with no code
+change at all. This has already produced a false regression during a
+performance pass, caught only because the same pair was run twice.
+
+To compare, in order:
+
+1. Diff the deterministic cells first. If those differ, stop; you have a real
+   change and do not need the stochastic ones.
+2. For the stochastic cells, run each side at least five times and compare the
+   distributions, not the means of one run each.
+3. Establish the noise floor before reading the signal: run the SAME code twice
+   and diff it. Any difference smaller than that gap is not a finding.
+
+Step 3 is the one that gets skipped, and it is the one that decides whether the
+other two mean anything.
+
 ## What these benchmarks do not measure
 
 - **Intent.** AgentHarm caps at 6.3% across every rung because in 143 of 176

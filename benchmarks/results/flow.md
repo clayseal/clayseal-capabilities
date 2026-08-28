@@ -711,6 +711,30 @@ buffer of up to 64 writes.
 The tail also has an attacker on it. See the lock section above: one write can
 hold the tracker lock for seconds.
 
+## The concurrent arms are not seeded, and now say so
+
+The concurrent rows race writers through a thread pool. Thread interleaving is
+not a function of `--seed`, and the arm exists to catch a lost update, so making
+it deterministic would delete what it measures.
+
+Two runs of this file on the same machine at the same commit give **170/200 and
+155/200** for the same cell. That is a 15-point spread with no code change.
+
+Those rows used to be a single pooled count with no spread attached, which is a
+draw from a distribution published as a measurement. It caused a false regression
+during the 0.6 performance pass: a change to the confidentiality tracker moved
+the 22-fragment concurrent arm from 150/200 to 158/200 and read as containment
+getting worse. Five runs a side put the means at 152.4 and 152.6 with fully
+overlapping ranges; the change had no effect on containment. The mirror failure
+is the worse one — a real 8-point regression waved away by somebody who had
+learned the arm was unreliable.
+
+Each such row now prints `NOT SEEDED` with its per-trial spread and carries
+`"stochastic": true` in the JSON. The comparison rule is in
+[docs/benchmark_program.md](../../docs/benchmark_program.md): diff the
+deterministic cells first, and establish the noise floor by running the same code
+twice before reading any before-and-after.
+
 ---
 
 ## What is open
