@@ -87,6 +87,27 @@ false-alarm rate on RedCode and `ipi_coding`
 scorer the product would run scores **0.0% at the same operating point, at an
 AUC of 0.425, below chance.**
 
+### Why the scorer slot contributes nothing: it cannot
+
+The first version of this document said the twin corridor dominates the scorer.
+That was the symptom. The cause is arithmetic.
+
+A conformal p-value is `(1 + #{cal >= score}) / (n + 1)`, so its smallest
+possible value is `1 / (n + 1)`. The detector gates each continuous tier at
+`alpha = 0.05`. Measured on the shipped configuration the floor is **0.0909**,
+so **the scorer tier cannot produce a p-value low enough to block, whatever it
+observes**. The `path` tier is in the same state. Two of the three continuous
+blocking tiers are arithmetically incapable of firing, and both fail silently:
+they run, they return a p-value, and nothing distinguishes "looked and found
+nothing" from "could not look".
+
+`ConformalCalibrator.resolution_floor` and `TrajectoryDetector.inert_tiers` now
+report the condition, and it names the number an operator needs: **roughly 60
+benign trajectories per goal bucket** before the behavioural tier can block at
+this alpha. The arithmetic floor needs 19; `fit` is split-conformal and Mondrian
+partitions per bucket, so reaching it takes between 40 and 60. The benchmark
+harness fits on 25 to 30.
+
 **The scorer slot contributes nothing to the detector's published result.**
 Measured on SLEIGHT trajectories, holding everything else fixed:
 

@@ -50,6 +50,30 @@ class ConformalCalibrator:
     def flag(self, score: float, *, alpha: float) -> bool:
         return self.p_value(score) <= alpha
 
+    @property
+    def resolution_floor(self) -> float:
+        """Smallest p-value this calibration set can produce, 1/(n+1).
+
+        A conformal test cannot report a p-value below this no matter how
+        extreme the observation, so a tier gated at an alpha below it can never
+        fire. That is not a tuning problem, it is arithmetic, and it is silent:
+        the tier still runs, still returns a p-value, and still reports success.
+        Measured on the shipped detector the floor is 0.0909 against an alpha of
+        0.05, which is why swapping the scorer for one carrying no information
+        changed nothing.
+        """
+        return 1.0 if not self._sorted else 1.0 / (self.n + 1)
+
+    def can_reach(self, alpha: float) -> bool:
+        """Is `alpha` achievable at this calibration size at all?"""
+        return self.resolution_floor <= alpha
+
+    def calibration_needed(self, alpha: float) -> int:
+        """Benign observations required before `alpha` becomes reachable."""
+        if alpha <= 0:
+            return 0
+        return max(0, int(-(-1 // alpha)) - 1 - self.n)
+
 
 @dataclass
 class MondrianConformal:
@@ -86,3 +110,10 @@ class MondrianConformal:
 
     def flag(self, bucket: str, score: float, *, alpha: float) -> bool:
         return self.p_value(bucket, score) <= alpha
+
+    def resolution_floor(self, bucket: str) -> float:
+        """Smallest p-value the calibrator serving `bucket` can produce."""
+        return self._calibrator(bucket).resolution_floor
+
+    def can_reach(self, bucket: str, alpha: float) -> bool:
+        return self.resolution_floor(bucket) <= alpha
