@@ -53,8 +53,8 @@ throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 **Read 39.4% as an average over two different cases, not as a rate.** Where the
 scenario's grant configures a budget it is 83.3%; where it configures none,
 18.9%. Which case you are in is fixed before anything runs and readable from
-your own policy, so it is a condition you can check rather than a rate you have
-to accept. [The split is below](#when-it-works-and-when-it-does-not).
+your own policy, so it is a condition you can check and not a rate you have to
+accept. [The split is below](#when-it-works-and-when-it-does-not).
 
 Per-call authorization scores 1 of 132, and the one it scores is the one worth
 understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a
@@ -194,8 +194,8 @@ nothing: the policy was written from the answer. The third column rebuilds the
 grant from half the benign events and scores it on the other half, which is what
 an incomplete policy costs. Across every corpus where it is measured, including
 the benign-only ones not listed here, it runs from 18.0% on `bfcl` to 55.6% on
-`agentharm`. It is measured at the ladder floor rather than on the full stack,
-and where it says "not run" the number is unknown rather than zero.
+`agentharm`. It is measured at the ladder floor and not on the full stack,
+and where it says "not run" the number is unknown, not zero.
 
 That is the same failure [AgentDyn](../benchmarks/results/agentdyn.md) measures
 against a live model, and `grant_is_observed=True` closes its deterministic form
@@ -206,7 +206,7 @@ than a recording producing it, neither the cost nor the fix applies: the list is
 an authorization, not a transcript.
 
 **Two further corpora, ASB (2,040 attacks) and InjecAgent (1,598), score 100% and
-are excluded from that table rather than counted.** Every attack in them uses a
+are left out of that table instead of counted.** Every attack in them uses a
 tool the grant never issued, so a trivial baseline scores the same. A number a
 naive rung also earns is not evidence about this system, and reporting it would
 add 3,638 attacks to the numerator for nothing.
@@ -237,7 +237,7 @@ these corpora cleanly is a **research scorer that the shipped gateway does not
 run**; the detector it does run scores 0.0% here, at an AUC below chance. That
 gap is tracked in
 [docs/INTEGRATION.md](INTEGRATION.md) and it is the honest reason the
-containment table above rests on the floor and content tiers rather than on
+containment table above rests on the floor and content tiers, and not on
 behaviour. On the content-defined corpora even the research scorer is at chance
 ([opeval.md](../benchmarks/results/opeval.md), five seeds).
 
@@ -275,7 +275,7 @@ measured the **shippable** path costs 3 points where CaMeL's published cost is 7
 **Most of what looks like the cost of enforcement is the cost of a weak agent**,
 and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
 fail with no defense present. The llama row is a null, not a win, a 12% baseline
-leaves nothing for a defense to cost, and it is kept rather than dropped.
+leaves nothing for a defense to cost, and it is kept.
 
 n=32 per model, so the interval around a 3-point difference is wide. The monotone
 trend across four models carries that claim, not any single cell
@@ -302,10 +302,10 @@ corpora**, the shipped default refuses between 27% and 56% of them:
 Containment is unchanged on every attack corpus where the mechanism actually
 fired ([observed_grant.md](../benchmarks/results/observed_grant.md)). It is off by
 default and must stay off wherever a human wrote the tool list, because there
-the list is an authorization rather than a transcript.
+the list is an authorization, not a transcript.
 
 That is the same mechanism AgentDyn punishes, measured on replayed traffic
-rather than against a live model. **AgentDyn itself has not been re-run**, so
+and not against a live model. **AgentDyn itself has not been re-run**, so
 the 21.67 stands as the published figure until someone does.
 
 Every headline result, the command that reproduces it, and the limit it does not
@@ -313,29 +313,41 @@ cross: [benchmarks/results/README.md](../benchmarks/results/README.md).
 
 ### The attacker every number above assumes
 
-**Static.** The AgentDojo figure, the eleven corpora and the 132 scenarios all
-replay a fixed attack that was written without knowledge of this gateway. That
-is the standard every published comparable is measured against, including the
-two quoted here, and it is a known weakness of the whole class: the same
-methodology made in-band defenses look strong until adaptive, defense-aware
-attacks broke twelve of them at over 90% success ([Adaptive Evaluation of
-Out-of-Band Defenses Against Prompt Injection in LLM
-Agents](https://arxiv.org/abs/2606.26479), 2026, which places CaMeL, FIDES,
-Progent, RTBAS and FORGE in one family and notes that a stronger optimized
-white-box attack against all of them remains open).
+Everything above replays a fixed attack, written without knowledge of this
+gateway. That is the standard the whole field is measured against, and it is a
+known weakness of the whole field. The same method made in-band defenses look
+strong until defense-aware attacks broke twelve of them at over 90% success
+([arXiv:2606.26479](https://arxiv.org/abs/2606.26479), which places CaMeL,
+FIDES, Progent, RTBAS and FORGE in one family and says an optimized white-box
+attack against any of them is still open).
 
-An adaptive attacker built against the mechanism rather than against a phrasing
-is in [../benchmarks/live/adaptive_attack.py](../benchmarks/live/adaptive_attack.py)
-and runs from `python -m benchmarks.adaptive`. Its results are **not quoted
-here and not quoted in the README**, because
-[adaptive_adversary.md](../benchmarks/results/adaptive_adversary.md) is stamped
-`unverified`: no command was recorded against those numbers, so nobody can
-re-derive them. Until that run is reproducible, the honest position is that the
-adaptive question is open for this gateway exactly as the paper says it is open
-for the rest of the family.
+So there is an attacker here that knows the defense. It sees each verdict,
+mutates the attack that failed, and searches again.
 
-What the architecture predicts, and what the measurement would have to confirm,
-is that the countable-limit rules are the ones an adaptive attacker cannot talk
-his way past. A ceiling is arithmetic. It does not care how the eleventh refund
-was phrased, which is the same reason the 83.3% row exists and the 18.9% row
-does not.
+```bash
+python -m benchmarks.adaptive --sweep --limit 20 --rounds 3
+```
+
+Ten seconds, no key. 24 corpus and objective pairs, 173,699 attack candidates.
+In 23 of the 24, going from a blind attacker to one with full visibility of the
+verdicts changes containment by nothing at all. More search budget does not
+help either: on redcode exfiltration, 12,200 candidates and 87,080 candidates
+both give 100%.
+
+The exception is the useful part. On `agentharm` persistence a blind attacker
+is contained 20% of the time and an attacker who can see the verdicts is
+contained never, so adaptivity is worth 20 points there. It is the one place
+measured here where knowing the defense helps.
+
+Full grid, the benign cost beside it, and the two cells where the control
+scores as well as the gateway does:
+[adaptive_deterministic.md](../benchmarks/results/adaptive_deterministic.md).
+
+**The live half is still open.** An attacker who talks a real model into the
+action is a different question, and the file that measures it is stamped
+`unverified` because no command was recorded for it. Nothing from it is quoted
+here.
+
+A ceiling is arithmetic. It does not care how the eleventh refund was worded,
+which is why the countable-limit rules are the ones that hold up, and it is the
+same line the 83.3% and 18.9% split draws.

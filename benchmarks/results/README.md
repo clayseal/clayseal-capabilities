@@ -6,7 +6,7 @@ This is the map over the files in this directory. Every number below was
 re-derived by running the command beside it, and each carries its cost, because
 containment alone is won by refusing everything.
 
-## The five headline results
+## The six headline results
 
 | question | answer | reproduce |
 | --- | --- | --- |
@@ -15,6 +15,7 @@ containment alone is won by refusing everything.
 | Does it contain what stays inside the surface? | **partly**: 196 of 507 agentharm (38.7%), 28 of 122 sleight (23.0%), 0 of 22 agentleak | same command, in-surface column |
 | What does it refuse that it should not? | **0 of 20,619 benign events and 0 of 5,851 benign sessions**, eight corpora | `python -m benchmarks.session_units` |
 | Do rules compiled from someone else's policy document break their own traffic? | **1 of 13,907** tau2 ground-truth actions blocked (0.007%) | `python -m benchmarks.tau2_policy_enforcement` |
+| Does an attacker who knows the defense do better than one who does not? | **no, in 23 of 24** corpus and objective pairs over 173,699 candidates; the 24th loses 20 points to it | `python -m benchmarks.adaptive --sweep --limit 20 --rounds 3` |
 
 ## Read the two units, not one
 

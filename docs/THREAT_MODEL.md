@@ -177,6 +177,7 @@ Verified in production posture:
 | Destination re-spelled so the allow-list cannot read it (IP literal in any base, bracketed IPv6, single-label host, non-ASCII homograph) | Host parse canonicalises to one form before matching: `inet_aton` rules for IPv4, IDNA for non-ASCII | `test_egress_destination_spellings.py`; all five were ALLOWED before the 0.6 pass while the dotted form was refused |
 | Denied path re-spelled so `fnmatchcase` cannot match it (case, Win32 trailing dot or space) | Extra readings widen DENY only; a path is denied if any reading is denied | `test_path_scope_same_file_spellings.py`; `workspace/SECRETS/key.pem` was ALLOWED under `denied_paths=["workspace/secrets/**"]` |
 | **Content-defined harm** (authorized action, harmful meaning) | **Not stopped** | 6.3% ([why_we_fail.md](../benchmarks/results/why_we_fail.md)) |
+| Secret encoded and pushed past the decoder's token budget | An argument with more opaque tokens than the decoder opens cannot support "carries no value"; the tracker escalates instead | `test_flow_decode_budget.py`; 8 harmless base64 tokens in front of a base64'd secret were ALLOWED while the same secret as the first token was refused. Costs 0.33% false-block on `flow[tau2]`, containment unchanged |
 | **In-scope data staging** | **Not stopped** | byte-identical to allow-all ([in_scope_exfiltration.md](../benchmarks/results/in_scope_exfiltration.md)) |
 
 ---

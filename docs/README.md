@@ -7,6 +7,7 @@ example. This page says which document answers which question.
 
 | Document | Answers |
 | --- | --- |
+| `clayseal try` | What does it actually do? One minute, no key, no setup. |
 | [DEV_GUIDE.md](DEV_GUIDE.md) | How do I install it, wire it into my agent, and call the API? |
 | [POLICY.md](POLICY.md) | What can a policy file say, and what does each rule do? |
 | [DEPLOYMENT_SHAPE.md](DEPLOYMENT_SHAPE.md) | Where does the gateway sit, and what does it need from the rest of my system? |

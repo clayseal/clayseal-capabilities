@@ -1,7 +1,8 @@
 """`clayseal`: read a policy, review it, and enforce it.
 
-Three commands, in the order someone actually uses them.
+Four commands, in the order someone actually uses them.
 
+    clayseal try                           see it work before reading anything
     clayseal policy show   policy.yaml     what this document authorizes
     clayseal policy lint   policy.yaml     what a reviewer should ask about
     clayseal proxy --policy policy.yaml -- npx @acme/mcp-server
@@ -17,6 +18,12 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from clayseal.capabilities.policy import PolicyError, load_policy
+
+
+def _cmd_try(args: argparse.Namespace) -> int:
+    from clayseal.capabilities.onboarding import run
+
+    return run(fast=args.fast, explain=args.explain)
 
 
 def _cmd_show(args: argparse.Namespace) -> int:
@@ -290,6 +297,14 @@ def build_parser() -> argparse.ArgumentParser:
         description="Authorize agent actions against a reviewable policy document.",
     )
     sub = parser.add_subparsers(dest="group", required=True)
+
+    try_cmd = sub.add_parser(
+        "try", help="watch the gateway stop two attacks, no setup")
+    try_cmd.add_argument("--fast", action="store_true",
+                         help="no pauses; also the default when piped")
+    try_cmd.add_argument("--explain", action="store_true",
+                         help="name the layer that answered each call")
+    try_cmd.set_defaults(func=_cmd_try)
 
     serve_cmd = sub.add_parser(
         "serve", help="run a policy in front of a Streamable HTTP MCP server",

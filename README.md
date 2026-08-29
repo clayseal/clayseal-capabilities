@@ -18,13 +18,28 @@ Clay Seal sits in front of your tools and judges each call against the whole
 session: the grant, the running totals, where the arguments came from, and what
 the agent has already done.
 
-## Install
+## Start here
 
 ```bash
 pip install clayseal
+clayseal try
 ```
 
-Python 3.10 to 3.14. Two dependencies: `cryptography` and `pyyaml`.
+`clayseal try` takes about a minute. It runs two attacks in front of you and
+shows the gateway stopping them. There is nothing to configure, no key to get
+and nothing leaves your machine. Every verdict on screen is decided live by the
+same gateway you would deploy, so a broken build cannot print a working demo.
+
+```
+    refund INV-001  $900   allowed   $900 of the $1,000 spent
+    refund INV-002  $900   REFUSED   this one would take it to $1,800, and the ceiling is $1,000
+      ... and so on, all the way to INV-010
+
+  The first went through. The next 10 did not.
+  $9,000 stayed where it was.
+```
+
+Python 3.10 to 3.14. Two dependencies, `cryptography` and `pyyaml`.
 
 ## Use it in two lines
 
@@ -181,8 +196,8 @@ strictest first, so a call refused early never reaches the expensive layers.
    arithmetically incapable of firing until enough benign sessions have been
    observed to calibrate them, because a conformal p-value cannot go below
    1/(n+1) and the alpha they are gated at sits under that floor. The detector
-   reports which tiers are inert rather than letting them look like tiers that
-   examined the session and found nothing.
+   names the inert tiers, so one that cannot fire does not look like one that
+   looked and found nothing.
 
 The word **budget** below means a running total the gateway keeps for the whole
 session: money, calls, or anything else countable. It is the only check that can
@@ -243,6 +258,7 @@ what the gate costs, and the limits, in full:
 
 | | |
 | --- | --- |
+| **An attacker that knows the defense** | 24 corpus and objective pairs, 173,699 candidates. In 23 of them, full visibility of the verdicts buys the attacker nothing. The 24th says what adaptivity is worth when it works |
 | **Eleven external corpora** nobody here authored | 98 to 100% where harm is defined by something the gateway can bind to, 31 to 55% where it is defined by the content of an authorized action, and the friction column that says what an incomplete policy costs |
 | **A live model**, AgentDojo prompt injection | 1 attack success in 216 runs, 0.5% [0.1, 2.6], against Progent's published 11.1 to 16.7% |
 | **What that costs**, paired per task over four models | −25 points on the weakest, −3 on the strongest, where CaMeL's published cost is 7 |
@@ -284,8 +300,8 @@ policy and takes back an unforgeable verdict stream
 drives iVisor.
 
 **It catches one class nothing above it can.** A DNS tunnel encodes its payload
-into subdomains, and the data leaves through the resolver rather than through
-any tool. There is no tool call, so `authorize()` is never asked, and every
+into subdomains, and the data leaves through the resolver. No tool is
+involved. There is no tool call, so `authorize()` is never asked, and every
 layer above denies nothing. On the captured trace iVisor denies all four
 queries and the tool-call layers deny none
 ([syscall_tier.md](benchmarks/results/syscall_tier.md)).
@@ -469,8 +485,9 @@ workload has not been measured against the traffic it will refuse, and a
 step-up halts an autonomous attacker just as hard while leaving a person able
 to say yes. Your rules run after the shipped ones, so a house rule cannot mask
 one that ships. A rule that raises is skipped and counted in
-`session_rules.RULE_FAILURES` rather than failing the decision: a gateway that
-stops authorizing because a regex threw is worse than one that misses a rule.
+`session_rules.RULE_FAILURES`, and the decision still goes through. A gateway
+that stops authorizing because a regex threw is worse than one that misses a
+rule.
 
 ## The lower-level API
 

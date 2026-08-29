@@ -96,6 +96,15 @@ jobs:
         run: |
           mkdir -p /tmp/clean && cd /tmp/clean
           pip install "$GITHUB_WORKSPACE"/dist/*.whl
+      # `clayseal try` is the first command in the README and the first thing a
+      # new user runs. It has to work from the installed wheel with no source
+      # tree in sight, which is the one place the checkout cannot tell you. It
+      # exits non-zero if the gateway failed to stop what the tour says it
+      # stops, so this is a smoke test of the product and not of the printing.
+      - name: The first command in the README must work from the wheel
+        working-directory: /tmp/clean
+        run: clayseal try --fast
+
       - name: Import every shipped module from the installed wheel
         working-directory: /tmp/clean
         run: |

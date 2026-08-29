@@ -4,6 +4,10 @@ How to operate Clay Seal. Start with the gateway, which is what most deployments
 use; the primitives underneath it are documented after, because you need them
 only when you are building something the gateway does not already do.
 
+If you have not seen it work yet, run `clayseal try` first. It takes a minute,
+needs no key and no configuration, and every verdict it prints comes from the
+gateway this guide describes.
+
 If you are looking for the shortest path to a running system, it is
 [the policy document](POLICY.md) and `clayseal proxy`. If you are looking for
 what the layer defends and what it does not, that is

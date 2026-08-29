@@ -123,9 +123,9 @@ def _sweep(args) -> int:
     for dataset in dict.fromkeys(r["dataset"] for r in rows):
         for objective_name in dict.fromkeys(
                 r["objective"] for r in rows if r["dataset"] == dataset):
-            def pick(engine, knowledge):
+            def pick(engine, knowledge, *, ds=dataset, obj=objective_name):
                 for r in rows:
-                    if (r["dataset"] == dataset and r["objective"] == objective_name
+                    if (r["dataset"] == ds and r["objective"] == obj
                             and r["engine"] == engine and r["knowledge"] == knowledge):
                         n = r["tasks_attacked"]
                         held = n - r["tasks_escaped"]
