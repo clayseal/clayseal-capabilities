@@ -158,6 +158,24 @@ class Guardrail:
 
         return cls.from_policy(load_policy(str(path)), **overrides)
 
+    @classmethod
+    def from_dict(cls, document: Any, **overrides: Any):
+        """Build a guardrail from a policy written inline.
+
+        The path a reader takes before they have a file. `from_policy_file`
+        was the only documented way in, so the README's own quickstart could
+        not be run by anyone who installed from PyPI: it named
+        `examples/refund.yaml`, which exists in a checkout and nowhere else.
+        A first example has to run where the reader actually is.
+
+        The document is the same mapping a policy file parses to, so moving
+        from this to a real file is a copy and paste, and `clayseal policy new`
+        writes one out.
+        """
+        from clayseal.capabilities.policy import compile_policy
+
+        return cls.from_policy(compile_policy(document), **overrides)
+
     # -- the decision ------------------------------------------------------ #
     def trace(self, traceparent: Any, tracestate: Any = None) -> None:
         """Join this session's receipts to the caller's trace.

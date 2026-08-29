@@ -327,6 +327,51 @@ _MAX_NEEDLE = 256          # longer values are matched on their first 256 chars
 _MAX_STARTS = 32           # candidate start positions tried
 
 
+#: How many bounded windows of a long value are matched, at 50% overlap.
+#: `_MAX_NEEDLE` alone matched a value on its FIRST 256 characters and nothing
+#: else, so anything longer could be exfiltrated by sending only the part past
+#: them. A 376-character value sent as its last 120 characters was ALLOWED while
+#: the same value sent whole was refused, in a single write with no
+#: fragmentation. Keys, certificates and record dumps are all longer than 256.
+_MAX_NEEDLE_WINDOWS = 8
+
+
+def _needle_windows(needle: str) -> list[str]:
+    """Bounded windows spanning a value, not just its head.
+
+    Overlapping by half a window so a match straddling a boundary is still
+    wholly inside one of them. Capped, so an enormous value costs a bounded
+    number of passes rather than one per 256 characters.
+    """
+    if len(needle) <= _MAX_NEEDLE:
+        return [needle]
+    step = _MAX_NEEDLE // 2
+    windows = [needle[i:i + _MAX_NEEDLE]
+               for i in range(0, len(needle), step)
+               if needle[i:i + _MAX_NEEDLE]]
+    if len(windows) <= _MAX_NEEDLE_WINDOWS:
+        return windows
+    # Keep the head, the tail and an even spread between them.
+    idx = sorted({round(i * (len(windows) - 1) / (_MAX_NEEDLE_WINDOWS - 1))
+                  for i in range(_MAX_NEEDLE_WINDOWS)})
+    return [windows[i] for i in idx]
+
+
+def _best_window_coverage(needle: str, haystack: str) -> tuple[int, int | None, int]:
+    """Best (covered, span, window length) over the windows of `needle`.
+
+    The window length is returned because the caller scores coverage as a
+    fraction of what it was looking for. Scoring a tail match against the whole
+    value's length would bury it under the part that was never sent.
+    """
+    best: tuple[int, int | None, int] = (0, None, min(len(needle), _MAX_NEEDLE))
+    for window in _needle_windows(needle):
+        covered, span = _subsequence_coverage(window, haystack)
+        if covered > best[0]:
+            best = (covered, span, len(window))
+    return best
+
+
 def _subsequence_coverage(needle: str, haystack: str) -> tuple[int, int | None]:
     """How much of `needle` appears in order in `haystack`, and over what span.
 
@@ -1214,7 +1259,10 @@ class FlowTracker:
             compact_token = self._folded(token)
             if len(compact_token) < _MIN_RECONSTRUCTED:
                 continue
-            target = min(len(compact_token), _MAX_NEEDLE)
+            # `target` is set below by the window search: a tail match must be
+            # scored against the window it matched, not against the whole value,
+            # or the part that was never sent buries it.
+
             # Look back only as far as a legitimate dense split could reach.
             #
             # The span bound below already says the fragments must be dense
@@ -1234,7 +1282,7 @@ class FlowTracker:
             # scan the run of unrelated prose it was spelling values out of.
             lookback = _LOOKBACK_SPREAD * max(
                 len(compact_token), _MIN_RECONSTRUCTED)
-            covered, span = _subsequence_coverage(
+            covered, span, target = _best_window_coverage(
                 compact_token, stream[-lookback:])
             if covered < _MIN_RECONSTRUCTED:
                 continue

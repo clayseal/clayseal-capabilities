@@ -27,17 +27,14 @@ clayseal try
 
 `clayseal try` takes about a minute. It runs two attacks in front of you and
 shows the gateway stopping them. There is nothing to configure, no key to get
-and nothing leaves your machine. Every verdict on screen is decided live by the
-same gateway you would deploy, so a broken build cannot print a working demo.
+and nothing leaves your machine.
 
-```
-    refund INV-001  $900   allowed   $900 of the $1,000 spent
-    refund INV-002  $900   REFUSED   this one would take it to $1,800, and the ceiling is $1,000
-      ... and so on, all the way to INV-010
+<img src="docs/assets/clayseal-try.svg" alt="clayseal try: eleven $900 refunds against a $1,000 ceiling, the first allowed and the rest refused, then an injected email recipient held for a person" width="820">
 
-  The first went through. The next 10 did not.
-  $9,000 stayed where it was.
-```
+Every verdict there is decided live by the same gateway you would deploy. The
+picture is generated from a real run by `python scripts/render_try_svg.py`, and
+a test fails if it drifts from what the command prints, so it cannot become a
+screenshot of something that used to work.
 
 Python 3.10 to 3.14. Two dependencies, `cryptography` and `pyyaml`.
 
@@ -55,7 +52,19 @@ def list_open_refunds():
 def issue_refund(invoice, amount):
     return f"refunded {invoice} ${amount:.2f}"
 
-guard = Guardrail.from_policy_file("examples/refund.yaml")
+guard = Guardrail.from_dict({
+    "version": 1,
+    "goal": {"id": "refund-run",
+             "summary": "Refund the invoices the customer disputed."},
+    "expires_at": "2030-01-01T00:00:00Z",
+    "tools": {"allow": ["list_open_refunds", "issue_refund"],
+              "harmless": ["list_open_refunds"],
+              "effects": {"list_open_refunds": "read", "issue_refund": "write"}},
+    "paths": {"pathless": ["list_open_refunds", "issue_refund"]},
+    "budgets": {"value": {"ceilings": {"refunds": "1000.00"},
+                          "tracked": {"issue_refund": {"arg": "amount",
+                                                       "budget": "refunds"}}}},
+})
 tools = guard.wrap_all({"list_open_refunds": list_open_refunds,
                         "issue_refund": issue_refund})
 
@@ -70,8 +79,12 @@ for row in tools["list_open_refunds"]():
 ```
 
 The first refund goes through. The second is refused, because the $1,000
-session ceiling in `examples/refund.yaml` is already spent. Neither call
-reached your function.
+session ceiling is already spent. Neither call reached your function.
+
+The policy is inline here so you can paste the whole thing into a file and run
+it. In a real deployment it lives in its own YAML, where a security team can
+review it and a pull request can gate it. `clayseal policy new > policy.yaml`
+writes a commented one to start from, and `Guardrail.from_policy_file` loads it.
 
 The wrappers keep the name, docstring and signature of your originals, so any
 framework that introspects them sees the tool it saw before. That covers
@@ -165,6 +178,21 @@ clayseal proxy --policy examples/refund.yaml -- python examples/refund_server.py
 You give the gateway a **policy file** and a **goal** for the session. It seals
 the goal at the start, so nothing the agent reads later can widen what was
 approved. Every tool call then goes through one decision point before it runs.
+
+```mermaid
+flowchart LR
+    A["your agent"] -->|tool call| G{{"Clay Seal"}}
+    P["policy.yaml<br/><small>reviewed, diffed, signed</small>"] -.->|"sealed at<br/>session start"| G
+    G -->|allow| T["your tools<br/>or MCP server"]
+    G -->|"step up"| H["a person"]
+    G -->|deny| X["never runs"]
+    H -->|approved once,<br/>for these arguments| T
+    T -->|result| S[("session state<br/><small>totals, provenance,<br/>what it has done</small>")]
+    S -.->|"the next call is<br/>judged against this"| G
+```
+
+That loop at the bottom is the whole idea. The gateway does not just check a
+call, it checks a call against everything the session has already done.
 
 A call gets one of three answers:
 
@@ -594,6 +622,7 @@ session = get_identity_provider("oidc").build_session(
 [docs/README.md](docs/README.md) is the index. The ones you are most likely to
 want:
 
+- [Your first ten minutes](docs/START.md) to go from the demo to your own agent
 - [Evidence](docs/EVIDENCE.md) for every measured number and the limit it does not cross
 - [API reference](docs/API.md) for the 57 exported names, tiered by what
   most integrations actually use
