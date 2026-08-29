@@ -105,7 +105,7 @@ benchmarks = ["agentdojo>=0.1.35,<0.2"]
 # Learned goal-conditioned trajectory scorer (clayseal.capabilities.monitor).
 # Optional: the n-gram scorer + conformal layer run with no extra deps; torch is
 # only needed to train/serve the transformer scorer (do it on a GPU VM).
-monitor = ["torch>=2.2"]
+monitor = ["torch>=2.13.0"]
 # `fakeredis` backs the cross-host ledger tests. It is a double, not a Redis:
 # set CLAYSEAL_TEST_REDIS_URL to run the same suite against a live server.
 dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.10", "fakeredis>=2.21", "redis>=5.0",
