@@ -46,7 +46,7 @@ requires-python = ">=3.10,<3.15"
 # private distribution and is vendored here now, because a hard dependency on a
 # repository nobody can read is not a dependency, it is a wall.
 dependencies = [
-  "cryptography>=42.0",
+  "cryptography>=50.0.1",
   "pyyaml>=6.0",
 ]
 
