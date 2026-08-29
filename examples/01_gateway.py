@@ -5,10 +5,22 @@
 An agent is told to triage billing tickets and email a summary internally. It
 reads a ticket, and the ticket contains an instruction that was not in the task.
 The agent follows it, because agents do. Every call it makes is a call it was
-granted the tool for; the fourth one is refused anyway.
+granted the tool for; the last one is held for a person anyway.
 
 This is the shape of the thing. Nothing here is mocked: the decisions come from
 the same `SessionBroker` the benchmarks measure and the MCP proxy runs.
+
+WHICH LAYER ANSWERS, and why this example is not the interesting case. The
+injected address is off-domain, so the egress allow-list catches it. That is a
+per-call rule: it reads one call's arguments and needs no session history, and a
+stateless gate given the same policy would refuse the same send. The gateway
+runs its layers cheapest first and this is the cheapest one, which is correct
+behaviour and a weak demonstration, so the run prints the layer that answered
+rather than letting the refusal imply a mechanism that never ran.
+
+`examples/README.md` runs the same session with the domain list removed. There
+the floor has nothing to say and provenance answers, which is the layer this
+project is actually about.
 """
 from clayseal.capabilities.monitor.action import Action, ContextItem, TrustLevel
 from clayseal.capabilities.policy import compile_policy
@@ -74,14 +86,18 @@ for step, (tool, args) in enumerate(calls):
                                   if step >= 2 else ()))
     decision = gateway.authorize(action)
 
-    mark = "ok  " if decision.allowed else "DENY"
+    # `step_up` is not `deny`. Both halt an autonomous agent, and only one of
+    # them is recoverable by a person saying yes, so they are not printed alike.
+    mark = {"allow": "ok  ", "step_up": "HOLD", "deny": "DENY"}[decision.outcome]
     print(f"{mark} {tool:14} {decision.outcome:8} {args}")
     if not decision.allowed:
         for reason in decision.reasons:
-            print(f"       {reason}")
+            print(f"       {decision.layer}: {reason}")
 
 # 3. The evidence. Every decision is on a hash-chained log, which is what an
 #    audit reads instead of taking this script's word for it.
 records = gateway.decision_log.records()
 denied = [r for r in records if r["decision"]["outcome"] != "allow"]
-print(f"\n{len(records)} decisions recorded, {len(denied)} refused")
+held = [r for r in records if r["decision"]["outcome"] == "step_up"]
+print(f"\n{len(records)} decisions recorded, {len(denied)} not allowed "
+      f"({len(held)} of them held for a person, not refused outright)")

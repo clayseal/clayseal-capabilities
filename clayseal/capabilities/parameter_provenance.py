@@ -111,7 +111,7 @@ class Source:
             origin = f"{where} of {obj!r}, read via {self.tool}"
         else:
             origin = f"{where} of {obj or self.tool}"
-        return origin + (", which the goal named" if self.goal_named else "")
+        return origin + (", a goal-named source" if self.goal_named else "")
 
     def object_trusted(self, goal_named_objects: set[str] | None) -> bool:
         """Is the containing object itself on the sealed goal's named set?"""

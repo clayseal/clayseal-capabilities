@@ -173,3 +173,41 @@ def test_check_destination_ungrounded_denies():
     trust, reason = _prov().check_destination("invented@nowhere.test")
     assert trust is DestinationTrust.DENY
     assert "no observation" in reason
+
+
+# --------------------------------------------------------------------------- #
+# The reason string is product surface
+# --------------------------------------------------------------------------- #
+def test_a_sealed_goal_source_reads_as_one_clause():
+    """`describe()` is handed to the agent as the reason for a refusal.
+
+    It used to concatenate four fragments unconditionally, so a destination
+    seeded from the sealed goal, where the tool and the containing object are
+    the same name, produced:
+
+        'ops@acme-internal.com' structured via a structured field of
+        sealed_goal of a goal-named resource in 'sealed_goal'
+
+    which names its one source three times and reads as a template fault. That
+    is the single most common grounded case, since `_seed_goal_provenance`
+    records every address in the goal summary this way.
+    """
+    from clayseal.capabilities.parameter_provenance import Source
+
+    described = Source("sealed_goal", True, True, "sealed_goal").describe()
+    assert described == "a structured field of the sealed goal"
+    assert "sealed_goal" not in described
+
+
+def test_a_source_names_its_object_and_its_tool_once_each():
+    from clayseal.capabilities.parameter_provenance import Source
+
+    described = Source("read_ticket", True, False, "tickets/T-1042.txt").describe()
+    assert described == "a structured field of 'tickets/T-1042.txt', read via read_ticket"
+
+
+def test_a_source_whose_object_is_its_tool_does_not_repeat_it():
+    from clayseal.capabilities.parameter_provenance import Source
+
+    assert Source("read_payees", False, False, "read_payees").describe() == (
+        "free text of read_payees")

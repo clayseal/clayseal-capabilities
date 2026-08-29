@@ -299,6 +299,40 @@ class Policy:
                 "denied. If that is intended, say so with domains: [].",
             ))
 
+        # A domain grant is every mailbox on that domain.
+        #
+        # The same shape as `untracked-effectful-tool`: a control is declared,
+        # looks like it binds the destination, and binds something much broader
+        # than the author is picturing. `domains: [acme-internal.com]` on a
+        # sending tool authorizes a send to every address at the company, so an
+        # injection that names `all-hands@` instead of an outside host is inside
+        # the grant and no layer below has anything to say about it. Naming the
+        # mailboxes under `egress.recipients` is what narrows it.
+        #
+        # A warning and not an error, because a policy whose sends really are
+        # "anyone internal" is a legitimate policy, and the document cannot tell
+        # the two apart. What it can do is stop the author finding out from an
+        # incident.
+        if (self.egress is not None and not self.egress.allow_all
+                and self.egress.allowed_domains
+                and not any("@" in r for r in self.egress.allowed_recipients)):
+            senders = sorted(
+                t for t in (self.allowed_tools or ())
+                if self.verb_for(t) == "send"
+            )
+            if senders:
+                out.append(Finding(
+                    "warning", "domain-grant-unbound-mailbox",
+                    f"egress.domains grants "
+                    f"{', '.join(sorted(self.egress.allowed_domains))} to "
+                    f"{', '.join(senders)} and egress.recipients names no "
+                    f"address, so every mailbox on those domains is a permitted "
+                    f"destination. An injected recipient inside the granted "
+                    f"domain passes the floor. List the mailboxes under "
+                    f"egress.recipients if the intended set is smaller than "
+                    f"the whole domain.",
+                ))
+
         if self.scope is None:
             out.append(Finding(
                 "warning", "no-path-scope",
