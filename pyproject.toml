@@ -94,7 +94,7 @@ a2a = ["rfc8785>=0.1.4", "PyJWT>=2.8,<3.0"]
 # Replay-defense store AND the cross-host principal ledger
 # (`ledger_backends.RedisPrincipalLedger`).
 redis = ["redis>=5.0"]
-dynamodb = ["boto3>=1.34"]
+dynamodb = ["boto3>=1.43.80"]
 # External agent-security corpora for the enforcement benchmark (benchmarks/).
 # agentdojo bundles its suite data; the loader tracks the 0.1.x suite/
 # ground-truth API (get_suites -> load_and_inject_default_environment ->
