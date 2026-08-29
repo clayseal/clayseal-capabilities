@@ -15,8 +15,8 @@ You have to do this once, by hand, before the first release can publish.
 
    | field | value |
    | --- | --- |
-   | Owner | `pberlizov` |
-   | Repository | `clayseal` |
+   | Owner | `clayseal` |
+   | Repository | `clayseal-capabilities` |
    | Workflow name | `release.yml` |
    | Environment name | `pypi` |
 

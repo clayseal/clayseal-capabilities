@@ -57,11 +57,11 @@ dependencies = [
 clayseal = "clayseal.capabilities.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/pberlizov/clayseal"
-Documentation = "https://github.com/pberlizov/clayseal/blob/main/docs/DEV_GUIDE.md"
-Repository = "https://github.com/pberlizov/clayseal"
-Issues = "https://github.com/pberlizov/clayseal/issues"
-Changelog = "https://github.com/pberlizov/clayseal/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/clayseal/clayseal-capabilities"
+Documentation = "https://github.com/clayseal/clayseal-capabilities/blob/main/docs/DEV_GUIDE.md"
+Repository = "https://github.com/clayseal/clayseal-capabilities"
+Issues = "https://github.com/clayseal/clayseal-capabilities/issues"
+Changelog = "https://github.com/clayseal/clayseal-capabilities/blob/main/CHANGELOG.md"
 
 # Execution-sandbox backends, resolved by name via clayseal.core.plugins. The
 # built-in iVisor backend needs no dependency here (it drives an external

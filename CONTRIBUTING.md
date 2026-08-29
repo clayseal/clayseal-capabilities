@@ -3,8 +3,8 @@
 ## Getting a working tree
 
 ```bash
-git clone https://github.com/pberlizov/clayseal.git
-cd clayseal
+git clone https://github.com/clayseal/clayseal-capabilities.git
+cd clayseal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest python/tests -q          # 2900+ tests, under a minute

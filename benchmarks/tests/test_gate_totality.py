@@ -12,11 +12,16 @@ import pytest
 
 from benchmarks.stress_gates import GATES, run_gate
 
-#: `clayseal.core.task_scope` lives in the sibling clay-seal-core repository, so
-#: it is reported here rather than patched from this one. See the writeup.
-EXTERNAL = {"task-scope"}
+#: Gates with a dedicated test below, kept out of the shared parametrisation so
+#: their own assertions are the ones that run.
+#:
+#: `task-scope` was here for a different reason: `clayseal.core` was a sibling
+#: repository nobody could edit from this one, so its defect was reported and
+#: not fixed. Core is vendored here now and the defect is fixed, which
+#: `test_task_scope_is_total` asserts directly.
+HAS_ITS_OWN_TEST = {"task-scope"}
 
-IN_REPO = sorted(set(GATES) - EXTERNAL)
+IN_REPO = sorted(set(GATES) - HAS_ITS_OWN_TEST)
 
 
 @pytest.mark.parametrize("gate", IN_REPO)

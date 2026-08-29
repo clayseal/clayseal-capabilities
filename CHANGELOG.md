@@ -7,7 +7,95 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added: `clayseal try`, so the first thing anyone does is watch it work
+
+One command, no key and no configuration. It runs two attacks and shows the
+gateway stopping them: eleven refunds that are each inside the limit and
+together are not, then an email address that arrived in a support ticket
+instead of from the user. Nothing is a recording. Every verdict comes from the
+same `SessionBroker` the proxy runs, and the command exits non-zero if the
+gateway fails to stop what the demo says it stops, so a broken build cannot
+print a working tour. `--explain` names the layer that answered each call.
+
+The README shows it as an SVG generated from a live run by
+`scripts/render_try_svg.py`, and a test fails when the picture and the command
+drift apart in either direction.
+
+### Added: `clayseal policy new`
+
+A commented starter policy to edit. `policy init` needs a running MCP server
+and `policy draft` needs a written policy document; someone who has just seen
+the demo has neither, and the previous answer was to copy a block out of the
+README. The new `unedited-template` lint rule is an ERROR, so a template that
+still names `your_read_tool` or a TODO goal cannot pass a merge gate.
+
+### Fixed: three places that named paths only a git checkout has
+
+One cause, three symptoms, and the checkout is the one environment that cannot
+detect any of them.
+
+- The README quickstart called `Guardrail.from_policy_file("examples/refund.yaml")`
+  directly under `pip install clayseal`, so the second thing on the page raised
+  `PolicyError` for everyone who followed the first. `Guardrail.from_dict` is
+  new and the quickstart is now self-contained.
+- `clayseal try` closed by pointing at `docs/EVIDENCE.md`.
+- The README's images and links were relative. GitHub resolves those and the
+  PyPI project page, rendered from the same file, does not, so the hero image
+  was broken on the page most first-time visitors land on.
+
+### Fixed: the enumerated recipient list did not bind on the provenance path
+
+`_egress_floor` calls `check_with_provenance` when provenance is enabled and
+`check` when it is not. They are alternatives, not layers, and the address
+block existed only in the second. Every deployment with provenance on, which is
+what `DeployableStack` builds, silently ignored `egress.recipients` and fell
+back to the domain grant. On identical arguments the two paths disagreed:
+
+    check()                 deny: recipient 'all-hands@...' not on allow-list
+    check_with_provenance() allow: egress within policy
+
+The BPL scenario named for this builds a broker with no provenance, so it
+exercised the path that was already correct. Tests now take the verdict from
+both paths on one input.
+
+### Added: `domain-grant-unbound-mailbox` lint
+
+A domain grant is every mailbox on that domain, so an injected recipient inside
+a granted domain passes the floor. Warns when a sending tool has a domain and
+no enumerated address.
+
+### Added: an adaptive adversary with a command behind it
+
+`python -m benchmarks.adaptive --sweep` runs the whole corpus and objective
+grid under one command. Ten seconds, no key, byte-identical across runs. 24
+pairs, 173,699 candidates: in 23 of them an attacker who sees every verdict
+does no better than a blind one, and on `agentharm` persistence adaptivity is
+worth 20 points. Published with its benign cost beside it, as the claims gate
+requires.
+
+This is what the published literature says is open for the whole family of
+out-of-band defenses. The live half, where a model is talked into the action,
+is still open here and nothing is quoted from it.
+
+### Documentation
+
+- `docs/START.md`, the first ten minutes, walked end to end by a test.
+- `docs/EVIDENCE.md` carries the measurements; the README is 671 lines from 809
+  and opens with the demo.
+- The external-corpus table now shows both friction columns. The 0.00% column
+  is 0.00% by construction on six of those corpora, which the harness has
+  always said and the README did not.
+- OWASP Top 10 for Agentic Applications 2026 mapping in `docs/CONTROLS.md`,
+  including the categories this does not address.
+
+### Fixed
+
+- Colour is switched off on a Windows console that will not enable
+  virtual-terminal processing, so the first command does not open with raw
+  escape codes.
+- The provenance reason string named its one source three times.
+- CI covers Python 3.11 and 3.12, which the metadata claimed and nothing ran,
+  and one macOS job, which is the platform the syscall tier targets.
 
 ## [0.6.0] - 2026-08-28
 

@@ -61,7 +61,7 @@ def warn_once(name: str, target: str | None = None) -> None:
     warnings.warn(
         f"{root} was renamed to {_ALIASES[root]} in Clay Seal 0.6 and will stop "
         f"working in 0.7. Import {target or _ALIASES[root]} instead. "
-        f"See https://github.com/pberlizov/clayseal/blob/main/docs/MIGRATION.md",
+        f"See https://github.com/clayseal/clayseal-capabilities/blob/main/docs/MIGRATION.md",
         DeprecationWarning,
         stacklevel=3,
     )

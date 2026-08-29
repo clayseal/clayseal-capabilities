@@ -36,6 +36,36 @@ SEAL = r"""
 """
 
 
+def _ansi_ok() -> bool:
+    """Will this console actually interpret the escape codes below?
+
+    Everywhere except Windows, yes. On Windows a console interprets them only
+    once virtual-terminal processing is switched on, and the legacy consoles
+    that have it off print the raw codes, so the first command anyone runs
+    would open with a screenful of `[38;5;173m`. Windows Terminal and
+    PowerShell 7 have it on already; `cmd.exe` on an older build does not.
+
+    So ask the console to turn it on, and take a refusal as the answer: no
+    colour, same demo. Nothing here is carried by colour alone.
+    """
+    if sys.platform != "win32":
+        return True
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32          # type: ignore[attr-defined]
+        # -11 is STD_OUTPUT_HANDLE, 0x0004 is ENABLE_VIRTUAL_TERMINAL_PROCESSING.
+        handle = kernel32.GetStdHandle(-11)
+        mode = ctypes.c_ulong()
+        if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            return False
+        return bool(kernel32.SetConsoleMode(handle, mode.value | 0x0004))
+    except Exception:  # noqa: BLE001
+        # Total by contract. A console that cannot be queried is a console that
+        # gets plain text, and no first run fails over a colour decision.
+        return False
+
+
 class Screen:
     """Printing, with the two things a terminal has and a pipe does not.
 
@@ -47,7 +77,7 @@ class Screen:
 
     def __init__(self, *, fast: bool = False) -> None:
         self.tty = sys.stdout.isatty()
-        self.colour = self.tty and not os.environ.get("NO_COLOR")
+        self.colour = self.tty and not os.environ.get("NO_COLOR") and _ansi_ok()
         self.fast = fast or not self.tty
         self.width = min(shutil.get_terminal_size((80, 24)).columns, 78)
 
@@ -270,7 +300,14 @@ def _what_now(screen: Screen) -> None:
     screen.say(f"  {screen.paint('clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server', CLAY)}")
     screen.say(f"      {screen.paint('put the gateway in front of it for real', DIM)}")
     screen.say()
-    screen.say(screen.paint("  Where it works and where it does not: docs/EVIDENCE.md", DIM))
+    # A repo-relative path, printed by a command someone installed from PyPI,
+    # names a file they do not have. It is the same mistake the README made
+    # with `examples/refund.yaml`, and the installed package is the one place
+    # it cannot be caught by running things from the checkout.
+    screen.say(screen.paint(
+        "  Where it works and where it does not:", DIM))
+    screen.say(screen.paint(
+        "  https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md", DIM))
     screen.say()
 
 

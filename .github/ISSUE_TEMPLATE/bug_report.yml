@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         For anything that lets an agent get **past** a control, stop and use
-        [a private advisory](https://github.com/pberlizov/clayseal/security/advisories/new)
+        [a private advisory](https://github.com/clayseal/clayseal-capabilities/security/advisories/new)
         instead.
 
   - type: textarea

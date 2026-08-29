@@ -1,6 +1,6 @@
 # Clay Seal
 
-<img src="docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
+<img src="https://raw.githubusercontent.com/clayseal/clayseal-capabilities/main/docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
@@ -29,7 +29,7 @@ clayseal try
 shows the gateway stopping them. There is nothing to configure, no key to get
 and nothing leaves your machine.
 
-<img src="docs/assets/clayseal-try.svg" alt="clayseal try: eleven $900 refunds against a $1,000 ceiling, the first allowed and the rest refused, then an injected email recipient held for a person" width="820">
+<img src="https://raw.githubusercontent.com/clayseal/clayseal-capabilities/main/docs/assets/clayseal-try.svg" alt="clayseal try: eleven $900 refunds against a $1,000 ceiling, the first allowed and the rest refused, then an injected email recipient held for a person" width="820">
 
 Every verdict there is decided live by the same gateway you would deploy. The
 picture is generated from a real run by `python scripts/render_try_svg.py`, and
@@ -136,11 +136,11 @@ that matters most: a tool that can spend money but debits no budget. On the file
 above it reports no errors and two warnings, both of which name a real decision
 you have not made yet.
 
-Full reference: [docs/POLICY.md](docs/POLICY.md).
+Full reference: [docs/POLICY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md).
 
 ## See it stop the attack
 
-From a checkout. [examples/](examples/) has five, each runnable with no key and
+From a checkout. [examples/](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/) has five, each runnable with no key and
 no network:
 
 ```bash
@@ -181,14 +181,22 @@ approved. Every tool call then goes through one decision point before it runs.
 
 ```mermaid
 flowchart LR
-    A["your agent"] -->|tool call| G{{"Clay Seal"}}
-    P["policy.yaml<br/><small>reviewed, diffed, signed</small>"] -.->|"sealed at<br/>session start"| G
-    G -->|allow| T["your tools<br/>or MCP server"]
-    G -->|"step up"| H["a person"]
-    G -->|deny| X["never runs"]
-    H -->|approved once,<br/>for these arguments| T
-    T -->|result| S[("session state<br/><small>totals, provenance,<br/>what it has done</small>")]
-    S -.->|"the next call is<br/>judged against this"| G
+    P["policy.yaml<br/>reviewed and diffed<br/>like any other file"]
+    A["your agent"]
+    G{{"Clay Seal"}}
+    T["your tools<br/>or MCP server"]
+    H["a person"]
+    X["never runs"]
+    S[("session state:<br/>running totals,<br/>where arguments<br/>came from")]
+
+    A -- "tool call" --> G
+    P -. "sealed at session start" .-> G
+    G -- "allow" --> T
+    G -- "step up" --> H
+    G -- "deny" --> X
+    H -- "yes, once, for<br/>these arguments" --> T
+    T -- "result" --> S
+    S -. "the next call is judged<br/>against all of this" .-> G
 ```
 
 That loop at the bottom is the whole idea. The gateway does not just check a
@@ -281,7 +289,7 @@ measurement is what that warning is worth.
 ### The rest of it
 
 The suite above is one we wrote, which is the first thing to distrust.
-[docs/EVIDENCE.md](docs/EVIDENCE.md) carries the evidence that is not ours,
+[docs/EVIDENCE.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md) carries the evidence that is not ours,
 what the gate costs, and the limits, in full:
 
 | | |
@@ -294,7 +302,7 @@ what the gate costs, and the limits, in full:
 | **The limit that outranks all of it** | on open-ended work where the next step cannot be known in advance, 21.67 interruptions per task |
 
 Every headline result and the command that reproduces it:
-[benchmarks/results/README.md](benchmarks/results/README.md).
+[benchmarks/results/README.md](https://github.com/clayseal/clayseal-capabilities/blob/main/benchmarks/results/README.md).
 
 ## Where the boundary is
 
@@ -313,7 +321,7 @@ path a call names, not just the one the action carries. It refuses a message
 whose JSON has duplicate keys. And it holds an effectful call until earlier
 results arrive, so it is never asked where a destination came from before it has
 been told. The table in
-[docs/POLICY.md](docs/POLICY.md) lists the differences, and what an in-process
+[docs/POLICY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md) lists the differences, and what an in-process
 integration has to do itself.
 
 Most deployments want the proxy. The agent connects to `clayseal
@@ -324,7 +332,7 @@ the agent does not plan around a tool it will then be refused.
 
 The syscall tier compiles an envelope's egress and path scope into a sandbox
 policy and takes back an unforgeable verdict stream
-([docs/ivisor_integration.md](docs/ivisor_integration.md)). The reference backend
+([docs/ivisor_integration.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/ivisor_integration.md)). The reference backend
 drives iVisor.
 
 **It catches one class nothing above it can.** A DNS tunnel encodes its payload
@@ -332,7 +340,7 @@ into subdomains, and the data leaves through the resolver. No tool is
 involved. There is no tool call, so `authorize()` is never asked, and every
 layer above denies nothing. On the captured trace iVisor denies all four
 queries and the tool-call layers deny none
-([syscall_tier.md](benchmarks/results/syscall_tier.md)).
+([syscall_tier.md](https://github.com/clayseal/clayseal-capabilities/blob/main/benchmarks/results/syscall_tier.md)).
 
 It runs the other way too. Beaconing over an allow-listed channel gives iVisor
 nothing to refuse, because each syscall really is permitted; what is anomalous
@@ -351,7 +359,7 @@ writes the content to a publication-classed object inside the same grant. Both
 actions are authorized and the path scope cannot help, because the agent was
 legitimately given the workspace that holds both. Measured against an oracle
 attacker, the escaped-task set is byte-identical to `allow-all`
-([in_scope_exfiltration.md](benchmarks/results/in_scope_exfiltration.md)). The
+([in_scope_exfiltration.md](https://github.com/clayseal/clayseal-capabilities/blob/main/benchmarks/results/in_scope_exfiltration.md)). The
 confidentiality flow tracker covers part of it as a step-up layer; wide fragment
 splits and unkeyed encodings remain open. Any containment claim for a coding
 agent has to carry this one.
@@ -427,11 +435,11 @@ effectful call whose path cannot be resolved is refused, not allowed
 unchecked, so the failure is loud instead of silent.
 
 `clayseal policy lint` names every tool that is missing either one. Read
-[docs/POLICY.md](docs/POLICY.md) before you write the first policy for a catalog
+[docs/POLICY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md) before you write the first policy for a catalog
 you did not design.
 
 If the person who signs off works in risk and not engineering,
-[docs/CONTROLS.md](docs/CONTROLS.md) says which obligations this produces
+[docs/CONTROLS.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/CONTROLS.md) says which obligations this produces
 evidence for, quoting the framework text where the mapping is exact and staying
 at the function level where it is not. It opens by saying what it is not: a
 library is not a control regime and cannot make anyone compliant with
@@ -556,7 +564,7 @@ injected address is off-domain, so the cheapest floor catches it and the
 provenance layer is never consulted. That is the gateway working in the right
 order, and it is not a demonstration of anything this document claims is
 distinctive, so the example prints which layer fired and
-[examples/README.md](examples/README.md) runs the same session with the domain
+[examples/README.md](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/README.md) runs the same session with the domain
 list removed, where provenance is what answers.
 
 If your policy names a domain and an attacker names an address inside it, the
@@ -578,14 +586,14 @@ refused, and an intent envelope from an unpinned signer is refused. The polarity
 used to be the other way around, which meant every deployment that had not read
 this section accepted all four.
 
-See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for what is signed, who signs
+See [docs/THREAT_MODEL.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/THREAT_MODEL.md) for what is signed, who signs
 it, and what is out of scope.
 
 ## Build from source
 
 ```bash
-git clone https://github.com/pberlizov/clayseal.git
-cd clayseal
+git clone https://github.com/clayseal/clayseal-capabilities.git
+cd clayseal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest python/tests -q
@@ -619,24 +627,24 @@ session = get_identity_provider("oidc").build_session(
 
 ## Documentation
 
-[docs/README.md](docs/README.md) is the index. The ones you are most likely to
+[docs/README.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/README.md) is the index. The ones you are most likely to
 want:
 
-- [Your first ten minutes](docs/START.md) to go from the demo to your own agent
-- [Evidence](docs/EVIDENCE.md) for every measured number and the limit it does not cross
-- [API reference](docs/API.md) for the 57 exported names, tiered by what
+- [Your first ten minutes](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/START.md) to go from the demo to your own agent
+- [Evidence](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md) for every measured number and the limit it does not cross
+- [API reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/API.md) for the 57 exported names, tiered by what
   most integrations actually use
-- [Developer guide](docs/DEV_GUIDE.md) to install it and wire it in
-- [Policy reference](docs/POLICY.md) for what a policy file can say
-- [Threat model](docs/THREAT_MODEL.md) for what it defends against and what it does not
-- [Privacy and data handling](docs/PRIVACY.md) for what it stores and what leaves the process
+- [Developer guide](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/DEV_GUIDE.md) to install it and wire it in
+- [Policy reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md) for what a policy file can say
+- [Threat model](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/THREAT_MODEL.md) for what it defends against and what it does not
+- [Privacy and data handling](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/PRIVACY.md) for what it stores and what leaves the process
 
-For reporting a vulnerability see [SECURITY.md](SECURITY.md); to contribute see
-[CONTRIBUTING.md](CONTRIBUTING.md) and the
-[code of conduct](CODE_OF_CONDUCT.md). Upgrading from `agentauth-capabilities`:
-[docs/MIGRATION.md](docs/MIGRATION.md). Corpora and their licences:
-[THIRD_PARTY.md](THIRD_PARTY.md). Cutting a release:
-[docs/RELEASING.md](docs/RELEASING.md).
+For reporting a vulnerability see [SECURITY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/SECURITY.md); to contribute see
+[CONTRIBUTING.md](https://github.com/clayseal/clayseal-capabilities/blob/main/CONTRIBUTING.md) and the
+[code of conduct](https://github.com/clayseal/clayseal-capabilities/blob/main/CODE_OF_CONDUCT.md). Upgrading from `agentauth-capabilities`:
+[docs/MIGRATION.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/MIGRATION.md). Corpora and their licences:
+[THIRD_PARTY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/THIRD_PARTY.md). Cutting a release:
+[docs/RELEASING.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/RELEASING.md).
 
 ## Naming
 
@@ -647,7 +655,7 @@ Before 0.6 this shipped to design partners on a private feed as
 paths still resolve and emit a `DeprecationWarning`; they are removed in 0.7.
 The aliased module is the same object as the real one, so a plugin registered
 through the old path is visible through the new one. Migration is a search and
-replace: [docs/MIGRATION.md](docs/MIGRATION.md).
+replace: [docs/MIGRATION.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/MIGRATION.md).
 
 Storage keys and wire identifiers were deliberately **not** renamed. The replay
 store still keys commit tokens under `agentauth:commit:`, because a gateway that
@@ -660,4 +668,4 @@ layers remain separate distributions and neither is required here.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/clayseal/clayseal-capabilities/blob/main/LICENSE).

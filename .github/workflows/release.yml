@@ -9,8 +9,8 @@ name: Release
 # holding a long-lived upload token would be the wrong example to set.
 #
 # One-time setup on pypi.org, under the project's Publishing settings:
-#   owner:       pberlizov
-#   repository:  clayseal
+#   owner:       clayseal
+#   repository:  clayseal-capabilities
 #   workflow:    release.yml
 #   environment: pypi
 # See docs/RELEASING.md.

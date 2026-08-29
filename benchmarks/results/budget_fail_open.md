@@ -154,15 +154,23 @@ sells, "bring verified claims from your IdP and build your own gateway":
   `bool` is excluded explicitly, because `True` is an `int` and would otherwise
   book one second and report `ok`.
 
-### One finding referred rather than patched
+### One finding referred, then fixed
 
-`clayseal.core.task_scope_allows_path` raises `TypeError` / `AttributeError` on
-`None`, `0`, `[1]`, `{}` and `True`. It lives in the sibling **clay-seal-core**
-repository, so it is reported here rather than edited from this one. The fix is
-the same shape as the two above: a non-string path is malformed, never
-legitimate, so return `False` rather than raise. `test_gate_totality.py` carries
-it as a `strict=True` xfail, which will flip to a failure the moment core is
-fixed and the stale expectation needs removing.
+`clayseal.core.task_scope_allows_path` raised `TypeError` / `AttributeError` on
+`None`, `0`, `[1]`, `{}` and `True`. When this was written, core was a sibling
+repository nobody could edit from here, so the finding was reported and carried
+as an xfail.
+
+**Core is vendored in this repository now, so the exemption expired and the
+defect was fixed.** A non-string path is malformed and never legitimate, so it
+returns `False` and the gate stays closed. Two of the five inputs needed the
+guard OUTSIDE the `lru_cache`, since the decorator hashes its argument before
+the body runs and an unhashable input never reaches an `isinstance` check.
+`test_task_scope_is_total` asserts it directly.
+
+The same investigation turned up a deny-list bypass through backslash
+separators, found by a differential fuzz against the second path matcher. See
+`python/tests/test_path_matcher_agreement.py`.
 
 ### What the harness got wrong before it got anything right
 

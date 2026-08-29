@@ -1,10 +1,11 @@
 """`clayseal`: read a policy, review it, and enforce it.
 
-Four commands, in the order someone actually uses them.
+In the order someone actually uses them.
 
     clayseal try                           see it work before reading anything
-    clayseal policy show   policy.yaml     what this document authorizes
+    clayseal policy new  > policy.yaml     a starter policy to edit
     clayseal policy lint   policy.yaml     what a reviewer should ask about
+    clayseal policy show   policy.yaml     what this document authorizes
     clayseal proxy --policy policy.yaml -- npx @acme/mcp-server
 
 `lint` exits 1 on an error finding, so it works as a pre-merge gate on the file

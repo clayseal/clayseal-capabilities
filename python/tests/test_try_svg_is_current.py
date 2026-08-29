@@ -85,11 +85,15 @@ def test_it_is_small_enough_to_put_in_a_readme() -> None:
 
 def test_the_readme_actually_shows_it() -> None:
     readme = (ROOT / "README.md").read_text()
-    assert "docs/assets/clayseal-try.svg" in readme
+    tag = re.search(r'<img src="([^"]*clayseal-try\.svg)"[^>]*>', readme)
+    assert tag, "the README no longer shows the picture"
+    # Absolute, because PyPI renders this same file for the project page and
+    # cannot resolve a relative source. See
+    # test_nothing_points_into_the_checkout.py for the rest of that class.
+    assert tag.group(1).startswith("https://"), (
+        f"{tag.group(1)} renders on GitHub and breaks on PyPI")
     # An image carrying the whole first impression needs alt text, and a
     # generic one is the same as none.
-    tag = re.search(r'<img src="docs/assets/clayseal-try\.svg"[^>]*>', readme)
-    assert tag, "the picture is referenced without an img tag to check"
     alt = re.search(r'alt="([^"]*)"', tag.group(0))
     assert alt and len(alt.group(1)) > 40, "the picture needs real alt text"
 
