@@ -254,6 +254,30 @@ class Policy:
                 "goal.summary is what the plan, the provenance roots and the "
                 "content checks are all derived from. An empty one disables them.",
             ))
+        else:
+            # A starter policy that reaches production unedited is a grant
+            # nobody wrote. `clayseal policy new` marks every decision it cannot
+            # make for you, and this is what stops those markers surviving: an
+            # error, so `lint` exits non-zero and a merge gate catches it.
+            unedited = sorted({
+                t for t in (self.allowed_tools or ()) if t.startswith("your_")
+            })
+            if "TODO" in self.goal.summary:
+                out.append(Finding(
+                    "error", "unedited-template",
+                    "goal.summary still says TODO. It is the sentence the sealed "
+                    "goal, the content checks and destination provenance are all "
+                    "derived from, so a placeholder here weakens every one of "
+                    "them.",
+                ))
+            if unedited:
+                out.append(Finding(
+                    "error", "unedited-template",
+                    f"tools.allow still names the template's placeholders "
+                    f"({', '.join(unedited)}). Replace them with the tools this "
+                    f"agent actually reaches; a name nothing serves grants "
+                    f"nothing and hides what was meant to be granted.",
+                ))
 
         expires = raw.get("expires_at")
         if not expires:

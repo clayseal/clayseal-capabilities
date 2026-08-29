@@ -89,25 +89,30 @@ that decision rather than informing it.
 ## OWASP Top 10 for Agentic Applications (2026)
 
 The list a security reviewer is most likely to arrive holding, and the one whose
-categories map closest to what this actually does. Stated per category, with the
-ones it does not address kept in the table rather than dropped from it.
+categories map closest to what this actually does. The ones it does not address
+stay in the table.
 
 | | category | what this contributes |
 | --- | --- | --- |
 | **ASI01** | Agent Goal Hijack | **Direct.** The goal is sealed at session start and nothing the agent reads afterwards widens it. A destination that first appears in a document the agent read is not the same as one the goal named, and the provenance layer keeps them apart. Measured on AgentDojo `important_instructions`: 1 attack success in 216 runs. |
-| **ASI02** | Tool Misuse & Exploitation | **Direct.** The grant enumerates tools, the proxy withholds the rest from the catalogue, and budgets hold the running total that catches a chain of individually permitted calls. This is the category the 132-scenario suite is about. |
-| **ASI03** | Identity & Privilege Abuse | **Partial.** Commit tokens bind a decision to the exact arguments it was made about, the replay store spends each one once, and the principal ledger binds an aggregate limit to the mandate rather than the session. It consumes verified claims from your IdP and issues none: authentication is out of scope. |
-| **ASI04** | Agentic Supply Chain | **Partial.** `policy init` treats a server's own tool catalogue as a claim rather than an authority: an effect may be raised and never lowered, and a server calling its effectful tool read-only is reported. It does not verify the provenance of the server, the model, or a dependency. |
+| **ASI02** | Tool Misuse & Exploitation | **Direct.** The grant enumerates the tools, the proxy withholds the rest from the catalogue so the agent is never told they exist, and the path scope and egress list bound what a granted tool may touch. Where a tool can spend, `clayseal policy lint` refuses to let it debit no budget. |
+| **ASI03** | Identity & Privilege Abuse | **Partial.** Commit tokens bind a decision to the exact arguments it was made about, the replay store spends each one once, and the principal ledger binds an aggregate limit to the mandate and not to the session. It consumes verified claims from your IdP and issues none: authentication is out of scope. |
+| **ASI04** | Agentic Supply Chain | **Partial.** `policy init` treats a server's own tool catalogue as a claim and never as an authority: an effect may be raised and never lowered, and a server calling its effectful tool read-only is reported. It does not verify the provenance of the server, the model, or a dependency. |
 | **ASI05** | Unexpected Code Execution | **Partial, and only at the syscall tier.** The tool-call layers see no call for a DNS tunnel to make, so they deny nothing; the sandbox backend compiles the same envelope into a syscall policy and denies all four queries on the captured trace. The reference backend is macOS only. |
-| **ASI06** | Memory & Context Poisoning | **Not addressed.** Poisoned context is an input to the agent, and this layer reads the agent's actions rather than its memory. It bounds what a poisoned agent can do; it does not detect the poisoning. |
-| **ASI07** | Insecure Inter-Agent Communication | **Not addressed here.** Delegation carries a scope that can only narrow, which bounds what a sub-agent inherits. The transport between agents is a separate distribution's problem. |
-| **ASI08** | Cascading Failures | **Not addressed.** A per-session authority bound says nothing about propagation across an ecosystem of agents. |
-| **ASI09** | Human-Agent Trust Exploitation | **Not addressed, and worth naming as a cost.** Step-up puts a person in the loop and a person approving without reading is the failure mode this category describes. The gateway can make the intervention point exist and cannot make anyone competent to use it. |
-| **ASI10** | Rogue Agents | **Weakly.** The behavioural layer watches the shape of a session against its goal, and it is advisory rather than blocking. On the corpora where harm is defined by the content of an authorized action rather than by a binding the gateway holds, the shipped detector is at chance. Do not buy this layer. |
+| **ASI06** | Memory & Context Poisoning | **Not addressed.** Poisoned context is an input to the agent, and this layer reads the agent's actions and never its memory. It bounds what a poisoned agent can do; it does not detect the poisoning. |
+| **ASI07** | Insecure Inter-Agent Communication | **Partial, on the authority and not on the channel.** A delegation token is signed by the parent, carries an expiry, and is verified to a trusted root, so a forged or expired grant between agents is refused. Attenuation is checked at every hop, so a chain that narrows and then widens is caught where checking only the endpoints accepts it. Signature verification and trust verification are deliberately separate calls, since code that checks the first and believes it has checked the second is the common mistake. Encrypting the transport itself is not this library's job. |
+| **ASI08** | Cascading Failures | **Partial, in the dimension we measured.** Authority propagates two ways here and both are bounded. Across sessions, a session-keyed ledger is reset by opening a second conversation, and containment fails at four fragments; the principal ledger holds the same $10,000 ceiling against 64 fragments ([structuring.md](../benchmarks/results/structuring.md)). Across agents, a delegation chain is verified whole, so one that narrows and then widens is caught where checking the endpoints would pass it. One agent's fault propagating into other agents' behaviour is not addressed. |
+| **ASI09** | Human-Agent Trust Exploitation | **Partial, by bounding what a fooled approval can buy.** An approval is one-shot, keyed to the exact tool and argument hash, expiring, and it waives only the rule codes the person was actually shown. Approving a destination does not clear a budget ceiling nobody saw, the same tool with different arguments is a new question, and a rule with no id cannot be waived at all. So a person talked into one yes cannot be leveraged into a session. The residue is real: a person who approves without reading has still approved that action, and no gateway fixes that. |
+| **ASI10** | Rogue Agents | **Direct, and the most measured category here.** This is what the 132-scenario suite is: the agent is not deceived and not compromised, it is being helpful, and the composite of its authorized calls breaks the policy. Undefended violation is 100 of 100 on `payout-splitting` where the same model takes 0 of 18 from stock injections. Contained and benign twin completed: **39.4%**, and **83.3%** where the rule names a countable limit. Longitudinally, a sealed approval baseline alarms on 82.1% of actions once a slow-drift attacker reaches its objective, against 0.5% for a rolling baseline that the attacker has quietly retrained ([drift.md](../benchmarks/results/drift.md)), and it fires on 7% of unchanged workloads with 67% power at 25% contamination ([behavior_drift.md](../benchmarks/results/behavior_drift.md)). The one part to distrust is the per-session trajectory scorer, which is at chance where harm is defined by content. |
 
-Read the column, not the count. Four rows say "not addressed", and the two
-categories this is strongest on are the two that are about **authority**, which
-is what an authorization layer is for.
+Read the column, not the count. One row says "not addressed", ASI06, and the categories
+this is strongest on are the ones about **authority**: who may do what, how much
+of it, and whether the whole run still adds up to what was approved.
+
+ASI10 is the one to correct a first impression about. A rogue agent sounds like a
+detection problem, and most of the answer here is not detection. An agent that
+drifts is stopped by the ceiling it crosses and the goal it leaves, both of which
+are arithmetic, and the drift monitor is what tells you it has been happening.
 
 ## SOC 2
 

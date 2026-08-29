@@ -48,6 +48,25 @@ def _cmd_lint(args: argparse.Namespace) -> int:
     return 1 if (errors or (warnings and args.warnings_as_errors)) else 0
 
 
+def _cmd_new(args: argparse.Namespace) -> int:
+    from clayseal.capabilities.starter import starter_policy
+
+    name = args.out or "policy.yaml"
+    text = starter_policy(goal_id=args.goal_id, days=args.days, name=name)
+    if args.out:
+        path = Path(args.out)
+        if path.exists() and not args.force:
+            print(f"{path} exists; pass --force to overwrite", file=sys.stderr)
+            return 1
+        path.write_text(text)
+        print(f"wrote {path}", file=sys.stderr)
+        print(f"now edit the TODOs, then: clayseal policy lint {path}",
+              file=sys.stderr)
+    else:
+        print(text, end="")
+    return 0
+
+
 def _cmd_init(args: argparse.Namespace) -> int:
     """Scaffold a policy from a live MCP server's own tool catalog.
 
@@ -359,6 +378,27 @@ def build_parser() -> argparse.ArgumentParser:
     draft.add_argument("--tools", default=None,
                        help="comma-separated tool names the agent may reach")
     draft.set_defaults(func=_cmd_draft)
+
+    new_cmd = policy_sub.add_parser(
+        "new",
+        help="write a commented starter policy you edit",
+        description=(
+            "Writes a policy with every section present and every line "
+            "explained. It is the answer to 'what do I do after the demo' when "
+            "you have no MCP server for `policy init` to read and no written "
+            "policy for `policy draft` to translate. It lints with errors until "
+            "you replace the TODOs, so an unedited file cannot reach production "
+            "quietly."
+        ),
+    )
+    new_cmd.add_argument("--out", default=None,
+                         help="write here instead of stdout")
+    new_cmd.add_argument("--goal-id", default="TODO-name-this-run")
+    new_cmd.add_argument("--days", type=int, default=30,
+                         help="how long the grant lives (default 30)")
+    new_cmd.add_argument("--force", action="store_true",
+                         help="overwrite an existing file")
+    new_cmd.set_defaults(func=_cmd_new)
 
     init = policy_sub.add_parser(
         "init",
