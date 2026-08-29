@@ -270,7 +270,14 @@ def _what_now(screen: Screen) -> None:
     screen.say(f"  {screen.paint('clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server', CLAY)}")
     screen.say(f"      {screen.paint('put the gateway in front of it for real', DIM)}")
     screen.say()
-    screen.say(screen.paint("  Where it works and where it does not: docs/EVIDENCE.md", DIM))
+    # A repo-relative path, printed by a command someone installed from PyPI,
+    # names a file they do not have. It is the same mistake the README made
+    # with `examples/refund.yaml`, and the installed package is the one place
+    # it cannot be caught by running things from the checkout.
+    screen.say(screen.paint(
+        "  Where it works and where it does not:", DIM))
+    screen.say(screen.paint(
+        "  https://github.com/pberlizov/clayseal/blob/main/docs/EVIDENCE.md", DIM))
     screen.say()
 
 
