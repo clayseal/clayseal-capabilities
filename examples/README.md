@@ -12,9 +12,9 @@ python examples/01_gateway.py
 | [02_the_proxy.py](02_the_proxy.py) | The same policy in front of an MCP server instead of inside the agent. Eleven $900 refunds against a $1,000 ceiling: the second is refused, and the server's own ledger proves it never ran. |
 | [03_commit_token.py](03_commit_token.py) | Minting and verifying a commit token, which binds a decision to the exact arguments it was made about. |
 | [04_cross_provider_commit.py](04_cross_provider_commit.py) | The same flow against each of the five built-in identity providers, to show the seam is real. |
-| [05_from_a_document.py](05_from_a_document.py) | A written delegation-of-authority document and a tool catalogue becoming an enforced policy, including the rule this layer cannot hold: segregation of duties is about WHO acts, so it stays a TODO for a reviewer rather than going quiet. |
+| [05_from_a_document.py](05_from_a_document.py) | A written delegation-of-authority document and a tool catalogue becoming an enforced policy, including the rule this layer cannot hold: segregation of duties is about WHO acts, so it stays a TODO for a reviewer instead of going quiet. |
 
-Two support files rather than examples: [refund.yaml](refund.yaml) is the policy
+Two support files, not examples: [refund.yaml](refund.yaml) is the policy
 `02` enforces, and [refund_server.py](refund_server.py) is the MCP server it runs.
 [policy.yaml](policy.yaml) is the one `clayseal policy lint` is demonstrated on.
 
@@ -50,7 +50,7 @@ HOLD send_email     step_up  {'to': 'collector-metrics.example', ...}
        floor: egress to 'collector-metrics.example' not on allow-list
 ```
 
-Both sends are now held, and that is the honest shape of the layer rather than a
+Both sends are now held. That is the honest shape of the layer, and not a
 flattering one. **Grounding earns supervision, not autonomy.** A destination the
 sealed goal named is admissible evidence and not an authorization, because an
 injected instruction can sit in a structured field of the very resource the goal
@@ -64,8 +64,7 @@ the injection names `collector-metrics.example`, which is the easy case. Change
 the injection to `mirror-archive@acme-internal.com` and the domain grant covers
 it, so the floor allows the send.
 
-Binding the mailbox rather than the domain is what closes that, and it is a
-declaration you have to write:
+Binding the mailbox closes it, and that is a declaration you have to write:
 
 ```yaml
 egress:

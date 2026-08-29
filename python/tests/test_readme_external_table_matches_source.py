@@ -140,7 +140,11 @@ def test_the_saturated_corpora_are_named_and_excluded() -> None:
     whole-file substring check would forbid a correct use of them.
     """
     text = _front_door_text()
-    assert "excluded from that table rather than counted" in text
+    # The disclosure has to be there; its exact wording does not. Pinning the
+    # sentence made a copy-edit look like a removed disclosure, which is a test
+    # that fires on prose and stays quiet on the thing it guards.
+    assert ("2,040" in text and "1,598" in text), (
+        "the saturated corpora must be disclosed with their sizes")
     for name in ("ASB", "InjecAgent"):
         assert name in text, f"{name} must be disclosed, not silently dropped"
     scored = _rows(text, "harm is defined by", CORPORA + ("asb", "injecagent"))

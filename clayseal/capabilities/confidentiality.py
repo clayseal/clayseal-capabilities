@@ -617,6 +617,40 @@ def _plausible(raw: bytes) -> str | None:
     return text if printable / len(text) >= 0.8 else None
 
 
+def decode_budget_exhausted(args: Any) -> str | None:
+    """Were there more opaque tokens than the decoder is allowed to open?
+
+    `_decode_layer` opens the first `_MAX_DECODE_TOKENS` opaque runs and stops,
+    which bounds the work an attacker-supplied argument can cost. The bug was
+    the conclusion drawn afterwards: with nothing found in the tokens it opened,
+    the tracker returned "carries no value from a sensitive read", a positive
+    claim of absence that the bound had made unfounded.
+
+    Eight harmless tokens in front of a base64'd secret were enough:
+
+        base64(secret)                       -> refused
+        8 x base64("harmless") + base64(secret) -> ALLOWED
+
+    Only consulted when the session has actually read something sensitive, so a
+    session holding no secrets pays nothing. Measured across seven corpora,
+    1.01% of benign events (108 of 10,716) carry more than the budget, and the
+    flow tracker escalates rather than denies, so the cost is a step-up on a
+    session that is already handling secrets.
+    """
+    try:
+        blob = " ".join(ParameterProvenance._tokens(args))
+    except (TypeError, ValueError, AttributeError, RecursionError):
+        # Falling back to repr keeps the guard conservative: an argument shape
+        # the tokenizer cannot walk still gets counted rather than waved past,
+        # which is the whole point of this function.
+        blob = str(args)
+    extra = len(_OPAQUE.findall(blob)) - _MAX_DECODE_TOKENS
+    if extra > 0:
+        return (f"{extra} opaque token(s) beyond the {_MAX_DECODE_TOKENS} the "
+                f"decoder opens")
+    return None
+
+
 def _decode_layer(blob: str) -> list[str]:
     """One round of every mechanical decoding, tried and discarded on failure.
 
@@ -1043,6 +1077,18 @@ class FlowTracker:
             carried = self._carried_from_blocks([*blocks, _join(variants)])
 
         if not carried:
+            # An argument carrying more opaque tokens than the decoder opens
+            # cannot support "carries no value": the value may sit in one it
+            # never read. Guarded on having actually read something sensitive,
+            # so a session holding no secrets is untouched, and this layer
+            # escalates rather than denies, so the cost lands as a step-up on a
+            # session that is already handling them.
+            if self.sensitive_origins:
+                undecidable = decode_budget_exhausted(args)
+                if undecidable is not None:
+                    return FlowVerdict(
+                        False,
+                        f"cannot rule out a carried value: {undecidable}")
             return self._record_and_allow(
                 sink_key, candidate, variants, declassified)
 
