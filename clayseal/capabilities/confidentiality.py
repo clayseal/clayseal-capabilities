@@ -805,14 +805,31 @@ def _variants(blob: str) -> tuple[str, ...]:
     decoded = _decode_layer(blob)
     # One further round, which is what catches double base64 and base64-of-hex.
     decoded += [d for c in decoded[:4] for d in _decode_layer(c)]
+    # The three base forms are always generated. They are a fixed set of three,
+    # each costing one pass over a blob the caller is already holding, and they
+    # are what catches the cheap obfuscations.
+    #
+    # Sharing one character budget with the decoded variants made a long write
+    # disable them entirely: the raw blob's own compact form spent the whole
+    # allowance, the loop broke, and `blob[::-1]` and `_rot13(blob)` were never
+    # produced. 8 KB of padding in front of a secret was enough to defeat
+    # reversal, rot13 and base64 detection at once, and the tracker then
+    # reported "carries no value from a sensitive read".
+    #
+    # The budget belongs on the DECODED variants, which is where an attacker
+    # controls the count: every opaque token in the write can add one.
+    for form in (blob, blob[::-1], _rot13(blob)):
+        compact = _compact_fold(form)
+        if compact and compact not in seen:
+            seen[compact] = None
     budget = _MAX_VARIANT_CHARS
-    for form in [blob, blob[::-1], _rot13(blob), *decoded]:
+    for form in decoded:
+        if len(seen) >= _MAX_VARIANTS or budget <= 0:
+            break
         compact = _compact_fold(form)
         if compact and compact not in seen:
             seen[compact] = None
             budget -= len(compact)
-        if len(seen) >= _MAX_VARIANTS or budget <= 0:
-            break
     return tuple(seen)
 
 
