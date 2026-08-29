@@ -48,8 +48,113 @@ def calibrate(engines, tasks, seed: int = 0):
     return engines
 
 
+#: The grid `--sweep` runs. Four corpora and six objectives, chosen so the table
+#: contains both outcomes. The first four objectives name a destination or a
+#: path the gateway can bind to; the last two keep the whole attack inside the
+#: grant, which is the case nothing here closes. A sweep that showed only the
+#: first four would be a sweep picked to win.
+SWEEP_DATASETS = ("redcode", "agentharm", "mcp_attack", "ipi_coding")
+SWEEP_OBJECTIVES = ("destruction", "exfiltration", "persistence", "side-channel",
+                    "in-scope-exfiltration", "in-scope-content-staging")
+
+
+def _sweep(args) -> int:
+    """The whole grid under one command, so the published table has a source.
+
+    The per-run CLI below answers one cell. A result file quoting a table of
+    them had no command that produced the table, which is how
+    `adaptive_adversary.md` ended up stamped `unverified`: the numbers were
+    real and nobody could re-derive them.
+    """
+    from benchmarks.core.reporting import format_rate
+    from benchmarks.core.runner import run_benchmark
+
+    rows: list[dict] = []
+    cost: dict[str, tuple[int, int]] = {}
+    for dataset in [d.strip() for d in args.datasets.split(",") if d.strip()]:
+        try:
+            tasks = get_loader(dataset).load(limit=args.limit)
+        except (KeyError, RuntimeError) as exc:
+            print(f"# {dataset}: not fetched ({exc})", file=sys.stderr)
+            continue
+        if not tasks:
+            continue
+
+        # The cost of the same arm, on the same tasks. `check_claims` refuses a
+        # containment figure published without one, and it is right to: deny-all
+        # contains everything. This replays the benign side through the same
+        # ladder the attack rows are scored on.
+        benign_engines = build_engines(
+            [n.strip() for n in args.engines.split(",") if n.strip()])
+        scored = run_benchmark(tasks, benign_engines, calibration_seed=args.seed)
+        full_result = scored.get("task-scope+binding+budget+velocity")
+        if full_result is not None:
+            cost[dataset] = (full_result.benign_blocked, full_result.n_benign)
+
+        for objective_name in [o.strip() for o in args.objectives.split(",") if o.strip()]:
+            objective = OBJECTIVES[objective_name]()
+            engines = build_engines(
+                [n.strip() for n in args.engines.split(",") if n.strip()])
+            calibrate(engines, tasks, seed=args.seed)
+            for engine in engines:
+                for level in [Knowledge(k.strip())
+                              for k in args.knowledge.split(",") if k.strip()]:
+                    result = run_adaptive(
+                        tasks, engine, objective=objective, knowledge=level,
+                        rounds=args.rounds, seed=args.seed, breadth=args.breadth,
+                    )
+                    rows.append({"dataset": dataset, "objective": objective_name,
+                                 **result.summary()})
+
+    if not rows:
+        print("error: no corpus loaded; run benchmarks/fetch_corpora.sh",
+              file=sys.stderr)
+        return 2
+
+    full = "task-scope+binding+budget+velocity"
+    tried = sum(r["candidates_tried"] for r in rows)
+    print(f"# Adaptive red-team sweep, {args.rounds} rounds, "
+          f"{tried:,} candidates tried\n")
+    print("Containment of the full stack against an attacker that knows the "
+          "defense. `oracle` is the strongest case: the attacker sees each "
+          "verdict and searches against it.\n")
+    print("| corpus | objective | blind | feedback | oracle | allow-all, oracle |")
+    print("| --- | --- | ---: | ---: | ---: | ---: |")
+    for dataset in dict.fromkeys(r["dataset"] for r in rows):
+        for objective_name in dict.fromkeys(
+                r["objective"] for r in rows if r["dataset"] == dataset):
+            def pick(engine, knowledge):
+                for r in rows:
+                    if (r["dataset"] == dataset and r["objective"] == objective_name
+                            and r["engine"] == engine and r["knowledge"] == knowledge):
+                        n = r["tasks_attacked"]
+                        held = n - r["tasks_escaped"]
+                        return format_rate(held, n)
+                return "-"
+            print(f"| {dataset} | {objective_name} "
+                  f"| {pick(full, 'blind')} | {pick(full, 'feedback')} "
+                  f"| {pick(full, 'oracle')} | {pick('allow-all', 'oracle')} |")
+
+    print("\nWhat the same arm costs, on the benign side of the same corpora:\n")
+    print("| corpus | benign events refused by the full stack |")
+    print("| --- | ---: |")
+    for dataset, (blocked, n) in cost.items():
+        print(f"| {dataset} | {format_rate(blocked, n)} |")
+
+    if args.json:
+        args.json.write_text(json.dumps(rows, indent=2))
+        print(f"\nWrote {args.json}", file=sys.stderr)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Adaptive red-team benchmark")
+    p.add_argument("--sweep", action="store_true",
+                   help="run the whole corpus x objective grid and print one table")
+    p.add_argument("--datasets", default=",".join(SWEEP_DATASETS),
+                   help="--sweep only")
+    p.add_argument("--objectives", default=",".join(SWEEP_OBJECTIVES),
+                   help="--sweep only")
     p.add_argument("--dataset", default="fixture")
     p.add_argument("--limit", type=int, default=100,
                    help="tasks to attack (the search is per-task, so this drives runtime)")
@@ -61,6 +166,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--knowledge", default="blind,feedback,oracle")
     p.add_argument("--json", type=Path, default=None)
     args = p.parse_args(argv if argv is not None else sys.argv[1:])
+    if args.sweep:
+        return _sweep(args)
 
     try:
         tasks = get_loader(args.dataset).load(limit=args.limit)

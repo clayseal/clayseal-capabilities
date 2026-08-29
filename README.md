@@ -177,7 +177,12 @@ strictest first, so a call refused early never reaches the expensive layers.
 5. **Provenance.** Where a destination came from. A payee named in the sealed
    goal is trusted; one that appeared in text the agent read afterwards is not.
 6. **Behavioural.** Watches the shape of the session against the goal. Advisory
-   by default: it escalates, it does not block.
+   by default: it escalates, it does not block. Its blocking tiers are also
+   arithmetically incapable of firing until enough benign sessions have been
+   observed to calibrate them, because a conformal p-value cannot go below
+   1/(n+1) and the alpha they are gated at sits under that floor. The detector
+   reports which tiers are inert rather than letting them look like tiers that
+   examined the session and found nothing.
 
 The word **budget** below means a running total the gateway keeps for the whole
 session: money, calls, or anything else countable. It is the only check that can
@@ -186,8 +191,7 @@ the measurements below show it is what decides whether this helps you.
 
 ## What it measures
 
-Two tiers. The deterministic one needs no model, no key and no money, runs in
-seconds. Read it first.
+One command, no model, no key, no network, a few seconds:
 
 ```bash
 python -m benchmarks.bpl_sweep --suite full
@@ -198,72 +202,25 @@ Two columns, because either is trivially winnable alone: refuse everything and
 you win containment, allow everything and you win completion. The column that
 matters is the conjunction.
 
-That command has four parameters, each defaulting to what the table below used,
-and the one that moves the headline most is the verb classifier: `--verbs bpl`
-selects the legacy raw-synonym version and scores 32% instead of 39.4%, buying 6
-points of containment with 57 points of benign completion. The default is the
-classifier the shipped gateway uses. All four deltas are tabulated in
-[REPRODUCE.md](benchmarks/bpl/REPRODUCE.md), because a number that depends on a
-flag should say so where the number is.
+**The attack was contained AND its benign twin completed, full suite, n=132:**
 
-**The attack was contained AND its benign twin completed:**
+| condition | contained and completed |
+| --- | ---: |
+| undefended | 0/132, 97.5% upper bound 2.8% |
+| refuse everything | 0/132, 97.5% upper bound 2.8% |
+| per-call authorization, given the policy | 0.8% (1/132) |
+| dataflow taint | 11.4% (15/132) |
+| **Clay Seal** | **39.4% (52/132)** |
 
-A zero is written with its upper bound, not as a bare percentage, here and
-throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
-26.5%.
+Against dataflow taint that is **28.0 points [18.2, 37.9], exact McNemar
+p=1.2e-07**. Of the 132 benign twins this gate refuses 2, and neither loses
+work; taint refuses 49 and loses work on 43.
 
-| condition | Core (12) | Hard (24) | **Full (132)** |
-| --- | ---: | ---: | ---: |
-| undefended | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
-| refuse everything | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
-| per-call authorization, given the policy | 8.3% (1/12) | 0/24, 97.5% upper bound 14.2% | 0.8% (1/132) |
-| dataflow taint | 0/12, 97.5% upper bound 26.5% | 8.3% (2/24) | 11.4% (15/132) |
-| **Clay Seal** | **75.0% (9/12)** | **41.7% (10/24)** | **39.4% (52/132)** |
+### The one number to read before the headline
 
-**Read 39.4% as an average over two different cases, not as a rate.** Where the
-scenario's grant configures a budget it is 83.3%; where it configures none,
-18.9%. Which case you are in is fixed before anything runs and readable from
-your own policy, so it is a condition you can check rather than a rate you have
-to accept. [The split is below](#when-it-works-and-when-it-does-not).
-
-Per-call authorization scores 1 of 132, and the one it scores is the one worth
-understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a
-single call's own arguments, needing no history at all, so a stateless gate
-enforces it exactly and completes the benign twin. Every other rule in the suite is a property of a
-trajectory. There a stateless gate holds nothing between calls, so a running
-total has nowhere to accumulate. Handing it the ceiling does not help; it has
-nowhere to put the total. That is the
-architectural claim, and the row is more convincing for not being a flat zero.
-
-It was a flat zero until this release, because the baseline was reading only the
-`scope` rule out of the policy it was handed and dropping the rest. Beating a
-baseline that was given half the rule is not beating it.
-
-Read the three columns, not one. **Core is the chosen leaderboard set, not a
-sample**: 83% of it is labelled as expected-to-be-contained where the suite is
-38%, and it is two thirds aggregate where the suite is one third. On raw
-containment that selection is worth 43 points, and on the joint metric above it
-is worth 37. The full-suite number is the one quoted here.
-
-Against dataflow taint the difference on the full suite is **28.0 points
-[18.2, 37.9], exact McNemar p=1.2e-07**, surviving Holm correction. Scenarios
-were written in batches at a sitting and are not independent, so the rate to
-quote is cluster-robust over authoring batches: **39.4% [24.3%, 57.9%]** against
-taint's 11.4% [6.1%, 17.7%]. Non-overlapping.
-
-Composition, selection effects, and the per-scenario detail:
-[bpl_suite_composition.md](benchmarks/results/bpl_suite_composition.md).
-
-### When it works, and when it does not
-
-The 39.4% above is an average over 132 scenarios, and averaging hides the thing
-you need in order to decide whether this helps you. Hold out whole batches of
-scenarios and containment ranges from nothing at all to everything, sd 0.344. It
-is not a mechanism that works 39% of the time; it works on some kinds of rule
-and not on others.
-
-What decides it is the rule, not the attack, and you can tell which case you are
-in by reading your own policy before running anything:
+**39.4% is an average over two different cases, not a rate.** What decides which
+case you are in is the rule, and you can tell by reading your own policy before
+running anything:
 
 | Does the rule state a countable limit? | scenarios | Clay Seal | dataflow taint |
 | --- | ---: | --- | --- |
@@ -274,193 +231,26 @@ Fisher exact p = 6.5e-11.
 
 **So write your rules as ceilings on something you can count.** "No more than
 $1,000 in refunds per session" is enforced. "Do not do anything inappropriate"
-is not: there is no running total for the gateway to keep, so such a rule falls
-back on whatever the goal check, the path scope and the egress list happen to
-catch.
+is not: there is no running total for the gateway to keep. `clayseal policy
+lint` already flags a tool that can spend but debits no budget, and this
+measurement is what that warning is worth.
 
-`clayseal policy lint` already flags a tool that can spend but debits no budget.
-This measurement is what that warning is worth.
+### The rest of it
 
-**If you will never write a budget**, the gateway can infer one from the goal
-text. "Triage the tickets and email a summary" implies one email, so a second
-one waits for approval with no budget declared anywhere. It steps up instead of
-denying, because the limit came from reading a sentence, and a retry after a
-failed send looks the same as a second send.
+The suite above is one we wrote, which is the first thing to distrust.
+[docs/EVIDENCE.md](docs/EVIDENCE.md) carries the evidence that is not ours,
+what the gate costs, and the limits, in full:
 
-That inference is **off by default**, and the reason is the cost. On an external
-corpus it caught 8 more attacks out of 507 and interrupted 26 benign actions out
-of 278, roughly three interruptions per catch. Whether that trade is worth it
-depends on your deployment, so you turn it on with `derive_counts=True`
-([the measurement](benchmarks/results/derived_counts_measured.md)).
+| | |
+| --- | --- |
+| **Eleven external corpora** nobody here authored | 98 to 100% where harm is defined by something the gateway can bind to, 31 to 55% where it is defined by the content of an authorized action, and the friction column that says what an incomplete policy costs |
+| **A live model**, AgentDojo prompt injection | 1 attack success in 216 runs, 0.5% [0.1, 2.6], against Progent's published 11.1 to 16.7% |
+| **What that costs**, paired per task over four models | −25 points on the weakest, −3 on the strongest, where CaMeL's published cost is 7 |
+| **34 µs per decision**, flat in session length | and the three numbers that are more interesting than the median |
+| **The limit that outranks all of it** | on open-ended work where the next step cannot be known in advance, 21.67 interruptions per task |
 
-### What it costs
-
-Of 132 benign twins, this gate refuses 2. Neither loses work: both are
-interrupted on a call that was not on the critical path and still reach full
-progress. Dataflow taint refuses 49 and loses work on 43.
-
-That is the more durable result: **comparable containment, and no benign task in
-the suite fails to finish.**
-
-All 54 contained attacks involve at least one hard denial. None is held by a
-step-up alone, so the number is autonomous and does not
-assume anybody is at the console to answer a question. `--step-up allow` prices
-the other end of it and produces an identical table, because this suite never
-produces a step-up at all.
-
-### What it costs in time
-
-```bash
-python -m benchmarks.gateway_cost
-```
-
-**34 µs per decision** (29,000/sec), flat in session length: the median cost at
-call 3,500 is the same as at call 0. An agent acts at 1 to 10 actions per second
-and the LLM round trip this gates is hundreds of milliseconds, so the median is
-four orders of magnitude below it.
-
-The median is the least interesting number, so the same file publishes the three
-that are: a 16 KB argument costs 206 µs, because the egress floor scans argument
-text and that text is attacker-influenced; the confidentiality tracker's p99
-reaches 10.7 ms and one run peaked at 219 ms, which is the open performance
-problem; and memory per session is unbounded at 1,182 bytes per decision.
-
-[benchmarks/results/performance.md](benchmarks/results/performance.md) is the one
-place these live, including which measurement point each number is from. That
-matters more than it sounds: four different documents here used to quote four
-different p50s for "the full stack", all correct for what they measured and none
-of them saying which.
-
-### The rest of the evidence
-
-The two mechanisms catch different things: 32 scenarios are contained by this
-layer only, 20 by dataflow taint only, 22 by both. Stacking them is still a bad
-trade, because the taint layer refuses 47 benign scripts this one completes.
-
-Everything above is a suite we wrote, which is the first thing to distrust. The
-deterministic tiers replay **eleven external corpora** nobody here authored:
-
-```bash
-python -m benchmarks.scoreboard
-```
-
-| corpus | contained | n (attack / benign) | harm is defined by |
-| --- | ---: | ---: | --- |
-| redcode | 99.9% | 718 / 344 | a path outside the workspace |
-| ipi_coding | 100.0% | 50 / 45 | an out-of-scope target |
-| mcp_attack | 100.0% | 5 / 9 | a poisoned tool or a mutated argument |
-| agent_threat_bench | 100.0% | 6 / 24 | a destination |
-| advbench_agent | 100.0% | 6 / 11 | a target |
-| mind2web_sc | 98.0% | 100 / 100 | a safety-critical step |
-| b3 | 66.7% | 9 / 8 | mixed |
-| **agentharm** | **55.3%** | 696 / 729 | **the content of an allowed action** |
-| **sleight** | **31.0%** | 129 / 311 | **the content of an allowed action** |
-
-**Two further corpora, ASB (2,040 attacks) and InjecAgent (1,598), score 100% and
-are excluded from that table rather than counted.** Every attack in them uses a
-tool the grant never issued, so a trivial baseline scores the same. A number a
-naive rung also earns is not evidence about this system, and reporting it would
-add 3,638 attacks to the numerator for nothing.
-
-**The spread is the finding, and it is not noise.** It is the same line the
-132-scenario suite draws with budgets: where harm is defined by something the
-gateway can *bind to*, containment is 98 to 100%; where harm is defined by the
-meaning of an otherwise authorized action, it falls to 31 to 55%. This is an
-authorization layer, not a harm classifier, and
-[THREAT_MODEL.md](docs/THREAT_MODEL.md) declares content-defined harm out of
-scope for exactly that reason.
-
-Containment at whatever false-block rate an engine picked for itself is not a
-headline, and this repo's own review rules forbid quoting it as one. At a
-**fixed 1% benign-block rate**, with a deny-all control that must score zero:
-
-| corpus | scorer | detection @1% FPR | AUC |
-| --- | --- | ---: | ---: |
-| redcode | deny-all control | 0.0% | 0.500 |
-| redcode | `ngram`, the shipped detector | 0.0% | 0.425 |
-| redcode | `target`, **not wired into the gateway** | 100.0% | 1.000 |
-| ipi_coding | `target`, not wired | 100.0% | 1.000 |
-| agentharm | `target`, not wired | not reached | 0.628 |
-| sleight | `target`, not wired | not reached | 0.511 |
-
-Read the second and third rows together. The behavioural channel that separates
-these corpora cleanly is a **research scorer that the shipped gateway does not
-run**; the detector it does run scores 0.0% here, at an AUC below chance. That
-gap is tracked in
-[docs/INTEGRATION.md](docs/INTEGRATION.md) and it is the honest reason the
-containment table above rests on the floor and content tiers rather than on
-behaviour. On the content-defined corpora even the research scorer is at chance
-([opeval.md](benchmarks/results/opeval.md), five seeds).
-
-**Against a live model.** AgentDojo prompt injection, `gpt-4o-mini`,
-`important_instructions`, deployable configuration, **three sweeps per suite**:
-
-| suite | undefended ASR | defended ASR | runs |
-| --- | ---: | ---: | ---: |
-| banking | 66.7% | 0.0% | 0 / 54 |
-| slack | 81.5% | 0.0% | 0 / 54 |
-| travel | 38.9% | 1.9% | 1 / 54 |
-| workspace | 88.9% | 0.0% | 0 / 54 |
-
-**Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6]**
-([pooled_asr.md](benchmarks/results/pooled_asr.md)). Progent, the closest
-published comparable, leaves 11.1 to 16.7% on the same suites and attack, though
-its figure is a single 18-run sweep. Our own single sweeps were the same size
-until this run, and 0 of 18 justifies nothing tighter than [0, 17.6%], which is
-why the pooled number is the one quoted.
-
-**What that costs, measured separately and paired.** `gpt-4o-mini` is used above
-because it is reliably injectable, which makes it right for a security test and
-wrong for a utility test. Utility is measured on its own, **paired per task so
-only defense-caused losses count**, across four models and 32 clean tasks each:
-
-| model | undefended | with Clay Seal | cost | false-block |
-| --- | ---: | ---: | ---: | ---: |
-| gpt-4o-mini | 84% | 59% | −25 pts | 12.5% [5.0, 28.1] |
-| gpt-oss-120b | 84% | 66% | −19 pts | 9.4% [3.2, 24.2] |
-| **grok-4-1-fast** | 81% | **78%** | **−3 pts** | **6.2%** [1.7, 20.1] |
-| llama-4-maverick | 12% | 12% | 0 pts | 0.0% [0.0, 13.8] |
-
-The cost falls monotonically with model strength, and on the strongest model
-measured the **shippable** path costs 3 points where CaMeL's published cost is 7.
-**Most of what looks like the cost of enforcement is the cost of a weak agent**,
-and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
-fail with no defense present. The llama row is a null, not a win, a 12% baseline
-leaves nothing for a defense to cost, and it is kept rather than dropped.
-
-n=32 per model, so the interval around a 3-point difference is wide. The monotone
-trend across four models carries that claim, not any single cell
-([the 4x4](benchmarks/results/live_ladder.md)).
-
-**One limit outranks all of it.** Every number above comes from corpora whose
-tasks are mostly specified in the prompt. On
-[AgentDyn](benchmarks/results/agentdyn.md), where the correct next step cannot be
-known until the agent looks at what is actually there, every such step deviates
-from the sealed plan and the cost is total: 21.67 interruptions per task, which
-is not friction but a system asking permission for nearly every action.
-
-**The deterministic form of that failure is now closed.** A grant derived from
-observed traffic enumerates the tools a recording happened to contain, so every
-tool it missed is refused even where the same mandate already authorizes that
-verb class. Measured on held-out mandates across **8,849 benign events in five
-corpora**, the shipped default refuses between 27% and 56% of them:
-
-| | tau2 | toolemu | atif | asb | agentharm |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| shipped default | 45.00% | 54.74% | 26.95% | 50.00% | 55.56% |
-| `grant_is_observed` | **0/7177** | **0/559** | **0/282** | **0/102** | 8.37% |
-
-Containment is unchanged on every attack corpus where the mechanism actually
-fired ([observed_grant.md](benchmarks/results/observed_grant.md)). It is off by
-default and must stay off wherever a human wrote the tool list, because there
-the list is an authorization rather than a transcript.
-
-That is the same mechanism AgentDyn punishes, measured on replayed traffic
-rather than against a live model. **AgentDyn itself has not been re-run**, so
-the 21.67 stands as the published figure until someone does.
-
-Every headline result, the command that reproduces it, and the limit it does not
-cross: [benchmarks/results/README.md](benchmarks/results/README.md).
+Every headline result and the command that reproduces it:
+[benchmarks/results/README.md](benchmarks/results/README.md).
 
 ## Where the boundary is
 
@@ -714,8 +504,20 @@ for step, (tool, args) in enumerate(agent_calls):
 
 `examples/01_gateway.py` runs this end to end against a prompt injection planted
 in a ticket the agent was allowed to read. The fourth call is allowed and the
-fifth is refused, because its destination came from the document and not
-from the sealed goal.
+fifth is held for a person.
+
+**What stops it there is the egress allow-list, which is a per-call rule.** The
+injected address is off-domain, so the cheapest floor catches it and the
+provenance layer is never consulted. That is the gateway working in the right
+order, and it is not a demonstration of anything this document claims is
+distinctive, so the example prints which layer fired and
+[examples/README.md](examples/README.md) runs the same session with the domain
+list removed, where provenance is what answers.
+
+If your policy names a domain and an attacker names an address inside it, the
+floor has nothing to say and `egress.recipients` is what binds the mailbox. It
+is not on by default and `clayseal policy lint` does not require it, so a
+policy that grants a domain grants every mailbox on it.
 
 ## Security posture
 
@@ -772,9 +574,10 @@ session = get_identity_provider("oidc").build_session(
 
 ## Documentation
 
-[docs/README.md](docs/README.md) is the index. The four you are most likely to
+[docs/README.md](docs/README.md) is the index. The ones you are most likely to
 want:
 
+- [Evidence](docs/EVIDENCE.md) for every measured number and the limit it does not cross
 - [API reference](docs/API.md) for the 57 exported names, tiered by what
   most integrations actually use
 - [Developer guide](docs/DEV_GUIDE.md) to install it and wire it in

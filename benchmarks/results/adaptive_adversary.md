@@ -6,6 +6,12 @@ STATUS: unverified
 > re-derived from it. `unverified` says that nobody has checked them, which
 > is the honest claim; `current` would be vouching for a run nobody can
 > reproduce. See the provenance section of [README.md](README.md).
+>
+> **The deterministic half of this question now has a command.**
+> [adaptive_deterministic.md](adaptive_deterministic.md) runs a defense-aware
+> attacker over 24 corpus and objective pairs in ten seconds with no key,
+> and it is stamped `current`. What is still unverified here is the LIVE half,
+> where a real model is talked into the attack. Quote the deterministic file.
 
 
 The decisive anti-overfit test, item 3 of the contract in

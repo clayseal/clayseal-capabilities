@@ -356,6 +356,58 @@ _MAX_ARG_DEPTH = 6
 _MAX_ARG_STRINGS = 512
 
 
+def scan_incomplete(args) -> str | None:
+    """Did the bounded scan fail to see all of this argument? Reason, or None.
+
+    The bounds exist so attacker-reachable input costs a bounded amount of work.
+    The bug was what happened when they bound: the walk stopped, found no
+    destination in what it had seen, and the caller read that as "no
+    destination". Both limits were therefore a one-argument bypass of the whole
+    egress floor, needing no cleverness at all:
+
+        {"body": "x" * 16_484 + " evil.example.com"}   -> ALLOWED
+        {"n": {"n": {"n": ... {"dest": "evil.example.com"}}}}  -> ALLOWED
+
+    while the same address in a short flat argument was refused. An unscanned
+    remainder is not evidence of absence, so `check` now refuses rather than
+    concluding from what it managed to read.
+
+    Measured cost of failing closed: 0 of 10,716 benign events across seven
+    corpora carry an argument that exceeds either bound.
+    """
+    budget = _MAX_ARG_STRINGS
+
+    def walk(value, depth):
+        nonlocal budget
+        if depth > _MAX_ARG_DEPTH:
+            return f"argument nested deeper than {_MAX_ARG_DEPTH} levels"
+        if isinstance(value, str):
+            budget -= 1
+            if budget < 0:
+                return f"more than {_MAX_ARG_STRINGS} strings in argument"
+            if len(value) > MAX_SCAN_CHARS:
+                return f"string longer than {MAX_SCAN_CHARS} characters"
+            return None
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if isinstance(key, str):
+                    budget -= 1
+                    if budget < 0:
+                        return f"more than {_MAX_ARG_STRINGS} strings in argument"
+                why = walk(item, depth + 1)
+                if why:
+                    return why
+            return None
+        if isinstance(value, (list, tuple, set, frozenset)):
+            for item in value:
+                why = walk(item, depth + 1)
+                if why:
+                    return why
+        return None
+
+    return walk(args, 0)
+
+
 def _strings_of(value, *, _depth: int = 0, _budget: list | None = None):
     """Every string reachable in one argument, including inside dicts.
 
@@ -555,6 +607,12 @@ class EgressPolicy:
         for domain in self._destinations(resource, args):
             if not self._permitted(domain):
                 return False, f"egress to {domain!r} not on allow-list"
+        # An argument the scan could not finish reading cannot support the
+        # conclusion "there is no destination in it". Placed after the loop so a
+        # destination that WAS seen still reports itself by name.
+        unscanned = scan_incomplete(args)
+        if unscanned is not None:
+            return False, f"egress undecidable: {unscanned}"
         # Opt-in binding of opaque recipients (account/IBAN), for transfer-style
         # tools where the destination is an identifier rather than a domain.
         if self.bind_recipients:

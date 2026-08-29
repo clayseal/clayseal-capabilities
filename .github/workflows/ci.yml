@@ -17,20 +17,33 @@ on:
 # The fast gate: everything that must be green before a change lands.
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     if: github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
-        # The floor and the ceiling of `requires-python` in pyproject.toml. Both
-        # ends are tested on purpose: a backslash inside an f-string expression
-        # is a SyntaxError before 3.12 and shipped undetected in
-        # `value_budget.py`, which `clayseal/capabilities/__init__.py` imports
-        # so the package was unimportable on 3.10 and 3.11 while every local
-        # interpreter was 3.13.
+        # EVERY version `requires-python` admits, not just its ends. The
+        # 3.10-and-3.11 SyntaxError below is the argument for the floor; the
+        # argument for the middle is that the badge and the metadata claim
+        # 3.10 to 3.14 and a claim nothing runs is a claim nobody checked.
+        #
+        # A backslash inside an f-string expression is a SyntaxError before
+        # 3.12 and shipped undetected in `value_budget.py`, which
+        # `clayseal/capabilities/__init__.py` imports, so the package was
+        # unimportable on 3.10 and 3.11 while every local interpreter was 3.13.
         # 3.14 is tested because the distribution now admits it. The old
         # <3.14 ceiling came from an optional extra, not the library.
-        python-version: ["3.10", "3.13", "3.14"]
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          # macOS on one version rather than the full matrix. The syscall tier's
+          # reference backend is macOS-only by construction, since
+          # Hypervisor.framework allows one VM per process, so ubuntu-only CI
+          # never built or imported anything on the platform that tier targets.
+          # One job is enough to catch a path, a permission or a default that
+          # differs; a second interpreter there buys nothing this does not.
+          - os: macos-latest
+            python-version: "3.13"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

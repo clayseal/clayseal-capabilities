@@ -16,6 +16,7 @@ example. This page says which document answers which question.
 
 | Document | Answers |
 | --- | --- |
+| [EVIDENCE.md](EVIDENCE.md) | What has it been measured at, on whose data, and what does it cost? |
 | [THREAT_MODEL.md](THREAT_MODEL.md) | What is it defending against, what is it not, and how are keys handled? |
 | [CONTROLS.md](CONTROLS.md) | Which compliance controls does its evidence support? |
 | [benchmarks/README.md](../benchmarks/README.md) | How is it measured? |

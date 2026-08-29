@@ -22,7 +22,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 README = ROOT / "README.md"
+EVIDENCE = ROOT / "docs" / "EVIDENCE.md"
 RESULTS = ROOT / "benchmarks" / "results"
+
+#: Every front-door document that may quote a measured table. Checked as one
+#: corpus rather than by name, so moving a table between them is a refactor and
+#: not a hole: the pin follows the table instead of the filename. A table that
+#: appears in neither still fails, which is the point.
+FRONT_DOOR = (README, EVIDENCE)
+
+
+def _front_door_text() -> str:
+    return "\n\n".join(p.read_text() for p in FRONT_DOOR if p.exists())
 
 
 def _plain(cell: str) -> str:
@@ -65,7 +76,7 @@ CORPORA = ("redcode", "ipi_coding", "mcp_attack", "agent_threat_bench",
 
 @pytest.fixture(scope="module")
 def scoreboard():
-    readme = _rows(README.read_text(), "harm is defined by", CORPORA)
+    readme = _rows(_front_door_text(), "harm is defined by", CORPORA)
     source = _rows((RESULTS / "scoreboard.md").read_text(),
                    "what the corpus tests", CORPORA)
     return readme, source
@@ -81,10 +92,44 @@ def test_scoreboard_tables_were_found(scoreboard) -> None:
 def test_scoreboard_containment_and_n_match(scoreboard) -> None:
     readme, source = scoreboard
     for c in CORPORA:
-        # README:  corpus | contained | n | harm-defined-by
-        # source:  corpus | contained | split | n | what
+        # README:  corpus | contained | FB complete | FB half | n | harm-defined-by
+        # source:  corpus | contained | split | FB complete | FB half | n | what
         assert _pct(readme[c][1]) == _pct(source[c][1]), f"{c} contained"
-        assert _plain(readme[c][2]) == _plain(source[c][3]), f"{c} n"
+        assert _plain(readme[c][4]) == _plain(source[c][5]), f"{c} n"
+
+
+def test_both_friction_columns_are_quoted_and_match(scoreboard) -> None:
+    """Containment without a friction column is the number this repo forbids.
+
+    `benchmarks/scoreboard.py` says in its own legend that `FB(granted)` is
+    "0.00% by construction" on six of these corpora and "is not evidence on its
+    own". The README quoted containment from this table for several releases and
+    carried no friction column at all, which is the exact thing the fixed-FPR
+    section two screens further down says a headline may not do.
+
+    Both columns are pinned, so dropping either from the README fails here.
+    """
+    readme, source = scoreboard
+    for c in CORPORA:
+        assert _plain(readme[c][2]) == _plain(source[c][3]), f"{c} complete-grant"
+        assert _plain(readme[c][3]) == _plain(source[c][4]), f"{c} half-grant"
+
+
+def test_the_held_out_column_is_not_silently_zero(scoreboard) -> None:
+    """`not run` must stay `not run`.
+
+    An unmeasured cell rendered as 0.00% reads as "this costs nothing", which is
+    the strongest claim in the table and the one nobody measured. The corpora
+    where it IS measured have to keep showing a real double-digit number, or the
+    column has stopped carrying its point.
+    """
+    readme, _ = scoreboard
+    measured = [c for c in CORPORA if "notrun" not in _plain(readme[c][3])]
+    assert measured, "no corpus reports a held-out figure any more"
+    for c in measured:
+        assert _pct(readme[c][3]) > 10.0, (
+            f"{c} half-grant friction is {readme[c][3]}, which would make the "
+            f"column decorative")
 
 
 def test_the_saturated_corpora_are_named_and_excluded() -> None:
@@ -94,7 +139,7 @@ def test_the_saturated_corpora_are_named_and_excluded() -> None:
     legitimate evidence and appear in the held-out false-block table, so a
     whole-file substring check would forbid a correct use of them.
     """
-    text = README.read_text()
+    text = _front_door_text()
     assert "excluded from that table rather than counted" in text
     for name in ("ASB", "InjecAgent"):
         assert name in text, f"{name} must be disclosed, not silently dropped"
@@ -110,7 +155,7 @@ SUITES = ("banking", "slack", "travel", "workspace")
 
 @pytest.fixture(scope="module")
 def pooled():
-    readme = _rows(README.read_text(), "defended ASR", SUITES)
+    readme = _rows(_front_door_text(), "defended ASR", SUITES)
     source = _rows((RESULTS / "pooled_asr.md").read_text(), "sweep spread", SUITES)
     return readme, source
 
@@ -132,10 +177,10 @@ def test_pooled_asr_matches(pooled) -> None:
 
 def test_the_pooled_denominator_is_216() -> None:
     """The headline says 216 runs; the rows must add up to it."""
-    readme, _ = _rows(README.read_text(), "defended ASR", SUITES), None
+    readme, _ = _rows(_front_door_text(), "defended ASR", SUITES), None
     total = sum(int(_plain(readme[s][3]).split("/")[1]) for s in SUITES)
-    assert total == 216, f"rows sum to {total}, README claims 216"
-    assert "1 attack success in 216 runs" in README.read_text()
+    assert total == 216, f"rows sum to {total}, the tables claim 216"
+    assert "1 attack success in 216 runs" in _front_door_text()
 
 
 # --- the paired utility 4x4 -------------------------------------------------
@@ -145,7 +190,7 @@ MODELS = ("gpt-4o-mini", "gpt-oss-120b", "grok-4-1-fast", "llama-4-maverick")
 
 @pytest.fixture(scope="module")
 def utility():
-    readme = _rows(README.read_text(), "with Clay Seal", MODELS)
+    readme = _rows(_front_door_text(), "with Clay Seal", MODELS)
     ladder = _rows((RESULTS / "live_ladder.md").read_text(), "endorse/task", MODELS)
     return readme, ladder
 
