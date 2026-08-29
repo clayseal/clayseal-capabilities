@@ -87,8 +87,8 @@ Two runtime dependencies, `cryptography` and `pyyaml`.
 ### From a checkout
 
 ```bash
-git clone https://github.com/pberlizov/clayseal.git
-cd clayseal
+git clone https://github.com/clayseal/clayseal-capabilities.git
+cd clayseal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -427,7 +427,7 @@ wrapper = wrap_with_identity_session(
 result = wrapper.run({"transaction_id": "t1"})
 ```
 
-Install [agentauth-receipts](https://github.com/pberlizov/clay-seal-receipts) at the matching tag when running this code.
+Install [agentauth-receipts](https://github.com/clayseal/clayseal-receipts) at the matching tag when running this code.
 
 ---
 

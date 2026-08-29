@@ -115,7 +115,7 @@ def test_the_guide_only_promises_commands_that_exist() -> None:
 
     text = START.read_text()
     subcommands = {
-        m.group(1) for m in re.finditer(r"^\s*clayseal (\w+(?: \w+)?)", text, re.M)
+        m.group(1) for m in re.finditer(r"^\s*clayseal (\w+(?: \w+)?)", text, re.MULTILINE)
     }
     assert subcommands, "no clayseal commands found in the guide"
     help_text = _run(["--help"], ROOT).stdout
