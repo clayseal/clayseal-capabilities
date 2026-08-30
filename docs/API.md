@@ -1,6 +1,6 @@
 # API reference
 
-`clayseal.capabilities` exports 57 names. **Four of them are the API most
+`clayseal.capabilities` exports 67 names. **Four of them are the API most
 integrations use**, and the rest exist for deployments that need to build the
 pieces themselves. This page is the map; the per-symbol detail lives in the
 module docstrings, which is where it stays correct.
@@ -76,6 +76,38 @@ Same trust basis as the derived-count rung: the rule comes from the goal sealed 
 any untrusted content exists, never from tool output and never from an argument.
 Off unless a caller sets it, because deriving a rule from a sentence is
 inference, and an invented obligation refuses work nobody prohibited.
+
+## Freshness: the justification an invalidator poisoned
+
+Precedence read backwards. An obligation says an action may not run **until**
+something has happened; an invalidation says it may not run **after** something
+has, because what authorised it no longer holds. The stale call and the
+legitimate call are identical on the wire, so nothing that reads the action alone
+can separate them.
+
+| export | what it is |
+| --- | --- |
+| `derive_invalidations` | reads `"A voids on B"`, `"A binds to pre-B"` and `"A; B destroys it"` out of the **sealed goal**, returning nothing unless the goal NAMES the invalidator |
+| `Invalidation` | one rule: `invalidators` poison what `establishes` set up |
+| `FreshnessLedger` | `observe(tool, verb)` records, `check(tool, verb)` gates |
+
+```python
+from clayseal.capabilities import FreshnessLedger, derive_invalidations
+
+rules = derive_invalidations(goal.summary, catalog=set(allowed_tools))
+broker.freshness = FreshnessLedger(invalidations=rules)
+```
+
+**Version, never a timer.** A five-second-old view of a hot ledger is stale and a
+five-day-old view of an archived record is not, so age is a proxy for change
+while change is directly observable. The version used is the one a gateway gets
+for free: an effect this session performed, which moves the object by definition.
+
+**Poisoned, then cleared.** Re-establishing clears the poison, because the agent
+who re-approves after amending is doing the right thing and must not be refused.
+A *consuming* call never clears, even when its name matches: a tool named
+"execute with approval" names the approval it spends, and without that split the
+rule either latches or clears itself on the action it existed to refuse.
 
 ## Entity binding: which counterparty
 

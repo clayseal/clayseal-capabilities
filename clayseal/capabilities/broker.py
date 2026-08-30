@@ -149,6 +149,16 @@ class SessionBroker:
     # Duck-typed like `delegation` and `velocity`. Absent means unordered, so an
     # existing caller is unchanged. Build with `obligations.derive_obligations`.
     obligations: Any | None = None
+    # Precedence's mirror image. An obligation says an action may not run UNTIL
+    # something has happened; this says it may not run AFTER something has,
+    # because what authorised it no longer holds. Both halves of the pair are
+    # states about the session, and neither is a property of the action: here the
+    # stale call and the legitimate call are identical on the wire, so scope,
+    # binding, budgets and flow control necessarily return the same answer.
+    #
+    # Duck-typed. Absent means no freshness checking. Build with
+    # `freshness.derive_invalidations`.
+    freshness: Any | None = None
     # WHICH COUNTERPARTY. `EgressPolicy` bounds the host an action may reach;
     # this bounds the entity it may name. "Pay Acme and Beta only" is not a
     # domain rule, and a session holding that list in its own sealed goal still
@@ -1360,6 +1370,19 @@ class SessionBroker:
                 return self._finalize(action, Outcome.DENY, "floor", (why,), None,
                                       is_write, start, blocked=True)
 
+        # Freshness, immediately after precedence because it is the same rung
+        # read backwards. That an invalidator ran is a fact about this session's
+        # own history, not a reading of tool output, so it refuses rather than
+        # escalates, exactly as a missing prerequisite does.
+        if self.freshness is not None:
+            ok, why = self.freshness.check(action.tool, action.verb)
+            if not ok:
+                self._rollback(action, v_res, c_res)
+                self._telemetry(self.metrics.record_prevented,
+                                protected_write=is_write)
+                return self._finalize(action, Outcome.DENY, "floor", (why,), None,
+                                      is_write, start, blocked=True)
+
         # Entity binding, on the same rung and for the same reason: an action
         # naming a counterparty the sealed goal did not name. Split by
         # provenance, not by severity. A list the goal states in structured form
@@ -1646,6 +1669,11 @@ class SessionBroker:
         # here where nothing downstream can still refuse.
         if self.obligations is not None:
             self.obligations.observe(action.tool)
+        # Same reason, and the symmetric hazard: a REFUSED invalidator must not
+        # poison a justification, and a REFUSED re-establishment must not clear
+        # one. Both directions are pinned by tests.
+        if self.freshness is not None:
+            self.freshness.observe(action.tool, action.verb)
         return self._finalize(action, Outcome.ALLOW, layer, reasons, score,
                               is_write, start)
 

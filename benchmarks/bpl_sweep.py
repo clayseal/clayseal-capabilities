@@ -61,7 +61,7 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario, is_bro
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
               "llm-monitor", "clayseal", "clayseal+obligations",
-              "clayseal+entities")
+              "clayseal+entities", "clayseal+freshness")
 
 
 
@@ -78,7 +78,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
                 "error": None, "outcomes": []}
     broker = scen.make_broker() if is_broker_arm(condition) else None
     if broker is not None and condition in ("clayseal+obligations",
-                                            "clayseal+entities"):
+                                            "clayseal+entities", "clayseal+freshness"):
         # Precedence read from the SEALED GOAL and the tool catalogue, the same
         # trusted inputs the derived-count rung uses. Nothing here reads the
         # scenario's label, its violation predicate or its scripts.
@@ -88,7 +88,8 @@ def _replay(scen, condition: str, script, verb_fn=None,
         rules = derive_obligations(summary, catalog)
         if rules:
             broker.obligations = ObligationLedger(obligations=rules)
-    if broker is not None and condition == "clayseal+entities":
+    if broker is not None and condition in ("clayseal+entities",
+                                            "clayseal+freshness"):
         # Which counterparty, from the same two trusted inputs and nothing else:
         # the goal's own structured intent, and failing that its summary
         # sentence. The first is authority and denies; the second is a reading
@@ -104,6 +105,21 @@ def _replay(scen, condition: str, script, verb_fn=None,
             bindings = derive_bindings(getattr(goal, "summary", "") or "")
         if bindings:
             broker.entities = EntityLedger(bindings=bindings)
+    if broker is not None and condition == "clayseal+freshness":
+        # Invalidation clauses, read from the sealed goal and nothing else. The
+        # goal must NAME the invalidator; where it does not, this derives
+        # nothing rather than guessing which call moves the world.
+        import re as _re
+
+        from clayseal.capabilities.freshness import FreshnessLedger, derive_invalidations
+        goal = getattr(broker, "goal", None)
+        summary = getattr(goal, "summary", "") or ""
+        lead = _re.match(r"^(\w+)", summary)
+        rules = derive_invalidations(
+            summary, set(getattr(broker, "allowed_tools", None) or ()),
+            goal_verb=lead.group(1) if lead else None)
+        if rules:
+            broker.freshness = FreshnessLedger(invalidations=rules)
     if broker is not None and confidentiality == "derived":
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
