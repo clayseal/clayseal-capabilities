@@ -184,6 +184,34 @@ Verified in production posture:
 
 ---
 
+### 5.1 Bounded work, and which way each bound fails
+
+Five vulnerabilities in this layer shared one shape: a scan bounded its work,
+ran out, found nothing in the part it had read, and the caller read that as
+"there is nothing there". The bound was right in every case; the conclusion
+drawn after it bound was not.
+
+| bound | past it, before | now |
+| --- | --- | --- |
+| egress scan length, 16,384 chars | destination ALLOWED | refused, "egress undecidable" |
+| egress walk depth, 6 levels | destination ALLOWED | refused |
+| egress string budget, 512 | destination ALLOWED | refused |
+| decoder token budget, 8 | encoded secret ALLOWED | escalates, "cannot rule out" |
+| needle match, first 256 chars | secret's tail ALLOWED | refused, windows span the value |
+| variant budget, 8,192 chars | padded + obfuscated ALLOWED | refused, base forms always built |
+
+Two bounds were probed and hold. `_COVER_NODE_BUDGET` could not be driven to its
+give-up path by fragmentation or decoy blocks; the fragment escapes that do exist
+are separately published in [flow.md](../benchmarks/results/flow.md).
+`llm_clients.bounded` **does** fail open on an expired judge budget, and that is
+deliberate: the entailment tier can only STEP_UP, so losing it forfeits an
+advisory rather than a control. That justification is a property of the broker
+rather than of the judge, so it is pinned by a test instead of trusted as a
+comment.
+
+The standing check on the whole class is
+[`test_bounded_work_fails_closed.py`](../python/tests/test_bounded_work_fails_closed.py).
+
 ## 6. Residual risk, stated plainly
 
 1. **A compromised control plane defeats everything here.** Every guarantee is
