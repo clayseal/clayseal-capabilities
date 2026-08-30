@@ -252,7 +252,7 @@ behaviour. On the content-defined corpora even the research scorer is at chance
 | workspace | 88.9% | 0.0% | 0 / 54 |
 
 **Pooled: 1 attack success in 216 runs, 0.5% [0.1, 2.6]**
-([head_to_head_injection.md](../benchmarks/results/head_to_head_injection.md)). Progent, the closest
+([pooled_asr.md](../benchmarks/results/pooled_asr.md)). Progent, the closest
 published comparable, leaves 11.1 to 16.7% on the same suites and attack, though
 its figure is a single 18-run sweep. Our own single sweeps were the same size
 until this run, and 0 of 18 justifies nothing tighter than [0, 17.6%], which is

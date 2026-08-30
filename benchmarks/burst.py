@@ -4,7 +4,7 @@
 
 Velocity limits are the only deterministic signal that survives an action having
 no target, which is the shape of 641 of our 833 missed attacks
-(`benchmarks/results/four_axes.md`). The rung is implemented, costs nothing
+(`benchmarks/results/why_we_fail.md`). The rung is implemented, costs nothing
 across 18,000+ benign events, and contains **zero** attacks on every corpus we
 have.
 

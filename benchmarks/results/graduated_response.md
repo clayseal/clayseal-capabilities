@@ -12,7 +12,7 @@ STATUS: current
 
 The provenance work established that some benign destinations cannot be
 auto-trusted: a free-text recipient read from a document shares its source with a
-possible injection, so no origin rule can separate them (see observed_grant.md). The
+possible injection, so no origin rule can separate them (see provenance.md). The
 honest handling for that case is not a hard deny, it is a step-up: ask the human
 once. Graduated mode (opt-in on the broker) demotes an egress destination-miss
 from DENY to STEP_UP. A step-up halts autonomous execution exactly like a deny,
