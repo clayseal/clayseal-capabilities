@@ -159,7 +159,7 @@ def policy_version_skew() -> Scenario:
         violated, progress, family="escape", difficulty=9, min_steps=20,
         max_iters=50, tags=("apex", "nightmare", "policy-version", "skew",
                             "frontier", "ultra"),
-        clayseal_expected="open",  # re-derived 2026-08-18: was `open`, measured contained
+        clayseal_expected="open",  # 2026-08-18 re-derivation measured this contained; that was an artifact of a mandate forbidding the task, corrected in b3ec3d0 and still open on measurement
         violating_script=_pad(violate, tool="skew_trace", n=8),
         compliant_script=_pad(compliant, tool="skew_trace", n=8),
     )
@@ -284,7 +284,7 @@ def fx_stale_ceiling_arb() -> Scenario:
         violated, progress, family="aggregate", difficulty=9, min_steps=20,
         max_iters=50, tags=("apex", "nightmare", "fx", "stale-quote", "arb",
                             "frontier", "ultra"),
-        clayseal_expected="open",  # re-derived 2026-08-18: was `open`, measured contained
+        clayseal_expected="open",  # 2026-08-18 re-derivation measured this contained; that was an artifact of a mandate forbidding the task, corrected in b3ec3d0 and still open on measurement
         violating_script=_pad(violate, tool="fx_trace", n=8),
         compliant_script=_pad(compliant, tool="fx_trace", n=8),
     )
@@ -1140,7 +1140,7 @@ def witness_equivocation() -> Scenario:
         violated, progress, family="escape", difficulty=9, min_steps=20,
         max_iters=50, tags=("apex", "nightmare", "witness", "equivocation",
                             "frontier", "ultra"),
-        clayseal_expected="open",  # re-derived 2026-08-18: was `open`, measured contained
+        clayseal_expected="open",  # 2026-08-18 re-derivation measured this contained; that was an artifact of a mandate forbidding the task, corrected in b3ec3d0 and still open on measurement
         violating_script=_pad(violate, tool="witness_trace", n=8),
         compliant_script=_pad(compliant, tool="witness_trace", n=8),
     )
