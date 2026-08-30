@@ -60,7 +60,7 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
 #: review comment that matters. The claim needs the class, not the name:
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
-              "llm-monitor", "clayseal")
+              "llm-monitor", "clayseal", "clayseal+obligations")
 
 
 def _replay(scen, condition: str, script, verb_fn=None,
@@ -74,7 +74,18 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Refuse every call. Contains everything, completes nothing.
         return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
                 "error": None, "outcomes": []}
-    broker = scen.make_broker() if condition == "clayseal" else None
+    broker = (scen.make_broker()
+              if condition in ("clayseal", "clayseal+obligations") else None)
+    if broker is not None and condition == "clayseal+obligations":
+        # Precedence read from the SEALED GOAL and the tool catalogue, the same
+        # trusted inputs the derived-count rung uses. Nothing here reads the
+        # scenario's label, its violation predicate or its scripts.
+        from clayseal.capabilities.obligations import ObligationLedger, derive_obligations
+        catalog = set(getattr(broker, "allowed_tools", None) or ())
+        summary = getattr(getattr(broker, "goal", None), "summary", "") or ""
+        rules = derive_obligations(summary, catalog)
+        if rules:
+            broker.obligations = ObligationLedger(obligations=rules)
     if broker is not None and confidentiality == "derived":
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and

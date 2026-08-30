@@ -135,7 +135,7 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
             result = "BLOCKED by content filter"
         else:
             result = scen.handler(env, name, args)
-    elif condition == "clayseal":
+    elif condition in ("clayseal", "clayseal+obligations"):
         action = Action(step=step, tool=name, resource=f"mcp:tool:{name}",
                         verb=verb_of(name), args=dict(args))
         d = broker.authorize(action)

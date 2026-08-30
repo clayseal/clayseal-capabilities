@@ -24,6 +24,10 @@ from typing import TYPE_CHECKING
 #: Public name -> the submodule that defines it. One entry per name in `__all__`;
 #: the test suite asserts the two agree in both directions.
 _EXPORTS: dict[str, str] = {
+    # obligations: precedence rules read from the sealed goal
+    "Obligation": "obligations",
+    "ObligationLedger": "obligations",
+    "derive_obligations": "obligations",
     # authorizers
     "cedar_authorizer": "authorizers",
     "external_authorizer": "authorizers",
@@ -218,6 +222,8 @@ __all__ = [
     "InMemoryUsedTokenStore",
     "Mandate",
     "MandateBudgets",
+    "Obligation",
+    "ObligationLedger",
     "RedisUsedTokenStore",
     "Refused",
     "SessionCallBudget",
@@ -239,6 +245,7 @@ __all__ = [
     "compile_task_scope",
     "default_capability_layer",
     "default_used_token_store",
+    "derive_obligations",
     "external_authorizer",
     "get_capability_layer",
     "issue_commit_token",

@@ -141,6 +141,14 @@ class SessionBroker:
     # limiter instead. Absent means unpaced, so adding this changes nothing for
     # an existing caller. Construct with `velocity_from_mandate`.
     velocity: Any | None = None
+    # Precedence. A budget bounds a running TOTAL; this bounds a running ORDER.
+    # "Full checklist before irreversible commit" is not expressible as a
+    # counter, and scenarios stating that shape are where the containment goes:
+    # 83.3% where the grant states a countable limit, 18.9% where it does not.
+    #
+    # Duck-typed like `delegation` and `velocity`. Absent means unordered, so an
+    # existing caller is unchanged. Build with `obligations.derive_obligations`.
+    obligations: Any | None = None
     # Was the TOOL list an authorization, or a transcript of what was observed?
     #
     # `scope_is_advisory` already draws this line for resources. The tool list
@@ -1330,6 +1338,17 @@ class SessionBroker:
             return self._finalize(action, Outcome.DENY, "floor", (reason,), None,
                                   is_write, start, blocked=True)
 
+        # Precedence, before the pace check: a prerequisite that has not happened
+        # is positive evidence, which is what this gateway reserves DENY for.
+        if self.obligations is not None:
+            ok, why = self.obligations.check(action.tool)
+            if not ok:
+                self._rollback(action, v_res, c_res)
+                self._telemetry(self.metrics.record_prevented,
+                                protected_write=is_write)
+                return self._finalize(action, Outcome.DENY, "floor", (why,), None,
+                                      is_write, start, blocked=True)
+
         # Pace, after the budgets and before anything stateful. `try_acquire`
         # rather than check-then-record: the two-call form is a race that let
         # forty concurrent actions through a cap of five. A refusal here has to
@@ -1344,6 +1363,10 @@ class SessionBroker:
                 return self._finalize(
                     action, Outcome.DENY, "floor", (paced.reason,), None,
                     is_write, start, blocked=True)
+
+        # The action is going to run, so it counts toward later prerequisites.
+        if self.obligations is not None:
+            self.obligations.observe(action.tool)
 
         # Behavioral layer over the running trajectory.
         self._trajectory.actions.append(action)

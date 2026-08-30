@@ -93,9 +93,16 @@ def _import_edges(files: dict[str, pathlib.Path]) -> dict[str, set[str]]:
                 continue
             for value in node.values:
                 if isinstance(value, ast.Constant) and isinstance(value.value, str):
-                    cand = f"{pkg}.{value.value}"
-                    if cand in files:
-                        out.add(cand)
+                    # A package __init__ maps names to ITS OWN submodules, so
+                    # resolve against `mod` as well as the parent package.
+                    # Resolving only against the parent silently missed every
+                    # lazy export in `clayseal/capabilities/__init__.py`, which
+                    # is the entire public surface.
+                    for base in (mod, pkg):
+                        cand = f"{base}.{value.value}"
+                        if cand in files:
+                            out.add(cand)
+                            break
         edges[mod] = {o for o in out if o in files}
     return edges
 

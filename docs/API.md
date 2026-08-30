@@ -51,6 +51,32 @@ lock; the two are alternatives and are asserted to agree.
 Prefer `with budget.reserve(...) as res:`. It commits on a clean exit and
 releases on an exception, which is the direction that cannot overcharge.
 
+## Precedence — the layer that sees an ordering
+
+A budget bounds a running **total**. These bound a running **order**: an action
+that may not proceed until another has. "Full checklist before irreversible
+commit" is not expressible as a counter, and the scenarios stating that shape are
+where containment is lost, 83.3% where the grant states a countable limit against
+18.9% where it does not.
+
+| export | what it is |
+| --- | --- |
+| `derive_obligations` | reads `"A before B"` and `"no B without A"` out of the **sealed goal**, returning nothing rather than guessing when either side fails to resolve to a tool |
+| `Obligation` | one rule: `gated` may not run until every tool in `requires` has |
+| `ObligationLedger` | session state; `observe(tool)` records, `check(tool)` gates |
+
+```python
+from clayseal.capabilities import derive_obligations, ObligationLedger
+
+rules = derive_obligations(goal.summary, catalog=set(allowed_tools))
+broker.obligations = ObligationLedger(obligations=rules)
+```
+
+Same trust basis as the derived-count rung: the rule comes from the goal sealed before
+any untrusted content exists, never from tool output and never from an argument.
+Off unless a caller sets it, because deriving a rule from a sentence is
+inference, and an invented obligation refuses work nobody prohibited.
+
 ## Authority: mandates, delegation, commit tokens
 
 | name | what it is |
