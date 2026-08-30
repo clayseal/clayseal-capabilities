@@ -94,6 +94,18 @@ class _Gates:
     __slots__ = ()
 
 
+def is_broker_arm(condition: str) -> bool:
+    """Does this arm run the gateway at all?
+
+    One predicate, because the alternative was a hardcoded arm tuple copied to
+    every dispatch site, and a name missing from one copy does not raise. It
+    routes the arm to the no-gate branch, which reports the gateway allowing
+    everything it was never asked about. An ablation arm that silently measures
+    nothing is worse than one that crashes.
+    """
+    return condition == "clayseal" or condition.startswith("clayseal+")
+
+
 def apply_call(scen, env, condition, broker, drift, authgraph, returns,
                name, args, step, verb_fn=None, step_up="block",
                outcomes=None, observe_results=False):
@@ -135,7 +147,7 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
             result = "BLOCKED by content filter"
         else:
             result = scen.handler(env, name, args)
-    elif condition in ("clayseal", "clayseal+obligations"):
+    elif is_broker_arm(condition):
         action = Action(step=step, tool=name, resource=f"mcp:tool:{name}",
                         verb=verb_of(name), args=dict(args))
         d = broker.authorize(action)
@@ -268,7 +280,7 @@ def run_episode(client, model: str, scen: Scenario, condition: str,
     env = scen.make_env()
     if scen.configure is not None:
         scen.configure(env, condition)
-    broker = scen.make_broker() if condition == "clayseal" else None
+    broker = scen.make_broker() if is_broker_arm(condition) else None
     drift = (DriftGate.from_scenario(scen.user_prompt, scen.tools)
              if condition == "drift" else None)
     authgraph = (AuthGraphGate.from_scenario(scen.user_prompt, scen.tools)

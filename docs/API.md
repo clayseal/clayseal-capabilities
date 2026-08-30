@@ -77,6 +77,40 @@ any untrusted content exists, never from tool output and never from an argument.
 Off unless a caller sets it, because deriving a rule from a sentence is
 inference, and an invented obligation refuses work nobody prohibited.
 
+## Entity binding: which counterparty
+
+The egress policy bounds the **host** an action may reach. This bounds the
+**entity** it may name. "Pay Acme and Beta only" is not a domain rule, and a session that
+held exactly that list in its own sealed goal still paid a third party, because
+nothing read the list back out.
+
+| export | what it is |
+| --- | --- |
+| `bindings_from_intent` | entity lists the goal states in **structured** form; `verbs` is skipped, being the intent envelope's |
+| `derive_bindings` | entity lists stated in a goal **sentence**, `"<verb> A and B only"`, returning nothing rather than guessing |
+| `EntityBinding` | one list: which argument it governs, the permitted values, and whether it was declared or derived |
+| `EntityLedger` | `check(tool, args)` returns `(allowed, reason, declared)` |
+
+```python
+from clayseal.capabilities import (
+    EntityLedger, bindings_from_intent, derive_bindings)
+
+bindings = (bindings_from_intent(goal.structured_intent)
+            or derive_bindings(goal.summary))
+broker.entities = EntityLedger(bindings=bindings)
+```
+
+**The verdict follows the source, which is what `declared` is for.** A list the
+goal states in structured form is part of the sealed authority, so naming an
+entity outside it is a fact and the broker denies. A list read out of a sentence
+is an interpretation of that sentence, so it escalates and never denies. The
+ledger accumulates nothing and has no way to learn a name, so injected tool
+output cannot widen it.
+
+Matching is exact on a canonical form, case and punctuation folded. It is
+deliberately not a prefix match: `"Acme Holdings Ltd"` is not `"Acme"` until a
+registry says so, and this rung has no registry.
+
 ## Authority: mandates, delegation, commit tokens
 
 | name | what it is |

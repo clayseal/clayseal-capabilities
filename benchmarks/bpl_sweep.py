@@ -48,7 +48,7 @@ import json
 import sys
 from pathlib import Path
 
-from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
+from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario, is_broker_arm
 
 #: `none` is allow-all under another name. `deny-all` is a permanent row for the
 #: reason `opeval.py` and `ceiling_proximity.py` carry theirs: a policy that
@@ -60,7 +60,9 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
 #: review comment that matters. The claim needs the class, not the name:
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
-              "llm-monitor", "clayseal", "clayseal+obligations")
+              "llm-monitor", "clayseal", "clayseal+obligations",
+              "clayseal+entities")
+
 
 
 def _replay(scen, condition: str, script, verb_fn=None,
@@ -74,9 +76,9 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Refuse every call. Contains everything, completes nothing.
         return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
                 "error": None, "outcomes": []}
-    broker = (scen.make_broker()
-              if condition in ("clayseal", "clayseal+obligations") else None)
-    if broker is not None and condition == "clayseal+obligations":
+    broker = scen.make_broker() if is_broker_arm(condition) else None
+    if broker is not None and condition in ("clayseal+obligations",
+                                            "clayseal+entities"):
         # Precedence read from the SEALED GOAL and the tool catalogue, the same
         # trusted inputs the derived-count rung uses. Nothing here reads the
         # scenario's label, its violation predicate or its scripts.
@@ -86,6 +88,22 @@ def _replay(scen, condition: str, script, verb_fn=None,
         rules = derive_obligations(summary, catalog)
         if rules:
             broker.obligations = ObligationLedger(obligations=rules)
+    if broker is not None and condition == "clayseal+entities":
+        # Which counterparty, from the same two trusted inputs and nothing else:
+        # the goal's own structured intent, and failing that its summary
+        # sentence. The first is authority and denies; the second is a reading
+        # and escalates. Neither reads the scenario's label or its predicate.
+        from clayseal.capabilities.entities import (
+            EntityLedger,
+            bindings_from_intent,
+            derive_bindings,
+        )
+        goal = getattr(broker, "goal", None)
+        bindings = bindings_from_intent(getattr(goal, "structured_intent", None))
+        if not bindings:
+            bindings = derive_bindings(getattr(goal, "summary", "") or "")
+        if bindings:
+            broker.entities = EntityLedger(bindings=bindings)
     if broker is not None and confidentiality == "derived":
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and

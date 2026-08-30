@@ -149,6 +149,17 @@ class SessionBroker:
     # Duck-typed like `delegation` and `velocity`. Absent means unordered, so an
     # existing caller is unchanged. Build with `obligations.derive_obligations`.
     obligations: Any | None = None
+    # WHICH COUNTERPARTY. `EgressPolicy` bounds the host an action may reach;
+    # this bounds the entity it may name. "Pay Acme and Beta only" is not a
+    # domain rule, and a session holding that list in its own sealed goal still
+    # paid a third party because nothing read the list back out.
+    #
+    # Verdict follows provenance, which is why `check` returns `declared`: a
+    # named list in `structured_intent` is part of the sealed authority and may
+    # DENY, while a list read out of a goal SENTENCE is an interpretation and
+    # may only escalate. Duck-typed; absent means unbound. Build with
+    # `entities.bindings_from_intent` and `entities.derive_bindings`.
+    entities: Any | None = None
     # Was the TOOL list an authorization, or a transcript of what was observed?
     #
     # `scope_is_advisory` already draws this line for resources. The tool list
@@ -1348,6 +1359,25 @@ class SessionBroker:
                                 protected_write=is_write)
                 return self._finalize(action, Outcome.DENY, "floor", (why,), None,
                                       is_write, start, blocked=True)
+
+        # Entity binding, on the same rung and for the same reason: an action
+        # naming a counterparty the sealed goal did not name. Split by
+        # provenance, not by severity. A list the goal states in structured form
+        # is authority and refuses; a list read out of a sentence is a reading of
+        # that sentence, and `semantic-payee-resolve` exists to punish a
+        # confident reading, so it escalates.
+        if self.entities is not None:
+            ok, why, declared = self.entities.check(action.tool, action.args)
+            if not ok:
+                if declared:
+                    self._rollback(action, v_res, c_res)
+                    self._telemetry(self.metrics.record_prevented,
+                                    protected_write=is_write)
+                    return self._finalize(action, Outcome.DENY, "floor", (why,),
+                                          None, is_write, start, blocked=True)
+                self._rollback(action, v_res, c_res)
+                return self._finalize(action, Outcome.STEP_UP, "entity-binding",
+                                      (why,), None, is_write, start)
 
         # Pace, after the budgets and before anything stateful. `try_acquire`
         # rather than check-then-record: the two-call form is a race that let

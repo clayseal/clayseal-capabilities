@@ -9,6 +9,14 @@ python -m benchmarks.bpl_sweep --suite full --json /tmp/bpl.json
 The gateway contains 54 of 132 attacks. This is an analysis of the other 78,
 and it starts from a measurement that changes the question.
 
+**Two of the classes below have since been built and measured**, both by deriving
+the rule from the sealed goal rather than by extending the policy language:
+precedence ([obligations.md](obligations.md), +10 joint) and entity binding
+([entities.md](entities.md), +2). Containment is now 66 of 132 and completion is
+unchanged at 130. A third, separation of duties, was built and removed; the
+section at the end of this file says why, and it is the reason the estimates in
+the table below should be read as upper bounds rather than as forecasts.
+
 ## The signal is there. The gateway is not reading it.
 
 **An LLM monitor contains 76 of the 78 attacks this gateway misses**
