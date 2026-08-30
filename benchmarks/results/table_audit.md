@@ -158,7 +158,7 @@ approximately 98%. `benchmarks/results/scoreboard.json` at the same commit print
 - **Evidence:** recounting per-task success straight from
   `benchmarks/results/model-ladder/*-trace.json` gives grok-4-1-fast none 81.2%,
   envelope 78.1%, envelope-taint 62.5% at n=32, and envelope-taint is the arm
-  every security row in the table reports (`pooled_asr.md` line 9), so the
+  every security row in the table reports (`head_to_head_injection.md` line 9), so the
   matched cost is 18.8 points and not 3.
 
 ### 2.8 Burst + flow + BFCL detector

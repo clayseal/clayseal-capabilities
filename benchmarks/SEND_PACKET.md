@@ -33,9 +33,9 @@ Live keystones (API $, separate):
 | Volume / burst containment 100% | ready | `results/burst.md` | Do not calibrate velocity on attack labels |
 | BPL escape-class containment | **known gap** | `results/bpl_full_sweep.md` correction | 17% (10 of 59), not the 61% previously published. The old figure was mandates that forbade the task. Attacks use only granted tools; the stack has no mechanism for sequence-growth escape. |
 | Sequence / BPL ≈0% violation vs Progent/CaMeL ≈100% | ready | `results/bpl_head_to_head.md` | Sample size modest (n≈20) |
-| Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready (**model-bound**) | `results/head_to_head_injection.md`, `pooled_asr.md`, `results/utility_experiment_void.md` | Utility cost is the tradeoff; report it. **And name the model.** On `gpt-5-mini` the UNDEFENDED ASR is 0.0% across four attacks, so the result does not transfer to a 2026 frontier model and cannot be re-run there. |
+| Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready (**model-bound**) | `results/head_to_head_injection.md`, `results/utility_experiment_void.md` | Utility cost is the tradeoff; report it. **And name the model.** On `gpt-5-mini` the UNDEFENDED ASR is 0.0% across four attacks, so the result does not transfer to a 2026 frontier model and cannot be re-run there. |
 | Detector closes aggregate bursts (BFCL / τ²) | ready | `results/detector.md` | Per-call ladder scores 0% on this class |
-| Content-defined harm (AgentHarm / SLEIGHT / AdvBench-agent) | ready (ceiling) | `results/agentharm_ceiling.md`, `why_we_fail.md` | **Not** an authorization win; do not optimize via hard-deny of untargeted tools |
+| Content-defined harm (AgentHarm / SLEIGHT / AdvBench-agent) | ready (ceiling) | `results/agentharm_ceiling.md`, `results/four_axes.md` | **Not** an authorization win; do not optimize via hard-deny of untargeted tools |
 | ASB / InjecAgent 100% containment | ready (saturated) | scoreboard `SATURATED` | **Never** in a pooled headline |
 | ToolEmu normalized traces | partial → ready when fixture/corpus present | `fixtures/toolemu/`, scoreboard | Raw toolkit mapping has **no** attack events |
 | MCP-attack (poisoned tool / deputy / arg mutation) | ready (fixture) | `fixtures/mcp_attack/`, `new-suites/mcp_attack.md` | Fixture, not a public leaderboard |
@@ -101,7 +101,7 @@ switches change it materially and both are now explicit rather than implied.
 - `SEND_PACKET.md` (this file)
 - `results/scoreboard.json` + `scoreboard.md`
 - `results/head_to_head_injection.md`, `bpl_head_to_head.md`, `live_ladder.md`
-- `results/four_axes.md`, `why_we_fail.md`, `agentdyn.md`
+- `results/four_axes.md`, `agentdyn.md`
 - `results/syscall_tier.md`
 - `a business memo` (kept outside this repository) or `clayseal_benchmarks.tex` with Reproduce block
 - git SHA + `corpus_manifest.json` hashes

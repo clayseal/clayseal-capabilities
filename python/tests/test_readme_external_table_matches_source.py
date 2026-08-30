@@ -152,40 +152,12 @@ def test_the_saturated_corpora_are_named_and_excluded() -> None:
         assert c not in scored, f"{c} must not appear as a scored containment row"
 
 
-# --- pooled live ASR --------------------------------------------------------
-
-SUITES = ("banking", "slack", "travel", "workspace")
-
-
-@pytest.fixture(scope="module")
-def pooled():
-    readme = _rows(_front_door_text(), "defended ASR", SUITES)
-    source = _rows((RESULTS / "pooled_asr.md").read_text(), "sweep spread", SUITES)
-    return readme, source
-
-
-def test_pooled_tables_were_found(pooled) -> None:
-    """Control."""
-    readme, source = pooled
-    assert set(readme) == set(SUITES), f"README: {sorted(readme)}"
-    assert set(source) == set(SUITES), f"pooled_asr.md: {sorted(source)}"
-
-
-def test_pooled_asr_matches(pooled) -> None:
-    readme, source = pooled
-    for s in SUITES:
-        assert _pct(readme[s][1]) == _pct(source[s][1]), f"{s} undefended"
-        assert _pct(readme[s][2]) == _pct(source[s][2]), f"{s} defended"
-        assert _plain(readme[s][3]) == _plain(source[s][3]), f"{s} runs"
-
-
-def test_the_pooled_denominator_is_216() -> None:
-    """The headline says 216 runs; the rows must add up to it."""
-    readme, _ = _rows(_front_door_text(), "defended ASR", SUITES), None
-    total = sum(int(_plain(readme[s][3]).split("/")[1]) for s in SUITES)
-    assert total == 216, f"rows sum to {total}, the tables claim 216"
-    assert "1 attack success in 216 runs" in _front_door_text()
-
+# The pooled live-ASR block was removed with `pooled_asr.md` itself. That result
+# was 216 runs against gpt-4o-mini through a paid API, and it could not be
+# re-derived: the OpenAI account has no credits, and gpt-4o-mini 2024-07-18 can
+# no longer be deployed on Azure, where the substitute (gpt-5-mini) is not
+# injectable by this attack at all. A pin on a table nobody can reproduce is a
+# pin on an assertion.
 
 # --- the paired utility 4x4 -------------------------------------------------
 

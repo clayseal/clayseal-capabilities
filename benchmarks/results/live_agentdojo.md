@@ -2,7 +2,7 @@
 
 STATUS: superseded
 
-Retired on 2026-08-29 and replaced by **[pooled_asr.md](pooled_asr.md)**, which is stamped
+Retired on 2026-08-29 and replaced by **[head_to_head_injection.md](head_to_head_injection.md)**, which is stamped
 `current` and reports the pooled 216-run attack-success rate.
 
 The figures that were here were never re-derived, carried no reproduce command,

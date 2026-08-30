@@ -296,7 +296,7 @@ what the gate costs, and the limits, in full:
 | --- | --- |
 | **An attacker that knows the defense** | 24 corpus and objective pairs, 173,699 candidates. In 23 of them, full visibility of the verdicts buys the attacker nothing. The 24th says what adaptivity is worth when it works |
 | **Eleven external corpora** nobody here authored | 98 to 100% where harm is defined by something the gateway can bind to, 31 to 55% where it is defined by the content of an authorized action, and the friction column that says what an incomplete policy costs |
-| **A live model**, AgentDojo prompt injection | 1 attack success in 216 runs, 0.5% [0.1, 2.6], against Progent's published 11.1 to 16.7% |
+| **A live model**, AgentDojo prompt injection | 0 of 18 on each of four suites, 97.5% upper bound 18.5% per cell, against Progent's published 11.1 to 16.7% |
 | **What that costs**, paired per task over four models | −25 points on the weakest, −3 on the strongest, where CaMeL's published cost is 7 |
 | **34 µs per decision**, flat in session length | and the three numbers that are more interesting than the median |
 | **The limit that outranks all of it** | on open-ended work where the next step cannot be known in advance, 21.67 interruptions per task |
