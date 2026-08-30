@@ -270,15 +270,24 @@ only defense-caused losses count**, across four models and 32 clean tasks each:
 | **grok-4-1-fast** | 81% | **78%** | **−3 pts** | **6.2%** [1.7, 20.1] |
 | llama-4-maverick | 12% | 12% | 0 pts | 0.0% [0.0, 13.8] |
 
-The cost falls monotonically with model strength, and on the strongest model
-measured the **shippable** path costs 3 points where CaMeL's published cost is 7.
+**The claim here is the ordering, not the cell.** At n=32 per model a
+three-point difference sits inside the noise of any single row, so
+"3 points on grok-4-1-fast against CaMeL's published 7" is not a result on its
+own and is not offered as one. What is outside that noise is the **monotone
+fall across four models**: 25 points, 19, 3, 0, ordered exactly by agent
+capability. Four of four in the predicted order is p = 1/24 = 0.042 under a
+null that ranks them at random, which is a weak test and stated as one.
+
 **Most of what looks like the cost of enforcement is the cost of a weak agent**,
 and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
-fail with no defense present. The llama row is a null, not a win, a 12% baseline
-leaves nothing for a defense to cost, and it is kept.
+fail with no defense present at all. The llama row is a null rather than a win,
+a 12% baseline leaves nothing for a defense to cost, and it is kept in for that
+reason.
 
-n=32 per model, so the interval around a 3-point difference is wide. The monotone
-trend across four models carries that claim, not any single cell
+The direction this supports is that the cost is not a fixed property of the
+gateway; it is a property of the pairing between the gateway and the agent, and
+it shrinks as agents improve. Confirming it needs more models and more tasks per
+model, not a tighter reading of this table
 ([the 4x4](../benchmarks/results/live_ladder.md)).
 
 **One limit outranks all of it.** Every number above comes from corpora whose
@@ -310,6 +319,49 @@ the 21.67 stands as the published figure until someone does.
 
 Every headline result, the command that reproduces it, and the limit it does not
 cross: [benchmarks/results/README.md](../benchmarks/results/README.md).
+
+### How this evaluation tries to break itself
+
+Three things here do work that a results table cannot, and they are the reason
+to trust the rest of the page rather than a detail of it.
+
+**An adversary that reads no labels reproduces the published gap.** The suite's
+own labels predict containment with 97.7% accuracy, so a curated evaluation
+cannot demonstrate that the mechanism handles anything nobody anticipated. The
+adaptive search reads no label and no scenario file: it constructs candidates
+against the shipped gateway and keeps whatever gets through. Over **1,014,100
+candidates on 250 tasks**, it independently reaches the same number the curated
+corpus reports for `in-scope-exfiltration` — the full stack contains exactly
+what the bare floor contains, 8.0% blind and 15.2% under feedback, at every
+step-up setting.
+
+It also found something no label could have encoded. On the neighbouring
+`in-scope-content-staging` class the stack goes from 9.6% to 83.6% blind,
+**but only with `step-up=block`**; with `step-up=allow` it falls back to the
+floor exactly. The flow tracker's entire contribution on that class is carried
+by whether a step-up halts the action, so a deployment treating step-up as
+advisory has the floor there and nothing else. That is a deployment-relevant
+fact discovered by search, not by authorship
+([adaptive_stack_labelfree.md](../benchmarks/results/adaptive_stack_labelfree.md)).
+
+**Removing each gate says which ones are load-bearing.** Reading the code cannot
+tell you, because every gate looks load-bearing in isolation. Measured by
+ablation across nine corpora and 3,094 contained attack events, three gates
+account for **all 378 unique catches**: resource scope 303, intent envelope 71,
+flow tracker 4. The tool allow-list produces **100% of held-out benign refusals
+and zero unique catches**, which is the finding that
+[observed_grant.md](../benchmarks/results/observed_grant.md) then acts on. The
+report separates "not exercised" from "zero unique catch", because six of twelve
+gates never fired at all and reading their zero as "contributes nothing" is how
+someone deletes the budget rung that carries the 83.3%
+([gate_contribution.md](../benchmarks/results/gate_contribution.md)).
+
+**Ten validity gates, each with a violation it actually caught.** Not a
+checklist that passed: a `deny-all` control row caught a tie-handling bug scoring
+it 100% at 1% FPR; a published table carried `0.0%` with a CI of `[0.0, 0.0]`
+where the true one-sided bound at n=8 was 36.9%; every cumulative-authorization
+claim had been measured in one process, and four processes against a ceiling of
+100 landed 400 ([validity_gates.md](../benchmarks/results/validity_gates.md)).
 
 ### The attacker every number above assumes
 

@@ -167,6 +167,21 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
             result = (f"DENIED by policy ({d.outcome.name}): "
                       f"{'; '.join(d.reasons) if d.reasons else d.layer}. "
                       "Do not retry; this action is not permitted.")
+    elif condition == "llm-monitor":
+        # The obvious alternative to a policy gateway: show a capable model the
+        # task, the history and the proposed call, and let it decide. It sees
+        # what the gateway sees and nothing more, and a refusal blocks exactly
+        # as a DENY does.
+        from benchmarks.llm_monitor import decide
+
+        allowed = decide(getattr(scen, "prompt", "") or "", list(returns),
+                         name, dict(args))
+        if allowed:
+            result = scen.handler(env, name, args)
+        else:
+            blocks += 1
+            result = ("DENIED by monitor. Do not retry; this action is not "
+                      "permitted.")
     elif condition in ("per-call", "progent"):
         # Given the policy, and still structurally unable to use it: a per-call
         # gate holds no state between calls, so an aggregate rule has nothing to

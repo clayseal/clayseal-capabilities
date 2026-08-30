@@ -59,7 +59,8 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario
 #: and naming a ~10-line reproduction after published work invites the only
 #: review comment that matters. The claim needs the class, not the name:
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
-CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint", "clayseal")
+CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
+              "llm-monitor", "clayseal")
 
 
 def _replay(scen, condition: str, script, verb_fn=None,
@@ -716,6 +717,19 @@ def main(argv=None) -> int:
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(rows, indent=2, default=str))
         print(f"\nwrote {args.json}")
+    # Persist the monitor's answers. Without this the arm re-spends on every
+    # run and is not reproducible without a bill, which would make it exactly
+    # the kind of number this repository refuses to publish.
+    try:
+        from benchmarks.llm_monitor import flush, stats
+        flush()
+        st = stats()
+        if any(st.values()):
+            print(f"\n  llm-monitor calls: {st['miss']} new, {st['hit']} cached, "
+                  f"{st['error']} errored (an errored call ALLOWS, never blocks)")
+    except Exception:
+        pass
+
     return 0
 
 
