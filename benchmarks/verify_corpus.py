@@ -25,12 +25,28 @@ CORPUS = ROOT / ".benchmark-corpus"
 MANIFEST = ROOT / "benchmarks" / "corpus_manifest.json"
 
 
+#: Generated files, excluded from the pin.
+#:
+#: The pin exists so a number that fails to reproduce is distinguishable from a
+#: number that was wrong. Hashing build artifacts defeats that: AgentDyn was
+#: pinned with `__pycache__` compiled by cpython-311, so every checkout on a
+#: different interpreter reported a mismatch of ~111 files and `run_all.sh`
+#: refused to run. The corpus had not changed; the byproducts of importing it
+#: had. Nothing here is corpus content, and none of it is what a published
+#: result was measured on.
+_GENERATED = ("__pycache__/", ".pytest_cache/", ".mypy_cache/", ".ruff_cache/",
+              ".ipynb_checkpoints/", ".DS_Store", ".git/")
+
+
+def _is_content(f: Path) -> bool:
+    text = str(f)
+    return f.is_file() and not any(part in text for part in _GENERATED) \
+        and not text.endswith((".pyc", ".pyo"))
+
+
 def digest(directory: Path) -> tuple[str, int]:
     h = hashlib.sha256()
-    files = sorted(
-        f for f in directory.rglob("*")
-        if f.is_file() and ".git/" not in str(f)
-    )
+    files = sorted(f for f in directory.rglob("*") if _is_content(f))
     for f in files:
         h.update(str(f.relative_to(CORPUS)).encode())
         h.update(hashlib.sha256(f.read_bytes()).digest())

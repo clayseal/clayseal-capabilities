@@ -662,6 +662,11 @@ def _plausible(raw: bytes) -> str | None:
     return text if printable / len(text) >= 0.8 else None
 
 
+#: A token that could plausibly be one encoded blob: one alphabet, no
+#: structural punctuation. base64, base64url, base32 and hex all satisfy it.
+_ENCODED_SHAPE = __import__("re").compile(r"[A-Za-z0-9+/=_-]{16,}")
+
+
 def decode_budget_exhausted(args: Any) -> str | None:
     """Were there more opaque tokens than the decoder is allowed to open?
 
@@ -689,10 +694,18 @@ def decode_budget_exhausted(args: Any) -> str | None:
         # the tokenizer cannot walk still gets counted rather than waved past,
         # which is the whole point of this function.
         blob = str(args)
-    extra = len(_OPAQUE.findall(blob)) - _MAX_DECODE_TOKENS
+    # Count only runs that could BE an encoded blob, not every 16-character
+    # run without a space. `_OPAQUE` is `\S{16,}`, so a JSON payload is mostly
+    # opaque tokens by that definition: `{"patient_name":"..."` has no space in
+    # it. Escalating on those cost 12 points of precision on the AgentLeak JSON
+    # arm for no recall at all, 0.974 either way, which is a false-positive
+    # machine rather than a control. A base64, base32 or hex blob draws from one
+    # alphabet and carries none of JSON's punctuation.
+    candidates = [t for t in _OPAQUE.findall(blob) if _ENCODED_SHAPE.fullmatch(t)]
+    extra = len(candidates) - _MAX_DECODE_TOKENS
     if extra > 0:
-        return (f"{extra} opaque token(s) beyond the {_MAX_DECODE_TOKENS} the "
-                f"decoder opens")
+        return (f"{extra} encoded-shape token(s) beyond the "
+                f"{_MAX_DECODE_TOKENS} the decoder opens")
     return None
 
 

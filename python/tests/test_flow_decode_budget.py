@@ -11,7 +11,7 @@ it, while the same secret as the first token was refused.
 
 Measured cost of failing closed: 1.01% of benign events across seven corpora
 carry more than the budget, and only sessions that have actually read something
-sensitive consult the guard, so `flow[tau2]` false-block moves 0.00% to 0.33%
+sensitive consult the guard, so `flow[tau2]` false-block moves 0.00% to 0.24%
 with containment unchanged at 100%.
 """
 
@@ -81,4 +81,18 @@ def test_the_budget_check_does_not_fire_on_ordinary_arguments() -> None:
     assert decode_budget_exhausted({"body": "a normal sentence"}) is None
     assert decode_budget_exhausted({"body": _b64("one token")}) is None
     reason = decode_budget_exhausted({"body": _noise(20)})
-    assert reason and "opaque token" in reason, reason
+    assert reason and "encoded-shape token" in reason, reason
+
+
+def test_json_key_soup_is_not_mistaken_for_encoded_blobs() -> None:
+    """The trigger counts things that could BE an encoded blob, not any long run.
+
+    `_OPAQUE` is `\\S{16,}`, so a JSON payload is mostly "opaque tokens" by that
+    definition: `{"patient_name":"..."` contains no space. Escalating on those
+    cost 12 points of precision on the AgentLeak JSON arm for no recall at all,
+    0.974 either way, which is a false-positive machine rather than a control.
+    """
+    payload = ('{"patient_name":"John Smith","case_type":"routine",'
+               '"performance_rating":"good","employee_name":"Ada Lovelace"}')
+    assert decode_budget_exhausted({"body": payload}) is None
+    assert _send(payload)

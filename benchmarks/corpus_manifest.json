@@ -1,19 +1,39 @@
 {
+  ".benchmark-corpus": {
+    "sha256": "e2bd188429c984db1ba67aa29c73f4590bd479ecfec7aaeea278c4d0d329a8ec",
+    "files": 57949
+  },
   "ASB": {
     "sha256": "7328f14b8f719e05aff3528173c78f063229d8fca816309fdb1f67607a3d2b54",
     "files": 3
   },
+  "ATBench": {
+    "sha256": "ace07917561c887df4d116e304dc1675f401f41335a3982bacba9d203ae115ea",
+    "files": 5
+  },
   "AgentDyn": {
-    "sha256": "4fe25aff9503fa5a08b185449750e66a430225b8878d19107b43053b616b06ee",
-    "files": 49330
+    "sha256": "0f9e3d9f662475628bd998c23e1c569332cc37930093f9d41faf8426f3fad775",
+    "files": 49209
   },
   "AgentHarm": {
     "sha256": "1cfccf80cb84bd263c1eb3b8f386cf7c88eec8d1ed4937d16daee40adef4ed58",
     "files": 4
   },
+  "AgentLeak": {
+    "sha256": "69e03ee1d63893585dac7c9e3eb4a5b1c7e3e52dab38215e669637e93cfb675a",
+    "files": 5162
+  },
+  "InjecAgent": {
+    "sha256": "1923f7166ab6c23cf942130a521a914d512af95f26d17608f3fab1252bc814d9",
+    "files": 22
+  },
   "RedCode": {
     "sha256": "45bf67a42c19a7ac37ef1c990e0f3d626ef33ea7381230feaee90fc3ce2d4427",
     "files": 211
+  },
+  "ToolEmu": {
+    "sha256": "db7523dd3de2b1984b31838bebacc20b8eb9668b66a044be286a0562779cacf9",
+    "files": 98
   },
   "bfcl": {
     "sha256": "809d557dd2c96ea4d395d94f5b4eb80d3bc6e97145908549adaae04da9c60bb0",

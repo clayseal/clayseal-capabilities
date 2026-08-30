@@ -62,11 +62,26 @@ def test_unverified_is_not_enforced_as_current():
 
 
 def test_the_repository_reports_the_unverified_count_separately():
-    """If this set ever stops being counted, the debt is invisible again."""
+    """If this set ever stops being counted, the debt is invisible again.
+
+    This used to assert that at least one file was stamped `unverified`, on the
+    theory that an empty set meant the label had been quietly dropped. The set
+    is now legitimately empty: every unverified result was either re-derived or
+    deleted. So the guard tests the MECHANISM rather than the population, which
+    is what it was always trying to protect. A label with no current users still
+    has to work, or the debt becomes invisible the next time one is incurred.
+    """
+    path = _write("# t\n\nSTATUS: unverified\n\nSome figure nobody re-ran.\n")
+    try:
+        assert scan(path)["status"] == "unverified", (
+            "the unverified label no longer round-trips; the debt would be "
+            "invisible the next time a result is stamped with it")
+    finally:
+        path.unlink()
+
+    # And nothing in the repository is currently claiming it.
     stamped = [r for r in (scan(f) for f in sorted(RESULTS.glob("*.md")))
                if r["status"] == "unverified"]
-    assert stamped, "no file is stamped unverified; has the label been dropped?"
-    # The whole point: these are NOT claiming to be current.
     assert all(r["status"] != "current" for r in stamped)
 
 
