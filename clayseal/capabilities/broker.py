@@ -815,8 +815,17 @@ class SessionBroker:
             # payload is already here, already has its source path, and adding a
             # second entry point is how `observe_context` ended up dead.
             try:
+                # Fall back to the TOOL's own resource id. Passing "" here marks
+                # nothing sensitive, whatever the policy says, so every tool
+                # without a path-like argument contributed nothing to the flow
+                # tier while reporting no error. That is most MCP tools, and it
+                # is all of them in the confidentiality scenarios: `read_secret`
+                # returning a live key left `_sensitive_tokens` empty, so the
+                # write that pasted the key into a public status passed the
+                # check. The tier was armed, active, and reading an empty set.
                 self.flow.observe(
-                    tool, containing_object or path or "", payload,
+                    tool, containing_object or path or f"mcp:tool:{tool}",
+                    payload,
                     policy=self.sensitivity, path=path or None,
                     structured_fields=structured_fields,
                 )

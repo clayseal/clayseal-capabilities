@@ -112,3 +112,35 @@ def test_a_broken_tracker_does_not_break_authorization():
         flow=Exploding(), sensitivity=POLICY)
     broker.observe_output("read_table", SECRET, source_path="db:customers")
     assert _send(broker, SECRET).outcome is Outcome.ALLOW
+
+
+def test_a_tool_without_a_path_argument_still_marks_its_output_sensitive() -> None:
+    """The flow tier was armed, active, and reading an empty set.
+
+    `observe_output` passed `containing_object or path or ""` as the resource,
+    and an empty resource marks nothing sensitive whatever the policy says. Most
+    MCP tools have no path-like argument, so most tools contributed nothing to
+    the tier while reporting no error: `read_secret` returning a live key left
+    the sensitive set empty, and the write that pasted that key into a public
+    channel passed the check.
+
+    An inert tier that reports no error is worse than one that raises, so this
+    pins the fallback rather than the symptom.
+    """
+    from clayseal.capabilities.broker import GoalSpec, SessionBroker, TaskScope
+    from clayseal.capabilities.confidentiality import FlowTracker, SensitivityPolicy
+
+    broker = SessionBroker(
+        goal=GoalSpec(query_id="q", summary="No secrets on public status"),
+        scope=TaskScope(allowed_resources=["mcp:tool:read_secret",
+                                           "mcp:tool:post_status"],
+                        allowed_actions=[]),
+        sensitivity=SensitivityPolicy(sensitive=("*",)),
+        flow=FlowTracker())
+
+    # no path, no containing object: exactly the shape that was silently dropped
+    broker.observe_output("read_secret", "api_key=APIKEY_LIVE_9f3a",
+                          source_args={"key": "api_key"})
+    assert broker.flow._sensitive_tokens, (
+        "a tool with no path argument marked nothing sensitive"
+    )

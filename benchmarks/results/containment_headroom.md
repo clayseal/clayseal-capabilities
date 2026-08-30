@@ -24,6 +24,11 @@ be read as upper bounds rather than as forecasts: each rung reached only the
 scenarios whose sealed goal NAMES the thing being constrained, which was three of
 six for freshness and none of four for duties.
 
+The information-flow class was attempted and does not land. The tier turned out
+to be silently inert, and with that defect fixed the only available declaration
+contains 23 more attacks while losing 53 benign tasks, moving the joint metric
+from 70 to 48. See [flow_tier.md](flow_tier.md); it stays off on evidence.
+
 The derived-aggregate class in that table is smaller than it looks. Of its eleven
 remaining scenarios, **seven declare no ceiling at all**, so no budget rung can
 bound them, and `gross-exposure-net-mask`, the flagship example, declares a
