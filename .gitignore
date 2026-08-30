@@ -117,3 +117,11 @@ scratchpad/
 # the demo tests use tmp_path, so nothing reads the committed copy. 47 files of
 # generated workspaces, ticket corpora and guest scratch were checked in.
 .demo-runs/
+
+# LaTeX build products
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
