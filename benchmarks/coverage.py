@@ -209,7 +209,11 @@ def main(argv: list[str] | None = None) -> int:
         if not total:
             continue
         sl, ins = result["mix"][SURFACE_LEAVING], result["mix"][IN_SURFACE]
-        print(f"| {name} | {total} | {sl} ({sl/total:.0%}) | {ins} ({ins/total:.0%}) |")
+        # `n / total` rather than `n (0%)`. This row is an exact partition, not
+        # a rate estimate, so a zero here carries no uncertainty to report; the
+        # count form says that and keeps the bare-zero ratchet meaningful for
+        # the rows where a zero IS an estimate.
+        print(f"| {name} | {total} | {sl} / {total} | {ins} / {total} |")
 
     for name, result in all_results.items():
         total = sum(result["mix"].values())

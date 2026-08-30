@@ -176,7 +176,7 @@ Verified in production posture:
 | Destination placed **past** a scan bound (beyond 16,384 characters, or nested deeper than 6 levels) | The bounds still hold; an argument the scan could not finish is refused as undecidable rather than read as clean | `test_egress_scan_bounds.py`; both were ALLOWED before this pass while the same address in a short flat argument was refused. Failing closed costs 0 of 10,716 benign events across seven corpora |
 | Destination re-spelled so the allow-list cannot read it (IP literal in any base, bracketed IPv6, single-label host, non-ASCII homograph) | Host parse canonicalises to one form before matching: `inet_aton` rules for IPv4, IDNA for non-ASCII | `test_egress_destination_spellings.py`; all five were ALLOWED before the 0.6 pass while the dotted form was refused |
 | Denied path re-spelled so `fnmatchcase` cannot match it (case, Win32 trailing dot or space) | Extra readings widen DENY only; a path is denied if any reading is denied | `test_path_scope_same_file_spellings.py`; `workspace/SECRETS/key.pem` was ALLOWED under `denied_paths=["workspace/secrets/**"]` |
-| **Content-defined harm** (authorized action, harmful meaning) | **Not stopped** | 6.3% ([why_we_fail.md](../benchmarks/results/why_we_fail.md)) |
+| **Content-defined harm** (authorized action, harmful meaning) | **Not stopped by the floor**; soft content cues raise a step-up | 31.0% on SLEIGHT, 55.3% on AgentHarm for the shipped stack ([scoreboard.md](../benchmarks/results/scoreboard.md)). The older 6.3% figure was an *information-theoretic ceiling* claim, and it is **withdrawn**: it was true of the JSON the loader reads and false of the benchmark, whose grading functions do assert targets ([agentharm_ceiling.md](../benchmarks/results/agentharm_ceiling.md)) |
 | Secret obfuscated behind enough padding to exhaust the variant budget | The three base renderings are always produced; the budget now bounds only the decoded variants, where the attacker controls the count | `test_flow_variant_budget.py`; 8 KB of padding defeated reversal, rot13 and base64 at once and were ALLOWED. Costs nothing measured |
 | Secret longer than the match bound, exfiltrated as its tail | The value is spanned by bounded half-overlapping windows and scored against the window that matched | `test_flow_long_value_windows.py`; a 376-character value sent as its last 120 was ALLOWED while the same value sent whole was refused, single write, no encoding. Costs nothing measured |
 | Secret encoded and pushed past the decoder's token budget | An argument with more opaque tokens than the decoder opens cannot support "carries no value"; the tracker escalates instead | `test_flow_decode_budget.py`; 8 harmless base64 tokens in front of a base64'd secret were ALLOWED while the same secret as the first token was refused. Costs 0.33% false-block on `flow[tau2]`, containment unchanged |
@@ -189,7 +189,8 @@ Verified in production posture:
 1. **A compromised control plane defeats everything here.** Every guarantee is
    downstream of "the thing that mints and seals is honest".
 2. **Content-defined harm is open.** 77% of missed attacks carry no target at
-   all, so nothing binds. The obvious fix, escalate every untargeted
+   all, so nothing binds. Quoting 6.3% as a ceiling is withdrawn; the measured
+   figures are 31.0% and 55.3% and they are not a ceiling. The obvious fix, escalate every untargeted
    consequential action, blocks 55% of legitimate work on tau2 and was
    rejected on measurement, not on taste.
 3. **In-scope staging is open**, as above.

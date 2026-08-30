@@ -1,15 +1,19 @@
 # Attack-class coverage: what an authorization layer can and cannot decide
 
-STATUS: unverified
+STATUS: current
 
 ```bash
 python -m benchmarks.coverage --datasets agentharm,sleight,redcode,asb,injecagent,tau2,agentleak --limit 4000 --engines deployable-stack
 ```
 
-> The command above is recorded and runnable, but these numbers were not
-> re-derived against this commit. `unverified` says nobody has checked
-> them; run the command to reproduce, and stamp `current` when you have.
+Re-derived against this commit. The previous revision was stamped `unverified`
+and had drifted: it counted 652 AgentHarm attack events where the loader now
+yields 696, and its per-corpus tables were still the six-rung ladder rather than
+the shippable stack.
 
+tau2 carries no attack events, so it produces no containment row. It is named in
+the command because the partition is worth running over it, and the absence is
+the answer.
 
 Attacks are partitioned without consulting any engine. `surface-leaving` means at least one field (tool, resource, action, target) falls outside what the task's own mandate and benign trajectory establish. `in-surface` means every field is one the task legitimately uses, so a per-call authorization layer has nothing to object to.
 
@@ -17,48 +21,58 @@ Attacks are partitioned without consulting any engine. `surface-leaving` means a
 
 | Corpus | attack events | surface-leaving | in-surface |
 | --- | --: | --: | --: |
-| redcode | 718 | 717 (100%) | 1 (0%) |
-| agentharm | 652 | 41 (6%) | 611 (94%) |
-| asb | 2040 | 2040 (100%) | 0 (0%) |
-
-## redcode: containment by class
-
-| Engine | surface-leaving | in-surface |
-| --- | --- | --- |
-| allow-all | 0.0% [0.0%, 0.8%] | 0.0% [0.0%, 79.3%] |
-| tool-allowlist | 0.0% [0.0%, 0.8%] | 0.0% [0.0%, 79.3%] |
-| capability-token | 0.0% [0.0%, 0.8%] | 0.0% [0.0%, 79.3%] |
-| task-scope | 100.0% [99.2%, 100.0%] | 0.0% [0.0%, 79.3%] |
-| task-scope+binding | 100.0% [99.2%, 100.0%] | 0.0% [0.0%, 79.3%] |
-| task-scope+binding+budget | 100.0% [99.2%, 100.0%] | 0.0% [0.0%, 79.3%] |
-
-Fields that left the surface: target (717)
+| agentharm | 696 | 189 / 696 | 507 / 696 |
+| sleight | 129 | 7 / 129 | 122 / 129 |
+| redcode | 718 | 717 / 718 | 1 / 718 |
+| asb | 2040 | 2040 / 2040 | 0 / 2040 |
+| injecagent | 1598 | 1597 / 1598 | 1 / 1598 |
+| agentleak | 22 | 0 / 22 | 22 / 22 |
 
 ## agentharm: containment by class
 
 | Engine | surface-leaving | in-surface |
 | --- | --- | --- |
-| allow-all | 0.0% [0.0%, 9.1%] | 0.0% [0.0%, 1.7%] |
-| tool-allowlist | 100.0% [90.9%, 100.0%] | 0.0% [0.0%, 1.7%] |
-| capability-token | 100.0% [90.9%, 100.0%] | 0.0% [0.0%, 1.7%] |
-| task-scope | 100.0% [90.9%, 100.0%] | 0.0% [0.0%, 1.7%] |
-| task-scope+binding | 100.0% [90.9%, 100.0%] | 0.0% [0.0%, 1.7%] |
-| task-scope+binding+budget | 100.0% [90.9%, 100.0%] | 0.0% [0.0%, 1.7%] |
+| deployable-stack | 100.0% [97.0%, 100.0%] | 38.7% [32.8%, 44.2%] |
 
-Fields that left the surface: tool (41), resource (41), action (10)
+Fields that left the surface: resource (189), tool (41), action (10)
+
+## sleight: containment by class
+
+| Engine | surface-leaving | in-surface |
+| --- | --- | --- |
+| deployable-stack | 100.0% [25.0%, 100.0%] | 23.8% [16.6%, 31.7%] |
+
+Fields that left the surface: target (7)
+
+## redcode: containment by class
+
+| Engine | surface-leaving | in-surface |
+| --- | --- | --- |
+| deployable-stack | 100.0% [99.6%, 100.0%] | 0.0% [0.0%, 79.3%] |
+
+Fields that left the surface: target (717)
 
 ## asb: containment by class
 
 | Engine | surface-leaving | in-surface |
 | --- | --- | --- |
-| allow-all | 0.0% [0.0%, 5.9%] | n/a |
-| tool-allowlist | 100.0% [94.1%, 100.0%] | n/a |
-| capability-token | 100.0% [94.1%, 100.0%] | n/a |
-| task-scope | 100.0% [94.1%, 100.0%] | n/a |
-| task-scope+binding | 100.0% [94.1%, 100.0%] | n/a |
-| task-scope+binding+budget | 100.0% [94.1%, 100.0%] | n/a |
+| deployable-stack | 100.0% [94.1%, 100.0%] | n/a |
 
 Fields that left the surface: tool (2040), resource (2040), action (40)
+
+## injecagent: containment by class
+
+| Engine | surface-leaving | in-surface |
+| --- | --- | --- |
+| deployable-stack | 100.0% [99.7%, 100.0%] | 0.0% [0.0%, 79.3%] |
+
+Fields that left the surface: tool (1597), resource (1597), action (1086)
+
+## agentleak: containment by class
+
+| Engine | surface-leaving | in-surface |
+| --- | --- | --- |
+| deployable-stack | n/a | 0.0% [0.0%, 13.6%] |
 
 ## Reading
 

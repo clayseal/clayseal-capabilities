@@ -1,6 +1,14 @@
 # Safety/usefulness frontier, workspace, gpt-4o-mini-2024-07-18, 6x3 runs per config
 
-STATUS: unverified
+STATUS: superseded
+
+> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
+> re-derived, carry no reproduce command, and are cited by no document in this
+> repository. The frontier across suites rather than one cell of it is now in
+> [frontier.md](frontier.md), which is stamped `current`.
+>
+> Kept rather than deleted, because a number that was once published should stay
+> readable with its correction attached.
 
 > No command was recorded for this file, so its numbers cannot be
 > re-derived from it. `unverified` says that nobody has checked them, which

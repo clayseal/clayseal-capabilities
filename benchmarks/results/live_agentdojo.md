@@ -1,6 +1,14 @@
 # Live AgentDojo evaluation
 
-STATUS: unverified
+STATUS: superseded
+
+> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
+> re-derived, carry no reproduce command, and are cited by no document in this
+> repository. 216 runs across three sweeps per suite, where this was a single sweep is now in
+> [pooled_asr.md](pooled_asr.md), which is stamped `current`.
+>
+> Kept rather than deleted, because a number that was once published should stay
+> readable with its correction attached.
 
 > No command was recorded for this file, so its numbers cannot be
 > re-derived from it. `unverified` says that nobody has checked them, which

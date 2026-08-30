@@ -30,11 +30,20 @@ FORMER = ("pberlizov/clayseal", "pberlizov/clay-seal-core",
           "pberlizov/agentauth-capabilities")
 
 
+#: This file necessarily contains every name in FORMER, because it is the file
+#: that lists them. It is skipped rather than the strings being obfuscated: a
+#: scanner that cannot see its own constants is easier to reason about than one
+#: whose constants are spelled in pieces. The test passed while it was untracked
+#: and began flagging itself the moment it was committed, which is the whole bug.
+SELF = Path(__file__).resolve()
+
+
 def _tracked_text_files() -> list[Path]:
     out = subprocess.run(["git", "ls-files"], cwd=ROOT,
                          capture_output=True, text=True).stdout.split()
     keep = (".md", ".py", ".toml", ".yml", ".yaml", ".cfg", ".txt", ".svg")
-    return [ROOT / name for name in out if name.endswith(keep)]
+    return [ROOT / name for name in out
+            if name.endswith(keep) and (ROOT / name).resolve() != SELF]
 
 
 @pytest.mark.parametrize("stale", FORMER)

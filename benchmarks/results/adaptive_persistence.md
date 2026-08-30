@@ -1,6 +1,14 @@
 # Adaptive red-team, redcode (100 tasks, objective=persistence, 3 rounds)
 
-STATUS: unverified
+STATUS: superseded
+
+> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
+> re-derived, carry no reproduce command, and are cited by no document in this
+> repository. The deterministic adaptive run; the persistence figures here predate the calibration defect recorded in adaptive_ladder_audit.md is now in
+> [adaptive_deterministic.md](adaptive_deterministic.md), which is stamped `current`.
+>
+> Kept rather than deleted, because a number that was once published should stay
+> readable with its correction attached.
 
 > No command was recorded for this file, so its numbers cannot be
 > re-derived from it. `unverified` says that nobody has checked them, which

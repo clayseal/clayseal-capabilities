@@ -1,6 +1,14 @@
 # Held-out generalization (dynamic sandbox v0.1)
 
-STATUS: unverified
+STATUS: superseded
+
+> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
+> re-derived, carry no reproduce command, and are cited by no document in this
+> repository. The shipped gateway; this measured dynamic sandbox v0.1, which is not the product is now in
+> [adaptive_stack.md](adaptive_stack.md), which is stamped `current`.
+>
+> Kept rather than deleted, because a number that was once published should stay
+> readable with its correction attached.
 
 > No command was recorded for this file, so its numbers cannot be
 > re-derived from it. `unverified` says that nobody has checked them, which

@@ -1,6 +1,14 @@
 # Published baselines, sourced
 
-STATUS: unverified
+STATUS: superseded
+
+> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
+> re-derived, carry no reproduce command, and are cited by no document in this
+> repository. The audit of the same column, which found several figures single-model is now in
+> [baselines_audit.md](baselines_audit.md), which is stamped `current`.
+>
+> Kept rather than deleted, because a number that was once published should stay
+> readable with its correction attached.
 
 > No command was recorded for this file, so its numbers cannot be
 > re-derived from it. `unverified` says that nobody has checked them, which
