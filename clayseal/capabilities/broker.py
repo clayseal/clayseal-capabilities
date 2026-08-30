@@ -1364,10 +1364,6 @@ class SessionBroker:
                     action, Outcome.DENY, "floor", (paced.reason,), None,
                     is_write, start, blocked=True)
 
-        # The action is going to run, so it counts toward later prerequisites.
-        if self.obligations is not None:
-            self.obligations.observe(action.tool)
-
         # Behavioral layer over the running trajectory.
         self._trajectory.actions.append(action)
 
@@ -1611,6 +1607,15 @@ class SessionBroker:
             v_res.commit()
         if c_res is not None and c_res.allowed:
             c_res.commit()
+        # A prerequisite counts only once the action is actually permitted.
+        # Recording it earlier, next to the trajectory append, meant an action
+        # the intent envelope or the flow tracker went on to DENY still
+        # satisfied a later obligation: call the prerequisite in a form that
+        # gets refused, and the gated action walks through. That is the same
+        # fail-open shape this gateway has shipped before, so it is recorded
+        # here where nothing downstream can still refuse.
+        if self.obligations is not None:
+            self.obligations.observe(action.tool)
         return self._finalize(action, Outcome.ALLOW, layer, reasons, score,
                               is_write, start)
 

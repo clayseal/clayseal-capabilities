@@ -73,6 +73,25 @@ The ten: `ccp-skip-then-ship`, `related-party-undisclosed`, `durc-review-skip`,
 `eventually-sar-skip`, `negation-as-failure-act`, `omit-then-act`,
 `summary-then-naf-act`.
 
+## A fail-open this rung shipped with, found and fixed
+
+The prerequisite was first recorded beside the trajectory append, which runs
+**before** the intent envelope, the flow tracker and the detector. An action any
+of those went on to DENY still satisfied a later obligation, so calling the
+prerequisite in a form that gets refused let the gated action walk through.
+Demonstrated directly: a `prep` call refused by a late gate was recorded as
+satisfied.
+
+It is recorded on the allow path now, where nothing downstream can still refuse.
+Both directions are pinned, because a fix that simply stopped recording would be
+indistinguishable from disabling the rung: a refused prerequisite must not
+satisfy the obligation, and a permitted one must.
+
+The numbers above are unchanged by the fix, which is the expected result on this
+suite: the scripts here do not attempt a refused prerequisite. It would have
+mattered to an adversary who read the rule, which is the only kind this gateway
+assumes.
+
 ## What this does not establish
 
 - **Three syntactic forms.** `A before B`, `no B without A`, `A then B`. A

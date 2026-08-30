@@ -114,3 +114,62 @@ def test_an_equal_match_on_both_sides_is_still_dropped() -> None:
     """
     rules = derive_obligations("audit before audit_review", {"audit_review"})
     assert all(not (r.gated & r.requires) for r in rules)
+
+
+def test_a_refused_prerequisite_does_not_satisfy_an_obligation() -> None:
+    """The fail-open this rung shipped with, and the reason it is tested here.
+
+    The prerequisite was first recorded next to the trajectory append, which
+    runs BEFORE the intent envelope, the flow tracker and the detector. An
+    action any of those went on to DENY still satisfied a later obligation, so
+    calling the prerequisite in a form that gets refused let the gated action
+    walk through. It is recorded on the allow path now, where nothing
+    downstream can still refuse.
+    """
+    from clayseal.capabilities.broker import Outcome, SessionBroker
+    from clayseal.capabilities.monitor import Action
+    from clayseal.capabilities.scoping.goal import GoalSpec
+    from clayseal.core.task_scope import TaskScope
+
+    class _Dev:
+        in_plan = False
+        reasons = ("off-plan",)
+        reason = "off-plan"
+        shape = None
+
+    class _DenyEnvelope:
+        """A late gate that refuses everything reaching it."""
+
+        def check_slots(self, *a, **k): return None
+        def conforms(self, *a, **k): return _Dev()
+        def feasible(self, *a, **k): return True
+        def last_deviation(self, *a, **k): return _Dev()
+        def surface_is_comparable(self, *a, **k): return True
+
+    rule = Obligation(gated=frozenset({"commit"}),
+                      requires=frozenset({"prep"}), source="t")
+
+    def _broker(ledger, envelope=None):
+        return SessionBroker(
+            goal=GoalSpec(query_id="q", summary="prep before commit"),
+            scope=TaskScope(allowed_resources=["mcp:tool:prep", "mcp:tool:commit"],
+                            allowed_actions=[]),
+            obligations=ledger, intent_envelope=envelope)
+
+    def _act(tool, step):
+        return Action(step=step, tool=tool, resource=f"mcp:tool:{tool}",
+                      verb="write", args={}, meta={})
+
+    refused = ObligationLedger(obligations=[rule])
+    assert _broker(refused, _DenyEnvelope()).authorize(
+        _act("prep", 0)).outcome is Outcome.DENY
+    assert not refused.check("commit")[0], (
+        "a DENIED prerequisite satisfied the obligation")
+
+    # Control: a prerequisite that is actually permitted must still satisfy it,
+    # or the fix would be indistinguishable from disabling the rung.
+    allowed = ObligationLedger(obligations=[rule])
+    broker = _broker(allowed)
+    assert broker.authorize(_act("prep", 0)).outcome is Outcome.ALLOW
+    assert allowed.check("commit")[0]
+    assert broker.authorize(_act("commit", 1)).outcome is Outcome.ALLOW
