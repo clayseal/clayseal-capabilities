@@ -270,25 +270,40 @@ only defense-caused losses count**, across four models and 32 clean tasks each:
 | **grok-4-1-fast** | 81% | **78%** | **−3 pts** | **6.2%** [1.7, 20.1] |
 | llama-4-maverick | 12% | 12% | 0 pts | 0.0% [0.0, 13.8] |
 
-**The claim here is the ordering, not the cell.** At n=32 per model a
-three-point difference sits inside the noise of any single row, so
-"3 points on grok-4-1-fast against CaMeL's published 7" is not a result on its
-own and is not offered as one. What is outside that noise is the **monotone
-fall across four models**: 25 points, 19, 3, 0, ordered exactly by agent
-capability. Four of four in the predicted order is p = 1/24 = 0.042 under a
-null that ranks them at random, which is a weak test and stated as one.
+```bash
+python -m benchmarks.ladder_attribution
+```
 
-**Most of what looks like the cost of enforcement is the cost of a weak agent**,
-and only pairing separates the two: on gpt-4o-mini banking, 3 of 8 clean tasks
-fail with no defense present at all. The llama row is a null rather than a win,
-a 12% baseline leaves nothing for a defense to cost, and it is kept in for that
-reason.
+**The cost has one cause, and it is located.** Across the ladder there are 18
+defense-caused losses, meaning a task that succeeded undefended and failed
+defended. Nine of them record a denial, and **every recorded denial is the
+`intent-envelope` layer** — off-plan-and-consequential, 10 of 10. No other rung
+in the stack denies a benign task anywhere in this data. The utility cost is not
+diffuse and it is not the price of authorization in general; it is one rule, and
+[gate_contribution.md](../benchmarks/results/gate_contribution.md) shows the same
+layer earning 71 unique catches, so the trade it makes is real in both
+directions.
 
-The direction this supports is that the cost is not a fixed property of the
-gateway; it is a property of the pairing between the gateway and the agent, and
-it shrinks as agents improve. Confirming it needs more models and more tasks per
-model, not a tighter reading of this table
-([the 4x4](../benchmarks/results/live_ladder.md)).
+**The other nine losses record no denial at all**, and that bounds how much of
+this table is the defense. A task counted as a defense-caused loss with nothing
+denied failed for some other reason — the agent varies run to run — so paired
+attribution is an upper bound on the cost, not a measurement of it. Half of the
+18 is attributable; the rest is unexplained and is reported as such rather than
+charged to the gateway.
+
+**On whether the cost falls with model strength, the paired test says no.** The
+four models run identical tasks, so the comparison is paired and McNemar is the
+right test. `grok-4-1-fast` against `gpt-4o-mini` is 1 loss to 6 on 23 tasks
+eligible under both, exact p = 0.125; against `gpt-oss-120b`, 2 to 6, p = 0.289.
+The direction is consistent and the evidence does not reach significance at this
+n. An unpaired Fisher test on the same data returns p = 0.043, and that number is
+an artifact of discarding the pairing rather than a result.
+
+Closing this needs more models, and the ladder cannot currently supply them:
+Foundry's serving of Llama-3.3-70B rejects any request defining more than one
+tool and AgentDojo's banking suite defines eight, while grok-4 takes over five
+hours on a single suite. Both exclusions are serving limits, verified directly
+rather than inferred from a failure.
 
 **One limit outranks all of it.** Every number above comes from corpora whose
 tasks are mostly specified in the prompt. On

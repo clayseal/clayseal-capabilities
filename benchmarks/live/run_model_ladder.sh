@@ -42,8 +42,14 @@ OUT="benchmarks/results/model-ladder"
 mkdir -p "${OUT}"
 
 FOUNDRY_BASE="https://clayseal-foundry.services.ai.azure.com/models"
+# The resource group is a deployment detail, not a constant, and redacting it
+# to a placeholder left this line unrunnable: `-g <aoai-resource-group>` is not
+# a shell variable, it is a syntax error waiting for whoever tried to reproduce
+# the ladder. It comes from the environment now, with a message that says what
+# to set rather than failing inside `az`.
+FOUNDRY_RG="${CLAYSEAL_FOUNDRY_RG:?set CLAYSEAL_FOUNDRY_RG to the resource group holding the Foundry account}"
 FOUNDRY_KEY="$(az cognitiveservices account keys list -n clayseal-foundry \
-  -g <aoai-resource-group> --query key1 -o tsv)"
+  -g "${FOUNDRY_RG}" --query key1 -o tsv)"
 
 # AgentDojo validates the model id against its own enum, so every run passes the
 # same recognized id while the client underneath is pointed at a different
