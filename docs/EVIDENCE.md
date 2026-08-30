@@ -48,6 +48,7 @@ throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 | refuse everything | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
 | per-call authorization, given the policy | 8.3% (1/12) | 0/24, 97.5% upper bound 14.2% | 0.8% (1/132) |
 | dataflow taint | 0/12, 97.5% upper bound 26.5% | 8.3% (2/24) | 11.4% (15/132) |
+| LLM monitor (`gpt-4.1-mini`, full trajectory) | 0 of 12 | — | 0.8% (1/132) |
 | **Clay Seal** | **75.0% (9/12)** | **41.7% (10/24)** | **39.4% (52/132)** |
 
 **Read 39.4% as an average over two different cases, not as a rate.** Where the
@@ -55,6 +56,19 @@ scenario's grant configures a budget it is 83.3%; where it configures none,
 18.9%. Which case you are in is fixed before anything runs and readable from
 your own policy, so it is a condition you can check and not a rate you have to
 accept. [The split is below](#when-it-works-and-when-it-does-not).
+
+**The LLM monitor is the row to read twice.** Shown the same policy, the same
+history and the same proposed call, it contains **93.9%** of the attacks — second
+only to refusing everything, and far above this gateway's 40.9%. It does that by
+refusing **97% of the legitimate work**: 4 of 132 benign twins complete. On the
+conjunction it scores 1. A stronger model (`gpt-4.1`) over-blocks less, doubling
+completion at identical containment, and still scores 1 of 12 on the core set
+where the gateway scores 9
+([llm_monitor_baseline.md](../benchmarks/results/llm_monitor_baseline.md)).
+
+That is the argument for scoring the conjunction rather than containment. A
+benchmark reporting containment alone would rank an unusable monitor above a
+deployable gateway, and not narrowly.
 
 Per-call authorization scores 1 of 132, and the one it scores is the one worth
 understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a
