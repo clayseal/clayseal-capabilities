@@ -159,6 +159,14 @@ class SessionBroker:
     # Duck-typed. Absent means no freshness checking. Build with
     # `freshness.derive_invalidations`.
     freshness: Any | None = None
+    # INDEPENDENCE, not count. A quorum, a two-person rule and an idempotent
+    # retry all rest on subjects being distinct, and an agent that mints three
+    # personas and votes with all three satisfies the threshold by arithmetic
+    # while defeating it in substance. Every call is individually correct.
+    #
+    # Duck-typed. Absent means identities are taken at face value. Build with
+    # `identity.derive_identity_rules`.
+    identity: Any | None = None
     # WHICH COUNTERPARTY. `EgressPolicy` bounds the host an action may reach;
     # this bounds the entity it may name. "Pay Acme and Beta only" is not a
     # domain rule, and a session holding that list in its own sealed goal still
@@ -1383,6 +1391,18 @@ class SessionBroker:
                 return self._finalize(action, Outcome.DENY, "floor", (why,), None,
                                       is_write, start, blocked=True)
 
+        # Independence. That two subjects share a root is a fact about what
+        # this session watched happen, not an opinion about who they are, so it
+        # refuses on the same footing as a missing prerequisite.
+        if self.identity is not None:
+            ok, why = self.identity.check(action.tool, action.args, action.verb)
+            if not ok:
+                self._rollback(action, v_res, c_res)
+                self._telemetry(self.metrics.record_prevented,
+                                protected_write=is_write)
+                return self._finalize(action, Outcome.DENY, "floor", (why,), None,
+                                      is_write, start, blocked=True)
+
         # Entity binding, on the same rung and for the same reason: an action
         # naming a counterparty the sealed goal did not name. Split by
         # provenance, not by severity. A list the goal states in structured form
@@ -1674,6 +1694,10 @@ class SessionBroker:
         # one. Both directions are pinned by tests.
         if self.freshness is not None:
             self.freshness.observe(action.tool, action.verb)
+        # Same discipline: a refused mint created nothing, and a refused payment
+        # never claimed its key.
+        if self.identity is not None:
+            self.identity.observe(action.tool, action.args)
         return self._finalize(action, Outcome.ALLOW, layer, reasons, score,
                               is_write, start)
 

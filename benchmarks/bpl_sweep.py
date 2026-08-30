@@ -61,7 +61,24 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario, is_bro
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
               "llm-monitor", "clayseal", "clayseal+obligations",
-              "clayseal+entities", "clayseal+freshness")
+              "clayseal+entities", "clayseal+freshness", "clayseal+identity")
+
+#: The goal-derived rungs, in the order they were added. Each arm carries every
+#: rung to its LEFT, so a column reads as the increment over its neighbour and
+#: the published `clayseal` arm never moves.
+#:
+#: This is a ladder rather than a membership test per rung because the tests
+#: were membership tuples that had to be edited in three places to add an arm,
+#: and the first arm added that way silently measured an undefended run.
+_LADDER = ("clayseal", "clayseal+obligations", "clayseal+entities",
+           "clayseal+freshness", "clayseal+identity")
+
+
+def _carries(condition: str, rung: str) -> bool:
+    """Does this arm carry `rung`? True for the rung itself and everything after."""
+    if condition not in _LADDER:
+        return False
+    return _LADDER.index(condition) >= _LADDER.index(rung)
 
 
 
@@ -77,8 +94,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
         return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
                 "error": None, "outcomes": []}
     broker = scen.make_broker() if is_broker_arm(condition) else None
-    if broker is not None and condition in ("clayseal+obligations",
-                                            "clayseal+entities", "clayseal+freshness"):
+    if broker is not None and _carries(condition, "clayseal+obligations"):
         # Precedence read from the SEALED GOAL and the tool catalogue, the same
         # trusted inputs the derived-count rung uses. Nothing here reads the
         # scenario's label, its violation predicate or its scripts.
@@ -88,8 +104,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
         rules = derive_obligations(summary, catalog)
         if rules:
             broker.obligations = ObligationLedger(obligations=rules)
-    if broker is not None and condition in ("clayseal+entities",
-                                            "clayseal+freshness"):
+    if broker is not None and _carries(condition, "clayseal+entities"):
         # Which counterparty, from the same two trusted inputs and nothing else:
         # the goal's own structured intent, and failing that its summary
         # sentence. The first is authority and denies; the second is a reading
@@ -105,7 +120,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
             bindings = derive_bindings(getattr(goal, "summary", "") or "")
         if bindings:
             broker.entities = EntityLedger(bindings=bindings)
-    if broker is not None and condition == "clayseal+freshness":
+    if broker is not None and _carries(condition, "clayseal+freshness"):
         # Invalidation clauses, read from the sealed goal and nothing else. The
         # goal must NAME the invalidator; where it does not, this derives
         # nothing rather than guessing which call moves the world.
@@ -120,6 +135,16 @@ def _replay(scen, condition: str, script, verb_fn=None,
             goal_verb=lead.group(1) if lead else None)
         if rules:
             broker.freshness = FreshnessLedger(invalidations=rules)
+    if broker is not None and _carries(condition, "clayseal+identity"):
+        # Independence, armed only by a sealed goal that says "distinct" or
+        # "idempotent". The root map is built from mints this session watched
+        # go past, so it is a fact about history rather than a claim about who
+        # anyone is.
+        from clayseal.capabilities.identity import derive_identity_rules
+        rules = derive_identity_rules(
+            getattr(getattr(broker, "goal", None), "summary", "") or "")
+        if rules is not None:
+            broker.identity = rules
     if broker is not None and confidentiality == "derived":
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and

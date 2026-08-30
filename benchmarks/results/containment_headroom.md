@@ -9,19 +9,28 @@ python -m benchmarks.bpl_sweep --suite full --json /tmp/bpl.json
 The gateway contains 54 of 132 attacks. This is an analysis of the other 78,
 and it starts from a measurement that changes the question.
 
-**Three of the classes below have since been built and measured**, all by
+**Four of the classes below have since been built and measured**, all by
 deriving the rule from the sealed goal rather than by extending the policy
 language: precedence ([obligations.md](obligations.md), +10 joint), entity
-binding ([entities.md](entities.md), +2) and freshness
-([freshness.md](freshness.md), +3). Together that is **15 gains against 0
-regressions, exact McNemar p = 6.1e-05**; containment is 69 of 132 and completion
-is unchanged at 130.
+binding ([entities.md](entities.md), +2), freshness
+([freshness.md](freshness.md), +3) and independence
+([identity.md](identity.md), +3). Together that is **18 gains against 0
+regressions, exact McNemar p = 7.63e-06**; containment is 72 of 132 and
+completion is unchanged at 130.
 
 A fourth, separation of duties, was built and removed. The section at the end of
 this file says why, and it is the reason the estimates in the table below should
 be read as upper bounds rather than as forecasts: each rung reached only the
 scenarios whose sealed goal NAMES the thing being constrained, which was three of
 six for freshness and none of four for duties.
+
+The derived-aggregate class in that table is smaller than it looks. Of its eleven
+remaining scenarios, **seven declare no ceiling at all**, so no budget rung can
+bound them, and `gross-exposure-net-mask`, the flagship example, declares a
+ceiling deliberately pointed at the wrong quantity (`netish` at net + 50,000)
+while its goal names a gross bound that appears nowhere. What was reachable there
+was not aggregation but **identity**, and it is measured in
+[identity.md](identity.md).
 
 ## The signal is there. The gateway is not reading it.
 

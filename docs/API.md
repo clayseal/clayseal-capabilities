@@ -1,6 +1,6 @@
 # API reference
 
-`clayseal.capabilities` exports 67 names. **Four of them are the API most
+`clayseal.capabilities` exports 69 names. **Four of them are the API most
 integrations use**, and the rest exist for deployments that need to build the
 pieces themselves. This page is the map; the per-symbol detail lives in the
 module docstrings, which is where it stays correct.
@@ -108,6 +108,36 @@ who re-approves after amending is doing the right thing and must not be refused.
 A *consuming* call never clears, even when its name matches: a tool named
 "execute with approval" names the approval it spends, and without that split the
 rule either latches or clears itself on the action it existed to refuse.
+
+## Independence: subjects that are counted but not distinct
+
+A quorum, a two-person rule and an idempotent retry all rest on subjects being
+distinct. An agent that mints three personas and votes with all three meets a
+three-signature threshold by arithmetic and defeats it in substance.
+
+| export | what it is |
+| --- | --- |
+| `derive_identity_rules` | arms from a **sealed goal** saying "distinct" or "idempotent", and returns nothing otherwise |
+| `IdentityLedger` | `observe(tool, args)` records, `check(tool, args, verb)` gates |
+
+```python
+from clayseal.capabilities import derive_identity_rules
+
+broker.identity = derive_identity_rules(goal.summary)
+```
+
+**The root rule.** An identity this session minted has this session as its root;
+one minted under a parent inherits that parent's root; one the session did not
+create is its own root. Each clause states what the session watched happen, which
+is why this rung may deny.
+
+The refusal condition is a **collapse, never a count**: distinct roots fewer than
+distinct subjects. One subject resolving to one root is ordinary. Three signers
+this session did not create are three roots and are allowed, which is the case a
+root-counting rule has to survive.
+
+**The refusal lands on the consuming act**, not on the vote. Casting a vote with
+an alias is not the harm; executing on the quorum it purports to establish is.
 
 ## Entity binding: which counterparty
 

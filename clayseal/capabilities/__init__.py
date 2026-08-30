@@ -28,6 +28,9 @@ _EXPORTS: dict[str, str] = {
     "Obligation": "obligations",
     "ObligationLedger": "obligations",
     "derive_obligations": "obligations",
+    # identity: subjects that are counted but are not independent
+    "IdentityLedger": "identity",
+    "derive_identity_rules": "identity",
     # freshness: the justification an invalidator poisoned
     "FreshnessLedger": "freshness",
     "Invalidation": "freshness",
@@ -231,6 +234,7 @@ __all__ = [
     "GoalSpec",
     "Guardrail",
     "GuardrailError",
+    "IdentityLedger",
     "InMemoryUsedTokenStore",
     "Invalidation",
     "Mandate",
@@ -260,6 +264,7 @@ __all__ = [
     "default_capability_layer",
     "default_used_token_store",
     "derive_bindings",
+    "derive_identity_rules",
     "derive_invalidations",
     "derive_obligations",
     "external_authorizer",
