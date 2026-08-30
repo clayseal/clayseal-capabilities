@@ -34,6 +34,8 @@ from dataclasses import dataclass, field
 #: refuses work nobody prohibited.
 _BEFORE = re.compile(r"^(?P<pre>.{3,60}?)\s+before\s+(?P<gated>.{3,60})$", re.IGNORECASE)
 _WITHOUT = re.compile(r"^no\s+(?P<gated>.{3,60}?)\s+without\s+(?P<pre>.{3,60})$", re.IGNORECASE)
+#: "<prerequisite> then <gated>", the third form policies actually use.
+_THEN = re.compile(r"^(?P<pre>.{3,60}?)\s+then\s+(?P<gated>.{3,60})$", re.IGNORECASE)
 
 _STOP = frozenset({
     "the", "a", "an", "any", "all", "full", "and", "or", "of", "to", "for",
@@ -46,21 +48,41 @@ def _tokens(phrase: str) -> set[str]:
             if len(t) > 2 and t not in _STOP}
 
 
-def _match_tools(phrase: str, catalog: set[str]) -> frozenset[str]:
-    """Tools whose name shares a significant token with `phrase`.
+def _score(phrase: str, tool: str) -> float:
+    """How much of `phrase` this tool's name accounts for, 0 to 1.
 
-    Token overlap rather than an embedding: the catalogue is small, enumerable
-    and trusted, and a nearest-neighbour match that is 80% right is a rule that
-    blocks the wrong tool 20% of the time.
+    Coverage rather than a raw count, because a raw count ties exactly where the
+    answer is clearest. "Disclose before related-party pay" gives
+    `disclose_related` one shared token with each side, a tie that drops it and
+    kills the rule; it covers 1 of 1 tokens of "Disclose" and 1 of 3 of
+    "related-party pay", so coverage puts it on the side it plainly belongs to.
     """
     want = _tokens(phrase)
     if not want:
-        return frozenset()
-    hits = set()
+        return 0.0
+    return len(_tokens(tool) & want) / len(want)
+
+
+def _split_tools(pre: str, gated: str,
+                 catalog: set[str]) -> tuple[frozenset[str], frozenset[str]]:
+    """Assign each tool to the side it matches more strongly, or to neither.
+
+    A tool matching BOTH sides used to be deleted from both, which silently
+    killed the whole rule. "Disclose before related-party pay" is the case:
+    `disclose_related` shares "disclose" with the prerequisite and "related"
+    with the gated phrase, so a rule the scenario states in its own sealed goal
+    produced nothing at all. Scoring each side and giving the tool to the
+    stronger one keeps the rule. A genuine tie is still dropped, because a tool
+    that is equally both is evidence of neither.
+    """
+    pre_hits: set[str] = set()
+    gated_hits: set[str] = set()
     for tool in catalog:
-        if _tokens(tool) & want:
-            hits.add(tool)
-    return frozenset(hits)
+        p, g = _score(pre, tool), _score(gated, tool)
+        if p == g:
+            continue
+        (pre_hits if p > g else gated_hits).add(tool)
+    return frozenset(pre_hits), frozenset(gated_hits)
 
 
 @dataclass(frozen=True)
@@ -88,14 +110,11 @@ def derive_obligations(goal_summary: str, catalog: set[str]) -> list[Obligation]
         clause = clause.strip()
         if not clause:
             continue
-        for pattern in (_WITHOUT, _BEFORE):
+        for pattern in (_WITHOUT, _BEFORE, _THEN):
             m = pattern.match(clause)
             if not m:
                 continue
-            gated = _match_tools(m.group("gated"), catalog)
-            requires = _match_tools(m.group("pre"), catalog)
-            # Both sides must resolve, and a tool cannot be its own prerequisite.
-            gated, requires = gated - requires, requires - gated
+            requires, gated = _split_tools(m.group("pre"), m.group("gated"), catalog)
             if gated and requires:
                 out.append(Obligation(gated, requires, clause))
             break

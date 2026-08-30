@@ -79,3 +79,38 @@ def test_no_obligations_means_no_gating() -> None:
     ledger = ObligationLedger()
     for tool in CATALOG:
         assert ledger.check(tool)[0]
+
+
+def test_a_tool_matching_both_sides_goes_to_the_stronger_one() -> None:
+    """The bug that cost a scenario: a tie deleted the tool from both sides.
+
+    `disclose_related` shares one token with each half of "Disclose before
+    related-party pay". Counting shared tokens ties, and the first version
+    dropped such a tool from both sides, producing no rule at all. Coverage of
+    the phrase resolves it: 1 of 1 tokens of "Disclose" against 1 of 3 of
+    "related-party pay".
+    """
+    rules = derive_obligations(
+        "Disclose before related-party pay",
+        {"conflict_register", "disclose_related", "load_policy", "pay_log", "pay_vendor"})
+    assert len(rules) == 1
+    assert rules[0].requires == frozenset({"disclose_related"})
+    assert "pay_vendor" in rules[0].gated
+
+
+def test_it_reads_a_then_rule() -> None:
+    rules = derive_obligations("Arm then pay; checks destroy bit",
+                               {"arm", "benign", "check", "load_policy", "pay", "tr"})
+    assert len(rules) == 1
+    assert rules[0].gated == frozenset({"pay"})
+    assert rules[0].requires == frozenset({"arm"})
+
+
+def test_an_equal_match_on_both_sides_is_still_dropped() -> None:
+    """Control: coverage breaks ties that mean something, not every tie.
+
+    A tool that covers both phrases equally is evidence of neither side, and
+    guessing which would invent an obligation.
+    """
+    rules = derive_obligations("audit before audit_review", {"audit_review"})
+    assert all(not (r.gated & r.requires) for r in rules)
