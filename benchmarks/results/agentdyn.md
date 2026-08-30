@@ -1,5 +1,12 @@
 # AgentDyn: the system does not work on open-ended tasks
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 AgentDyn (arXiv:2602.03117) is the 2026 successor to AgentDojo from the DRIFT
 authors. Its tasks are open-ended and require the agent to plan at runtime
 rather than follow a plan fixed in advance, and it embeds helpful third-party

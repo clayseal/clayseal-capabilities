@@ -2,6 +2,8 @@
 
 STATUS: superseded in part
 
+**Use [coverage.md](coverage.md) instead**, which was re-derived against this commit. The in-surface containment figures below are wrong. The current partition gives AgentHarm 189/696 surface-leaving and 507/696 in-surface, and the shipped stack contains 100.0% of the surface-leaving class against 38.7% [32.8%, 44.2%] of the in-surface one.
+
 ## Correction
 
 The in-surface containment figures for the shipped stack below, 24.9% on

@@ -1,5 +1,12 @@
 # What an incomplete mandate costs, and what it takes to fix
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 Our headline friction number, 0.00% false-block across 18,356 benign events, is
 conditional on a mandate that names everything the task will touch. Rebuild the
 grant from half a task's benign events and score the other half, and it becomes:

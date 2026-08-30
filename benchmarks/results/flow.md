@@ -1,5 +1,16 @@
 # Confidentiality flow, re-measured
 
+STATUS: current
+
+Re-derived against this commit; the figures below reproduce. The previous
+revision carried no `STATUS` line, which is what `unstamped` meant: a
+reproduce command with nothing recording whether anyone had run it.
+
+Fresh run of `python -m benchmarks.flow --corpus tau2 --count 200`:
+leak arm contained 200/200, legitimate arm false-blocked 0 of 200, real traffic
+false-blocked 4 of 1,242 benign events (0.3%). The multi-fragment escapes below
+are unchanged and still carry their `NOT SEEDED` per-trial spread.
+
 Every number below was produced on 2026-08-09 by `python -m benchmarks.flow`
 against the working tree, or by a probe printed in the Reproduce section at the
 end. The file it replaces was written before the arms that follow existed, and

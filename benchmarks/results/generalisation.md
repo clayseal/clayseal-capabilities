@@ -1,5 +1,12 @@
 # Pattern generalisation: the friction was a mandate-language problem
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 Held-out false-block was the worst number in the project: **47.91% on tau2**. A
 grant rebuilt from half a session's benign events refused roughly half the rest.
 

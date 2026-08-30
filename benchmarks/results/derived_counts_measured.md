@@ -2,6 +2,8 @@
 
 STATUS: superseded in part
 
+**Two claims below are wrong**, both found by re-measurement rather than by review. The derived-count rung is off by default and its measured cost is 8 further attacks caught out of 507 against 26 benign actions interrupted out of 278, roughly three interruptions per catch; that trade, not the figures below, is what the README quotes.
+
 ## Correction, and it is not a small one
 
 Two claims below are wrong, and both were found by

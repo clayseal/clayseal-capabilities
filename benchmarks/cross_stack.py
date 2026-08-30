@@ -155,6 +155,15 @@ def render(payload: dict) -> str:
     lines = [
         "# Cross-stack generalizability",
         "",
+        # Emitted by the generator, not hand-added: this file is rewritten on
+        # every run, so a stamp edited into it by hand disappears the next time
+        # anyone runs the command. It was `unstamped` for exactly that reason.
+        "STATUS: current",
+        "",
+        "```bash",
+        "python -m benchmarks.cross_stack",
+        "```",
+        "",
         payload["note"],
         "",
         "| Corpus | Tag | Hard | Soft | Union | FB (h/s) | J | Ladder | n |",

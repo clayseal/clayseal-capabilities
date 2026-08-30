@@ -1,7 +1,7 @@
 # Live tier: the model ladder, and a correction to our utility story
 
-STATUS: superseded
-> **STATUS: superseded on one axis.** Every "supervised utility" figure below is a
+STATUS: current
+> **The `supervised utility` column below is WITHDRAWN.** Every "supervised utility" figure below is a
 > **counterfactual**, not a measurement. It is `autonomous + step-up losses`, which
 > assumes both that a human approved and that the task then succeeded. Nothing
 > resolved a step-up when these ran: `SessionBroker.resolve_step_up` and

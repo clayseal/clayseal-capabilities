@@ -1,5 +1,14 @@
 # SLEIGHT-Bench: where our authorization layer has no signal
 
+STATUS: current
+
+Re-derived against this commit; the figures below reproduce. The previous
+revision carried no `STATUS` line, which is what `unstamped` meant: a
+reproduce command with nothing recording whether anyone had run it.
+
+`python -m benchmarks.cli --dataset sleight --ci` gives union 31.0%, hard 7.8%,
+soft 23.3%, false-block 3.5%, matching the `sleight[stack]` scoreboard row.
+
 SLEIGHT-Bench (arXiv:2605.16626, Anthropic alignment) is a 2026 benchmark of a
 different kind from anything else we replay. RedCode, AgentHarm, and ASB
 catalogue *risky operations*. SLEIGHT catalogues *evasion*: 44 attacks in which a

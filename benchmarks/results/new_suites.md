@@ -1,5 +1,14 @@
 # Three new external suites: RedCode, AgentHarm, ASB
 
+STATUS: current
+
+Re-derived against this commit; the figures below reproduce. The previous
+revision carried no `STATUS` line, which is what `unstamped` meant: a
+reproduce command with nothing recording whether anyone had run it.
+
+`python -m benchmarks.cli --dataset redcode` gives union 99.9%, hard 99.9%,
+false-block 0 of 344, matching the `redcode[stack]` scoreboard row.
+
 Added to the deterministic-replay harness and run against the full enforcement
 ladder. All three ship static labeled ground truth, so these are CPU-only
 replays with no LLM in the loop.

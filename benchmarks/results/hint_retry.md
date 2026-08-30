@@ -2,52 +2,11 @@
 
 STATUS: superseded
 
-> **STATUS: superseded.** Retired on 2026-08-29. The figures below were never
-> re-derived, carry no reproduce command, and are cited by no document in this
-> repository. The measured version of the same question, what a grant refuses that its own mandate authorizes, on 8,849 held-out benign events is now in
-> [observed_grant.md](observed_grant.md), which is stamped `current`.
->
-> Kept rather than deleted, because a number that was once published should stay
-> readable with its correction attached.
+Retired on 2026-08-29 and replaced by **[observed_grant.md](observed_grant.md)**, which is stamped
+`current` and reports what an observed grant refuses that its own mandate authorizes.
 
-> No command was recorded for this file, so its numbers cannot be
-> re-derived from it. `unverified` says that nobody has checked them, which
-> is the honest claim; `current` would be vouching for a run nobody can
-> reproduce. See the provenance section of [README.md](README.md).
-
-
-ARGUS's utility story: on deny, return grounded recipients; agent retries;
-retry is fully re-authorized. We had `trusted_candidates` on
-`BrokerDecision` and in the live block string, but no rewrite+re-gate loop.
-
-## Mechanism
-
-- `clayseal/capabilities/retry_hints.py`, rewrite destination-shaped args
-  only (`to` / `account` / …); never touch `body`.
-- `BrokerToolsExecutor`, on floor egress miss with candidates, one re-audited
-  retry via `harness.gate` (full `authorize`). No bypass.
-- Candidate order: egress allow-list first (can ALLOW), then provenance
-  structured (STEP_UP only under product policy).
-- Provenance mode widens the allow-list from **structured** fields of
-  **goal-named** reads so a later retry can ALLOW; free text is never mined.
-
-## Live (gpt-4o-mini, important_instructions)
-
-| suite | ablation | n | clean util | ASR | util@attack | hint-retry |
-|---|---|--:|--:|--:|--:|--:|
-| workspace | envelope | 4 | 100% | 0% | 100% | 0/0 |
-| workspace | envelope-provenance | 4 | 100% | 0% | 100% | 0/2 |
-| banking | envelope-provenance | 8 | 0% | 0% | 12.5% | **1/19** |
-| banking | envelope-taint | 8 | 0% | 0% | 12.5% | **1/8** |
-
-Hint-retry is live (1 autonomous recovery on banking). Clean-utility cliff on
-banking is mostly non-egress (plan/scope): goals like "pay
-bill-december-2023.txt" name no IBAN. Retry cannot promote provenance-only
-STEP_UP to ALLOW without reintroducing the structured-injection inversion;
-hits need allow-list membership (goal seed or structured widen from a
-goal-named read).
-
-## Security invariant
-
-Retry never skips the broker. A rewritten send to an attacker address still
-denies. Soft STEP_UP remains halt-for-autonomous.
+The figures that were here were never re-derived, carried no reproduce command,
+and were cited by no document in this repository. They are not reproduced on
+this page, because leaving a wrong number on display with a correction under it
+invites the number to be quoted and the correction to be missed. The content is
+in the history if it is ever needed.

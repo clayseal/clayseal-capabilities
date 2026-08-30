@@ -2,6 +2,8 @@
 
 STATUS: superseded in part, see the correction below
 
+**Use [bpl_head_to_head.md](bpl_head_to_head.md) instead.** The containment column below is inflated by 27 points because the mandates these scenarios were measured against forbade the work the scenarios ask for. The corrected joint-metric figure is **39.4% (52/132)**, cluster-robust [24.3%, 57.9%], at 2 benign scripts refused and 0 losing work.
+
 > ## CORRECTION 2026-08-20, the containment column was inflated by 27 points
 >
 > **Every containment number below is superseded.** The mandates these scenarios

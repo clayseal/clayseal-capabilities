@@ -1,5 +1,12 @@
 # Does the mechanism have a runtime input?
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 A benchmark hands a mechanism whatever it asks for. A deployment does not. This
 is the check that separates a result from a result-shaped thing, and it is not
 the same question as the attribution check already applied everywhere

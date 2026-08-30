@@ -1,5 +1,12 @@
 # Where the utility goes, and what fixing it is worth
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 Diagnosis of every false block the live tier recorded across four models and
 four suites, then a targeted change and its measured effect. Reproduce the
 first half with `python -m benchmarks.live.diagnose_denials`.

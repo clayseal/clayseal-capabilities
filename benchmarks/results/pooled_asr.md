@@ -1,5 +1,14 @@
 # Pooled attack-success rate: 216 runs, four suites, three sweeps each
 
+STATUS: unverified
+
+This is a **live-model** result: 216 runs against `gpt-4o-mini` through the
+OpenAI API. Re-deriving it needs credentials and costs money, and neither is
+available in the environment this was checked in, so it stays `unverified`
+rather than being vouched for. Its per-suite figures are consistent with
+[head_to_head_injection.md](head_to_head_injection.md), which is `current`,
+but consistency is not reproduction.
+
 Every live security number in this repository previously came from a single
 sweep of n=18. At that size a clean result supports a claim to about one
 significant figure: 0 of 18 has a Wilson upper bound of **17.6%**. We also had

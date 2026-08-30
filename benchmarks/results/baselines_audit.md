@@ -1,5 +1,12 @@
 # Baselines audit: the "Best alternative" column
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 
 > The audited document is kept outside this repository. The findings below are
 > checks of its claims against this code.

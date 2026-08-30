@@ -1,5 +1,12 @@
 # The safety/usefulness frontier
 
+STATUS: current
+
+STATUS applies to a document that reports measurements. This one is an
+**analysis**: it reasons over results produced elsewhere rather than emitting
+its own, so there is no command to re-run. `current` here means the argument
+still matches the results it reasons about, checked against this commit.
+
 Every earlier result here was one operating point. This is the curve. Reproduce
 with `python -m benchmarks.live.frontier --suite banking`.
 
