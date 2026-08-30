@@ -119,7 +119,7 @@ them can express "this was measured once and no command was recorded". Stamping
 
 They are kept because deleting a measurement for being inconvenient to re-derive
 is worse than publishing it with a caveat. They are not evidence you can check.
-`why_we_fail.md` is the one to know about, because THREAT_MODEL.md cites it for
+`four_axes.md` is the one to know about, because THREAT_MODEL.md cites it for
 the 6.3% content-defined-harm figure.
 
 `unverified` is not a way to clear the debt, and the gate is built so it cannot

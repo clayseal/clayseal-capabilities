@@ -153,7 +153,7 @@ containment is monotone up the ladder"). It was not visible before because the
 fixture is the only other path-scoped corpus and it contains no
 connector-substitution case.
 
-**Fixed** (see [rigor_pass.md](rigor_pass.md)) by the second option:
+**Fixed** (see [validity_gates.md](validity_gates.md)) by the second option:
 `TaskScopeEngine` now composes the capability check rather than replacing it.
 `connector-substitution` goes 0% to 100% at that rung with false-block
 unchanged at 0%, and overall containment moves 89% to 92% and 95% to 97%. The

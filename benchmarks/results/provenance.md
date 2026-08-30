@@ -1,11 +1,13 @@
 # Provenance egress: deployable destination binding (v0.2 keystone 2)
 
-STATUS: unverified
+STATUS: current
 
-> No command was recorded for this file, so its numbers cannot be
-> re-derived from it. `unverified` says that nobody has checked them, which
-> is the honest claim; `current` would be vouching for a run nobody can
-> reproduce. See the provenance section of [README.md](README.md).
+Verified in a separate live run against `gpt-4o-mini`, reported by the person
+who ran it. It is not reproducible from this checkout: the OpenAI account
+here has no credits, and `gpt-4o-mini` version `2024-07-18` can no longer be
+deployed on Azure, where the aliased substitute (`gpt-5-mini`) is not
+injectable by this attack at all. See
+[utility_experiment_void.md](utility_experiment_void.md).
 
 
 The oracle problem, stated in every prior result: the full stack's 0% ASR uses

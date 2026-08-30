@@ -284,7 +284,7 @@ measurement rather than review. The invariants that now fail the build:
 - **Every arm of a benchmark must clear the ladder below the mechanism under
   test.** Without it, burst and flow would both be re-measuring scope.
 
-Sources: `why_we_fail.md`, `burst.md`, `flow.md`, `agentdyn.md`, `pooled_asr.md`.
+Sources: `four_axes.md`, `burst.md`, `flow.md`, `agentdyn.md`, `pooled_asr.md`.
 
 ## One security regression this caught before it shipped
 
