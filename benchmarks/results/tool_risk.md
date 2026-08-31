@@ -1,6 +1,21 @@
 # Which tools carry the loss, and can that be predicted in advance?
 
-STATUS: current
+STATUS: exploratory. NOT PUBLICATION GRADE, and deliberately excluded from the
+paper. Three reasons, the first of which is disqualifying:
+
+1. **The prior is fit on the evaluation set.** The `_RISK` lexicon was written
+   after reading these scenarios, so AUC 0.733 is measured on the same tool names
+   it was built against. No interval fixes that; it is the wrong kind of error.
+   An honest number needs the lexicon fixed before seeing the suite, or a
+   leave-one-authoring-batch-out evaluation scored only on held-out batches.
+2. **The 33 treats the benign twin as a complete oracle** for legitimate
+   behaviour, with no realistic partial-observation counterpart measured.
+3. **Neither number carries a cluster-robust interval** over authoring batches,
+   which is what the rest of this work commits to.
+
+Kept because the ablation table and the free-containment tail are real
+measurements that point somewhere, and because the reasons above are worth
+having written down. Do not quote the AUC.
 
 ```bash
 python -m benchmarks.tool_risk
