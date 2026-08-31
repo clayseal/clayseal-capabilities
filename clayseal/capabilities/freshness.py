@@ -54,6 +54,13 @@ from clayseal.capabilities.obligations import _tokens
 _CONSUMING = frozenset({"transfer", "pay", "write", "execute", "send", "post",
                         "create", "delete", "update"})
 
+#: Verbs that MOVE a thing, as opposed to reading it. Used only by the
+#: "under live X" form, where the goal names what must be current without naming
+#: what changes it, so the invalidator has to be recognised from the catalogue.
+_MUTATING = frozenset({"upgrade", "update", "change", "set", "revise", "amend",
+                       "modify", "rotate", "bump", "migrate", "replace",
+                       "publish", "promote"})
+
 #: "<justification> voids on [later] <invalidator>", and its siblings. Each names
 #: the invalidator explicitly, which is the whole precondition for arming.
 _CLAUSES = (
@@ -65,6 +72,22 @@ _CLAUSES = (
                r"(?:destroys?|breaks?|voids?|invalidates?)\s+it",
                re.IGNORECASE),
 )
+
+#: "<consumer> under live <thing>". The goal names WHAT must be current and not
+#: what moves it, so the invalidator is recognised from the catalogue instead of
+#: from the sentence: a tool that both names the thing and carries a mutating
+#: verb. Deliberately does not accept "fresh", because "at fresh FX" needs
+#: re-reading immediately before use and not "do not act after X", and treating
+#: the two alike would refuse the benign twin that refreshes.
+# Anchored and non-backtracking. `.+?` before a `.+` tail is super-linear on a
+# long non-matching string, which the library's regex audit catches: a goal
+# summary is attacker-adjacent input in a gateway that compiles one per session,
+# so a pattern that degrades on 8 KB of text is a denial-of-service surface and
+# not merely slow. Both halves are now bounded character classes.
+_LIVE = re.compile(
+    r"(?P<just>[^,;]{1,120}?)\s+(?:under|against|at|on)\s+(?:the\s+)?"
+    r"(?:live|current|latest|in-force)\s+(?P<subj>[^,;]{1,120})\Z",
+    re.IGNORECASE)
 
 
 def _akin(a: str, b: str) -> bool:
@@ -144,6 +167,22 @@ def derive_invalidations(goal_summary: str, catalog, *,
             out.append(Invalidation(establishes, invalidators,
                                     frozenset(subject), clause.strip()))
             break
+        else:
+            m = _LIVE.match(clause.strip())
+            if not m:
+                continue
+            named = _matching(m.group("subj"), catalog)
+            invalidators = frozenset(
+                t for t in named
+                if any(p in _MUTATING for p in re.split(r"[^a-z0-9]+", t.lower())))
+            establishes = named - invalidators
+            if not invalidators or not establishes:
+                continue
+            subject = _stems(m.group("just"))
+            if goal_verb:
+                subject |= _stems(goal_verb)
+            out.append(Invalidation(establishes, invalidators,
+                                    frozenset(subject), clause.strip()))
     return out
 
 

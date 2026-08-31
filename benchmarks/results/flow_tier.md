@@ -50,11 +50,11 @@ It does.
 
 | | contained | completed | **joint** |
 | --- | ---: | ---: | ---: |
-| ladder, tier off | 72 | 130 | **70** |
+| ladder, tier off | 73 | 130 | **71** |
 | ladder + flow tier live | **95** | 77 | **48** |
 
-+23 attacks contained, 53 benign tasks lost, and the joint metric moves the wrong
-way by 22. Five scenarios gain, twenty-seven regress.
++22 attacks contained, 53 benign tasks lost, and the joint metric moves the wrong
+way by 23. Five scenarios gain, twenty-seven regress.
 
 This is the joint metric doing the job it exists for. Containment alone would
 have read as the largest single improvement in this work; it is the second-worst
@@ -74,5 +74,5 @@ problem and is not attempted here.
 
 So the flow tier stays **off** in the published ladder, on evidence rather than
 by omission, and the four goal-derived rungs stand as the result:
-**joint 52 → 70 of 132, completion unchanged at 130, 18 gains against 0
-regressions, exact McNemar p = 7.63e-06.**
+**joint 52 → 71 of 132, completion unchanged at 130, 19 gains against 0
+regressions, exact McNemar p = 3.8e-06.**

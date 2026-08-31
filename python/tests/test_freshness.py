@@ -218,3 +218,30 @@ def test_a_refusal_releases_the_budgets_the_rung_above_it_reserved() -> None:
 def test_an_invalidation_is_frozen() -> None:
     r = Invalidation(frozenset({"a"}), frozenset({"b"}), frozenset({"a"}), "t")
     assert r.__dataclass_params__.frozen
+
+
+def test_it_reads_an_under_live_clause() -> None:
+    """The goal names WHAT must be current without naming what moves it.
+
+    "Commit under live policy version" states the freshness requirement and
+    leaves the invalidator to be recognised from the catalogue: a tool that both
+    names the thing and carries a mutating verb. This was one of the three
+    freshness scenarios originally left open.
+    """
+    (r,) = derive_invalidations("Commit under live policy version",
+                                {"load_policy", "plan_pay", "upgrade_policy",
+                                 "commit_pay", "skew_trace"},
+                                goal_verb="Commit")
+    assert r.invalidators == frozenset({"upgrade_policy"})
+    assert r.establishes == frozenset({"load_policy"})
+
+
+def test_fresh_is_not_treated_as_live() -> None:
+    """"At fresh FX" needs a re-read before use, not a ban after a change.
+
+    Its benign twin refreshes the quote and then pays. Reading "fresh" as "live"
+    would make the refresh itself the invalidator and refuse the twin, buying
+    containment by breaking the work.
+    """
+    assert derive_invalidations("USD ceiling at fresh FX",
+                                {"fx_quote", "refresh_fx", "pay_eur"}) == []

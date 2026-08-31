@@ -25,12 +25,12 @@ count is right and the independence is fake.
 | `clayseal` | 54 | 130 | 52 |
 | `+ obligations` | 64 | 130 | 62 |
 | `+ entities` | 66 | 130 | 64 |
-| `+ freshness` | 69 | 130 | 67 |
-| `+ identity` | **72** | **130** | **70** |
+| `+ freshness` | 70 | 130 | 68 |
+| `+ identity` | **73** | **130** | **71** |
 
 Three gains, zero regressions, completion unchanged. Cumulatively the four
-goal-derived rungs are **18 gains against 0 regressions, exact McNemar
-p = 7.63e-06**, against a published `clayseal` arm that has not moved.
+goal-derived rungs are **19 gains against 0 regressions, exact McNemar
+p = 3.8e-06**, against a published `clayseal` arm that has not moved.
 
 ## The root rule
 

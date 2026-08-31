@@ -23,10 +23,12 @@ TWO SOURCES, TWO VERDICTS
 
 WHICH ARGUMENT CARRIES THE ENTITY
 
-Only an argument whose name shares a token with the intent key or with the
-tool's own name: `pay_vendor(vendor=...)` under a `vendors` list. Checking every
-string argument would refuse a memo field that happens to name a third party,
-and a rule that refuses the memo is a rule an operator turns off.
+Only an argument whose name is akin to the intent key or to the tool's own name:
+`pay_vendor(vendor=...)` under a `vendors` list. Matching is by shared prefix and
+not by exact token, so a plural key still governs a singular argument on a tool
+named after something else. Checking every string argument would refuse a memo
+field that happens to name a third party, and a rule that refuses the memo is a
+rule an operator turns off.
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from clayseal.capabilities.freshness import _akin
 from clayseal.capabilities.obligations import _tokens
 
 #: "<verb> <A> and <B> only", the form a policy sentence actually uses.
@@ -110,7 +113,14 @@ class EntityLedger:
         for name, value in args.items():
             if not isinstance(value, str) or not value.strip():
                 continue
-            if _tokens(str(name)) & want:
+            # Morphology, the same shared-prefix rule the freshness rung uses.
+            # Exact token equality made this work only where the TOOL name
+            # happened to carry the key's word: a `vendors` list against
+            # `pay_counterparty(vendor=...)` matched nothing, and neither did
+            # `transfer(to_vendor=...)`, because "vendor" and "vendors" are
+            # different tokens. The suite hid it because every tool in it is
+            # named after the thing it pays.
+            if any(_akin(t, w) for t in _tokens(str(name)) for w in want):
                 out.append(value)
         return out
 

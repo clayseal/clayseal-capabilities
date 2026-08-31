@@ -13,9 +13,9 @@ and it starts from a measurement that changes the question.
 deriving the rule from the sealed goal rather than by extending the policy
 language: precedence ([obligations.md](obligations.md), +10 joint), entity
 binding ([entities.md](entities.md), +2), freshness
-([freshness.md](freshness.md), +3) and independence
-([identity.md](identity.md), +3). Together that is **18 gains against 0
-regressions, exact McNemar p = 7.63e-06**; containment is 72 of 132 and
+([freshness.md](freshness.md), +4) and independence
+([identity.md](identity.md), +3). Together that is **19 gains against 0
+regressions, exact McNemar p = 3.8e-06**; containment is 73 of 132 and
 completion is unchanged at 130.
 
 A fourth, separation of duties, was built and removed. The section at the end of
