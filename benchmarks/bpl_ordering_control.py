@@ -79,10 +79,12 @@ def _score(names, cut) -> dict:
         c = not a_violated
         # `completed` is "nothing was refused", exactly as `bpl_sweep` defines
         # it (line 212), NOT `progress >= 1.0`. Thirty compliant scripts end
-        # below 1.0 with nothing blocked at all, so scoring on progress would
-        # have handed the control a 30-scenario head start against a gateway
-        # measured a different way. A control graded on an easier metric than
-        # the thing it is controlling is not a control.
+        # below 1.0 with nothing blocked at all, so adding a progress clause
+        # holds the control to a STRICTER standard than the gateway it checks,
+        # and understates it: joint 2 rather than 3. Small here, because the
+        # control loses either way, but the direction is the point. A control
+        # accidentally graded harder than the system it is checking flatters
+        # that system, silently.
         m = b_refused == 0
         contained += c
         completed += m

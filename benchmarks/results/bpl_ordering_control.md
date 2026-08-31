@@ -56,13 +56,22 @@ is 44, so the "block nothing" endpoint still refused calls in the four longest
 scenarios and reported 102 completions where allow-all reaches 132. A control
 whose null endpoint is wrong cannot bound anything.
 
-**The control was graded on an easier metric than the gateway.** The first
-version scored a twin as completed when `progress >= 1.0`. That is not what
-`bpl_sweep` means by completed, which is *nothing was refused*
+**The control was graded on a different metric than the gateway, and the
+difference ran in OUR favour.** The first version scored a twin as completed when
+`progress >= 1.0` *and* nothing was refused. `bpl_sweep` means only the second
 (`bpl_sweep.py:212`). Thirty compliant scripts end below 1.0 with nothing blocked
-at all, so the control would have started with a thirty-scenario head start over
-the thing it was controlling. A control graded on a different metric is not a
-control.
+at all, so the extra clause held the control to a **stricter** standard than the
+gateway it was controlling, and understated it:
 
-Both are pinned by tests, on the principle that a broken control reports the most
-flattering possible result and reports it quietly.
+| grading | best position cut |
+| --- | --- |
+| stricter, as first written | contained 7, completed 13, **joint 2** |
+| matched to the gateway | contained 118, completed 4, **joint 3** |
+
+The effect is small here because the control loses either way. The direction is
+what matters: a control accidentally held to a harder standard than the system it
+is checking will always make that system look better, and it will do so silently.
+This was an error in our favour, and it is recorded as one.
+
+Both faults are pinned by tests, on the principle that a broken control reports a
+flattering result and reports it quietly.

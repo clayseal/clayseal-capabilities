@@ -35,9 +35,10 @@ def test_the_controls_endpoints_are_the_two_degenerate_policies(out) -> None:
 def test_counting_is_graded_on_the_same_metric_as_the_gateway(out) -> None:
     """`completed` is "nothing refused", not `progress >= 1.0`.
 
-    Thirty compliant scripts end below 1.0 with nothing blocked at all, so
-    grading the control on progress would hand it a thirty-scenario head start
-    over the gateway it is controlling.
+    Thirty compliant scripts end below 1.0 with nothing blocked at all, so an
+    extra progress clause holds the control to a STRICTER standard than the
+    gateway it checks and understates it. That error runs in our favour, which
+    is the kind nobody goes looking for.
     """
     pos = [r for r in out["rows"] if r["rule"] == "position cut"]
     assert pos[-1]["completed"] == out["n"], (
