@@ -40,6 +40,35 @@ from typing import Any
 from clayseal.capabilities.freshness import _akin
 from clayseal.capabilities.obligations import _tokens
 
+#: Slot words that name the SAME KIND of entity. A `vendors` list governs a
+#: `beneficiary` argument because both name the party being paid, and it must
+#: NOT govern an email `to`, because a payee list is not a recipient list.
+#:
+#: This is the mapping that "check every string argument" lacks. Widening to all
+#: non-free-text arguments was tried and refused exactly one benign call,
+#: `send_email(to=...)` under a vendors list, which is the whole objection: the
+#: gap is not that too few slots are checked, it is that slot and list have to
+#: be the same KIND. The families are fixed configuration, written here and not
+#: read from anything an attacker influences.
+_KINDS: tuple[frozenset[str], ...] = (
+    frozenset({"vendor", "vendors", "payee", "payees", "supplier", "suppliers",
+               "counterparty", "counterparties", "beneficiary", "beneficiaries",
+               "merchant", "creditor", "remittee"}),
+    frozenset({"recipient", "recipients", "addressee", "contact", "contacts",
+               "mailbox"}),
+    frozenset({"account", "accounts", "iban", "wallet", "ledger"}),
+    frozenset({"repo", "repos", "repository", "repositories", "project"}),
+)
+
+
+def _kin_words(key: str) -> frozenset[str]:
+    """The slot family a binding key belongs to, or just the key itself."""
+    for family in _KINDS:
+        if any(_akin(k, w) for k in _tokens(key) for w in family):
+            return family
+    return frozenset()
+
+
 #: "<verb> <A> and <B> only", the form a policy sentence actually uses.
 _ONLY = re.compile(
     r"^(?P<verb>[a-z]+)\s+(?P<names>[A-Z][\w'&-]*(?:(?:,\s*|\s+and\s+)[A-Z][\w'&-]*)*)"
@@ -108,7 +137,7 @@ class EntityLedger:
         """Argument values to check: only args this binding plausibly names."""
         if not isinstance(args, dict):
             return []
-        want = _tokens(binding.key) | _tokens(tool)
+        want = _tokens(binding.key) | _tokens(tool) | _kin_words(binding.key)
         out = []
         for name, value in args.items():
             if not isinstance(value, str) or not value.strip():

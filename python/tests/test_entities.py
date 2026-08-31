@@ -187,3 +187,37 @@ def test_a_refusal_releases_the_budgets_the_rung_above_it_reserved() -> None:
         assert broker.authorize(_act("Evil", 1)).outcome is want
         assert broker.authorize(_act("Acme", 2)).outcome is Outcome.ALLOW, (
             "two refused calls consumed a budget of two")
+
+
+def test_a_second_slot_of_the_same_kind_is_governed() -> None:
+    """A vendors list governs `beneficiary`, because both name the party paid.
+
+    Found by `benchmarks.invariance_rungs`. Widening to every non-free-text
+    argument was tried first and refused a benign `send_email(to=...)`, which is
+    the objection in one line: the gap was never that too few slots are checked,
+    it is that the slot and the list have to be the same KIND.
+    """
+    led = _ledger()
+    assert led.check("transfer", {"vendor": "Acme",
+                                  "beneficiary": "ContingencyCo"})[0] is False
+    assert led.check("disburse", {"payee": "ContingencyCo"})[0] is False
+
+
+def test_a_slot_of_a_different_kind_is_not_governed() -> None:
+    """A payee list must not govern an email recipient.
+
+    This is the control the kind mapping exists to preserve. Refusing it is what
+    "check every string argument" does, and it costs a benign send.
+    """
+    led = _ledger()
+    assert led.check("send_email", {"to": "ops@acme-internal.com"})[0] is True
+    assert led.check("notify", {"recipient": "ContingencyCo"})[0] is True
+
+
+def test_morphology_does_not_depend_on_the_tool_being_named_after_the_key() -> None:
+    """Exact token equality worked only where the tool carried the key's word."""
+    led = _ledger()
+    for tool, args in (("pay_counterparty", {"vendor": "ContingencyCo"}),
+                       ("transfer", {"to_vendor": "ContingencyCo"}),
+                       ("disburse", {"vendors": "ContingencyCo"})):
+        assert led.check(tool, args)[0] is False, (tool, args)

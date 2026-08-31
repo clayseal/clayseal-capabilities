@@ -72,7 +72,13 @@ the classes a goal actually names, and declassified sinks scoped to the
 destinations it permits. Deriving those from a one-line goal is a research
 problem and is not attempted here.
 
-So the flow tier stays **off** in the published ladder, on evidence rather than
-by omission, and the four goal-derived rungs stand as the result:
+**Scoping is the fix, and it was built and measured**: see
+[flow_scoped.md](flow_scoped.md), where a declaration limited to tools that name
+a confidential thing buys 3 attacks at zero benign cost, taking the joint score
+to 74. The broad declaration below stays on record as the control that motivated
+it.
+
+The unscoped tier stays **off** in the published ladder, on evidence and not by
+omission, and the four goal-derived rungs stand as the result:
 **joint 52 → 71 of 132, completion unchanged at 130, 19 gains against 0
 regressions, exact McNemar p = 3.8e-06.**

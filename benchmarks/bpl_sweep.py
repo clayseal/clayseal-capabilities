@@ -145,14 +145,15 @@ def _replay(scen, condition: str, script, verb_fn=None,
             getattr(getattr(broker, "goal", None), "summary", "") or "")
         if rules is not None:
             broker.identity = rules
-    if broker is not None and confidentiality == "derived":
+    if broker is not None and confidentiality in ("derived", "scoped"):
         # Declare the confidentiality classes the scenario does not, from the
         # sealed goal alone. See benchmarks/bpl/sensitivity.py for the rule and
         # why it is stated before it is measured.
-        from benchmarks.bpl.sensitivity import derive
+        from benchmarks.bpl.sensitivity import derive, derive_scoped
         from clayseal.capabilities.confidentiality import FlowTracker
 
-        broker.sensitivity = derive(scen)
+        broker.sensitivity = (derive_scoped(scen) if confidentiality == "scoped"
+                              else derive(scen))
         broker.flow = FlowTracker()
     returns: list[str] = []
     outcomes: list[str] = []
@@ -730,7 +731,7 @@ def main(argv=None) -> int:
                         "the measured system is the floor and the budgets and "
                         "nothing else. Off by default so no published number "
                         "moves silently.")
-    p.add_argument("--confidentiality", choices=("off", "derived"),
+    p.add_argument("--confidentiality", choices=("off", "derived", "scoped"),
                    default="off",
                    help="off: the scenarios declare no confidentiality classes, "
                         "so the flow tier is inert, which is what every "
