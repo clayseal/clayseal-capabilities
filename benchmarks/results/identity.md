@@ -26,11 +26,12 @@ count is right and the independence is fake.
 | `+ obligations` | 64 | 130 | 62 |
 | `+ entities` | 66 | 130 | 64 |
 | `+ freshness` | 70 | 130 | 68 |
-| `+ identity` | **73** | **130** | **71** |
+| `+ identity` | **75** | **130** | **73** |
 
-Three gains, zero regressions, completion unchanged. Cumulatively the four
-goal-derived rungs are **19 gains against 0 regressions, exact McNemar
-p = 3.8e-06**, against a published `clayseal` arm that has not moved.
+Three gains from independence and two more from separation of duties, zero
+regressions, completion unchanged. Cumulatively the goal-derived rungs with the
+scoped flow declaration are **24 gains against 0 regressions, exact McNemar
+p = 1.2e-07**, against a published `clayseal` arm that has not moved.
 
 ## The root rule
 

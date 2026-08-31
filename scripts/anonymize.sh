@@ -112,7 +112,7 @@ import json
 rows = json.load(open("/tmp/anon_sweep.json"))
 a = "sessiongate+identity"
 j = sum(r["cells"][a]["contained"] and r["cells"][a]["completed"] for r in rows)
-print(f"headline joint containment: {j} of {len(rows)}  (paper reports 71 of 132)")
-assert j == 71, f"artifact does not reproduce the paper: {j}"
+print(f"headline joint containment: {j} of {len(rows)}  (paper reports 73 of 132)")
+assert j == 73, f"artifact does not reproduce the paper: {j}"
 PY
 echo "artifact ready at $OUT"

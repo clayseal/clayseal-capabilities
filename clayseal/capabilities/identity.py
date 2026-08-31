@@ -70,6 +70,22 @@ _CREATE = frozenset({"mint", "create", "issue", "register", "provision",
 _PARENT = frozenset({"parent", "root", "under", "owner", "issuer", "sponsor",
                      "controller", "grandparent"})
 
+#: Arguments naming the actor of a role-bearing act. These are DECLARED, not
+#: attested: the agent writes them. Declaring the same actor for both halves of a
+#: two-person control is self-incriminating and may be refused on that basis. An
+#: agent that lies and declares two names is outside what a declaration can see,
+#: which is stated in the docstring and measured rather than hidden.
+_PRINCIPAL = frozenset({"principal", "actor", "signer", "approver", "operator",
+                        "witness", "party", "who", "user_id", "persona"})
+
+#: Tools that OBSERVE rather than act. Needed because verb classification does
+#: not separate them here: `escrow_status` and `disburse_escrow` both classify as
+#: `call`, and refusing the status poll would refuse the agent looking at what it
+#: is about to do.
+_OBSERVER = frozenset({"status", "state", "log", "trace", "report", "list",
+                       "get", "read", "show", "view", "check", "audit",
+                       "history", "info", "inspect", "describe"})
+
 #: Arguments naming an idempotency key rather than a value.
 _KEY = frozenset({"key", "idempotency_key", "request_id", "nonce", "token"})
 
@@ -84,6 +100,10 @@ def _values(raw: Any) -> list[str]:
     return [p.strip() for p in re.split(r"[,;|]", raw) if p.strip()]
 
 
+def _is_observer(tool: str) -> bool:
+    return any(p in _OBSERVER for p in re.split(r"[^a-z0-9]+", tool.lower()))
+
+
 def _is_creation(tool: str) -> bool:
     return any(p in _CREATE for p in re.split(r"[^a-z0-9]+", tool.lower()))
 
@@ -94,10 +114,12 @@ class IdentityLedger:
 
     distinct_subjects: bool = False
     idempotency: bool = False
+    separation: bool = False
     source: str = ""
     _root: dict[str, str] = field(default_factory=dict)
     _seen: set[str] = field(default_factory=set)
     _keyed: dict[str, tuple] = field(default_factory=dict)
+    _acts: list[tuple[str, str]] = field(default_factory=list)
 
     # -- roots -------------------------------------------------------------
 
@@ -148,6 +170,28 @@ class IdentityLedger:
 
     # -- the two hooks -----------------------------------------------------
 
+    @staticmethod
+    def _signature(tool: str, args: Any) -> str:
+        """What makes two role-bearing acts DIFFERENT acts.
+
+        The tool, plus the non-principal arguments. Two `attest` calls for slots
+        A and B are two acts; the same call retried is one, so an idempotent
+        retry by the same party is not a separation-of-duties violation.
+        """
+        rest = ()
+        if isinstance(args, dict):
+            rest = tuple(sorted((str(k), repr(v)) for k, v in args.items()
+                                if str(k).lower() not in _PRINCIPAL))
+        return f"{tool}{rest}"
+
+    def _principal(self, args: Any) -> str | None:
+        if not isinstance(args, dict):
+            return None
+        for name, raw in args.items():
+            if str(name).lower() in _PRINCIPAL and isinstance(raw, str) and raw.strip():
+                return raw.strip()
+        return None
+
     def observe(self, tool: str, args: Any) -> None:
         """Record an ALLOWED call only.
 
@@ -173,6 +217,10 @@ class IdentityLedger:
             key, payload = self._key_and_payload(args)
             if key is not None:
                 self._keyed.setdefault(key, payload)
+        if self.separation:
+            who = self._principal(args)
+            if who is not None:
+                self._acts.append((self._signature(tool, args), who))
 
     def check(self, tool: str, args: Any, verb: str = "") -> tuple[bool, str]:
         if self.idempotency:
@@ -182,6 +230,25 @@ class IdentityLedger:
                     f"idempotency key {key!r} was already used for different "
                     f"values, so this is a second act wearing the first one's "
                     f"receipt rather than a retry; the sealed goal states "
+                    f"{self.source!r}")
+
+        if self.separation and self._principal(args) is None and not _is_observer(tool):
+            # Refuse the ACT, never the signature. Refusing the second signature
+            # by the same party looks right and contains nothing: these scenarios
+            # score an INCOMPLETE control identically to a collapsed one, so a
+            # blocked second attestation leaves an empty slot and the predicate
+            # fires anyway. Measured three times in this work before it was
+            # believed, on the quorum rungs and here.
+            by_actor: dict[str, set[str]] = {}
+            for sig, who in self._acts:
+                by_actor.setdefault(who, set()).add(sig)
+            doubled = {w: sigs for w, sigs in by_actor.items() if len(sigs) > 1}
+            if doubled and len(by_actor) < 2:
+                who = min(doubled)
+                return False, (
+                    f"{who!r} carried out {len(doubled[who])} distinct "
+                    f"role-bearing acts and no other party acted, so the control "
+                    f"was satisfied by one party; the sealed goal states "
                     f"{self.source!r}")
 
         if (self.distinct_subjects and not _is_creation(tool)
@@ -204,7 +271,10 @@ def derive_identity_rules(goal_summary: str) -> IdentityLedger | None:
     text = (goal_summary or "").lower()
     distinct = "distinct" in text
     idem = "idempot" in text
-    if not (distinct or idem):
+    sep = any(k in text for k in ("distinct principal", "two-person",
+                                  "two person", "dual-control", "dual control",
+                                  "separation of duties", "sod:"))
+    if not (distinct or idem or sep):
         return None
     return IdentityLedger(distinct_subjects=distinct, idempotency=idem,
-                          source=goal_summary.strip())
+                          separation=sep, source=goal_summary.strip())

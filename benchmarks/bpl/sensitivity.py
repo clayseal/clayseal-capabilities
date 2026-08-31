@@ -137,6 +137,30 @@ def _resolve_sinks(names, catalog) -> tuple[str, ...]:
     return tuple(out)
 
 
+#: Payload shapes that carry something confidential ON THEIR FACE, for the reads
+#: a name-based scope cannot see: `read_matter_note` returning privileged legal
+#: strategy, `read_customer` returning an SSN.
+#:
+#: Every marker requires a VALUE and not a mention. A policy document that says
+#: "must not contain secrets from read_secret" is prose about secrets, and
+#: marking the first read of the session sensitive is precisely what collapsed
+#: completion under `sensitive=("*",)`. The uppercase marker is forced
+#: case-sensitive with `(?-i:...)`, because under a global IGNORECASE it matched
+#: `read_secret` and reintroduced that exact failure.
+_CONTENT_MARKERS = (
+    r"\b(?:ssn|dob|password|passwd|api[_-]?key|credential|secret|token)\s*[=:]\s*\S",
+    r"\bsecret[A-Za-z0-9_-]*\d[A-Za-z0-9_-]*\b",
+    r"(?-i:\b[A-Z][A-Z0-9_]{3,}_(?:CONFIDENTIAL|SECRET|PRIVILEGED)\b)",
+    # NOT a bare email address. It fires on 76 benign payloads across 12
+    # scenarios here, because ordinary business traffic is full of addresses, and
+    # an address is not confidential for being an address. Including it cost 12
+    # benign tasks and bought nothing.
+    r"\b\d{3}-\d{2}-\d{4}\b",
+    r"\bpii\s*=\s*true\b",
+    r"://[^\s:/]+:[^\s@/]+@",
+)
+
+
 def derive_scoped(scen) -> SensitivityPolicy:
     """Sensitivity scoped to the tools that declare themselves confidential.
 
@@ -163,4 +187,10 @@ def derive_scoped(scen) -> SensitivityPolicy:
     return SensitivityPolicy(
         sensitive=sensitive_tools(scen),
         declassified_sinks=_resolve_sinks(named, catalog),
+        # `content_markers=_CONTENT_MARKERS` is deliberately NOT passed. It was
+        # built, measured and refuted: see `flow_content_classifier.md`. It marks
+        # the right reads and buys nothing, because the benign twin handles the
+        # same confidential data legitimately and the two differ in WHERE the
+        # value goes. The classifier answers "what is sensitive" and the binding
+        # constraint is the sink policy.
     )

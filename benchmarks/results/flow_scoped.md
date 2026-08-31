@@ -8,7 +8,7 @@ python -m benchmarks.bpl_sweep --suite full --confidentiality scoped --observe-r
 
 [flow_tier.md](flow_tier.md) reports the broadest declaration expressible,
 `sensitive=("*",)` with no permitted destination. It contains 22 more attacks,
-loses 53 benign tasks, and moves the joint score from 71 to 48. The falsifier
+loses 53 benign tasks, and moves the joint score from 73 to 48. The falsifier
 that declaration stated in advance fired.
 
 The reason is visible in one trace: marking every read sensitive marks
@@ -19,13 +19,13 @@ which every subsequent write is carrying secret data.
 
 | declaration | contained | completed | **joint** |
 | --- | ---: | ---: | ---: |
-| tier off | 73 | 130 | **71** |
+| tier off | 75 | 130 | **73** |
 | `sensitive=("*",)` | 95 | 77 | **48** |
-| **scoped** | **76** | **130** | **74** |
+| **scoped** | **78** | **130** | **76** |
 
 Three gains, zero regressions, completion unchanged. Against the published
-`clayseal` baseline the full stack is now **22 gains against 0 regressions,
-exact McNemar p = 4.8e-07**.
+`clayseal` baseline the full stack is now **24 gains against 0 regressions,
+exact McNemar p = 1.2e-07**.
 
 ## Where the scope comes from
 

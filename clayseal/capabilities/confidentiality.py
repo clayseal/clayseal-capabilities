@@ -73,6 +73,7 @@ measured rather than assumed: see `benchmarks/results/flow.md`.
 from __future__ import annotations
 
 import fnmatch
+import re
 import threading
 import unicodedata
 from collections.abc import Mapping, Sequence
@@ -159,6 +160,13 @@ class SensitivityPolicy:
     sensitive: tuple[str, ...] = ()
     # Sinks the sealed goal named. Sensitive data may reach these and only these.
     declassified_sinks: tuple[str, ...] = ()
+    #: Regexes that make a PAYLOAD confidential whatever its resource is named.
+    #: Resource-name scoping cannot see a tool called `read_matter_note` that
+    #: returns privileged legal strategy, or `read_customer` that returns an SSN.
+    #: Marking more things sensitive is a TIGHTENING, which is the one thing the
+    #: monotone rule permits tool output to do, so classifying content is sound
+    #: where deriving authority from it would not be.
+    content_markers: tuple[str, ...] = ()
     # Destinations whose ARGUMENTS leave the boundary, whatever the verb. A read
     # served by a third party hands it whatever the query contains.
     argument_sinks: tuple[str, ...] = ()
@@ -176,12 +184,28 @@ class SensitivityPolicy:
     def active(self) -> bool:
         """Absent policy means no flow control, so adding this module changes
         nothing for a mandate written before it existed."""
-        return bool(self.sensitive)
+        return bool(self.sensitive or self.content_markers)
 
     def is_sensitive(self, resource: str | None, path: str | None = None) -> bool:
         return any(_matches_sensitive(c, pat)
                    for c in (resource, path) if c
                    for pat in self.sensitive)
+
+    def content_is_sensitive(self, payload: Any) -> bool:
+        """Does this payload carry something confidential on its face?
+
+        Deliberately cheap and deterministic. A learned PII model would score
+        better and would also have to ship with the gateway, be versioned with
+        it, and be defended against its own false positives; this layer only has
+        to decide whether a value is worth tracking, and over-marking costs
+        precision at the next decision instead of refusing anything outright.
+        """
+        if not self.content_markers:
+            return False
+        text = payload if isinstance(payload, str) else str(payload or "")
+        if not text:
+            return False
+        return any(re.search(m, text, re.IGNORECASE) for m in self.content_markers)
 
     def sends_its_arguments(self, tool: str, resource: str | None,
                             path: str | None = None) -> bool:
@@ -1056,7 +1080,8 @@ class FlowTracker:
         """Record what this observation returned, and whether it was sensitive."""
         self.provenance.record_observation(
             tool, payload, structured_fields=structured_fields)
-        if not policy.is_sensitive(resource, path):
+        if not (policy.is_sensitive(resource, path)
+                or policy.content_is_sensitive(payload)):
             return
         origin = path or resource
         with self._lock:

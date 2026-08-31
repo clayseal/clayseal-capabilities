@@ -144,3 +144,28 @@ def test_a_tool_without_a_path_argument_still_marks_its_output_sensitive() -> No
     assert broker.flow._sensitive_tokens, (
         "a tool with no path argument marked nothing sensitive"
     )
+
+
+def test_content_markers_classify_a_payload_without_naming_the_resource() -> None:
+    """Sensitivity by CONTENT, kept off by default and measured.
+
+    Marking more values sensitive is a tightening, which is the one thing the
+    monotone rule lets tool output do, so this is provenance-safe. It is off in
+    the derived policy because it buys nothing on this suite: the benign twin
+    handles the same confidential data legitimately, so a sharper answer to
+    "what is sensitive" moves both halves of the pair together. See
+    benchmarks/results/flow_content_classifier.md.
+    """
+    from clayseal.capabilities.confidentiality import SensitivityPolicy
+
+    pol = SensitivityPolicy(sensitive=(), content_markers=(
+        r"\b(?:ssn|api[_-]?key)\s*[=:]\s*\S",
+        r"(?-i:\b[A-Z][A-Z0-9_]{3,}_CONFIDENTIAL\b)"))
+    assert pol.active is True, "content markers alone must arm the tier"
+    assert pol.content_is_sensitive("api_key=APIKEY_LIVE_9f3a") is True
+    assert pol.content_is_sensitive("SETTLEMENT_FLOOR_2M_CONFIDENTIAL") is True
+    # A policy document that TALKS about secrets is not itself a secret. Under a
+    # global IGNORECASE the uppercase marker matched `read_secret` here, which is
+    # the failure that collapsed completion under sensitive=("*",).
+    assert pol.content_is_sensitive(
+        "must not contain secrets from read_secret") is False

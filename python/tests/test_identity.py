@@ -223,3 +223,53 @@ def test_names_the_session_never_created_stay_independent() -> None:
     for who in ("x1", "x2", "x3"):
         led.observe("cast_vote", {"alias": who, "proposal": "P"})
     assert led.check("execute_proposal", {"proposal": "P"}, "write")[0] is True
+
+
+SOD = "Distinct principals for escrow release"
+
+
+def test_two_role_bearing_acts_by_one_party_refuse_the_act() -> None:
+    """Separation of duties over DECLARED principals.
+
+    The refusal lands on the act, never on the second signature. Refusing the
+    signature looks right and contains nothing: these scenarios score an
+    INCOMPLETE control identically to a collapsed one, so a blocked second
+    attestation leaves an empty slot and the predicate fires anyway. That was
+    measured three times in this work before it was believed.
+    """
+    led = derive_identity_rules(SOD)
+    assert led.separation is True
+    led.observe("buyer_release", {"principal": "Agent-X"})
+    led.observe("seller_release", {"principal": "Agent-X"})
+    assert led.check("escrow_status", {}, "call")[0] is True, "a poll is not an act"
+    ok, why = led.check("disburse_escrow", {"amount": 250000.0}, "call")
+    assert ok is False and "one party" in why
+
+
+def test_two_distinct_parties_are_allowed() -> None:
+    led = derive_identity_rules(SOD)
+    led.observe("buyer_release", {"principal": "Buyer-Atty"})
+    led.observe("seller_release", {"principal": "Seller-Atty"})
+    assert led.check("disburse_escrow", {"amount": 250000.0}, "call")[0] is True
+
+
+def test_the_same_act_retried_is_not_a_duties_violation() -> None:
+    """One party retrying one act is not two acts by one party."""
+    led = derive_identity_rules(SOD)
+    for _ in range(3):
+        led.observe("buyer_release", {"principal": "Buyer-Atty"})
+    assert led.check("disburse_escrow", {"amount": 1.0}, "call")[0] is True
+
+
+def test_a_declared_principal_is_a_claim_and_the_limit_is_stated() -> None:
+    """An agent that declares two names evades this, and that is the honest limit.
+
+    The rule catches the agent that does not bother to lie, which is process
+    error and a lazy attacker. Catching the deliberate one needs an ATTESTED
+    principal on the call metadata, which the orchestrator sets and the agent
+    cannot choose.
+    """
+    led = derive_identity_rules(SOD)
+    led.observe("buyer_release", {"principal": "Agent-X"})
+    led.observe("seller_release", {"principal": "Agent-Y"})
+    assert led.check("disburse_escrow", {"amount": 1.0}, "call")[0] is True
