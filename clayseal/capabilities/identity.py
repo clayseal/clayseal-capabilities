@@ -110,15 +110,27 @@ class IdentityLedger:
             cur = self._root[cur]
         return cur
 
-    def _subjects(self, args: Any) -> list[str]:
+    def _candidates(self, args: Any) -> list[str]:
+        """Every identifier an action names, whether or not it is rooted YET.
+
+        Filtering to already-rooted names here made the rung order-dependent:
+        an attacker who cast the votes BEFORE minting the aliases recorded no
+        subjects at all, because at vote time the names were unknown, and the
+        later mints could not retroactively add them. Candidates are kept and
+        resolved at decision time, when the root map is complete.
+        """
         if not isinstance(args, dict):
             return []
         out = []
         for name, raw in args.items():
             if str(name).lower() in _KEY:
                 continue
-            out.extend(v for v in _values(raw) if v in self._root)
+            out.extend(_values(raw))
         return out
+
+    def _subjects(self, args: Any) -> list[str]:
+        """Candidates this session has actually rooted."""
+        return [v for v in self._candidates(args) if v in self._root]
 
     # -- idempotency -------------------------------------------------------
 
@@ -156,7 +168,7 @@ class IdentityLedger:
                 for v in _values(raw):
                     self._root.setdefault(v, parent or _SESSION)
         if self.distinct_subjects and not _is_creation(tool):
-            self._seen.update(self._subjects(args))
+            self._seen.update(self._candidates(args))
         if self.idempotency:
             key, payload = self._key_and_payload(args)
             if key is not None:
@@ -174,7 +186,8 @@ class IdentityLedger:
 
         if (self.distinct_subjects and not _is_creation(tool)
                 and str(verb).lower() in _CONSUMING):
-            subjects = set(self._seen) | set(self._subjects(args))
+            subjects = {v for v in set(self._seen) | set(self._candidates(args))
+                        if v in self._root}
             if len(subjects) > 1:
                 roots = {self._root_of(s) for s in subjects}
                 if len(roots) < len(subjects):

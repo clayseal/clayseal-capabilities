@@ -191,3 +191,35 @@ def test_a_cycle_in_the_root_map_terminates() -> None:
     led = IdentityLedger(distinct_subjects=True, source="t")
     led._root.update({"a": "b", "b": "a"})
     assert led._root_of("a") in {"a", "b"}
+
+
+def test_the_rung_does_not_depend_on_the_order_of_mint_and_use() -> None:
+    """Casting the votes BEFORE minting the aliases must not evade the rule.
+
+    Found by `benchmarks.invariance_rungs`, which asks what an attacker who
+    controls only the conversation can reach. Subjects were filtered to
+    already-rooted names at observation time, so votes cast before their aliases
+    existed recorded nothing, and the later mints could not add them
+    retroactively. Candidates are now kept and resolved at decision time.
+    """
+    led = derive_identity_rules(QUORUM)
+    for alias in ("a1", "a2", "a3"):
+        led.observe("cast_vote", {"alias": alias, "proposal": "P"})
+    for alias in ("a1", "a2", "a3"):
+        led.observe("mint_persona", {"alias": alias, "display_name": alias})
+    assert led.check("execute_proposal", {"proposal": "P"}, "write")[0] is False
+
+
+def test_names_the_session_never_created_stay_independent() -> None:
+    """The other half of the same rule, and it must not change.
+
+    An attacker can vote with names this session never minted. Those read as
+    external and count as distinct, so the quorum stands. That is the correct
+    answer: three signers the session did not create are indistinguishable from
+    three real ones, and refusing them is the deny-all column. It is a real
+    limitation of deriving identity from session history alone.
+    """
+    led = derive_identity_rules(QUORUM)
+    for who in ("x1", "x2", "x3"):
+        led.observe("cast_vote", {"alias": who, "proposal": "P"})
+    assert led.check("execute_proposal", {"proposal": "P"}, "write")[0] is True
