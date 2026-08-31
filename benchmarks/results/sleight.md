@@ -9,6 +9,18 @@ reproduce command with nothing recording whether anyone had run it.
 `python -m benchmarks.cli --dataset sleight --ci` gives union 31.0%, hard 7.8%,
 soft 23.3%, false-block 3.5%, matching the `sleight[stack]` scoreboard row.
 
+**Re-run 2026-08-31 reports FB 3.2%, not 3.5%.** Small, and unexplained: the same
+`--ci` command, and `check_claims` passes, so whatever moved it is inside
+whatever tolerance that linter allows. Recorded here rather than silently
+adopted. The split is the part that matters and it is stable: **h 0.0% / s 3.2%**.
+
+**The false-block number is entirely SOFT.** The gateway hard-refuses zero of 311
+benign events; every false block is a step-up for review. That changes the
+comparison against the published frontier, which catches 32% of this corpus at a
+1% false-positive rate using a frontier model with extended thinking. A monitor's
+flag is an escalation too, so the honest read is similar containment at roughly
+three times the review load, and not a refusal rate three times worse.
+
 SLEIGHT-Bench (arXiv:2605.16626, Anthropic alignment) is a 2026 benchmark of a
 different kind from anything else we replay. RedCode, AgentHarm, and ASB
 catalogue *risky operations*. SLEIGHT catalogues *evasion*: 44 attacks in which a
