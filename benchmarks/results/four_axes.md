@@ -192,7 +192,7 @@ a script whose purpose is harassment.
 | Corpus | attack events | contained |
 | --- | --: | --: |
 | AgentHarm | 652 | 6.3% |
-| SLEIGHT-Bench | 328 | 36.9% at 32.64% false-block |
+| SLEIGHT-Bench | 328 | 36.9% at 32.64% false-block (a velocity-cap sweep point, NOT the shipped stack; see below and `sleight.md`, where the product row is 31.0% at 3.5%) |
 
 **On AgentHarm, 6.3% is a limit of our loader.** An earlier version of this
 section called it an information-theoretic ceiling. That was wrong: AgentHarm's
