@@ -1,6 +1,11 @@
 # An LLM monitor as a baseline: near deny-all, and why containment alone hides it
 
-STATUS: current
+STATUS: SUPERSEDED. Every number below was produced with an EMPTY task
+description, because the harness read `scen.prompt` where the field is
+`user_prompt`. The monitor judged each call knowing nothing about the task and
+blocked a median of 14 benign calls per scenario. Re-measured correctly it
+contains 25 of 132 at 108 completed, joint 7, and catches 3 of the 57 attacks
+this stack misses. Kept for the record; do not cite the figures below.
 
 ```bash
 export AZURE_OPENAI_ENDPOINT=... AZURE_OPENAI_KEY=...

@@ -37,14 +37,25 @@ while its goal names a gross bound that appears nowhere. What was reachable ther
 was not aggregation but **identity**, and it is measured in
 [identity.md](identity.md).
 
-## The signal is there. The gateway is not reading it.
+## RETRACTED: "the signal is there"
 
-**An LLM monitor contains 76 of the 78 attacks this gateway misses**
-([llm_monitor_baseline.md](llm_monitor_baseline.md)). It does that by refusing
-97% of legitimate work, so it is not a defense, but it settles a question that
-matters more than its own score: **the trajectory carries enough information to
-separate these attacks from their benign twins.** The misses are not an
-information-theoretic wall. They are a representation gap.
+This section previously claimed that **an LLM monitor contains 76 of the 78
+attacks this gateway misses**, and concluded that the trajectory carries enough
+information to separate these attacks from their twins, so the residual was a
+representation gap and not an information wall.
+
+**That was measured with an empty task description.** The harness read
+`scen.prompt`, an attribute that does not exist; the real field is `user_prompt`.
+The monitor judged every call knowing nothing about what the agent was supposed
+to be doing, so it blocked a median of 14 benign calls per scenario and its
+"containment" was refusal.
+
+Re-measured with the task description, the monitor contains **25 of 132** at 108
+completed, and **of the 57 attacks this stack misses it catches 3**. The claim
+this section rested on is withdrawn. Whether the residual is a representation gap
+is now an open question, and the evidence available points the other way: a
+capable model reasoning in natural language over the same trajectory finds
+almost none of what we miss.
 
 Losses are concentrated:
 
