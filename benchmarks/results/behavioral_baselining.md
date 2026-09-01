@@ -1,6 +1,11 @@
 # Behavioural baselining from existing traffic: measured, and it converges to nothing
 
-STATUS: current
+STATUS: current, with one conclusion CORRECTED. This file previously ended by
+claiming this class cannot be learned from behaviour. That was too strong for the
+evidence: the three methods tested here are all UNCONDITIONED, and conditioning
+on the task is a different idea, tested separately in
+[plan_sets.md](plan_sets.md). The correct statement is narrower and appears at
+the end of this file.
 
 ```bash
 python -m benchmarks.mined_precedence
@@ -63,6 +68,13 @@ over action sequences flags attack actions at 1.17x the benign rate
 blocks are tolerable, adds +1 and then +0.
 
 **Correct behaviour does not demonstrate the rule. It merely never violates it.**
+
+That holds for a model of behaviour in general, fitted on pooled traffic with no
+view of the task. It does not settle what a TASK-CONDITIONED model can do, which
+is a separate question with a separate answer in [plan_sets.md](plan_sets.md):
+such a model is a real signal on the 23% of attacks that deviate from the stated
+task, and is structurally blind to the 77% where the task itself is what breaches
+the policy.
 
 A thousand sessions in which nobody split a payment to evade a ceiling contain no
 evidence that splitting is forbidden; they contain payments. The constraint lives
