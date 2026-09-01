@@ -90,3 +90,32 @@ undoes is reversible, whatever the compiler said. That is not built.
 One model call per catalogue at compile time, cached and versioned with the
 schema. Zero per prompt. At decision time the rung is a set-membership test
 against the session's own history, with no model and no network.
+
+## Severity does not discriminate, and cannot on this class
+
+The reversibility flag was expected to give severity for free. Measured, it gives
+nothing:
+
+| | irreversible | attack actions on one | benign actions on one | lift |
+| --- | ---: | ---: | ---: | ---: |
+| compiler as-is | 415/600 (69%) | 72.0% | 73.5% | 0.98x |
+| structurally corrected | 385/600 (64%) | 67.1% | 68.7% | 0.98x |
+
+The compiler over-marks, and the marking is sometimes plainly wrong:
+`list_customers` and `read_customer` come back irreversible, because the prompt
+asks whether an effect can be undone and a read has no effect to undo, so the
+model answers no to a vacuous question. Correcting that structurally, an operator
+with no effects is trivially reversible and one whose deletions another tool
+re-establishes is reversible, moves 69% to 64% and **leaves the lift at 0.98**.
+
+That is not a compiler defect to fix. It is the attack class. **The attack uses
+the same tools as its benign twin**, and its violating step is an ordinary
+irreversible action in an ordinary place; splitting a payment into four uses the
+same `pay_vendor` the legitimate run uses. A per-action severity score cannot
+separate sequences that differ only in their combination, which is the same
+reason a per-call gate scores 1 of 132.
+
+Severity therefore has a real job and it is not detection. It ranks refusals
+that some other rung has already decided on, which is how it is used here: an
+unmet precondition on an irreversible operator denies, and one on a reversible
+operator escalates. Reporting it as a detector would be reporting a 0.98x lift.
