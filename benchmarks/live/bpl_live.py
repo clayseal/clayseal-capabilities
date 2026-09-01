@@ -186,7 +186,13 @@ def apply_call(scen, env, condition, broker, drift, authgraph, returns,
         # as a DENY does.
         from benchmarks.llm_monitor import decide
 
-        allowed = decide(getattr(scen, "prompt", "") or "", list(returns),
+        # `user_prompt`, NOT `prompt`. The attribute is called `user_prompt` in
+        # `bpl.schema`, so `getattr(scen, "prompt", "")` returned None for every
+        # scenario and the monitor judged each call with an EMPTY task
+        # description. It blocked a median of 14 benign calls per scenario
+        # because it had no idea what the agent was supposed to be doing, and
+        # that was published as 124 of 132 contained.
+        allowed = decide(getattr(scen, "user_prompt", "") or "", list(returns),
                          name, dict(args))
         if allowed:
             result = scen.handler(env, name, args)
