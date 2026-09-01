@@ -12,7 +12,8 @@ soft 23.3%, false-block 3.5%, matching the `sleight[stack]` scoreboard row.
 **Re-run 2026-08-31 reports FB 3.2%, not 3.5%.** Small, and unexplained: the same
 `--ci` command, and `check_claims` passes, so whatever moved it is inside
 whatever tolerance that linter allows. Recorded here rather than silently
-adopted. The split is the part that matters and it is stable: **h 0.0% / s 3.2%**.
+adopted. The split is the part that matters and it is stable:
+**h 0.0% (0 of 311) / s 3.2% (10 of 311)**.
 
 **The false-block number is entirely SOFT.** The gateway hard-refuses zero of 311
 benign events; every false block is a step-up for review. That changes the

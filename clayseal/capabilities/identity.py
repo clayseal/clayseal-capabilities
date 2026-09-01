@@ -178,7 +178,7 @@ class IdentityLedger:
         A and B are two acts; the same call retried is one, so an idempotent
         retry by the same party is not a separation-of-duties violation.
         """
-        rest = ()
+        rest: tuple[tuple[str, str], ...] = ()
         if isinstance(args, dict):
             rest = tuple(sorted((str(k), repr(v)) for k, v in args.items()
                                 if str(k).lower() not in _PRINCIPAL))
