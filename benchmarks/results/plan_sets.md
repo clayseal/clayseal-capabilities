@@ -73,9 +73,10 @@ benign run at 0. Task-conditioned plan distance is a real signal for
 **deviation from the task**, and no signal at all for **the task violating
 policy**, which is the majority shape here.
 
-Untested, and not claimed either way: larger K, stronger generators, learned
-distance metrics, peer-group baselining across tasks of the same type, and
-session-level risk aggregation over many weak features. The failure above is
+Peer-group baselining and session-level risk aggregation, the two standard UEBA
+techniques, were subsequently tested in [learned_envelope.md](learned_envelope.md)
+and do not separate either. Still untested: larger K, stronger generators, and
+learned distance metrics fitted rather than thresholded by hand. The failure above is
 structural for the 77%, and the remaining 23% is where those refinements would
 have room to work.
 
