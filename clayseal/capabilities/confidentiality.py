@@ -177,6 +177,10 @@ class SensitivityPolicy:
         return cls(
             sensitive=tuple(str(p) for p in (raw.get("sensitive") or ())),
             declassified_sinks=tuple(str(p) for p in (raw.get("declassified_sinks") or ())),
+            # Reachable by declaration only. The field is measured net-negative
+            # on BPL and stays empty by default; a mandate that writes it was
+            # previously ignored in silence, which is worse than either answer.
+            content_markers=tuple(str(p) for p in (raw.get("content_markers") or ())),
             argument_sinks=tuple(str(p) for p in (raw.get("argument_sinks") or ())),
         )
 

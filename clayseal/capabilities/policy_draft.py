@@ -731,8 +731,28 @@ def to_yaml(draft: Draft, *, goal_id: str = "REPLACE-ME",
             out.append(f"    windows: {{{', '.join(windows)}}}")
         out += ["    tracked:"]
         if catalog is not None:
-            out += tracked_block(
-                catalog, budgets=[f"budget_{i}" for i in range(1, len(value) + 1)])
+            # Derived and UNCOMMENTED, which is the change. The section used to
+            # render every candidate behind a `#` because which tool debits which
+            # ceiling was in neither the document nor the catalogue. It is: a
+            # ceiling and a quantity-carrying tool that is not a read is a debit,
+            # and where the grant states one ceiling nothing is being chosen at
+            # all. Everything derived is marked `source: inferred` so a reviewer
+            # can tell it from what they wrote.
+            from clayseal.capabilities.budget_binding import Ceiling, derive_tracked
+            limits = [Ceiling(f"budget_{i}", rule.source)
+                      for i, rule in enumerate(value, start=1)]
+            derived = derive_tracked(limits, catalog)
+            for binding in derived:
+                out += binding.as_yaml()
+            bound = {b.tool for b in derived}
+            # Still commented, and still the operator's call: a tool the catalogue
+            # gives a quantity that nothing above bound. Naming the wrong budget
+            # splits a shared limit in two and reads as working policy.
+            rest = [t for t in catalog.tools if t.amount_args and t.name not in bound]
+            if rest:
+                out += tracked_block(
+                    Catalog(tools=rest),
+                    budgets=[f"budget_{i}" for i in range(1, len(value) + 1)])
         else:
             out += ["      # TODO: map each tool to the budget it debits and the",
                     "      #       argument carrying the amount.",

@@ -112,14 +112,22 @@ def lint_mandate(
     ceilings: Mapping[str, Any] | None = None,
     principal_scoped: bool = False,
     stateless: bool = False,
+    inferred: Iterable[str] = (),
 ) -> list[Finding]:
     """Report every effect the mandate leaves uncounted.
 
     `catalog` is the tool set the agent can actually reach. Without it the
     untracked-sibling check cannot run at all, which is the honest outcome: you
     cannot tell that a money tool is missing from a ledger by reading the ledger.
+
+    `inferred` names the tools whose binding `budget_binding` derived rather than
+    a person writing it. Derivation is measured to reach 71 of the 73 scenarios a
+    hand-written map contains, at identical completion, so this is not a reason
+    to distrust it; it is a reason to put a reviewer's eye on the small set where
+    a mistake moves money or destroys state rather than on all of them.
     """
     declared_harmless = {str(t) for t in declared_harmless or ()}
+    inferred = {str(t) for t in inferred or ()}
     value_tracked = dict(value_tracked or {})
     call_tracked = dict(call_tracked or {})
     ceilings = dict(ceilings or {})
@@ -260,6 +268,26 @@ def lint_mandate(
                  "ceiling; bind to a principal ledger if the limit is meant "
                  "to be an authority limit")),
             escape="session restart"))
+
+    # 6. A derived binding on a consequential tool. Not a defect and not a
+    #    reason to distrust the derivation, which reaches hand-written
+    #    containment at hand-written completion. It is where a reviewer's
+    #    attention is worth something: a wrong binding on `get_report` costs a
+    #    refused read, and a wrong one on `wire_transfer` moves money against a
+    #    limit nobody chose. Same families the untracked-sibling check uses, so
+    #    a tool flagged here is one this file already treats as consequential.
+    for tool in sorted(inferred & set(value_tracked) | inferred & set(call_tracked)):
+        family = _family_of(tool)
+        if family in ("value", "destruction"):
+            findings.append(Finding(
+                code="inferred-binding",
+                severity="warning",
+                subject=tool,
+                detail=(f"this {family} tool's budget was derived from the tool "
+                        f"catalog, not written by a person, and the catalog is "
+                        f"written by the server being constrained. Confirm it "
+                        f"debits the ceiling you meant"),
+                escape="mis-bound ceiling"))
 
     return findings
 

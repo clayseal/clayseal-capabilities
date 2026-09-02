@@ -106,6 +106,13 @@ class ToolFacts:
     amount_args: tuple[str, ...] = ()
     identity_args: tuple[str, ...] = ()
     disagreement: str | None = None
+    #: The server's own prose. Read for the verb and previously discarded, which
+    #: made one thing impossible: a written policy and a tool catalog use
+    #: different words, and a rule about "bills" has to reach `make_payment`. A
+    #: reader working from tool NAMES cannot bridge that and one working from
+    #: descriptions can. Kept as evidence, never as authority: the verb rule
+    #: below still only ever RAISES from prose.
+    description: str = ""
 
     @property
     def unsure(self) -> bool:
@@ -141,6 +148,17 @@ class Catalog:
                     out[tool.name] = arg
                     break
         return out
+
+    def descriptions(self) -> dict[str, str]:
+        """Tool to the server's own prose about it, where there was any.
+
+        A written rule and a tool catalog rarely share vocabulary: a policy
+        sentence says "invoices", the tool is `make_payment`, and nothing at the
+        name level connects them. The description usually does, because it is the
+        one place the server explains itself in the same register the document
+        was written in.
+        """
+        return {t.name: t.description for t in self.tools if t.description}
 
     def pathless(self) -> list[str]:
         return sorted(t.name for t in self.tools if t.pathless)
@@ -203,6 +221,7 @@ def read_tool(entry: object) -> ToolFacts | None:
         amount_args=tuple(a for a in args if _AMOUNT.search(a.lower())),
         identity_args=tuple(a for a in args if _IDENTITY.search(a.lower())),
         disagreement=disagreement,
+        description=description,
     )
 
 

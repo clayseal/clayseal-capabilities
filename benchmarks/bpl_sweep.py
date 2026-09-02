@@ -82,9 +82,63 @@ def _carries(condition: str, rung: str) -> bool:
 
 
 
+def _rebind_budgets(scen, broker, mode: str) -> None:
+    """Replace the grant's hand-written `tracked` map with a derived one.
+
+    The one field in a grant that nobody has been able to generate, and the
+    field the aggregate rung rests on: 83.3% containment where a grant configures
+    a budget against 18.9% where it does not, and none of 520 external tasks
+    configures one. `derived` throws away what the scenario author wrote and
+    rebuilds it from the ceiling ids and the tool schemas alone; `none` deletes
+    it, which is the arm every real deployment starts in.
+
+    Reads the ceilings and the catalogue. Never the goal, the scripts, the
+    violation predicate or the expected label.
+    """
+    from clayseal.capabilities.budget_binding import Ceiling, derive_tracked
+    budget = getattr(broker, "value_budget", None)
+    config = getattr(budget, "config", None) if budget is not None else None
+    if config is None or not getattr(config, "ceilings", None):
+        return
+    if mode == "none":
+        config.tracked = {}
+        return
+    from clayseal.capabilities.budget_binding import refute
+    from clayseal.capabilities.value_budget import EffectSpec
+    # Split the base reading from the refutation step. Matching on the whole
+    # string sent `derived+refuted` down the `else` branch and silently ran it
+    # with identity args on, which made the two refuted arms the same arm.
+    base, _, suffix = mode.partition("+")
+    derived = derive_tracked(
+        [Ceiling(b) for b in config.ceilings], scen.tools,
+        strict=(base == "derived-strict"),
+        identity=("named" if base == "derived-named-identity"
+                  else "all" if base == "derived-identity" else "off"))
+    if suffix == "refuted":
+        # Compile-time only, over traffic that already happened. The honest
+        # limit, the same one `validate_ontology.py` records: the only
+        # known-good trace for a catalogue here is that scenario's own benign
+        # twin, so the completion column afterwards is guaranteed by
+        # construction and is not a result. Containment is, and refutation
+        # never saw the attack.
+        derived, _notes = refute(
+            derived, dict(config.ceilings), [scen.compliant_script or ()],
+            # `windows` is on the BUDGET, not on its config: a rolling ceiling is
+            # a property of the ledger that enforces it. Reading it off the
+            # config found None and let a running total refute the one binding
+            # that was right.
+            windowed=set(getattr(budget, "windows", None)
+                         or getattr(config, "windows", None) or ()))
+    config.tracked = {
+        b.tool: (EffectSpec(budget_id=b.budget_id, amount_arg=b.amount_arg,
+                            identity_args=b.identity_args)
+                 if b.identity_args else (b.amount_arg, b.budget_id))
+        for b in derived}
+
+
 def _replay(scen, condition: str, script, verb_fn=None,
             step_up: str = "block", observe_results: bool = False,
-            confidentiality: str = "off") -> dict:
+            confidentiality: str = "off", budgets: str = "declared") -> dict:
     """Run one scripted sequence through one condition."""
     env = scen.make_env()
     if scen.configure is not None:
@@ -94,6 +148,8 @@ def _replay(scen, condition: str, script, verb_fn=None,
         return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
                 "error": None, "outcomes": []}
     broker = scen.make_broker() if is_broker_arm(condition) else None
+    if broker is not None and budgets != "declared":
+        _rebind_budgets(scen, broker, budgets)
     if broker is not None and _carries(condition, "clayseal+obligations"):
         # Precedence read from the SEALED GOAL and the tool catalogue, the same
         # trusted inputs the derived-count rung uses. Nothing here reads the
@@ -182,7 +238,7 @@ def _replay(scen, condition: str, script, verb_fn=None,
 
 def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None,
           step_up: str = "block", observe_results: bool = False,
-          confidentiality: str = "off") -> list[dict]:
+          confidentiality: str = "off", budgets: str = "declared") -> list[dict]:
     rows = []
     for name in names:
         scen = get_scenario(name)
@@ -196,10 +252,10 @@ def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None,
         for cond in conditions:
             attack = _replay(scen, cond, scen.violating_script, verb_fn,
                              step_up=step_up, observe_results=observe_results,
-                             confidentiality=confidentiality)
+                             confidentiality=confidentiality, budgets=budgets)
             benign = _replay(scen, cond, scen.compliant_script, verb_fn,
                              step_up=step_up, observe_results=observe_results,
-                             confidentiality=confidentiality)
+                             confidentiality=confidentiality, budgets=budgets)
             row["cells"][cond] = {
                 # Contained: the violating sequence did not achieve the
                 # violation. `None` means the gate raised, which is neither.
@@ -738,6 +794,18 @@ def main(argv=None) -> int:
                         "published number measures. derived: declare them from "
                         "the sealed goal, uniformly, and see what the tier is "
                         "worth. Needs --observe-results to do anything.")
+    p.add_argument("--budgets",
+                   choices=("declared", "derived", "derived-strict",
+                            "derived-identity", "derived-named-identity",
+                            "derived+refuted", "derived-identity+refuted",
+                            "none"),
+                   default="declared",
+                   help="where `budgets.tracked` comes from. declared: the "
+                        "scenario author wrote it, which is what every "
+                        "published number measures and what no real deployment "
+                        "has. derived: rebuild it from the ceiling ids and the "
+                        "tool schemas. none: delete it, which is the state a "
+                        "grant arrives in.")
     p.add_argument("--json", type=Path, default=None)
     args = p.parse_args(argv)
 
@@ -772,9 +840,10 @@ def main(argv=None) -> int:
         verb_fn = legacy_verb_for
     rows = sweep(names, verb_fn=verb_fn, step_up=args.step_up,
                  observe_results=args.observe_results,
-                 confidentiality=args.confidentiality)
+                 confidentiality=args.confidentiality, budgets=args.budgets)
     print(f"[verbs] {args.verbs}  [suite] {args.suite}  "
-          f"[step-up] {args.step_up}  [n] {len(names)}\n")
+          f"[step-up] {args.step_up}  [budgets] {args.budgets}  "
+          f"[n] {len(names)}\n")
     _composition(names, args.suite)
     _report(rows)
     _statistics(rows)

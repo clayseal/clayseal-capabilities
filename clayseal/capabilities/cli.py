@@ -128,7 +128,12 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
     draft, document = Draft(), None
     if args.rules:
-        draft = extract(Path(args.rules).read_text())
+        # The catalog goes IN, not just out. `extract` binds ordering and
+        # state-conditional rules to a tool, and with no catalog it has nothing
+        # to bind to and files the sentence as a TODO instead. This command has
+        # had both halves in hand all along and was passing only one.
+        draft = extract(Path(args.rules).read_text(),
+                        [t.name for t in catalog.tools])
         document = str(args.rules)
 
     rendered = to_yaml(
@@ -173,8 +178,8 @@ def _cmd_draft(args: argparse.Namespace) -> int:
         print(f"clayseal: cannot read {args.document}: {exc}", file=sys.stderr)
         return 2
 
-    draft = extract(document)
     tools = [t.strip() for t in (args.tools or "").split(",") if t.strip()]
+    draft = extract(document, tools)
     rendered = to_yaml(draft, goal_id=args.goal_id or "REPLACE-ME",
                        goal_summary=args.goal or
                        "REPLACE ME with the task this grant is for",
