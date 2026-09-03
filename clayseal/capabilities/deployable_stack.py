@@ -50,8 +50,11 @@ from clayseal.capabilities.mandate_lint import (
     require_clean,
 )
 from clayseal.capabilities.monitor.action import Action, Trajectory
+from clayseal.capabilities.monitor.ontology import ToolOntology
 from clayseal.capabilities.monitor.llm_clients import default_entailment_judge
 from clayseal.capabilities.parameter_provenance import ParameterProvenance
+from clayseal.capabilities.duties import duties_from_compiled
+from clayseal.capabilities.preconditions import PreconditionLedger
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.core import env
 
@@ -202,7 +205,46 @@ class DeployableStack:
         sensitivity=None,
         enable_flow: bool = True,
         strict_mandate: bool = False,
+        # Refuse a consequential action whose payload carries a credential-shaped
+        # value. The control exists on `SessionBroker`, is measured (0 of 761
+        # benign string arguments on the BPL corpus, 97.5% upper bound 0.5%), and
+        # had no parameter here, so no deployment built through this factory could
+        # turn it on. Default matches the broker's own so this exposes the control
+        # without changing what an existing caller gets; `profiles.py` is where a
+        # deployment default belongs.
+        refuse_credential_payloads: bool = False,
+        # The four goal-derived rungs. Derived from the sealed goal and the tool
+        # catalogue by `derivation.derive_session_rungs`, which is the same
+        # derivation the benchmark performed by hand. Before this existed the
+        # published arm was unreachable from any supported factory, so the
+        # measured system and the shipped system were not the same system.
+        #
+        # ON by default: a rung derives nothing unless the goal names the
+        # constraint in the catalogue's vocabulary, so the failure mode of
+        # deriving is an absent rule, not a spurious one. Pass an explicit
+        # ledger to override one, or `derive_rungs=False` to build the base
+        # gateway.
+        derive_rungs: bool = True,
+        obligations: Any = None,
+        # Catalogue-derived precedence. The ontology is not derived here, because
+        # compiling one is a deployment-time job over the tool schemas with a
+        # cost, so the caller supplies it. Accepts either a `ToolOntology`, which
+        # is wrapped in a ledger below, or a ready ledger. See `preconditions.py`.
+        preconditions: Any = None,
+        # Separation of duties. Like the ontology, the binding comes from a
+        # compile step over the clause and the schemas, so the caller supplies
+        # it. Accepts the compiled mapping, which is wrapped in a ledger below,
+        # or a ready ledger. See `duties.py`.
+        duties: Any = None,
+        entities: Any = None,
+        freshness: Any = None,
+        identity: Any = None,
         session_rules: bool = False,
+        # The deterministic content pack. See `SessionBroker.content_rules`:
+        # priced at 19.7 points on SLEIGHT and 11.9 on AgentHarm, entirely on the
+        # corpus each half was written against, and 0 on BPL. Default matches the
+        # broker so nothing moves; `profiles.py` turns it off for deployments.
+        content_rules: bool = True,
         # Rules this deployment adds. See `SessionBroker.house_rules`: the seam
         # for "in our shop X is also forbidden", without forking the gateway.
         house_rules: tuple = (),
@@ -312,7 +354,41 @@ class DeployableStack:
                     catalog=catalog,
                 )
 
+        # An ontology is data; the ledger is the mechanism that enforces it. Take
+        # the data and build the mechanism here, so a caller does not have to
+        # know the ledger exists and the module is reachable from the product.
+        if isinstance(preconditions, ToolOntology):
+            preconditions = PreconditionLedger(preconditions)
+        # Same split: the compiled mapping is data, the ledger is the mechanism
+        # that enforces it. Building it here keeps the module reachable from the
+        # product and spares a caller from knowing the ledger exists.
+        if isinstance(duties, dict):
+            duties = duties_from_compiled(
+                duties, str(getattr(goal, "summary", "") or ""))
+
+        # Derive the rungs from the two trusted inputs, then let an explicitly
+        # passed ledger win. An operator who built one by hand meant it; a
+        # derived rule is a default, not an override.
+        rungs: dict[str, Any] = {
+            "obligations": obligations,
+            "preconditions": preconditions,
+            "duties": duties,
+            "entities": entities,
+            "freshness": freshness,
+            "identity": identity,
+        }
+        if derive_rungs:
+            from clayseal.capabilities.derivation import derive_session_rungs
+
+            derived = derive_session_rungs(
+                goal, allowed_tools or tool_catalog or set()
+            )
+            for name, rule in derived.items():
+                if rungs[name] is None:
+                    rungs[name] = rule
+
         kwargs: dict[str, Any] = {
+            **rungs,
             "goal": goal,
             "scope": scope,
             "allowed_tools": allowed_tools,
@@ -342,6 +418,8 @@ class DeployableStack:
             "plan_extender": plan_extender,
             "require_declaration_for_egress": require_declaration_for_egress,
             "session_rules": session_rules,
+            "content_rules": content_rules,
+            "refuse_credential_payloads": refuse_credential_payloads,
             "house_rules": tuple(house_rules),
             "receipt_sink": receipt_sink,
         }

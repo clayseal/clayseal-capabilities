@@ -14,12 +14,12 @@ the Waymo path envelope and the learned scorer.
 """
 from __future__ import annotations
 
-import re
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
 
 from clayseal.capabilities.monitor.action import Trajectory
+from clayseal.capabilities.monitor.consequence import touches_security_surface
 from clayseal.capabilities.monitor.scoring.ngram import goal_bucket
 
 _EGRESS_VERBS = {"send", "transfer", "post", "share"}
@@ -27,32 +27,19 @@ _VALUE_VERBS = {"transfer", "pay", "send"}
 _DESTRUCTIVE_VERBS = {"delete", "remove", "drop", "revoke", "wipe"}
 _ROUND_THRESHOLDS = (100.0, 500.0, 1000.0, 5000.0, 10000.0, 50000.0)
 
-# Security-relevant surfaces for delegated-trust laundering. A cross-boundary
+# Delegated-trust laundering keys off the security surface. A cross-boundary
 # summary (main/sidekick) that steers an action touching one of these is the
 # Devin/Fusion threat: trust laundered across an unauthenticated boundary into a
 # change of the authorization surface.
-_SECURITY_SURFACE = ("auth", "permission", "role", "acl", "iam", "credential",
-                     "security", "policy", "token", "secret", "grant", "privilege",
-                     "sudo", "admin", "firewall", "access")
-
-
-_SECURITY_SURFACE_WORDS = frozenset(_SECURITY_SURFACE)
-#: Split on anything that is not a letter or digit, so `access_key` and
-#: `iam-role` yield the words they are made of.
-_WORDS = re.compile(r"[^a-z0-9]+")
-
-
-def _touches_security_surface(action) -> bool:
-    """Does this action name part of the authorization surface?
-
-    Matched on WORDS, not substrings, for the same reason as the twin check in
-    `consequence.py`: `acl` is inside "oracle", `iam` inside "William Diamond",
-    `access` inside "accessory". Ordinary arguments were reading as a change to
-    the authorization surface, which is what this detector escalates on.
-    """
-    hay = " ".join([action.tool, action.resource,
-                    " ".join(str(v) for v in action.args.values())]).lower()
-    return not _SECURITY_SURFACE_WORDS.isdisjoint(_WORDS.split(hay))
+#
+# The vocabulary and the word-matching are `consequence.touches_security_surface`
+# and are imported, not restated. This file used to carry its own copy under a
+# comment claiming the two were in sync. They were not: the copy here was
+# missing "key", so an untrusted-context action naming an `access_key` was a
+# security touch for the consequence ladder and not a laundering hit here.
+# Importing also picks up the path hint, which the copy did not read, so an
+# attempt that names the surface only in a path is visible here now too. No
+# change on the BPL suite, measured: clayseal and product moved on no scenario.
 
 
 def peer_z_score(feats: dict[str, float], mean: dict[str, float],
@@ -175,7 +162,7 @@ class AmlAnalytics:
             if getattr(c.trust, "value", c.trust) == "untrusted"
         }
         for a in traj.actions:
-            if a.verb != "read" and untrusted.intersection(a.derived_from) and _touches_security_surface(a):
+            if a.verb != "read" and untrusted.intersection(a.derived_from) and touches_security_surface(a):
                 typ.append("delegated-trust-laundering")
                 reasons.append(
                     f"{a.verb} on security surface justified by untrusted "

@@ -165,6 +165,7 @@ AUTONOMOUS = Profile(
         "enable_replan": True,
         "enable_flow": True,
         "session_rules": False,
+        "content_rules": False,
         "strict_mandate": True,
         "audit_budget": 0,
     },
@@ -196,6 +197,15 @@ AUTONOMOUS = Profile(
             "Off. Corpus-derived patterns should not decide an unattended "
             "deployment's behaviour on traffic unlike those corpora."
         ),
+        "content_rules": (
+            "Off. Sixty patterns keyed to two benchmark corpora, priced at "
+            "19.7 points on SLEIGHT and 11.9 on AgentHarm with the two halves "
+            "disjoint and neither transferring, and 0 on BPL "
+            "(content_rule_contribution.md). A rule matching `brainfuck` or a "
+            "two-package typosquat list decides nothing about this deployment, "
+            "and the harm cues fire on `drugs` and `bomb`, which are ordinary "
+            "words in a pharmacy or a demolition firm."
+        ),
         "strict_mandate": (
             "A mandate that fails to cover a money-moving tool is a startup "
             "failure rather than a silent gap."
@@ -221,6 +231,7 @@ SUPERVISED = Profile(
         "enable_replan": True,
         "enable_flow": True,
         "session_rules": False,
+        "content_rules": False,
         "strict_mandate": True,
         "audit_budget": 8,
     },
@@ -248,7 +259,19 @@ SUPERVISED = Profile(
             "is exactly the profile that should ask rather than refuse."
         ),
         "session_rules": (
-            "Off. A deployment should measure with them before adopting them."
+            "Off. Measured at zero contribution on the benchmark corpora "
+            "(benchmarks/results/corpus_rule_contribution.md), which says "
+            "nothing about a deployment's own traffic. Measure there before "
+            "adopting them."
+        ),
+        "content_rules": (
+            "Off. Sixty patterns keyed to two benchmark corpora, priced at "
+            "19.7 points on SLEIGHT and 11.9 on AgentHarm with the two halves "
+            "disjoint and neither transferring, and 0 on BPL "
+            "(content_rule_contribution.md). A rule matching `brainfuck` or a "
+            "two-package typosquat list decides nothing about this deployment, "
+            "and the harm cues fire on `drugs` and `bomb`, which are ordinary "
+            "words in a pharmacy or a demolition firm."
         ),
         "strict_mandate": "Same as autonomous: uncovered money tools fail at startup.",
         "audit_budget": (
@@ -273,16 +296,26 @@ BENCHMARK = Profile(
         "enable_replan": True,
         "enable_flow": True,
         "session_rules": True,
+        "content_rules": True,
         "strict_mandate": False,
         "audit_budget": None,
     },
     rationale={
         "session_rules": (
-            "ON, and this is the reason the profile is separate. Five "
-            "corpus-derived pattern rules, one carrying a corpus's own project "
-            "name as a literal, contributed to every published containment "
-            "number. Reproducing those numbers requires them; deploying on "
-            "unlike traffic does not."
+            "ON because every published number was produced with the pack on, "
+            "and this profile exists to be that configuration. It is NOT "
+            "load-bearing: with it off, sleight stays 28/122, agentharm "
+            "196/507, BPL joint 52/132 at 2 false blocks, and benign cost stays "
+            "0 of 20,619 events "
+            "(benchmarks/results/corpus_rule_contribution.md). The corpus "
+            "project name one rule carried has been removed. A deployment "
+            "profile that leaves this off gives up no measured containment."
+        ),
+        "content_rules": (
+            "ON. Unlike `session_rules`, this pack is worth real containment on "
+            "SLEIGHT and AgentHarm, so reproducing those published numbers "
+            "requires it. That it is worth them ONLY on the corpora it was "
+            "written against is the reason it is off everywhere else."
         ),
         "strict_mandate": (
             "Off: the harnesses build intentionally incomplete mandates in "

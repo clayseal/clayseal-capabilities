@@ -103,7 +103,8 @@ def is_broker_arm(condition: str) -> bool:
     everything it was never asked about. An ablation arm that silently measures
     nothing is worse than one that crashes.
     """
-    return condition == "clayseal" or condition.startswith("clayseal+")
+    return (condition == "clayseal" or condition.startswith("clayseal+")
+            or condition.startswith("product"))
 
 
 def apply_call(scen, env, condition, broker, drift, authgraph, returns,

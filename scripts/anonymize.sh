@@ -106,13 +106,63 @@ echo "=== the artifact must still work ==="
 # not an anonymization failure, so a single failure here does not stop the run.
 .venv-anon/bin/python -m pytest python/tests -q | tail -2 || true
 .venv-anon/bin/python -m benchmarks.check_claims | tail -2
-.venv-anon/bin/python -m benchmarks.bpl_sweep --suite full --json /tmp/anon_sweep.json >/dev/null
+# Two sweeps, because Table 1's system row and the control it is argued against
+# are two configurations of one suite. The scoped tier needs the gateway to
+# observe tool outputs, the stronger deployment assumption recorded in
+# benchmarks/results/flow_scoped.md, which is why it is a separate invocation.
+# `--conditions` because the arms asserted below are the only ones needed, and a
+# full sweep runs all sixteen. Measured: 90 seconds filtered against roughly
+# thirty minutes unfiltered, for the same asserted cells.
+ARMS=sessiongate+identity,product,product+all,product+generative
+.venv-anon/bin/python -m benchmarks.bpl_sweep --suite full --conditions "$ARMS" \
+    --json /tmp/anon_sweep_off.json >/dev/null
+.venv-anon/bin/python -m benchmarks.bpl_sweep --suite full --conditions "$ARMS" \
+    --confidentiality scoped --observe-results \
+    --json /tmp/anon_sweep_scoped.json >/dev/null
 .venv-anon/bin/python - <<'PY'
 import json
-rows = json.load(open("/tmp/anon_sweep.json"))
-a = "sessiongate+identity"
-j = sum(r["cells"][a]["contained"] and r["cells"][a]["completed"] for r in rows)
-print(f"headline joint containment: {j} of {len(rows)}  (paper reports 73 of 132)")
-assert j == 73, f"artifact does not reproduce the paper: {j}"
+
+# Table 1's system row is 78/130/76: the ladder top with the flow tier scoped.
+# 75/130/73 is the same arm with the tier off, the control the flow section
+# quotes as "73 to 48". The old assert checked 73 alone and called it the
+# headline, so the number the paper actually leads with went unchecked.
+#
+# All three columns, not the joint alone: a change losing two containments and
+# gaining two elsewhere holds the joint and still contradicts the table.
+#
+# `product` builds every scenario through `DeployableStack.from_goal`, the only
+# factory the CLI and the README expose, where the ladder arms are wired by the
+# harness. Holding both to the same numbers is what makes this a reproduction of
+# the SHIPPED system rather than of a harness configuration: if `from_goal`
+# stops deriving a rung, this goes red instead of passing on the hand-wired arm.
+# (contained, completed, joint) per arm, per configuration. The headline the
+# paper leads with is the catalogue-derived 88, so it is asserted here rather
+# than left to a reader: an artifact that only checks the arm the paper argues
+# AGAINST is not checking the paper.
+#
+# None of these needs an API key. The compile steps are cached in
+# benchmarks/_ontology_cache.json and _role_cache.json, and this was verified by
+# unsetting AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY and re-running: identical
+# to the digit. A reviewer reproduces the headline with no credentials.
+RUNS = [("tier off", "/tmp/anon_sweep_off.json",
+         {"sessiongate+identity": (75, 130, 73), "product": (75, 130, 73)}),
+        ("scoped", "/tmp/anon_sweep_scoped.json",
+         {"sessiongate+identity": (78, 130, 76), "product": (78, 130, 76),
+          "product+all": (90, 130, 88), "product+generative": (90, 130, 88)})]
+
+for label, path, wants in RUNS:
+    rows = json.load(open(path))
+    for arm, want in wants.items():
+        if arm not in rows[0]["cells"]:
+            raise SystemExit(f"artifact does not carry arm {arm!r}")
+        cells = [r["cells"][arm] for r in rows]
+        got = (sum(c["contained"] for c in cells),
+               sum(c["completed"] for c in cells),
+               sum(c["contained"] and c["completed"] for c in cells))
+        print(f"  {label:<8} {arm:<21} contained {got[0]} "
+              f"completed {got[1]} joint {got[2]} of {len(rows)}")
+        assert got == want, (
+            f"artifact does not reproduce the paper: {label} {arm} "
+            f"gave {got}, the paper reports {want}")
 PY
 echo "artifact ready at $OUT"

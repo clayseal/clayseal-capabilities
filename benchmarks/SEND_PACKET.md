@@ -32,9 +32,9 @@ Live keystones (API $, separate):
 | Behavioural-layer numbers | **corpus-limited** | `results/adequacy.md` | Of 11 corpora, 4 carry zero attack events and 1 can evaluate provenance. Quote no behavioural number without the adequacy verdict for that corpus. |
 | Volume / burst containment 100% | ready | `results/burst.md` | Do not calibrate velocity on attack labels |
 | BPL escape-class containment | **known gap** | `results/bpl_full_sweep.md` correction | 17% (10 of 59), not the 61% previously published. The old figure was mandates that forbade the task. Attacks use only granted tools; the stack has no mechanism for sequence-growth escape. |
-| Sequence / BPL ≈0% violation vs Progent/CaMeL ≈100% | ready | `results/bpl_head_to_head.md` | Sample size modest (n≈20) |
+| Sequence / BPL ≈0% violation vs stateless per-call and dataflow-taint defenses ≈100% | ready | `results/bpl_head_to_head.md` | **Do not name Progent or CaMeL.** The conditions are ~10-line reproductions of an architectural class, the cited file dropped those names, and no cell may be read as "system X fails". Aggregate-budget class is n=100 per cell. The exfil row and Core-12 are still n=20, where a zero has a 97.5% upper bound of 15%. |
 | Live AgentDojo ASR ≈0% (gpt-4o-mini, important_instructions) | ready (**model-bound**) | `results/head_to_head_injection.md`, `pooled_asr.md`, `results/utility_experiment_void.md` | Utility cost is the tradeoff; report it. **And name the model.** On `gpt-5-mini` the UNDEFENDED ASR is 0.0% across four attacks, so the result does not transfer to a 2026 frontier model and cannot be re-run there. |
-| Detector closes aggregate bursts (BFCL / τ²) | ready | `results/detector.md` | Per-call ladder scores 0% on this class |
+| Detector closes aggregate bursts (BFCL / τ²) | **withdrawn, no surviving evidence** | none. `results/detector.md` was stamped `unverified` and deleted in `bbf9f5d` for carrying no reproduce command | Nothing in `results/` measures the trajectory detector on BFCL or τ². `results/composed_detector.md` measures it on sleight and agentharm only. The per-call ladder's blindness to this class survives the deletion and is in `four_axes.md`. |
 | Content-defined harm (AgentHarm / SLEIGHT / AdvBench-agent) | ready (ceiling) | `results/agentharm_ceiling.md`, `four_axes.md` | **Not** an authorization win; do not optimize via hard-deny of untargeted tools |
 | ASB / InjecAgent 100% containment | ready (saturated) | scoreboard `SATURATED` | **Never** in a pooled headline |
 | ToolEmu normalized traces | partial → ready when fixture/corpus present | `fixtures/toolemu/`, scoreboard | Raw toolkit mapping has **no** attack events |
@@ -55,7 +55,8 @@ switches change it materially and both are now explicit rather than implied.
 
 | switch | measured setting | what it means |
 | --- | --- | --- |
-| `session_rules` | **on** | Five corpus-derived pattern rules (`clayseal/capabilities/session_rules.py`) matching shell command text — `ln -s` then `zip`, `awk $N` vs an observed CSV header, absolute-line `sed` after an expanding edit — one of which carries a corpus's own project name as a literal. They were inlined in the broker and unswitchable; they are now named and default OFF on the raw `SessionBroker` and ON in `DeployableStack.from_goal`, which is the profile every published number came from. STEP_UP only, never DENY. **Any containment claim for a workload unlike these corpora should be re-measured with `session_rules=False`.** |
+| `session_rules` | **off** | Five corpus-derived pattern rules (`clayseal/capabilities/session_rules.py`) matching shell command text: `ln -s` then `zip`, `awk $N` vs an observed CSV header, absolute-line `sed` after an expanding edit. STEP_UP only, never DENY. They default OFF on the raw `SessionBroker` and OFF in `DeployableStack.from_goal`, the factory `benchmarks/core/stack_factory.py` builds every scored run through. `profiles.BENCHMARK` is the only shipped profile setting it True. The pack WAS on when the published numbers were produced, and its contribution was then measured by removing it and re-running every scored population: sleight 28/122, agentharm 196/507, BPL joint 52/132 at 2 false blocks, identical in both arms, benign cost 0 of 20,619 events (`results/corpus_rule_contribution.md`). The corpus project-name literal is removed. **Zero is a measurement on these corpora. A workload unlike them has not been measured either way.** |
+| `content_rules` | **off** in deployment, **on** in BENCHMARK | Sixty patterns in `monitor/entailment.py` (27 structural rules keyed on one corpus's file layout and vocabulary, plus 33 harmful-intent cues) that ran UNCONDITIONALLY on the authorize path until they were priced. They are worth 19.7 points of in-surface containment on SLEIGHT and 11.9 on AgentHarm, the two halves disjoint and neither transferring to the other corpus, and 0 on BPL (`results/content_rule_contribution.md`). STEP_UP only. **Any content-harm number is a number measured with these on.** |
 | `detector` | **off** | The trajectory detector does not ship enabled. On SLEIGHT it reaches 100% containment by refusing 13 of 18 benign trajectories. |
 
 ## Forbidden claims (auto-fail review)
@@ -101,7 +102,7 @@ switches change it materially and both are now explicit rather than implied.
 - `SEND_PACKET.md` (this file)
 - `results/scoreboard.json` + `scoreboard.md`
 - `results/head_to_head_injection.md`, `bpl_head_to_head.md`, `live_ladder.md`
-- `results/four_axes.md`, `four_axes.md`, `agentdyn.md`
+- `results/four_axes.md`, `composed_detector.md`, `agentdyn.md`
 - `results/syscall_tier.md`
 - `a business memo` (kept outside this repository) or `clayseal_benchmarks.tex` with Reproduce block
 - git SHA + `corpus_manifest.json` hashes

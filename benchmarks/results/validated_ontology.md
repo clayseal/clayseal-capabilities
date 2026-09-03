@@ -8,6 +8,24 @@ python -m benchmarks.validate_ontology    # once per catalogue, offline
 python -m benchmarks.precondition_rung    # deterministic, no model
 ```
 
+The middle command scores its rungs on top of the `clayseal+identity` arm of the
+goal-derived sweep, so it needs that sweep's per-scenario cells. It reads them
+from `benchmarks/_bpl_baseline.json` and builds that file by running the sweep
+itself when it is absent. Measured over three cold runs with the file deleted and
+no Azure key in the environment, that build cost between 4.1 and 7.8 seconds
+wall, against 1.4 to 1.9 seconds once the file exists. So the block above runs
+from a clean checkout. Two flags control it:
+
+```bash
+python -m benchmarks.validate_ontology --baseline PATH   # a dump you already have
+python -m benchmarks.validate_ontology --refresh-baseline
+```
+
+`--baseline` takes any `bpl_sweep --json` dump. Use `--refresh-baseline` after a
+gateway change, because a kept dump goes stale silently; the earlier hardcoded
+`/tmp/base.json` hid that by being wiped on reboot, at the cost of making the
+number below unreproducible from a checkout.
+
 [compiled_ontology.md](compiled_ontology.md) established the split, compile once
 per catalogue and enforce deterministically per call, and found that an
 **unreviewed** artifact is a wash: +9 attacks contained against 8 benign tasks

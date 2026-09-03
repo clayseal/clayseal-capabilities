@@ -459,6 +459,56 @@ class SessionBroker:
     #: measure both ways. They only ever STEP_UP, so the cost of leaving them on
     #: is friction rather than blocked work.
     session_rules: bool = False
+    #: Run the deterministic content pack in `monitor/entailment.py`.
+    #:
+    #: Sixty corpus-derived patterns: 27 structural rules, each an AND of a regex
+    #: over the write body and an English-word test over the goal, plus 33
+    #: harmful-intent cues. Until this switch existed the pack ran UNCONDITIONALLY
+    #: on the authorize path, with no flag and no measurement, which made it the
+    #: largest unpriced hand-authored artifact in the gateway.
+    #:
+    #: It is now priced, and the result is not the one `session_rules` got. The
+    #: pack is worth a great deal, and it is worth it only on the corpus each rule
+    #: was written against (`benchmarks/results/content_rule_contribution.md`):
+    #:
+    #:     population            full pack   structural only   pack off
+    #:     SLEIGHT in-surface       23.8%          23.8%          4.1%
+    #:     AgentHarm in-surface     38.7%          26.8%          26.8%
+    #:     BPL, 132 scenarios          0              0              0
+    #:
+    #: The two halves are disjoint. Every point on SLEIGHT comes from the 27
+    #: structural rules and none from the cues; every point on AgentHarm comes
+    #: from the cues and none from the structural rules. Neither half transfers to
+    #: the other corpus, and on BPL the pack was invoked 54 times and fired 0.
+    #: That is what a memorised rule looks like when you measure it.
+    #:
+    #: Default True so no published number moves and no existing caller changes
+    #: behaviour. `profiles.py` turns it OFF for both deployment profiles, because
+    #: a rule keyed on `brainfuck`, a two-package typosquat list and one corpus's
+    #: directory layout has nothing to say about a deployment's own traffic, and
+    #: `_HARM_CUES` fires on `\bdrugs?\b` and `\bbomb\b`, which a pharmacy or a
+    #: demolition contractor writes in the ordinary course of business.
+    #:
+    #: STEP_UP only, never DENY, which bounds the cost of being wrong to friction.
+    content_rules: bool = True
+    #: Compiled tool ontology, enforced by `preconditions.PreconditionLedger`.
+    #:
+    #: Precedence WITHOUT goal text: the operators come from the tool schemas,
+    #: compiled offline and once per catalogue, so this rung reaches deployments
+    #: whose goal is written in a vocabulary the lexical rungs cannot parse.
+    #: Build with `preconditions.PreconditionLedger(ontology)`, and validate the
+    #: ontology against your own known-good traffic first: an unvalidated
+    #: artifact is a wash (+9 -8, p=1.0), a validated one is +10 -0 at p=0.002.
+    #:
+    #: A merely-unmet precondition ESCALATES. Only an unmet precondition on an
+    #: irreversible act denies, because a compiler's guess should not become a
+    #: hard refusal.
+    preconditions: Any | None = None
+    #: Separation of duties with the roles bound to tools at compile time.
+    #: Build with `duties.duties_from_compiled`. The four lexical rungs cannot
+    #: reach this class, because the goals name roles and the catalogue names
+    #: actions; see `duties.py`.
+    duties: Any | None = None
     #: Rules this deployment adds, checked after the built-in pack.
     #:
     #: The seam a workload actually needs. Everything else here is a knob on
@@ -1309,7 +1359,8 @@ class SessionBroker:
         # deterministic patterns on this write body vs the sealed goal, then
         # optional LLM entailment (fail-open). Same STEP_UP contract; never hard-deny.
         if (
-            not self._declaration_advisories
+            self.content_rules
+            and not self._declaration_advisories
             and not self._declaration_denials
             and self._sealed_plan is None
             and is_consequential(action)
@@ -1386,6 +1437,35 @@ class SessionBroker:
                                 protected_write=is_write)
                 return self._finalize(action, Outcome.DENY, "floor", (why,), None,
                                       is_write, start, blocked=True)
+
+        # Catalogue-derived precedence, right after the goal-derived kind because
+        # it answers the same question from the other source. This one denies only
+        # when the act is irreversible; a compiled operator is a derived artifact
+        # and an unmet precondition on a recoverable act is a question, not proof.
+        if self.preconditions is not None:
+            ok, severe, why = self.preconditions.check(action.tool)
+            if not ok:
+                if severe:
+                    self._rollback(action, v_res, c_res)
+                    self._telemetry(self.metrics.record_prevented,
+                                    protected_write=is_write)
+                    return self._finalize(action, Outcome.DENY, "floor", (why,),
+                                          None, is_write, start, blocked=True)
+                self._rollback(action, v_res, c_res)
+                return self._finalize(action, Outcome.STEP_UP, "floor", (why,),
+                                      None, is_write, start, step_up_flag=True)
+
+        # Separation of duties. A collision between two halves of one control is
+        # a fact about this session's own history, so it refuses rather than
+        # escalating, exactly as a missing prerequisite does.
+        if self.duties is not None:
+            ok, why = self.duties.check(action.tool, action.args)
+            if not ok:
+                self._rollback(action, v_res, c_res)
+                self._telemetry(self.metrics.record_prevented,
+                                protected_write=is_write)
+                return self._finalize(action, Outcome.DENY, "floor", (why,),
+                                      None, is_write, start, blocked=True)
 
         # Freshness, immediately after precedence because it is the same rung
         # read backwards. That an invalidator ran is a fact about this session's
@@ -1698,6 +1778,14 @@ class SessionBroker:
         # here where nothing downstream can still refuse.
         if self.obligations is not None:
             self.obligations.observe(action.tool)
+        # Same discipline: a refused act established none of its facts, so a
+        # later act that required them is still refused.
+        if self.preconditions is not None:
+            self.preconditions.observe(action.tool)
+        # Same discipline: a refused act was performed by nobody, so it must not
+        # occupy a role in the duty ledger.
+        if self.duties is not None:
+            self.duties.observe(action.tool, action.args)
         # Same reason, and the symmetric hazard: a REFUSED invalidator must not
         # poison a justification, and a REFUSED re-establishment must not clear
         # one. Both directions are pinned by tests.

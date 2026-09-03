@@ -21,9 +21,12 @@ placement had three costs and no benefit:
 
 Extracting them changes no behaviour. Every predicate, every threshold and every
 reason string below is byte-identical to the inlined version, so the published
-scoreboard reproduces exactly with ``session_rules=True``, which is what
-``DeployableStack.from_goal`` passes by default for that reason. The raw
-``SessionBroker`` defaults to OFF, because the library primitive should not carry
+scoreboard reproduces exactly with ``session_rules=True``. Both the raw
+``SessionBroker`` and ``DeployableStack.from_goal`` now default to OFF, and
+``profiles.BENCHMARK`` is the only shipped profile that turns it on, because the
+pack's measured contribution to every published number is zero
+(``benchmarks/results/corpus_rule_contribution.md``). The raw ``SessionBroker``
+defaulted to OFF from the start, because the library primitive should not carry
 a corpus's fingerprints unless a caller asks for them.
 
 WHAT THEY ARE FOR

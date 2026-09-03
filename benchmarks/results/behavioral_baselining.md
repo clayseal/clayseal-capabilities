@@ -12,6 +12,14 @@ python -m benchmarks.mined_precedence
 python -m benchmarks.plan_distribution
 ```
 
+`mined_precedence` scores its rules on top of the `clayseal+identity` arm of the
+goal-derived sweep and reads that arm from `benchmarks/_bpl_baseline.json`,
+building the file by running the sweep when it is absent, so the block above runs
+from a clean checkout. `--baseline PATH` points it at a `bpl_sweep --json` dump
+you already have, and `--refresh-baseline` rebuilds a dump that has gone stale
+against a changed gateway. It previously read a hardcoded `/tmp/base.json` that
+no checkout contains.
+
 The ideal gateway needs nothing on day one and hardens itself from activity the
 deployment already produces. No goal that names its constraint, no declared
 ontology, no compile step, no review. This is the specification-mining idea, and

@@ -148,17 +148,21 @@ def test_the_step_up_setting_actually_changes_what_runs():
     assert not blocked, "a step-up must proceed when the approver rubber-stamps"
 
 
-def test_no_containment_in_this_suite_depends_on_a_human_answering():
+def test_no_containment_in_this_suite_depends_on_a_human_answering(rows):
     """Every stop is a hard denial, so the headline is an autonomous number.
 
     Worth pinning because the README describes tiers that step up rather than
     deny, and a reader is entitled to ask how much of the containment is a
     question somebody has to answer. On this suite the answer is none of it.
-    """
-    from benchmarks.bpl_sweep import sweep as _sweep
 
-    rows_ = _sweep(list(SCENARIOS))
-    outcomes = [o for r in rows_
+    Takes the `rows` fixture rather than sweeping again. It called `sweep()` a
+    second time for a column the fixture already held, which is a full pass over
+    every scenario and EVERY arm, and the arm list has since grown from 10 to 16.
+    Measured: one pass is 90s for `none`, the arm that does nothing at all, and
+    130s on average across arms, so the duplicate was costing more than twenty
+    minutes to re-derive `cells["clayseal"]`.
+    """
+    outcomes = [o for r in rows
                 for o in (r["cells"]["clayseal"].get("attack_outcomes") or [])]
     assert "STEP_UP" not in outcomes, "suite now produces step-ups; report the band"
     assert "DENY" in outcomes

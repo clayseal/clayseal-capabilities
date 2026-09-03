@@ -93,17 +93,41 @@ class EntityBinding:
         return f"{self.key}: {sorted(self.allowed)} ({kind} from {self.source!r})"
 
 
+#: Structural fields of the intent envelope. These name the SHAPE of the task,
+#: not the counterparties it may touch, so none of them is an entity list.
+#:
+#: This started as `{"verbs"}` alone, on the rule "everything else that is a
+#: list of strings is an entity list". That rule is wrong in the dangerous
+#: direction, and connecting the rung to `DeployableStack.from_goal` is what
+#: surfaced it: every MCP fixture ships `structured_intent={"kind":..., "verbs":
+#: [...], "tools": [...]}`, so `tools` became an entity binding with
+#: `declared=True`, which is the provenance level that DENIES rather than
+#: escalating. The tool allow-list then governed argument slots of kind "tool"
+#: and refused benign work. One false block in nine on `mcp_attack`.
+#:
+#: An allow-list of entity keys would be the tighter design and it cannot be
+#: written: the whole point of the rung is that an operator names their own
+#: entity families. So the exclusion is explicit, and a key that is not the
+#: envelope's own vocabulary is still treated as an entity list.
+_ENVELOPE_FIELDS = frozenset({
+    "verbs", "tools", "kind", "type", "phases", "call_templates",
+    "ontology", "goal_conditions", "initial_facts", "named_objects",
+    "allow_resources", "allow_agent_memory_writes", "allow_writes", "mutating",
+})
+
+
 def bindings_from_intent(structured_intent: Any) -> list[EntityBinding]:
     """Entity lists the sealed goal states in structured form.
 
-    `verbs` is excluded: it names actions, and the intent envelope already owns
-    it. Everything else that is a list of strings is an entity list.
+    The intent envelope's own structural fields are excluded (`_ENVELOPE_FIELDS`):
+    they name actions, tools and plan shape, and the envelope already owns them.
+    Everything else that is a list of strings is an entity list.
     """
     out: list[EntityBinding] = []
     if not isinstance(structured_intent, dict):
         return out
     for key, values in structured_intent.items():
-        if key == "verbs" or not isinstance(values, (list, tuple, set)):
+        if key in _ENVELOPE_FIELDS or not isinstance(values, (list, tuple, set)):
             continue
         names = {_norm(v) for v in values if isinstance(v, str) and v.strip()}
         if names:

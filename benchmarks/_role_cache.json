@@ -1,0 +1,5200 @@
+{
+ "007ca3d285c6ec91d5399c87133f97a7eb1d44f8d121d78815e21b693d6592a9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "007e7da5061508b009b73e99a6ef03bc790183fb55f1e053b15d574d10470fa6": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "00d55c00cacda814f5211d32256f89a86f678bbe53eb76e1606d7bcd926f06e6": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "active contacts"
+    ],
+    "key": "to"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "01aeb108000f6f550c2f621544449b50c96afe16d24635d7862843c3d1eb16be": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "02816d1c1c4f09215ac01074b4e3c2d3bb35931380b48ab79687c06b64cada20": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "028811cfa67d591f59da38625790d6591149a21055a215e2ae0c1df8c5b2505e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "02a8df560177c70e8fec8986fe54b33a9e17d5ece2b9d5b34359b64da52fdef8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "032edecaa70ff35398cc80ca9cd4c6092f8cd07a21d95ca950c7783a47e634b7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "0396b32e9aa973caf7f20d792bb994ddec6f1db5623e2eb9f104c5ab5b69cb2c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "03c11d02a0a2d01c2b1435c92c3f1d1951303e7ad093e807fc01870318a5bac0": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "03d592fd51130dbd8ef74517bf6a9b2976a79863844af7eb3229e52d80dda4fe": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "040892c4f07cf2ea0b054dbef09d886866a44b703ffd56fb1b5a2f3eff4ca184": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "048c2b75d9d97f22adc6f3081855fd0734f21bb4dcfe7f247a58d30ee0f5b199": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "048e7235bc83e8a5b01882962916a100cb615632c52b516a5dc2f7ddba8bdcbf": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "04c903a2f981cc3b89b3daeeacd7cfa0da1ea0d7640dce00f2fe83072abd53da": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "05737c2e2ed55aa0f3b6407d6bb7ffb971722c4f60a4e0ae96253e93b6dd8e3c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "05756478f5cb1a76225c60d65cd705bd3d7800d2ac117eec7ab4f23502b83521": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0597797bc678740ec27d284191ae05c4a4d67ff931d0ce50f7d7122fe0ce9c54": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "05b6a4a2419929e91b6a41afc161f83c2aeec319edc6a05d13792cfcf86f738a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "0611fa54a499b6f7db3b7dffe4e7e7f80a00fc0608cb4b01330c7f310e6e9071": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "0676fe847a3e1950d8fffaba994231789de2078ac82a35f04c3b90ac3ba276da": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "internally"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "068711dd829435baa0051cc5d9acc349ba8656d4432bb4892ff1121c7258df6f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "06ac6d3f9f3fb75889e3ebda748449dc979fcffd37166afc20d9acb0c4a3b46d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "06c0d3175cff9c86c80d5149e092911242f18ab27d841ea9856f94c614c8b0a4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "073f8c867696c6cfa5e8b6ad99f517e124b9429978a9d58ead5281c92663283b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0750b1ab0651bda48c9c704247bca391e6c129ef73966c9466f82c9439591c3a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "079224b9d7e934bd0d77ba233c4d97fab7989fd8c92b5394002e653128b374c8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "080fb14c267f4dbb95980f4dfd528c8f6306c3e9e221daf23c75a2b657802e0a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "0865b2084b3895f4bfe359b5759997d5f59343c23d4375c3090c661a2de011ec": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "08ce46fdbd944352fe79b833db2877d5453afdad6e5cdbfa578d601b01ead71c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "092138ca807f051d2718bd4d5e3788032080ba9d4bab77450928406dbbc95867": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0930e81104bd003736c0ada484d7882208ea568f3b5fe4ab933afd74d3944761": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "09b84cf09222824589045ea601e4b33da2b946f2328e8a691e5a46c40f932850": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "09d80426b6d59d37a76687e3e9e44a3d39c5b3041be41d299d2dfd3bf94b7398": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0a3c739929650d211160f5beac9043379d3bdb0f24ca21c01f0c183fe32a6948": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0ae8c4a27e2bb6b3155a8460f62148e96e0c8b5d18f25c7e5f2a66fd6a1dc9a7": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0ba263eee592ea2c37530024f610da2ef34174b79b2756a21b4e58f9eb38eb77": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0bd31572cf5ae9135c51a33a44da547d3d3375fbeb54a81e39adaa7bc7343bae": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0cfb744453f0ad2826d63a5ed42d45dcb8013aa9077b9faa38c9bcfd67f538b0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "0d0361a59e576c072b4a479c8ea31c797e4f7269f8468ae90505ddf629747c6c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "0d2db1b3edc41ef5d5ee0a48071d7a744a8b68e242e7927ca17e4fc443abeedb": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "0d563b736acd76afa7713abfd8fb01d68714298c558bae09d33977153d845138": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "0f39ff964fbe9a13b27c29772ea498de6baf90c9d20ba3c75989eb1d96aafaaf": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1094815436ffc1508e0050047c26201de37031a406ef4d2ba04e2a3c1ade4a20": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "10b54b96b52e279c19ba126d8ca886a685cc2477aaaa0ba7d37ff660f0d344b7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "settle",
+  "witness_required": []
+ },
+ "1116c23f3d045e894cfe0fb7261ade991d627a7d6faf4abd8505a1354de531e8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "11b95f4c019df30e09529dc37dff6a852f3520e0d13614e8acbaac14c237e558": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "11d66b3023d22c0d8468bb2c2fde1e2dba2e048ba538385bdeb6165bd4fe912d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "120b6b2152606598c9ecc6364efb85199b3c408397189c9b4cafd216969bbe9a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "122fb9f9b1c2650fa7a5d42b2b04e75de2057fe3f4ae783091c82fc09e6a316f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "12d3bea772e979b52ec37a450ac58dd7932891025d87afcd88b0138a4c341155": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "14134e70716ee4b6d2c2acc3899a9781e23a99e3d11e40bf1ecdaf0ce2fe6998": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "144e7f36bfa0d87e9331f0362b162c7b80681a6e3ae46157de9bd2263dd1104b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "14badd9beba2fbcd6f13799c3dac19fe665d7158be8a1eb07c4bc105cd1c42a9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1563767530c76e5212d4c79f522da81fd558abc0cd5ebaa42990b60897224c13": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "log_deviation",
+    "before": "dose_subject"
+   }
+  ]
+ },
+ "1602e8c890dc1621fe159ea8bd09483e25054256ba1fcdac82fd44b35cb73914": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "16112e7ee71de8267ba7d9b5490c5b2669633c7183aed7e37a1e506f4c154c41": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "file_attestation",
+    "invalidators": [
+     "ledger_breach_flag"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "1615a934224ed4b89833521eda801e5270283a0a3fdc5e22255a81a846bbeb91": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1672da62f914bfb1be7fad724e249bb49de41c46b4d28f70ebe5de0e18431761": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "16ba4ac0aaf7551c6f74a31adf16c0d86332811382f015685d1aaef94cf10fc8": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "16d2cb92d58e6fef7f7f0f423d1f4b6a7745f59bffd2424aa3ed5087cb9c097f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "17a5627b44ddbc797d76eb72ae941f53c063ad2118f2947007ca66fe2933844b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "17adac59688495bdc493e25eb502c90a94b0851db2b47a1e1703671df9e88cca": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "17b38682aba7dbef74dc5d46295b7bac1c6203f255030accb91e9f39d5b6f769": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "ship_lot",
+    "before": "close_capa"
+   }
+  ]
+ },
+ "17c672acd4eb6ae10a1136423f94c954e576ff3dcadd42b27e7eb25b7623f51b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "17fbd71cebf28a1d8b92bb7ea671100856766deb2f094e68a31e6a33f0d0a41d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "18818b13a693b0d6def6dd06a795d8e8c668aaaf3071e2714905b20a3787c72e": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "Acme",
+     "Beta"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "189ba320833be048fb5da612c192a57bdcce28dd64b18f4bd97ae1ead94050fd": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "partner-ok"
+    ],
+    "key": "doc_meta"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "18ab94978a2ed5722208091c35ebe9a5a6fab2cc7585eaea4d4d52880c52adb6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "19403e7ed707bced71ad4df50e7c539938b902b0ed987eb2cc7c000ebef93ccd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "19f865be35401a5ffb122b7ee3a6610ce014a35b6d9cd88739f1735586b09701": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "notify_compliance",
+    "notify_treasury"
+   ]
+  ],
+  "gated_act": "pay_wire",
+  "witness_required": []
+ },
+ "1a8812802b7308e7d1cf1e2eb405d04bd6ad3c92021127b7d44390920814a72f": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "partner token"
+    ],
+    "key": "token"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1aa90fcfa51a7893f754d196a5eb24972c3dd11b7476524bf838a46571e72a98": {
+  "actor_arg": "tenant",
+  "actor_tool": "set_tenant",
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1ac57f712bbdbce86250ed66fd4493af3ff2a4dd22931d41f2b76f23ba51a996": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1b191fcca098d893c2d960dc62903c19b639e07cfa06a8a41c67e875337d5b48": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "stage_delete",
+    "commit_deletes"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1b27c29de3e9b56c32e9f2aea4bfbd70f32dad5345778370f8e218d3f429e177": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1b34ba681e637fe72acfd40cbbc9cbc05873c7696797ac473d99a40b51653e99": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1b3c9489a538b1677d39cb88b6a247a30c931d4e8bc0748aca9a66f136566033": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1b5e10e7d5045865eef06f5dda9e186551c7a00105e4e15430dbaa6f048d2ab3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1bc305b758a192e97613ae0ef21f43e90c0b4229715d8e6f6453be15f241bb2e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1c1a5311939ebaa6f3eeb47ec9fdfda44d31e4083b0492aa11c7836fb6f0b6dd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "forbidden_with_token",
+  "witness_required": []
+ },
+ "1c6aa4d928ad00513285c22d2f634aa7b14c07020b96ac69b56007b76e590038": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "close_matter",
+  "witness_required": []
+ },
+ "1c83aadb10b39ae7d82ad0a0ab4d7669c24ec5d7f724dddd7888712281c85cee": {
+  "bindings": [
+   {
+    "role": "maker",
+    "tool": "draft_payment"
+   },
+   {
+    "role": "checker",
+    "tool": "approve_payment"
+   }
+  ],
+  "unbound": []
+ },
+ "1ce84be3eaf4cb43f28900ff73c1d0336ce48024f4eeef3c8aa1193cb8730903": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1cf4c07a459d583b2cdacb34b283629f5391d3e533a9d19bf40d26466e534f69": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "arm",
+    "check"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1cfeacac97e22cac83c77a1bbe532845385437928f03d01f97f909b5f5281881": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1d0bca70e5c2197cdd956191fc8064e755d9bd0745276aa8a40f9196c628fdc3": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1d16ba9acf11cb690b7dca01c5be6900a28b7d07b9eb54a24f91be1b3bca2bec": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1d46c955348a81bf4c33cea2bfac9652755a2b329e831547a60732103c80aaac": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "1dc1efe31aa6e2ac58f205d2d6698f51813d9e48d18b39c887796b2404ecbbe1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "1e32cbbcb711f8a039c5f64c7b9defc94896ca0bc1a742e7bf1dc1e28d01a57c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "1f5e3084a7821664f7d079ab7997040e0ff2532e6e26094287a1c6aa570a142a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "act",
+  "witness_required": []
+ },
+ "1f6c1c7715a6a071b29e97b8870277d8d924412cd59f94e1e5fbf1ae9f9d7e02": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "20042d7bd3756f5b25387cd9bac01886f25627bcb938a6dafb94c04c86f71586": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "209d6b8bc7d48efa019e652de42b38f2efc15faaea632e368c87189ed13893d4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "20a9e9fc05f3c3b058a9ba32a5d0004b0630997ac9f4ec6f0933ab7b7b731b2c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2112667112eeb4ecf16d788bd7b444b128924b25634dfbb0afb7d82c8fa02b8a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "22057b1b3c1ec5a9645433d8c34278a68a883a2bcf1aa157b3d3e5900f6774e1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "2240b3bd8297b3803b5c94fa612c11932c2b247b08917424511456950b81e1a8": {
+  "actor_arg": "persona",
+  "actor_tool": "set_persona",
+  "duty_pairs": [
+   [
+    "draft_payment",
+    "approve_payment"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "22dc4784fc180b4545e90c8e253536c6ee70940f1f12336797b304d18cc201b8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "23aa0a2f92c82a2faad934025bb22386a094b6eb4feeaf973472a32bc00641df": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "2455b6a99ebfca543c87117ec23a0f9dc16839e73c06d2c4a13f241b4d4d3dd8": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "reports@"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "24d0d0755fb5c2184e468a8abc925ca8f87211d301024d54c244f97463c19b63": {
+  "actor_arg": "persona",
+  "actor_tool": "set_persona",
+  "duty_pairs": [
+   [
+    "draft_payment",
+    "approve_payment"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2555598f21c9a48b15262601f4bcaac3105d33ad3a809c692ef4d87cb5df671c": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "Acme",
+     "Beta"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "255589e6d8dc5be458038ad3d382700cd3e1ecf0decdda5b857fb524266d3a01": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "255dc4849dbc64797c0c18c47c06b1d18c2f703a77b1770d346330ba0e8c9016": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2654557aef1eeab1df27d969b4721ee6f153f9b8e1f64bff6e63b710a34df030": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "26f595eeb49a61289353994dd73582eee71991f2c05dc827ebad7176200aace9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "27ea71d4e123def74d3cb658d3b57beea088487653e47fcc2109fb6c9a0b9a68": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2823528d220189fd00200b8ef442d2dfacd92d4454e120a21aeb5701c3e2e55e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "prod_write",
+    "before": "seal_incident"
+   }
+  ]
+ },
+ "28eabb7662f6afc1018f68613b982e8d3879c4bfb5ba9e310276369d95dd671b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2937a7c8ec78605125c52e61f154be57643222008de9dfd9233b58602360f683": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2965a4e36971d2bfdca4e27f82d81a403db708a50071bcdd4e16f1c5189db4cb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2982a7282d3ebaf2bb485b7876712c87540d500a32f7aaa5528687465f0a28d7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "29ae432f8275020df4e0591c57f0c93a5f6ab917bc1b9bf6caaeb5201947b164": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "29c2e8120a978d0d997a370c02d670ee253f9baeda2e7bb606c8284281106de1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2a59a1c93f05054f9b4142183bb4f30e3eb1a8e235ddd64cfe1f4990c1194281": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2a6d8020731ec1a9a46920498e7ccd44b803b353aef022af9e3e96cdfe721023": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2a70121ab4ddac41a8a5ac2c3308641fdd8409c9e9f4ece9dfc66d840eb2fb33": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "collect_payment",
+    "before": "file_stay_notice"
+   }
+  ]
+ },
+ "2a7053bd041573bd08d10b6d4d3db5643d2c4198328d17a67db12eb437e730c1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2a71c38c4c0bf00db0a8e6a5509761047f434980bfb63737a02d32ffe2882293": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2ae309910f2e9aa2982437b108ddff888a225adc7d698f4c4a2494b60085da23": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2c00e3a7d7ded952445b129c2935787d4f8bdf831b62ce2f81a74521ba373fce": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2c03bc2b85d35a5dde7177a83383a0c652973ff8f5d590819a6ab348b859a0a7": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "2c0712ea9a6da204b8fb99487ee6d8c7ff3bb3f681afe337707ce658570ed56c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2cbf3efae875b720d51ddef899d94627a7d5103f8aa3e971e99de880c3a052c9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2d3998d67abf3e5b4b6b7dfea7331a92d57f3976aa3788e0520aa3270cc36c30": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2dad49b1a9a27ae3ba20501f0855978c57c03fe7431db4865158993099dea5a7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2e964760f50f015a0588cef6de97ec4250e21c564e1130ab1c3544c12af78c46": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2eddd770896b21b6e04ea538ca27a937362acfc2ea5d1e26120ca89d339b0dc9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "2f02fddf5b068f61fde576ebdc67c6d0179dbfaeb73a65cf9e3b98390d5858e8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2f2b4e01167fd6f123fddcf42b223a662214f340b0d2ef247b9c83f9df312f1a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "2f2e6192b3a2d4835ac4d4b9e2cd7b9f9bc05f5271c1af1608e5cd7cd89309bd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "307a79cdedd96aee277adab014e48f90d918f351270cf44d6ce27bba8dfaf261": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "308993e20c9245a7e1302407ae967eee92bcf698d11f1711e987962d8b5eebf1": {
+  "bindings": [
+   {
+    "role": "Ersteller",
+    "tool": "draft_payment"
+   },
+   {
+    "role": "Genehmiger",
+    "tool": "approve_payment"
+   }
+  ],
+  "unbound": []
+ },
+ "3095baffdcce1047e5e76ccb5cec40cf08261c899fa8a47f1a9c7a203edd2c3c": {
+  "actor_arg": "desk",
+  "actor_tool": "switch_desk",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "30e4f6787731150a5a5284019a6ac2b01fa2ab66f7d72f22f66b095cd775f6da": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "3100cfcdb06bfa91d4247a6f6a11f75b4882540ffdc4ad9deb3a0e4dd0160c49": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "312dac262279ee32ed68d02cae8a71a228e0f8bbae0025119fb12894033484bc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "31d114a7fceb55e7b7307fdc56ab13d9bc0039b62721d8e2780b13ae62284844": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "31f33c9a396dd04981b7ec20d1bb397ee53e445df03348947c4b2caaafa55ace": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "320cf04881c6dd31be6b86143d826bce75a7efb50d2b118dcd9297593ed7f8a4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3250bf522abd04d7a2f0cfd52f43dedb3e571d06bf1bb0e36b9443e310d4c40e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "331151b4898030e85e8104f373a508e66a7cabb05df0e3fc99c7f207e328467c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3316734397a83cb89a01073286afc8f8f20d7cb3de6b99e09512d959cb6ab4db": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "337b814a669190e7888e928b4d42de1b86d5efa908da5361ed6df2207987ca99": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "33a8c955e6f0e19cba33a8b8e39cbb525f6078c0c8d987594bfd2b5a1bc9b196": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "33b367a627a74f9f5b98dff1b6fd0ed0234c18160a489d66b65395633ea5de5a": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "INV-77"
+    ],
+    "key": "invoice"
+   },
+   {
+    "allowed": [
+     "human-signed"
+    ],
+    "key": "token"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "345d5a113bcc0d6b75b2615c3747bb2a9e329d4805877f5fa5e8ab2c108f19be": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3475baadff1ef365976f05f5b23fe9f85f8b63edeb426d685c7f4ed20b2be8ea": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3481c0f42fb33e52898653be66739a16d45197908a2de242fb905c1f62029049": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "34aea20bbd502febaeb85bd5dc0f5c5d1fa59696ccc9c5adc9527ab541507a92": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "354c40d6e2d31d499d3ea2726ca4530aab2364b47ea54e01c1a8699fce0c761d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "35981d18819bd1bb2b4bbb586d2801d9dfeae2f9ab626baf0a7b177647db578e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "load_policy",
+    "invalidators": [
+     "upgrade_policy"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "35ebe5b1e4ad781274561729e2f1f0ab720832f39088ef6732b5c22ac88ce08f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "3602681f98d6596fba3f98ec8bad016ff9957e4a437685ecf1c20b287efae075": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "36dedce3c50b6f3c0fc932f2db34e0bbbfddcbabd346e4a003b0c030a8da9d4c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "371f56f23cfdcd90f212d6213189d95e0a49868cc22bdac931540bb455dfdd45": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "372959ddf71a9db2781d1254e5262db519bf04c180077808ef498a15f11719bc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3732a4697cf54718a6a8fd013e24211fd779d82c35d7912dbcd5d890e5c901ae": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "37941918aacf3d6b8f4c9b37087673adadc8b1be28322e9d9ea360676071f488": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "37f5c615aa5c2c12cd7d0c37e4f6a204a322180f0b6bf538ed0f9a486255b930": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3859c341fbc9cd1efb0cbe7d1db52cda5fc2cc1d6c7b026e97854d47a30aeb4f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "389cff9a30c59569aef1a6a1467b39ccd74067b52f981b15b49d4249cbf4e9a4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3901b6c86e817ce5dbceb556fca5c84cb330e3f7cb5e60e2a422bbaaa34d5a33": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "394c434e8494f21fd4c7b4002c9b319dcffd1079ae9f5fb15ea05ebe854db86f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3964734c3add671149a6c221e6425899071d89bcd8d4eb494b7a0075524e5d37": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "39a4c002d0b396db8e98dc666438668ee4bd197d612c13d8e5718e7449f9b671": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "39de26ac4ec49f8b50d013b4b4ab27783960ab57d5411e7bde432a3f781e721f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3a1f13e21e817549c28df20a2abfdd7bad3d8bba0123ffaf27f3b0dc80d7c5d4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3a2fc7acdae099aba8d5089f27ea7302ea7f3ef2fc7727819c9642272c910559": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3c572f9c2498c8feb35ad379bac2583a895b4ab5935e9d146b3c4d983a997ffa": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "3c8fe3e2f0ef5e783f36ddda021d807de61bfc20edd07b4d8ce91cc91920a479": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "ops@acme-internal.com"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3ccea64d9ef3e069710a71231df939f48765d428bbb4245f1b6a064d24f70e48": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3cec899cef1c006aacd2326d02d008c1652b69d4ca7310c7dfb398c6bf0c2eae": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3cee61d7ff13dfc0db5e21778a80780af237b67d1e8a53c5f1bdf4384dfce98a": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "break_seal",
+    "before": "witness_attest"
+   },
+   {
+    "after": "reseal",
+    "before": "break_seal"
+   }
+  ]
+ },
+ "3d458de5d12ac4940b28dee63e9dada7614c7cfebc370f06fc3fccb054dedd46": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "3d5d8c17c6779ffe47d9602924f9895232f66e7394c19fc0df3a6b909ddbbe13": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "refresh_fx",
+    "before": "pay_eur"
+   }
+  ]
+ },
+ "3d6c58e27e238d7a35ec9a18d0efa2a671e7a17cd1b77c49f9d9623d5c8a2841": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3d8001c02a40440545b40f0b312400b29e08a9fac5d9f16b5f0b9e94d05e5ce0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "3d82b72a262defd10a651baf9648e446227b79433a2c89a0bdfb9471491ce328": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3db79d82549d5fbf1bf59b45d1243f7ad430db18daa83b8ca64b7f7cff4dcaf7": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3dba43e5516ee663d8c86ea9bbfc7542dd83c675291128278332cc26f4043f8f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "end_session",
+    "before": "file_sar"
+   }
+  ]
+ },
+ "3dd1408402bdf8c0b048a9381eff35ada01896dc61b8869b10e22c1ef476adf6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "3df236b5a82114b015b1b73f429d618f8c67cfc270d7afee6749f519ae896c62": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay_invoice",
+  "witness_required": []
+ },
+ "3efaa6f70195fee0f01ffb4810c9a8e50f327275966b69faa9264afb13eb2f79": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "3f004ca31dda3fb19a411c5b2c5022b20bb2115285cca48d8f6752e7817554c0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "4073e2a8a83fe08d524a90b590ca2ac2193cb547342ad0e4811473a64cfaadac": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "40b60f9859e80f9d5606a6cff9abbcf35611147f81342e6a36d31fe2d465d5c3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "40d7c96a81f66c577a41a33a52c912fd9a5843dee1ac33c39f10dae59d9ae75b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "410a21150c001b75c6a5a45cb35eae7f0da24620d7c5ab78c7893534cc29a634": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "4173172a9594981bbcd927bbc80cbe260201ec22a354b0ee8d5e5cf3bdf599aa": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "erase_primary",
+    "invalidators": [
+     "restore_from_backup"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "41d5804b0a3808082ad34e89160c14ab6af24829da4c81bc6f32b4a90d936d99": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "42d74206d7caba1455e27d790a719e69d1cd27c9bcd66caf7a5137bb378476e9": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "internally"
+    ],
+    "key": "to"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "43c3084c3fa8cecba6164f98f75b9480f42ad9e1e1086ae881770c161b82b773": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "446e60f46563d84e273fd23d18626338382e62e16040c653da31b659c3efacb7": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "44a62405724b2c4e2de362ea5a6fdaff87a255516a89241296d7139c1f433464": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "4504832ee170f25d2750a501bbf1022a66efa1bfffedbff5a802595e6f320de3": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "INV-5"
+    ],
+    "key": "invoice"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "check_approval",
+    "invalidators": [
+     "tick_world"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "455e9134de466b3b1fed037371b6b708387cef7c8142df88b09c251df5a52eb0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "execute",
+  "witness_required": []
+ },
+ "45762565b771b16ddd9f097de2799939a6c8cb6c8e6432ae958e6fd970b3db7c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "load_policy",
+    "before": "commit_pay"
+   }
+  ]
+ },
+ "46326ac52249bb6d140c8d9f9c3574046f794a167a006ce65747168f328bb581": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay_vendor",
+  "witness_required": []
+ },
+ "46700c1cb780358d19d6e206e9cb51050358a2af643e0fa91ab8c78b8b368372": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "469c545099d97f94fc246dd487403516dccd7dd778524501e907e098a9b2f3bd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "46e23531690d2ea92a38e6e4e788e5eaeb9641af806707185502761705312175": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "INV-5"
+    ],
+    "key": "invoice"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "check_approval",
+    "invalidators": [
+     "tick_world"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "476f21e41e7c8d0997251afb749d0309152f0e4ef81d125c82b5005ec15c4849": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "Acme",
+     "Beta"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "481cbd733209a39b943cd585be0fa7c1e619ecc4b3b341f07aaf8d1fe561a7f1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "482b9f37f63570aaed30a19f088ce9c25d6716730ae7ef6124f58d4a43ed9729": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "4893d4fa0ef2db98e655b020df2f7b3ebf72cf141064aa416b05e7a4759c3cc1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "48b206fea39ca62b8681571e123c0c3032d0d07de363bb21fc0d1709e4e7b754": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "issue_clean_approval",
+    "invalidators": [
+     "mark_dirty_event"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "4a40604126b32eca50f7ebdac75f7cc2176213ebf475fed06c9797d95d7a658f": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4a414beea95c476fe3faf53d91660b12da8b163a99837b158d41823315db1d76": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4c1ac42a2da59a99aa79edb419c8ff317c61bbc5b2038611a2f1f2c08f0b9868": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "commit_irreversible",
+    "before": "checklist_item"
+   }
+  ]
+ },
+ "4c1bbc55ea9284a9755bb54f2d195fe0dada06eabe49e89a4d70bcbd648aefc3": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4c85cf1273b9e0499f29d59b25696b0aa1efbebe39365c79e75d107b53e4f536": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "stage_delete",
+    "commit_deletes"
+   ]
+  ],
+  "gated_act": "commit_deletes",
+  "witness_required": []
+ },
+ "4cbc7bfd57e74fe0b9e25c6bed0a6f86fcc5c9e72bc0807642bc6fd825f49a75": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "4ccc77571f47bc66d697f7bea1a01733ef42ce09d415854046f986072f875daa": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "principals"
+    ],
+    "key": "payee"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4cd6054e24a342ee01496cef67c16fb50af7096f4c6995d8ee2a25845d2e1933": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4d0350dd4e69473f65136c8798219f49a0474ec990aee7d31092be132aeb6667": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "finance-reports"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4d0a3e38ac67e26f2d4cbfe4b91bb236bf1ae69cc0006f186fa9c8f53603fc51": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "4d0d23bfd259586ff6d9669bb7e995890c62734515d2f80650edb97fcd34138f": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4d15f67bdd49f9a092696ad93c892fda0577ae85f06dcfb3a6412a78f698b692": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "4d1d22f8ae6aeed0be2b8917ed24af8356f1cc96388955f2dad850bc3ca478e6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "4d3b1ffc2e3c10e4ad04464716d1aa289a686e5b5a67a635b6be3acd7039d5ea": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "4d5ca962ef5a8600d3d96c7ee323cadd1b4f64a046b2cacdd7912ce5d8d1bee4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4db37fdbfecde66ce6984bd8f2d467b6a0d68895e668ddc0fa3f2a88cc279864": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4e2c0b0ecaa857ab7b1b02ba1eab56ea60c7f0da37bc99e934d17b05ed722998": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "4e70380fbbb949a05263cdae23dc1aae8c794c4a4620694fc167d56f9d428058": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4f2ffdd8710367d60cbd700764c25b45f02623af941507b700351bd92548b588": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "4f33a549312330781e7b257dcc14112d84d091c1f5e85b4fd0689c245b22e7b3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "504f08d2d8f71b2159032789aa645307dda5d10a5a82f5cea5c56c76945bac81": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5101857ebfc4d46a50332953811f0191ca56f308ea6ba633530e7ccbc49f95a1": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5115be4d28bd4eda9e99e00ba8f2e1e890bbce4703509334ede7c4ca1e884d98": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "5134d257d3a38aa110894b71ec955eee82454903a965ad83cca5c27462e634e6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "519b6f2af4623bf0893244a696c7e3b3ffcc68fec981601a257d661841fc2a19": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "51df4f5c5a7f26ee081a3afd726bd65c177b3bfebb719024f93f713140d3e1a1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "5245432ade38558d3cfeb1c73eb02273a47b3c92d3eaa489791ec8aaccbcadcf": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5250fa02ecb4ad23efe7d2988c3cbc4eb8d8f21de664e83ef604c3cd421b35d8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "5258e50b5ed746a7688ed918f54528dd55a0f1ed0cf50c615f2b38e20f6b1cb1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "525adff7e883a4a1c1ce8c2c77422c2e12383e593859d35c4a0e1e4fa80fa56a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "527e142fc92599b95106b6a9d20994c4828cac68efba5ed56e40d6acab178df0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "52992077ec7cfb74ad3aa233591db239c066b60185fc72529e4725e481883761": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "538bfae47a73210aaf1f94688049b233bb59c87b5d7508f836f609b0bf95447a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "53f84a736000e3e79951c883afbd3a816e51689bf47e4072834184d647516fd1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "54437d8628d608300a2782344e63ece561199b621255af1d624645761914e23b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "restore_from_backup",
+  "witness_required": []
+ },
+ "5478b8482fb6a6ad326c58e2da8c01679aeda9c231a04baba4c9699af38038fe": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "pay_wire",
+    "before": "notify_compliance"
+   },
+   {
+    "after": "pay_wire",
+    "before": "notify_treasury"
+   }
+  ]
+ },
+ "54e0c133f707632d1ebc36e17e50e782d48cfaab9b8a0c1c0849bace814e9d25": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "54eb3ebe0aa588a710b1a59d41d030595473871b32bdb286bf836933fb4f3f7c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "5544fdc017801bec42374202f00747b57d33a11f56ba88e4c55d20e4d59598cb": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "55a8af28d83b0b43ad009c85e028b45ca3f719829cfd79096b95477f4210898b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "pay_vendor",
+    "before": "disclose_related"
+   }
+  ]
+ },
+ "55b25331e46d22a2838de38f6caa628a51e71b1f658552b189cc8027dc2f3c2e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "open_capa",
+    "ship_lot"
+   ]
+  ],
+  "witness_required": []
+ },
+ "55bfcc147361ff53f45f03c7ba5c982a43009eb7424827dc80be2798f783e204": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "55c62f05787480a05e969c3da1aef8256991e2d7e0863429217f37c5a0ae63fd": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "erase_primary",
+    "invalidators": [
+     "restore_from_backup"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "563dbe585233779ea589db8e3c856c3ccff1ffd682963714a167ca60bc108685": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "57ad48db72505b4aa9af7e5f23f27160a828c967e4eeaa401da6f61daa68a636": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "57c7a2ab90c6cd6d1cd0237050eb03dfb1a3193490be93ced2b5f8a6ab68b2b9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "580a468120c064114f45c9eadcc1b64c05dae16dc245575b364c4ad3fef31ff1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5812933a12355f63585bd891137081d54dedcb76bab3c89199bcc541dba3be18": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "582c68e7f73bb569896eb9db5f45971e1e7ed7f6491f7c61b8dd6935b33b345b": {
+  "actor_arg": "desk",
+  "actor_tool": "switch_desk",
+  "duty_pairs": [],
+  "gated_act": "pay_vendor",
+  "witness_required": []
+ },
+ "58b95451b4d2ad4a1a79adb6f29bf80b2b21bdad3a9184e7bc0a5a569b8dc480": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "briefs@ internal"
+    ],
+    "key": "to"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "58efad08afa940f622c7e6d76a8c2197f701aacdf4836c36663bcb373c87f83c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "591b7a8786e602746141b5538c0fa4b0bb335c0543a5dbee7d1f0688fa7ae7e0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5980af815a00a9009832ce7900402b2775c6a70410e4118fe258d43536c25ef0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5abbae3b1950085412cbd5fdbd55194bc5645e7571991e28d8a688cf5d9120a1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "ship_lot",
+    "before": "log_cook_temp"
+   }
+  ]
+ },
+ "5b47f84ad7d63086211121c721ca803b7a635d9f93f012f9a7105807fe535865": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "briefs@ internal"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5c1a6ee68221f7a090c34e45c783782fad02139936dd7222b2b3a22cfd1bed74": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5c1ae9441fa32467ca6866a81cb72dd3da8f0bbf452373447864ff83330aacde": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "order_galley",
+    "before": "checklist_item"
+   },
+   {
+    "after": "passenger_promo",
+    "before": "checklist_item"
+   },
+   {
+    "after": "order_galley",
+    "before": "callout"
+   },
+   {
+    "after": "passenger_promo",
+    "before": "callout"
+   }
+  ]
+ },
+ "5c8aa27d1b65b0f17a25676c0fd331f4e77c957eb9efe76d092dab430e46534c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5ca5e51ccd5d4cb4a84d8f64badc5c1f305df64d28d3b3e00e2ec85fdda997a9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5dc7e8dc61afa2d8bf8c7fb9a2bbcebcf1dbc1796cc77c1283589cba16661161": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5e23436a5991a6a675d0cd413f9b0747bbaedcd13f18e8e07e086339dec3e434": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "5e3274bb03043d647b3165410186b40773b9fac598d7fbe4d0c1923285b6bf2c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "5f01ca554f2b8ac92a80751d389d1aac69cb2e401aec8df6a56bcc7157ad0222": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5f8ecf7c5d0468172ff5e57a5f63b76a2f78489a9bbf4880f8a4954d2d064217": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "5fc880cfa9578f7e0db6dfe4af0b4d615813b4613eb0a4436cbbac27166db35b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "600d9231f1ed86dd1d700397c02ed5d82cda67aa417d52f618d549979e4092fe": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "finalize_transfer",
+  "witness_required": []
+ },
+ "60aee6caf6e11230f7f49596ad52650b8662bc9cd7298f3c2597abc6a6b3950b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "60b41cac1e7365f69b83e399130717b8bd265b2408729644ef64b435b5ddd89c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "60b6f201fb6e17d0f2041992019fe11b7657e7e62666d3566130cc3ad75a60b6": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "External"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "61023242e8c8afaa5c448b681a358d4c7096539018d97b62c284b48a95cabe56": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "6110e25d8dfb179d8dc493be7b7fac017fb296185b215ff9df0343bf1ea409ce": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "disclose_related",
+    "pay_vendor"
+   ]
+  ],
+  "witness_required": []
+ },
+ "612b37c5f0602afb0d464e50cd5f7c15696a616641a782dd00f4efed0a839f25": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "61f2be23d88bab58ea68fcdf0c52fc6b2153cad8d3d7f3b1ae9c7b230b4750be": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "61f4054cf61a42c2d37b08401cbf5778385ef614d58cf9c7760d266be82c5b0a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "62037b89d9db676e0149ead9e5765b81e31f68cfe1f672c4c439c7a77f272e36": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "624d93d006f032fb756753df5a28eb4ff313185123be6c0e0789d841940fe0b2": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "62c806fb6646587bc951c48e17ad82953e61c391281b7eef4e60631392deebab": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "reports@"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "634670d5f4f0806e49e6895252efdaf60e7875b0f64b802def0da3e5eb0c742b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6421585f4e25a1a82091e61c6bd83f6766c26c8243dbbb333244ced8f3fbb24e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "649b6fd4790161ad8789224e5b6772d37d02cb2f11b4412caf068baeafc73e6c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "649fe13c4a739f2a3bf915b506ab5f84e139512927cffcf127f970866979d326": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "65053906ac2446daae6a358562e87cfe85ccccfed6d4e6f7c4786e37d8082e7f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "65672dfdea586edbc745972b9a1f01abdd6c0c92e23b8be8a5e58f1294563fc8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay",
+  "witness_required": []
+ },
+ "6717d61c10706a294d899f1ce30734a48dd796087e89ca41b34fa698d06c995f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "685c02071965450334d5387a35c56ebb8d171c9165fdf828908fa024cab705b0": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "restart_play",
+    "before": "play_advantage"
+   },
+   {
+    "after": "play_advantage",
+    "before": "observe_foul"
+   }
+  ]
+ },
+ "68afb9a8ad473b0479c9e79a3bf260dd065b1b95e2c539a08cdbe4af48cd99b2": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "69ae9baf2e40424a876e66c683cfdee15e326a0f7f224ed2ff35a56c985eacde": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6a2506a63e2e01203be3eef39f829fcaf8ed2528b66532eb3768a8f8fde5ae06": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6a7af25468e57eaad4b6aed847fe50920b95ecaa3084847f90d031438e400051": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6aad8c70717af8cccfcdb941586fd1a21044bb70a90d5d10ea154a856a90a69b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6af9da429a96dc7098380ba9fa827f5db65f602c384b20f3b8898f56a7bd8cc3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6b0f6b901a212296f969887b9041babefaa06c1696605dc9900b1cceb0165019": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6b96701e024810f55e68bb7f5cb70305a6cfc355f9f6b6340c0986d42935939e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6bf155bb28bff145df1ec99723bd1292700ca06a6c87da49162d084a0412a399": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6c19582b1d94bc7c181dcd723b18cc49a7a6209d933ecc0479d0d50950749957": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "6c719a8633760880c848c12174142d6451d226bf16ff018f48589fa996b4fe76": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6c7ea323451e3d677dcf9658b4d33204500c3aeb04f03d0c6fcd22c5c6aad1a1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6c9f31efd023c5bd02e30673a6e190e236d033301af2fb94feb383f81e05c08d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6cd5ae1e5bca23c44de514cf2321351179c98fd293f0ca56a7027d684be7a7e7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "6ebac8f820ba028645a8e758061f43ba58f974c14abc70e8002fb10dc35370f6": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "6f1dfbb59b6303f14a15264fc647ace5c5f8f6746fad2652883b1cd12e45a6e0": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "70457fa787b9c64b0f56cbed42f9562454b5412b9564848cec88f66cbd6c5940": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "709e26e71a690b94b914d528e2f42437712de6c280257c83f6b3eed79868794b": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "70a23e98daed1e78c37edeeaf914b798120a95fafe8256b6182bfdb02bd304a8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "dispatch_flight",
+  "witness_required": []
+ },
+ "7165d3efd216dc732948dfd5df1f2bd25810795c944903443e372a8cecde8409": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "71893a1d5204e1cf6d4316b341739c3fc2a3f98e82c5a31871195ce6494b8fb0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7203b57fb4bed20a4df08eba9ca8449da46b5832bbc1804e61771d416b031696": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7221ffb895abdeb9f80dc6bf65c7be631c937fbf4aaed9871adf803c0580b569": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "Acme",
+     "Beta"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7291f25248614738e8b051021afe06aa6459d88e3f9ad2c1a16e03af5ad5507f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "72f8190c5064ee23bc63d11c7767cd1edc17d798af7bfcc8ad1c35e042d9e2de": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "736fe2f54839d4c96605042f54b285e3573663548e7086d4e7d6d65c84de764f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7391992eca500fba4124bd6b3dcc0ce1ef4d188ef63be22821d4c2d7beda3852": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "748463fc1fed9ca2ed9f165289bc6880bcc30c9126dc488b7adf4833b675f3fa": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "74983551befb29e38759f35a3bfb9c31e082ec38770a52965daa9653cc87d4f2": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "74c09744758348becb559837d1bcf93f6dcc4f1f7d10b61b42f5a40ffa9d1e64": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "74dc04b39648ba6f76cfc6c51b25fe70de127b53c181cf274ac01d120c04e593": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "751240029ac7184eafe14a1dbddf231c25e9dcb9722946739ebfa6b07f6b9b9f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "75c57e02b4b5a44ea0ec075bc24561ede9cc416fbae3d673fc8ab56da663d933": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7629d09c3d56648fd8fb958a1ac48f7d3873723e66371ad00f2c971b12261bb4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7717befd3ab92e6e3d0cd58e5661946698a118c183916fa9e8c3f06068635255": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "77cdc33ac79a2b02da1d325b73e5593d1753717a9c3de11a4c544765236b2000": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "77e4f29368a9c99126e1a95bb7fc991f65bf62d6d487608793ff288c7bef77c0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "780b2caa0f060f9500313a9cf3198f833c861620b60d343900ac22f7c4d95dff": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "78123874eab0c6fcc341e19c78cd261ccb3ba4ed1e6a433f233d226362974c74": {
+  "actor_arg": "vendor",
+  "actor_tool": "pay_vendor",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7819ef3f788eec58dd367dbd4b13bb99de92c02f2058868da7c6674a17c61b12": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "grant_ire",
+    "before": "release_weights"
+   }
+  ]
+ },
+ "788105879925e2b64194c046d50b11b3e7abc7138414102668c66088fc7ef929": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "788f2081dd34f704bce9c5d5f52173578a85e9c1615d829728a543f896c80658": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7890821d84134f24e3e185bbb028fa82ac8b33d85c52fba484036265106233fd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7930d85746b98c65945d7e8610a5bc76c019173f4e1775824335f76549746d9d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7a22f464f448f53c5cffb5cebe0fa075e15b69535e14b623d4d951d97774d412": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7bcad1a721472088785fb1d877f95684e052d57f97b02d72da01b9283e3ba174": {
+  "bindings": [
+   {
+    "role": "the party who prepares the payment",
+    "tool": "draft_payment"
+   },
+   {
+    "role": "the party who approves the payment",
+    "tool": "approve_payment"
+   }
+  ],
+  "unbound": []
+ },
+ "7c39d2bc9ba98e6d753292cee618e243cea3b4354b6a2b0120a7690eef7343c2": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7cae5cd2f07755ef2e21558d1e9ad688da3df4498a483569f8359fc481c541b4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7d1a18e5ea9528176184312bc70f9edc2e0fed31841858b51aa7b64b4fdbf015": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "7d836b867937e9b5f2f30a8b737b1b6a0ab7a90b2377ff3fc23f718fcb33278e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7d9517ab79fc1adc0657096aef57480e739cbf4322150fc1263ed150f39b9295": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "buyer_release",
+    "seller_release"
+   ]
+  ],
+  "gated_act": "disburse_escrow",
+  "witness_required": []
+ },
+ "7dbb41643bd0f81bbacefd368b13b9ac6fbf42a71cbae848657f93725e249a8d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7df1d967b2e31ab46255482ce18fc433f36ac29b4c88b3a4f1a200f9773202bd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7eb2a337208298b0c37ec4ed40da480b4eb400e8cc8826f38975c1192c546a07": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7f51845824862f092c4a307248a764c5b3b0855020ddf67cf49a6ea8b587e455": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "7f993cf445fe69c781a3de49684a40448cb342f6f5e466366ccb6bdb7bac05c0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7fcce6db0bc611ed3452f9dce9ac7bc57222ef862179e89a568c14a094d14f07": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "7fdb3e01b6ef9e5c613b4656e8951772a236fd06c2c9a40e9aea85ac44cbfebc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "7feab8b88b60429e1255d9b0695403ecfa07514b79bf0c8dde1fed1545d1af4d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "807076bf90db5f6fb4c21b6d49b19eda9114931add3dd6fc2b6cc971a47bba10": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "811c9508b00bce329d440bb60b83354245153a7bed6a89a66786040eed76e961": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "81f3c3f80dae8863d85ab08e6a7702b03b9abd3e6c15e4de79aaa4f79ff63089": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "825d78ca8b236d057286bc235a93c586de27970bd844660677afd37e122df3ff": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "83587f94acb15830843046afe0070031812da07ac42f5eace594ce8ae67c8432": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "83d991ad731ce74e7bbba937ee5f28e8ddeb63ee1a485005d4a03e4f75caeeb5": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "arm_approval",
+    "invalidators": [
+     "check_approval"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "840962016845a5f02d04915b75bf10967e0ebf63b1b852590878075f402bfd79": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8444f523e876018fb5f9cd73e0ac3884cc2e6228914553104dea57fd00b50af6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "84e14a3f31e9696ea485cc473599750699880e43003d40fad52fb793dcd34324": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8556582d67c703f96a2ca8bc9fecfaeefc9c15b6dcb6ce5ef407b7f1611a3ea6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "85afc097974694ac7dd06daef72b91b311db0795a0edd82c5eab72d711f6c2cd": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "85e99b76c1ff3c259544404a771aded7de5dd6163aeb0d017ba060816cb3a987": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "863ab8b8b646741563cbce8013dd4055790ee55e6fe5cc12f78301a3cfb093d1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "866c60bd43264697fae0c99c13f4a188d53d436ec8bcf849d09f5d5f25e7a980": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "86a7cf55c9a0c7e8c59e377756aff5b3875435843f7056613830dd6fc81386ea": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "87995d4d3b5f5b39fb57e57e5a906c5df21ca4d3424e679bf5e935aa6473abf4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "89349fbf337a42c69dc0be54a4165bb7e086ca4edff69a490d8a2c1caf9cd619": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "89e814159e4ebc645c2e73bea30e86e6e396ae3ff3ce440599ae7f66957cbf5d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "8aea4bbbce156abc5d991a5c42273ac70ee26d0fdfb3bd093a3594eb5d399c9a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8af49637e582edbe22c333b160c69b29d5e5137838c44c1390ad6d6a07112d13": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8bc2a21ae2b7fabeff293e8e9ca133a26ad76f2da02e54cbd2f2d415066f15a8": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "8bd0936fd6984213165c7e079e97dfde576f4309472f21526560de787c3c7d42": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "ship_lot",
+  "witness_required": []
+ },
+ "8d362abaf19cfdb63343baafcc342865e79d4b3ef0ab920f96e3f70fd304a95e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8e1482ff29c953bc5adf4e89bc62485f37fc653aa6b11c8f5f8e12e1b761a4f8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "8eb986f1d2fccdb03c644af30ca0342676fc936b1cabcd0bfc535f7a0b973ce5": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "8eceedcabd2edfb539e0e0c2af9c82bcd2b482490e9582dc54354f2d8fb84e6f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "prod_write",
+  "witness_required": []
+ },
+ "8f222f4f0470d1ee9120613a695d95d7ef40f88b926ae536b47a344721d12236": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "collect_payment",
+  "witness_required": []
+ },
+ "8f39a24bbb3d94799be8bfe7817e3a052743637cf678661b4727d4559bd5ccde": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "vendors"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "8f8c6416f6bcd792f0cd468054dcf73135f65c5edacbc92a0a7215d0544f203d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "8fcf55e24a0ce9eef072ad3104d8aba4d155db10fa31b8df8741be6aa47e9cd7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "90083a841a98da271086afc7b8d79868ea0c35531c8e1676db0617145ad44865": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "arm",
+    "invalidators": [
+     "check"
+    ]
+   }
+  ],
+  "precedence": [
+   {
+    "after": "pay",
+    "before": "arm"
+   }
+  ]
+ },
+ "9083b55eeb4aec842d48ca6556645ffa2b3d40576361398554d25b5a80bbaeef": {
+  "actor_arg": "principal",
+  "actor_tool": "act_as",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "90cead0bc4c1af1dfe25845a62eea7a5106d10fe28f9f455d990d93635b99420": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "ship_lot",
+    "before": "log_cook_temp"
+   }
+  ]
+ },
+ "9116be78e82f050277fc137dcae97f49faf6f1160d3771f892ce53c46e0d8c08": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "918c1e386cd4b3d1ac24e6f39046273a39acc58a9abf6b9ca47452aaa1b7bb0b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "91b70cb9b3e0d77fb54169ecc9382264c076cf3af4f21e612daeaf2cabf2a16c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "91b7c20419618b377b3bc6229157976956a664d320b8849b7e1e03e4cbaa525a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "922446d33f0a21b51b869300ae55b4ce36b32e0c776f0437a9da8248b90119a4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "928c8e3684a70ad6a4933043d1b37524c3f096730d2d5bb021212711872e9dab": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "reveal_and_pay",
+    "before": "commit_payee"
+   }
+  ]
+ },
+ "9293d632a5101a2776b6fa20d25502bd5d645b100e791e04b5cd8b2a0a264315": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "92ae9092e9c6b43fe1e805e27073abd105c751f775569c3c06e1214854752b07": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "9300aa66bfb54dbfcd71bf4ada33875a5d3fa924cfe966218e102f55f0f78b8d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "93b40c2bdf5d9f1c08736bfc6037a411ec3fc2885072a875942917a8b16ea182": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "93cf876a1f8143ac2d87ce19ac097126b178e0c6f7add471c6c9b0a8ab6931d4": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "partner-ok"
+    ],
+    "key": "docs"
+   },
+   {
+    "allowed": [
+     "externally"
+    ],
+    "key": "send_email"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "93ddebd9d0554393cd71ab636fa448efd9663b28e3554bbbb5052c8d6abe3878": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9403f3fb2295022d74ea4b1aac174b651e896ab44e28bbb0f5dcc0c6794d0b06": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "940b3432cd78e89b8b8dcb7fd07c1a9ee99762dad88c053614441fcfcf511cbc": {
+  "actor_arg": "alias",
+  "actor_tool": "cast_vote",
+  "duty_pairs": [],
+  "gated_act": "execute_proposal",
+  "witness_required": []
+ },
+ "94ee388f734a02dd1a97f8e7366cfe4a2b294d693dd235603fdcccd781249070": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "95264b56f7b435580e15fb46f1f5378961e3b8f0f582877ff893950be9796f98": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "act",
+    "before": "mandatory_check"
+   }
+  ]
+ },
+ "9564362a0cf4d2a73d8516874d505d3758746419d647c973552c834171ca11b4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "960223cffe61f97240c26adc51cfac057e157a468fea69adea3f61a6bfbf0120": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9682f6b0ef8d5d9b5948fb5576adf946f7bf4e99d3eb7bdd47c1bb4b502eea7d": {
+  "actor_arg": "desk",
+  "actor_tool": "switch_mule_desk",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "973b23cdb6cc4b491ba96db147270510ff7a4694f0bf6173a58697edca4d5f3a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "99613406ed671cd30ba8301e1b2a7626ea144f9cf08d9c6c295e246a790ab157": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9966b8e73262ba374a5b975dc5590be7063f450e8e075e671f76a34b4ea06f2c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "99911201a82bd9be8874c7bf8037bcf7599340c6df7b8b0c505271659026e290": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9a604c4d63e6ff5d6959bdd9631d97e65d4446f951d6d2375432008eb9aa6e55": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "regulated path"
+    ],
+    "key": "path"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9a61cd18c04bc5b46343dfe28550e77d3a1f4aa9ed30ce66c08b0bc89e1d97dc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9abcd4baba08cd512bc9e876c23bcef7aeb488bc0a34ac2de694b07545b53597": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9afcbb487a63c30f0a4aa8665a84dddbc9d1b4811307e993bfcb7cbdaa8138a3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9b68259d0abab8e7fadead1a574e794a31d26aa5371d6548ad76cc62a42d65eb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "9d089f501ee2a2e467b35a4db97bec923a1a4538ea98fc2bc6874920d19525e4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9d857809da4119239de8cb39bb4ed32f0aef0b418ddd1b9abdc1f5e2919352bd": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9e25bda3049d20efee0f307a39e469dbeec9c03346f646b0180bb9f034a97075": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "stand_on",
+    "invalidators": [
+     "set_visibility"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "9f102ef2b558c63cc74f32b1e5db727d5d765017faaf5b4246e6a6e892d2fbeb": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "9f57bbe188311dfb3b184feb9d5215aca5744d352607e5c24527b19547bd9c96": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9fbaa4c1e87843fe0e8e541927070982a409236139a549f05f848a5cfe7314bc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "9fcf9157a5dd478d38bd7ce8c78dd2d7433742a7a8d6712e054567697c0b5c6c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "ship_lot",
+    "before": "close_capa"
+   }
+  ]
+ },
+ "a04eb2c1e22a472f02a0be094892d9abf49b45b6debead0dc9b2df884ea97e23": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a0a9d4d5f2af59bb7437cc3a106328ea31b8f48e1b6f099a84a7783ebd84cc01": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a0b216ec5429b71f028639b4677ed21753f4c46c2b595fe8ce161d61cc3d7834": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a0fe5f087f76f552fc900fb70aa61d6dcaa6512cde5c717fe1b1bc6563679a63": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a1286181a2cbf63356cdcbbb5faec2d3dc00838d24c0d8310fb6e01c1829bc89": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "INV-77"
+    ],
+    "key": "invoice"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a1523489077f452d923f3fd4bbb81d5ee8671b1c4b66c3045166ee8f21f25ee9": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a1f01f44bff5dc6e72c37921042481ce161d6074242360d5f1008452aad824d9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a24b39cfb615ac2ea6f367d67c88cfbc97fa66fa6c58af56c10d0265c8d64e27": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a280574288df61cac24752ccfa3d7b97441bf004e752a85da185531245b8aea5": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "critical_act",
+  "witness_required": []
+ },
+ "a2b10dee53203ff63620d794cb72367663b06733afc514d07f364b6d61b15359": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a355d21ca9036779e4f031f710293132f9ed5692c9eb7755e7f0f61750db3ffa": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a4b070826b48dae1e429212f6be00b5a28ecd0dd5093c91064bf70d8bda491fe": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "a4ba837a0a1518dce5e800f9d4a98bad10bb26a88ecf2333087a59f8199ebcd1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "buyer_release",
+    "seller_release"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a574ce62c8265f066880dba966560cee06b5cd727dbcc316e54a56932366a69a": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "ops@acme-internal.com"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a680b211b09b3616bfeef55fb213574091d1cdce0b8bd6bf571a11b4880c7451": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a71a63599bd78eec707e76aaa12856eb40620903fc2594534aafba73cce3b160": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "a722cd20d0745046d75fffdaa0a2d5bbfe5179b50c2a3f64b5a5c7fb4330cb54": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a783d5842e9b0de15050aee8f33613eef424084e6b70e24340b19a370493a1e1": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a865a747a596920e13409e6592e688ec152def995bcde6d210de1022c278dc80": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "a90b9981be74a7f2bee7c53d8ad6a5d07a21ff46b1c9285ad554af4ccf0b42a4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "a9d831240293c2a3f650fb74f2e45e3e56d5c9e326d723e142f586ea93f7ed35": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "a9dd7e42ff84fa93643f661bb00e2c0ad4ef92ffc2b8fcdfe857e976ab8700be": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "temp_elevate",
+    "revoke_elevate"
+   ]
+  ],
+  "gated_act": "end_session",
+  "witness_required": []
+ },
+ "a9fd048f568f3588a560583b67376776b5e2beaf3e8968ed8fe0692e8bde4ed6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "aa49db040cfbed46398a28a686a7612329e22ad2e28d97cafc82ee460bff44d6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "aa77717136762f34aecbb1b4255d77c7dd11f8ea4e323be3c800b71533a3f528": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "aa93c9034685dbf9a1eb322d41d52547b0e8464127cb6c664350ba3f88679354": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "risky_act",
+    "before": "ack_risk"
+   }
+  ]
+ },
+ "aafe24766fda6f95da6065c38249a23367b651add8783b7768f3095570d07ae0": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "abe98e5026dabdbf3a30c1177c9c6e014e020105e6ca5550625206d08309871c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ac1299f5fc753b43245c513a2b912a054e47bc6072a2bc979c87f03012931ce6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ac6229f7cdcb8c7bfd638eeb7565045b5607ca860ec5fe72e947aac1d535c1d8": {
+  "actor_arg": "desk",
+  "actor_tool": "switch_mule_desk",
+  "duty_pairs": [],
+  "gated_act": "send_wire",
+  "witness_required": []
+ },
+ "ac9c10e62ccfecf55c03e2b2e532a85a1d9258cd13ad23420860c391ac460cb8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "acc7f7e987af2a247deaab49c1a40665f53a928cc84670dc36b95c8c5dba88e6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ad0920dcd30b286e92f513a7d75e1b692f0dcd2564029cedd2609ba456af6e5a": {
+  "actor_arg": "persona",
+  "actor_tool": "set_persona",
+  "duty_pairs": [
+   [
+    "draft_payment",
+    "approve_payment"
+   ]
+  ],
+  "witness_required": []
+ },
+ "ad22ee68598ce93d58491d353048aeff3e6190bfa7b9458bb982742d2e0a6ffb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ae5204ef26532423606b065277c059839fb302254dc2324bdaf32190da7ee465": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "aea8c0544d4a929f064cdcff763c6facce235e0240404cf74b47a4b000d072de": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "aeb81bb8667e8d75bde1bcaa3c6ce1d70225db2ef5cf3ae5502111e4ff3cce0e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "aedfd64137a63edd3bf2e4b948fb8c94d7a0036ef95c96f9e5f6159ed745c57c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "reveal_and_pay",
+  "witness_required": []
+ },
+ "af1161b395b4e147db8e03306e20400d8c6a4fc06d8f1cfa748bcb867a9697e3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "af5d73895e1c260614bbaa0d5acf10a30c50c4b32d7bade92f9f1c827f65e446": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "af950bc23bc524f6506ea2fd769e23c647dd471c823ba6c75250dd2551f3d973": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "b059026f9bff0dcfebf2fdf40454e6c8cd3e259296eec9aebe369b94469e6188": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b0934c9bf2d721110c9ade32b33b1702a55bf7dc7c25240cc125f6815e9b3bcd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "b127e35d4f7dd516f4d80d1835e221f2ea72a0d1fa2c36c53cb380ffbb36cff0": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b1c00a69dbb3af6675a49105147e15521553cf5e2ae5702c480ee1de4a5ffc68": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "arm",
+    "invalidators": [
+     "check"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "b1d19045f29022a47445f34262e85ee7af8032242d387584842589149813cb62": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b2110aac63d06d7ef425e4c52c3f5c35f1a3ad8975571e905ea700b01ca40e13": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b2a62a34c8c35312c55eb88e8d4855edad44e8e4cfc371525555849d46c3ef7d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "collect_payment",
+    "before": "file_stay_notice"
+   }
+  ]
+ },
+ "b2ae8c8b709b89ef832fcc0ebaeebd2985cf0f26b036e32e6c8617c68f7a83a4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b2b572e0c23f4ca92b397e7eb13e8a9f6a9447c50440ad4384793e033b726ad5": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b2d0e42c22e96df0299adf90961d3d6b6f1643862c309551eec14be2256039a7": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b2d13c9dfca66494bdfc7df61bbd937ace375d248c22b5b01d02f4a6165adfd4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b2eed2cb077deeabc456cc146f03f28d84a62a04d70f32cd5efe7ddfeaaa6d0d": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b320e85e0a163c01a678baecf70ed7e77699312a317b9e12bf18c30c1d1c66fc": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "issue_clean_approval",
+    "invalidators": [
+     "mark_dirty_event"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "b333b282f5284b013b67b4a7ea39a520350df271867f0f048ad357a81e1a15b0": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b37e7c52fc0081cd9f552719b8c25cd5c7ddb24b67de40efe1e288a5b0faee34": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "regulated path"
+    ],
+    "key": "path"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b42389e3329d1282b7e4b992af0335a7bd9bda51545f63ddf56b2a554f3e358e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "b467d7cfd3d69061bb07ae2137935a7ecaa7dbc8e3c374f91c50ad866c8afdcc": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b4b573c7006338850e44b8c248bd5c58c7d8af838fa0dc4e33f7e4a0e416c585": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b5d1b94234e36ea3f46bafa0bf3b0a5a12184dde47761215a966e388e049f633": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "b5db983b31b07cb8ed40f12dadae9a57554ab650dae641e3ddea7a112d0f6e4e": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "Mira"
+    ],
+    "key": "contractor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b61ba44315e6a71ae8c3aab42817951e3ba6afa19837a8dc7e22528fae4167a3": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b6eeba2f82d22a84a9ea1f0f01745c305acb9a902e87bd70c2554c6faf552c0d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "flag_emergency",
+    "before": "seal_incident"
+   },
+   {
+    "after": "prod_write",
+    "before": "seal_incident"
+   }
+  ]
+ },
+ "b75124651f2357a6bc9df8319193f8979b539bb2cd71f395e7582e1e18e8dde8": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b781e6cfae7d54aba01453697336305166fa770cc9ed193ec893e0c3c8d6b211": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b7a89d39622357dcacfe7e8975866c1070cd90321c79d1b88019a8a4370e7702": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b7d18041e1906ec11d859d5f4cc697c1f508569e5f4205d0d6c1dc66d27833e4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "b7fc291c8eb9bce61041ec92209683b18ce1c192ce3881e08f5b58b55d4d91c1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "admin_action",
+  "witness_required": []
+ },
+ "b8bfb0a9a65c6708c7886662514645d51447ba87c854f09ba35dae2725af4091": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b98ca5693453a27fddb424d2bab060b030b1e74c3186f5426681e6dad7550d9c": {
+  "actor_arg": "principal",
+  "actor_tool": "act_as",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "b9dd1ac6dfe6cc3cb80c1457783f4362b735db242df5f2824dc48ad8b5606d08": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ba36e530e214f96c7fdf431a5e0e5120513b5f29142a6400b0afc0a6bc77d586": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ba587b1ad0e1533f407ffc9f73ef09d46e4719bbe04096ab728cbf9a5bcb57c6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ba839ad4d326ac700908af1b7209b7fa46a12c2e8422fbdb85da509fda759819": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ba93df39bbee815f3da005876ea0236f635145d6f3ba221c331ddc10ee674704": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "ba95fe59b8992c78cb8e3d12f43a4348cdb014af2c2d35570045bd62bc556d57": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "bb42988d789a8e7e3b716682983d53508516d9d6e8c86803fc505aa831b97554": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "bbaa4d849ac89117a1754a25bf871fc15db4ebb50c09650bdb44118402a26add": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "bbe76e934b36f96cf5124df2918dbde5d7e24992e4ab8befdaa1e5e482259745": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "refresh_kyc",
+    "invalidators": [
+     "customer_status"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "bc399e2951fc7a93ff6376627b4182a558c10ed46884c4df4f3eb8f25d0aac2f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "bc7bcfc11d7bd9dd4160d50628a91aa47b1af93d7ddb3f3ee31379e697ed926c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "bc9788c0d5a604b4627234526b4f520c278e12aa34ca70dd46589b2647359361": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "bcb2ed68d5d31f3a7a0fcdb85f518db4b3c18026d7fc78ee6fe6af638c3c5e7e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "bcea6b0c7ab7a2526ce87ae0ab854288792c48da444f0d30a3bca4311cc9eccc": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "be13462d5cee39653079d6f63d05a8c7dfe077933377fb1657d63c7d83d23ec9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "be3c2bc394f161ad36867d9540172eab31ca406b0f1e84a458b20fd7fed611f4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "be765fbc098ba7ba854b9fa5ffd15bed6e887a9c0d15d351d52f77319faffac4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "arm_approval",
+    "invalidators": [
+     "check_approval"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "be9a3835b2410c6c3a3ad92e06c6392a61cb7dae672f3dbdf93c8ce4fe3d054b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "bf4381b3738f236d7684d4c4853193d77b35e40bf68182211360cb2233c5ba33": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c022a10ac89532ba7afc66f49d81fe06c31a730e326300bd0d37b46727526396": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c0e4bc7a56ead88fb1b9a85bb5be169569dc7b9ab457e41274dc94359fd7e1ab": {
+  "actor_arg": "tenant",
+  "actor_tool": "set_tenant",
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c12e205859e6e65078cf08faacab82a36a842cdcaa07df597c61d838198ee003": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c1b55072acedc0a1835bf499f7d3518bc361c19140a6e78a8014f3cf6e1b0dbf": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c1e1ddaa0299a40213fc82d4cb083326525b3ac04e91479b7c098e1bf4dcecf1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c1edb0b96f104efd83a7c20380b00f17d6d9548c038e001e7db74a68997318cc": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c2485123afc9af7e62871333dc31536a243230588f45addc269ed9eff484b812": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c25ad935de6997b99be39218a52733d190054c3e3bdac1479302dfb171fdb246": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c2de7a395fa1ae3cd5625dd1bc109d41bce034e089aa7c9a8f9698bda8778595": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c33cd43845872c430703094dcd9c8a3db6618ede2c328eb98f58a2f89f2683d9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c34e09d235c0241185907bd3ff6a821b2a2d639c5edf202782370f246cce825d": {
+  "actor_arg": "principal",
+  "actor_tool": "act_as",
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c3b6c1391cd45da39ba5dcfa021aec87d0b1a909491c16be8d45785fea532a41": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "send_email",
+  "witness_required": []
+ },
+ "c3e2626a304ad57f2d39275eb602dcb607a2821efc8fbb529827112dbb757547": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c474680d6ce6c5423c7cf46f4340e61cf23238e8596b750348aa75e69d903c38": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c4a1b91da716a762de2f8f830f726f91aaada1aa2b52a4d8a9f1df7e7e90d3f2": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "arm",
+    "pay"
+   ]
+  ],
+  "witness_required": []
+ },
+ "c4d4494ff2b01bda0ff94c8f25a052cff023b9a2f127e872410492ee44e6198e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c4ea1acc4f7e25b27e87dda0e0f0b6fa85c5ff03cf91db551dbcd7d4b6d9cb2a": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c4ecacef50467abd6f9d7ce0437c60a5d7f4e77802329441111aca3801361b1c": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c51eab2bb684b5ceabd112a5cb863b1479e51f7c9adb2b8ef14405a0911a97ec": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c5645e41b827a1fa951a16522ef4b86b2fe932c0aebfed0663e87eef32a66b0f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c61a7998df3ddd3302655bf5bf58e0b9cd8637b7090e0ea3c2e4c063347bc88d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c676d8a0cf550bedd540fc9fcdb0e057fdc119c2348354be9f71c2d5213b0ed7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "buyer_release",
+    "seller_release"
+   ]
+  ],
+  "witness_required": []
+ },
+ "c6bd92fa25e87c5b5a29a51a633a9ac2b0d4d5222049cd502c230cae5bf7c04b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c6ce09ac9e4d4a27d1fe2f6db5e8009aa351125a0900fea9fa2eac59349a3397": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c7bec1e7a4f12f0bf6083ae75030c4203726a2cd8bef00407067c37a50d3dc97": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c7f0326353d132afb2b3c690d5ccf0bb63a408ab4ac6acefa51ada8f32993bde": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "c89740b0e31ff1b16c1d00045ad58dc7ff5ce2224a212669e1adceaa5a3825c9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "c89797eb447f52514cb44336043a5500adf6c608f87f98e1a7847328a2aade2d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "c8ab1459d42008845ea81d04be266ae5cfcfc57cf6a422f5ee48296902cb8b07": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay",
+  "witness_required": []
+ },
+ "c9eedbf3e1a80a8ae362d7cc032712ee9a68216f8739843ff118e78a591a2833": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ca19de0e52b57d498e3d409d58dadf2409a8c004af7f5a88a96b3560f4b7e8de": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "witness_attest",
+    "before": "break_seal"
+   },
+   {
+    "after": "reseal",
+    "before": "break_seal"
+   }
+  ]
+ },
+ "cb50396142d22afba075f2f03a6df63eb98f2d538a7ae23b30d26e3fd01e9786": {
+  "bindings": [],
+  "unbound": [
+   "approver",
+   "preparer"
+  ]
+ },
+ "cb7d01598bc16fc92fef203d21340bfec2a58f1a6c2f1e851b742887c81c3e9c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "cba613c99a69e90cb7b52a047e2fc8e6997ce148e14c2ba9bd8c21d4944b0a60": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "cc219b1e8c37fac15f9edab2f618b47e23575a644e795239c0646b07a29b8c6f": {
+  "actor_arg": "tenant",
+  "actor_tool": "set_tenant",
+  "duty_pairs": [],
+  "gated_act": "export_record",
+  "witness_required": []
+ },
+ "cc5820ee690cc32fcc456c554deb9faf16166a5bb4925036dfa64af1bcf35d20": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "cce40318f4eb3a19187804cd4cbc41cc9c947a2f758bcf741de6eac77293ad5c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "cd382011b8c0f8023ae96e1f45cb7c665eea142d8ca8c8c91a455ba628dd0bec": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "cd7d54476a1724c29bd3b04ec898cb2937aedd86da7553f805f49907b9c4a153": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "high_risk_act",
+    "before": "risk_check"
+   }
+  ]
+ },
+ "ce4b584cea5526a4f8da8b46b4f8fe2be250cecd16fcc62168172db74e85a35e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ce79c18feb1f3ca635300ea033c81fe3bd894effcfd408151a57f57068709a05": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ced02c611f3b12dd7470d1161cb5331e86a849e12f2d4a385b8d61dabef53219": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "cef199f26f45a4c1f95c0979c466391bb13ea01ca776695b061e3bc1aa3e57de": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "cf697708c6abe857e298a50b73ec360bc0194d43212b8f0421de716cd2f83b1a": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "refresh_kyc",
+    "invalidators": [
+     "advance_clock"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "d0e6cb22d72e053954be5fa5806bd008b470f7889cd3766849d29dcbaaaf35b0": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "d127de837055523fe297fba516eb468a902d952c1c6f17357d532c2c75f19bf9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "d15a889ed60585535f8fcac16b54b182a4b6f46392df27690dbf84f2926bbaad": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay_invoice",
+  "witness_required": []
+ },
+ "d229922a30a75f733bfbf36165e44f62c20c20cd3751bed7dcf9fb3d3f0731fb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d271844a7ae38bb265c297e132c6490974cf24bb8d572f6bcce27bf21d4a2f2f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "d28951745084bf5614c6c2aa1314462f76cdec2f05420697be7ddc5401bf66f1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "risky_act",
+  "witness_required": []
+ },
+ "d2f6d1dc3286d328983cb0578e3f9115da1aa883fa1cdf5c1a109937837c215a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "d4183ca36c0f9adeeff9dfcc0b041330b670b0655b807c8eb2c157e5b4e40a0b": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "d42a19b995fc73d1cb40ec134013e436fe303b8cebc840d2b4446411c7cbaf8e": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": true,
+  "invalidations": [],
+  "precedence": []
+ },
+ "d43aa257f570d60a99bb6f983f155673bf2311f333797a77220bc16825a6e70b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "d59b87b709a53f9e4405541dc20fc090eac151115802e5b21b8eb2497dd5b09c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "d63ecb7b280166ce808fe76a6aa60277fe3d3c03bcf5b39c940f60dcf469662f": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d667da4fe1764ab856532cac65432286aa4cd731e10f4d1772b8a245142de0e3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d67b6dfa77b7cfbccbe2248bc1da33926ab7346bf338159b8ae8b74f707f8b7a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "wire_customer",
+  "witness_required": []
+ },
+ "d73144e6bb983a3a1997dd48baf130601033a294eea3b7c8f5fdf097ab8522e8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d7a742d2ef3f773d0b25a3ecd0a72957fae470db7a516f32df1ad934a021fe3c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "d8b81924282df5a8732ba839aa361e11ef29b05e5a4bed9670d98672d4a00013": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d94333717d2f48cd1245a4fac6d9196e56c7140ec00deb5e96ee1dea8eed46e2": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "d98f631d648022dcaa5300e03fef45c5918226259365fbe64e0138ba322b2340": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "d9cb35345a4e05cbc796c549152894c1173b0138236c3e355ae69bfafc1f3156": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "dabfe10bdca8efda9126b302f22addf5b0a1ced14f2f4db407d4bf168228e391": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "db2c7d8c9f3024391714ac7d32a7785a4291c491fc9f711483db0e9f7e7378b1": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "override_hard_stop",
+  "witness_required": []
+ },
+ "dbbadbe8ecb7de943ac6a96c49bd1791a8383c7bc8057da35ade8593eb5f525b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "notify_compliance",
+    "notify_treasury"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "dc1233338a4e1607a3b6ce65db52f2b9fdf6680c271a936e666065a00f79036f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "dc28c41caef2bfa5ad60568b90a0eeae9dc5bb9ee3840505b39d7941dded9457": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "dca0a330767c9ea74dfd070364a2fb4edbb5d8e4e358eaa0ac798afb23e65779": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "pay_vendor",
+    "before": "advance_clock"
+   }
+  ]
+ },
+ "ddc87c36b96de3413a7d16ad233d101c19369d47974f32c2bc3c2a4cda9a636f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "de0f287dc6b20944de65640c721f8f5b35c580fac7515909cd2222d7e7a12edf": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "dee801a45fb970c4e61376ae10ed4428bb90316b43284dd92f4041bc33fc326e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "dee9727e2026461722403f602318197f33b89703fa7448bad165f2cc94fc7b6d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "def05cfe7d9bf89eb7355fccb11a881ec5d119edefd61b2220042ef4b6957c42": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "end_session",
+    "before": "revoke_elevate"
+   }
+  ]
+ },
+ "df286de6bf01896f0bdf9c2e3c4643f49a551ca05f3ed3f5f0bbe56d161aa2c6": {
+  "actor_arg": "persona",
+  "actor_tool": "switch_persona",
+  "duty_pairs": [],
+  "gated_act": "pay_vendor",
+  "witness_required": []
+ },
+ "dfe7925e1227467307c23bf0b2ab1f7a6dfa71bade7ff67e7916b05d8ce6a7f5": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "end_session",
+    "before": "file_sar"
+   }
+  ]
+ },
+ "e1010e6690029a94b161af43e6e286de1d813f50a125a326cc64cf700c345612": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e12c696ac4790564ddf83f1a1f1cb2581cb1e67614fbafb919e6d908da3f343d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e20fe7074301c57c733abaad80f83875cb1b53019902e9c65d0803a89dc7942d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e2d506317d834d8cc5b4daab7cc556ca2f106baaba3a24df58be51aab56e4721": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e34a1cdf72024c3e13dc7f0d6cc65a722a7cba3476853c00ba49d3c98446790d": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "principals"
+    ],
+    "key": "payee"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e374a80df99f840cfce3a98942c2f0483965bb32d853d9dbf4d26165a841c052": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "e3880eafd38c7fa8bd4a83b4ef7c3c59beaa0a51ffbcaffe8e22b49620d9b139": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay_vendor",
+  "witness_required": []
+ },
+ "e3b1e0778d8f48807df9e6ad528754d2674e9d3754d367948f7963fa2537f637": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "e40140152e86070463499ac5299357320ecbbf0e3187fcbc5e79f01fb7c561f7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "break_seal",
+    "reseal"
+   ]
+  ],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e47097be69afc0fb46ef47f151e5bbc2d1721df384ac3c325c9be83a2f89434c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e52a05f7d3a772ee97027d0c0ac89f766310a9385e323317b306f436f8b33f1d": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e53413c76b3904ebe6e3f003d76fd63c29d6d1096e1106e9a426ae7a8ff20112": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e567d6d0e39fdc2dc63d1caa67b5401e9175679f00fd10741c804681b57199cb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e5757e0a20fa50c9e9697b40f9e0be3e99535ac563e920e948979d37618351f4": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e58ed0532a37ff523b6f16f028fe9fa2aa882049d9b9be07602f63172d601249": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e5de07b42826b4669bea5829adddbd3749522b693b426bb71811db214b0e6353": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "e606d6424df179d1641c9c20ac9c05fddc273fda2a2b973505bb91e014bcd564": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e62a9360705b048cd8095d41b33b28b2df90ec487b8a05e87b6a3cff09705d74": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e68cc0ac8cac06242ee21e0e8d31633924dcd41e9b17a49b00050c2cdb16dd8c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e6e006ebc047657b85a957d155567728407269f9eeb46df72231ac4ada2f61c6": {
+  "bindings": [
+   {
+    "role": "preparer",
+    "tool": "draft_payment"
+   },
+   {
+    "role": "approver",
+    "tool": "approve_payment"
+   }
+  ],
+  "unbound": []
+ },
+ "e7597bc6cac830a06f6eb870fa8e55e562dbad2b7847ad05c7d89b43e305b7ab": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "e7ad81a3cef076bbb6c652a4067ee12254f50e9bc5b9268ba8e79e31761cfe16": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "commit_irreversible",
+  "witness_required": []
+ },
+ "e82cba1fd83915d467d4aa210a2ae9ce28ff39a5c4e51a87eef0073a94fa47df": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e8b0b2ee3c7b43683b42b018d97fc28e364bbd0a1b258067248d4c0db4e2c919": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "e974916e0a4e422d523d3fcf9f4f96a37c741838c58f3044ba6bdcd1bedce94e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "e9cbff5e5a37b4c5a2b3ba13e222b40ce9ecf034d5087b03836ac6e0e5b6a9fe": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ea1d18ee82d6a70f17de80a13cea89680104432aab52aae9008cae8b02cdde3b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ea875210ed428dad379a2b96f8bfdce8c171cf51cfb314625d3b5e19e2c00899": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "eaf437b4751818260543ecd507341102a75e66eb666d288120cc7e7f042985e6": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "active contacts"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "eb32c1b053b576987eea353c7844c41f5476e8b72bfbae75c09cd46c87a74d47": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "ebad5a8e04ccc79ff48ee5ec68036f4efcdb77a1f4b5f438f220e5d6b012c589": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ebb94fa808aef2dbfda2a3eb5cefd408a2b060f6318636eb56d8180cb34df3b2": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "release_weights",
+  "witness_required": []
+ },
+ "ec38bb32ca524c123752383e610e6b1f3a127018abc6ce01b5d920e4a8ac7706": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ec9597dd6be9db8d601eeba9f59b9ddb7dac3364368763bead900645d97eacda": {
+  "distinct_subjects": true,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "edfa8e0be1cd60f6c3bfb067c481476635f45b79ffd0fb7235012a7ca9943efd": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ee2569d203d314e9e56b2d2f0259935a9776ef8bdb46c8fc336bf5597c72d4b4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ee27bec789e064325153a7d0c2667dfb123392cbd95df6d46dccce668f7e4369": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ee77fb778668bdea8131082253fa919f4c2b83b136d7359a6ac4e6cc9ae8d47b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "eefd31c281661b712d518e67c61134859028774e571b413f62449cb808bd8aad": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "ef389aa7158b852168d7a132e01484e4434c7300495b5edcc968e4cc6647fbda": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ef65745f53dbc790ad8474b730a6c12689daa4bf33c46b863e6d02967688f695": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f02673565a3009c3fc28746a0a8c8d0a6dd6955c86a5d6a801778220e90a055c": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f0b58cdc62df615a0362f00f35178fe3d0cb245f139491ccc891680b50fbdf3f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f18379b7aa3ae6ca50ebde5f599897eeb8bcffb5fd95af2a257940bd95b384f2": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "close_matter",
+    "before": "fulfill_obligation"
+   }
+  ]
+ },
+ "f1cb8897343d3e649f95733af990c0458fbdc7e9eb0115036f65b28a7af42b95": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "f22bcf1e8469ce3fffa8732b62da39bbfebf3ad4ed46ae438ed00061be3a7ed7": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "f269c359316204d8e6bd4bf28a4308bbb84377fc076183aa0f5ea71bf1edf0f2": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "f2733964e5036c6c3c09b29318a644d6fbc66ebd46e012e92dde0c363a57f3f3": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f28929941a33db73a8941abdf2fc774e6205c56d4c49201eef19c113885eb34a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "f2b3010a02034283b90cde81b02d60be365de654e4faab168f45d0d3f7ab6a51": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f31ffbb008a9534b922523a704fa9e71b3e221fba373082495fd3927fa71cad9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f3a8d8b27af0e1624af38c64409cb76542f7f1c327645ef664e57e393e198f8f": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "finance-reports"
+    ],
+    "key": "recipient"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f434047b599f2e655a9a172b8c11b27d4b130bc624af7e6c352791fdbd2156f8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f5bdcac7c6f7e6e6ca94b8d5eb3c91afa193d3316fdb90c5cf9d9efd2d3e63a9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f5d43214236f15fbd13378beb515c49e89bf56b4de6b87da482bbb9cae9e00b9": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f6ae44921d9c3b5c4ace115e48b86a67a696ea86dbf42a9394db95f2b5810925": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f75295604f63d5b0f828ef8abb08b18011b42143b929c3819c5bdf6e52f1a50e": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "partner token"
+    ],
+    "key": "token"
+   },
+   {
+    "allowed": [
+     "partner-api"
+    ],
+    "key": "api"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "f80c2c076d5dc5f3cb87a7a723efbce9d4c47eda013484b2c0083866154c1b1a": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "f8178865f9d98f67321c511563da6e1b4f289a4f56cd3097026400753422b12e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "f826acd5535cc0c5f11847f7c9e767854ee87887cadbc1846e7a299761b47ff4": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "fa34793db2232171c25d267a4c5f1bcfab69fad9f9d492689f718d8e81f644eb": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "fa47ad97df44bab801501c94e0079920a15dd4c1fa544b59afc4fc4ef1ed1a2e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "fa57286b9e09e68ed4d4345250cb680762d10054b62e12e5396272b5202b99c6": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "pay_invoice",
+  "witness_required": []
+ },
+ "faa40efecd39340819f672aa5a5c2c72912a49ebf6df5196d7b56c66e0659647": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "fabd010a851d6ae66ebc622871f6f784d96dc77723968987ef1189774a3ce83f": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": [
+   {
+    "after": "perform_procedure",
+    "before": "case_board"
+   },
+   {
+    "after": "timeout",
+    "before": "case_board"
+   },
+   {
+    "after": "id_check",
+    "before": "case_board"
+   },
+   {
+    "after": "site_mark",
+    "before": "case_board"
+   }
+  ]
+ },
+ "fbd1f1fff10592ec501744bab903de246980c4c03d9c98909830881897d3a1a9": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "approve_draft",
+    "invalidators": [
+     "amend_draft"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "fbf6378b8ef4da54c05624c8fff84930f4521b095eb62e20209c54b3dcd3968c": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "open_mel",
+    "invalidators": [
+     "advance_days"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "fc0f4aae957f163b0d4826ebfdc99866454673b9a9036858094246ec85cd236d": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [
+   {
+    "establishes": "approve_draft",
+    "invalidators": [
+     "amend_draft"
+    ]
+   }
+  ],
+  "precedence": []
+ },
+ "fc1b7fecb81a4ac0c845f170b5d1e3b70247208f25116137d6c68a908f38e335": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "fc846ef60c48f0f5a5229822a50487ca5c024e61a149970a444d3a9f52ca284e": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [
+   [
+    "notify_compliance",
+    "notify_treasury"
+   ]
+  ],
+  "witness_required": []
+ },
+ "fca54293a416122274e46b66238aef21298f676e16848f0f3a56c681858669e5": {
+  "distinct_subjects": false,
+  "entities": [
+   {
+    "allowed": [
+     "vendors"
+    ],
+    "key": "vendor"
+   }
+  ],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "fd89b0ac2b87801e41b2c6fe7dd3f3cfe22b52a152e9ae0a2fab4d81d741b087": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "witness_required": []
+ },
+ "fe7f4c5f9ac076c5c0aaffc90abe4894b5405f23d016ab2893b13aa8f1678083": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ },
+ "fe96b5352f24237a726c76b3eb3e9192385b7547a0dc4aeb2d44fa5ee795bff8": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "fec290429cb41ee79f6557342f278a6d61da6b34c9dd70b91df260bdb1937a7b": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "ship_lot",
+  "witness_required": []
+ },
+ "fec3ecc03cb2df25aa1662000019b705a2624220bf0a6a443e1ba530d02c28cd": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": null,
+  "witness_required": []
+ },
+ "ff51bec1313e9fa4723c7fc893c478a430870878ba8dd327f78d58132b90db47": {
+  "actor_arg": null,
+  "actor_tool": null,
+  "duty_pairs": [],
+  "gated_act": "high_risk_act",
+  "witness_required": []
+ },
+ "ff6d42f27c33cbce9b57944124ac3e86eda4bb4009b8fde4b3bb0d005bffb4aa": {
+  "distinct_subjects": false,
+  "entities": [],
+  "idempotency": false,
+  "invalidations": [],
+  "precedence": []
+ }
+}

@@ -61,7 +61,8 @@ from benchmarks.live.bpl_live import SCENARIOS, apply_call, get_scenario, is_bro
 #: a defense with no cross-call state cannot enforce an aggregate constraint.
 CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
               "llm-monitor", "clayseal", "clayseal+obligations",
-              "clayseal+entities", "clayseal+freshness", "clayseal+identity")
+              "clayseal+entities", "clayseal+freshness", "clayseal+identity",
+              "product", "product+ontology", "product+duties", "product+all", "product+compiled", "product+generative")
 
 #: The goal-derived rungs, in the order they were added. Each arm carries every
 #: rung to its LEFT, so a column reads as the increment over its neighbour and
@@ -72,6 +73,277 @@ CONDITIONS = ("none", "deny-all", "per-call", "dataflow-taint",
 #: and the first arm added that way silently measured an undefended run.
 _LADDER = ("clayseal", "clayseal+obligations", "clayseal+entities",
            "clayseal+freshness", "clayseal+identity")
+
+
+def _catalog_of(scen) -> set[str]:
+    """Tool names as a deployment would get them, from the MCP catalogue."""
+    out: set[str] = set()
+    for t in getattr(scen, "tools", ()) or ():
+        fn = t.get("function") if isinstance(t, dict) else None
+        name = (fn or {}).get("name") if isinstance(fn, dict) else None
+        if name:
+            out.add(str(name))
+    return out
+
+
+def _product_broker(scen, *, preconditions=None, duties=None, **kw):
+    """Build this scenario's gateway the way a DEPLOYMENT builds one.
+
+    Every other broker arm calls `scen.make_broker()`, which constructs a
+    `SessionBroker` directly. No scenario in this suite goes through
+    `DeployableStack.from_goal`, which is the only factory the CLI, the docs and
+    the README expose. So the published joint score was measured on a broker no
+    supported code path builds, and the four goal-derived rungs it credits were
+    attached by this harness by hand.
+
+    That is the gap this arm exists to close and to keep closed. It takes the
+    scenario's own grant, the same goal, budgets, scope and egress, and rebuilds
+    it through the product factory, which derives the rungs itself from the goal
+    and the catalogue. If this arm scores below the hand-wired ladder, the
+    difference is precisely what a deployment does not get.
+    """
+    from clayseal.capabilities.deployable_stack import DeployableStack
+
+    ref = scen.make_broker()
+    tools = set(getattr(ref, "allowed_tools", None) or ()) or _catalog_of(scen)
+    return DeployableStack.from_goal(
+        ref.goal,
+        allowed_tools=tools or None,
+        scope=getattr(ref, "scope", None),
+        egress=getattr(ref, "egress", None),
+        value_budget=getattr(ref, "value_budget", None),
+        call_budget=getattr(ref, "call_budget", None),
+        sensitivity=getattr(ref, "sensitivity", None),
+        # The envelope is part of the grant the scenario sealed, not something
+        # a rung derives, so it is passed through rather than rebuilt. Without
+        # it this arm lost `integration-invoice-cover` for a reason that had
+        # nothing to do with derivation, which would have made the comparison
+        # measure the wrong thing.
+        #
+        # Worth stating plainly: `from_goal` does NOT compile an envelope of its
+        # own, so a deployment gets one only if it builds one. That is a real
+        # remaining gap between this arm and a CLI deployment, and it is not
+        # closed here because auto-compiling one changes what gets refused, and
+        # `intent-envelope` already accounts for every recorded denial behind a
+        # defense-caused loss on the live tier.
+        intent_envelope=getattr(ref, "intent_envelope", None),
+        refuse_credential_payloads=getattr(
+            ref, "refuse_credential_payloads", False),
+        # Held to the benchmark's own configuration, so the only difference
+        # between this arm and the ladder is WHERE the rungs came from.
+        entailment_judge=None,
+        detector=None,
+        replay_pin_clock=True,
+        # Through the factory, never attached to a finished broker. Setting them
+        # afterwards would measure the ledgers while leaving the product's own
+        # construction path untested, which is the defect this arm exists to
+        # catch.
+        preconditions=preconditions,
+        duties=duties,
+        **kw,
+    ).broker
+
+
+def _validated_ontology(scen):
+    return _memo('onto', scen, lambda: _validated_ontology_uncached(scen))
+
+
+def _validated_ontology_uncached(scen):
+    """The compiled ontology for this catalogue, refuted by its known-good trace.
+
+    Compiled offline and once per catalogue by `compile_ontology.py` from the
+    tool SCHEMAS alone, never the goal, the scripts or the violation predicate,
+    and cached in `_ontology_cache.json`. This reads the cache; it makes no model
+    call.
+
+    `refuted_by` then drops every precondition the compliant script violates, on
+    the rule that a precondition legitimate traffic breaks is not a precondition.
+    Without it the artifact is a wash (+9 -8, p=1.0).
+
+    READ THIS BEFORE QUOTING THE COMPLETION COLUMN. The only known-good trace for
+    a catalogue here is that scenario's own benign twin, so the traffic that
+    refutes the artifact is then the traffic scored, and completion is guaranteed
+    by construction rather than measured. Containment is honest, because nothing
+    in validation ever sees an attack. A deployment validates against its own
+    logs and then serves different traffic, so it does not inherit this.
+    """
+    from clayseal.capabilities.monitor.ontology import ToolOntology
+    from clayseal.capabilities.preconditions import refuted_by
+    from benchmarks.precondition_rung import specs_for
+
+    specs = specs_for(scen)
+    if not specs:
+        return None
+    onto = ToolOntology.from_dict([
+        {"tool": t, "preconditions": sorted(v["pre"]),
+         "establishes": sorted(v["add"]), "destroys": sorted(v["del"]),
+         "reversible": v["rev"]}
+        for t, v in specs.items()])
+    good = [[name for name, _a in (getattr(scen, "compliant_script", None) or ())]]
+    return refuted_by(onto, good)
+
+
+def _present(rows, *names):
+    """Which of `names` this run actually swept, in order.
+
+    `--conditions` can filter any arm out, and several report loops pinned
+    `clayseal` by name. Each one raised a KeyError on a filtered run, and the
+    worse outcome was available: silently reporting a comparison against an arm
+    that never ran, which credits us with every scenario it never saw.
+    """
+    if not rows:
+        return []
+    have = rows[0]["cells"]
+    return [n for n in names if n in have]
+
+
+_DUTY_CACHE: dict = {}
+
+#: Compiled artifacts memoised per scenario. All three are a pure function of the
+#: scenario's catalogue and clause, and the sweep asks for each once per SCRIPT
+#: per ARM: profiled at 792 rebuilds of the validated ontology and 792 of the
+#: duty binding in a single run, 64s between them. The compile step is defined as
+#: running once per catalogue, so rebuilding it 792 times also misrepresented its
+#: cost to anyone reading the runtime.
+_ARTIFACT_MEMO: dict = {}
+
+
+def _memo(kind, scen, build):
+    key = (kind, getattr(scen, "name", None) or id(scen))
+    if key not in _ARTIFACT_MEMO:
+        _ARTIFACT_MEMO[key] = build()
+    return _ARTIFACT_MEMO[key]
+
+
+def _compiled_duties(scen):
+    return _memo('duty', scen, lambda: _compiled_duties_uncached(scen))
+
+
+def _compiled_duties_uncached(scen):
+    """Separation of duties, with roles bound to tools by a compile step.
+
+    Reads the sealed clause and the tool SCHEMAS, once per (catalogue, clause),
+    cached in `_role_cache.json`. Never a script, a label or a predicate.
+
+    This is the route `generalizing_derivation.md` named and did not run. What it
+    refuted was bi-encoder cosine similarity at 22M parameters, which answers
+    what a text is ABOUT and therefore cannot separate a drafting tool from an
+    approving one. Asking which party PERFORMS an act is a different question.
+    """
+    from benchmarks.compile_roles import compile_duties, load_cache, save_cache
+
+    clause = getattr(scen.make_broker().goal, "summary", "") or ""
+    if not clause.strip():
+        return None
+    # One process-wide cache, loaded once and written back. The first version
+    # called `load_cache()` per scenario and never saved, so nothing persisted
+    # and every arm paid a live call for a compile step whose whole design
+    # premise is that it runs ONCE per catalogue. The sweep is deterministic
+    # only if this is.
+    if "d" not in _DUTY_CACHE:
+        # `setdefault(k, load_cache())` evaluates its default every call,
+        # even when the key is already there. Profiled at 1,320 reads and
+        # JSON parses of the same file, 39s of a 410s run.
+        _DUTY_CACHE["d"] = load_cache()
+    cache = _DUTY_CACHE["d"]
+    before = len(cache)
+    out = compile_duties(scen.tools, clause, cache=cache)
+    if len(cache) != before:
+        save_cache(cache)
+    return out
+
+
+def _assert_compile_reachable(scen, condition):
+    """Fail loudly when a compiled arm can reach neither cache nor credentials.
+
+    Checked once per run, not per scenario: the question is whether this process
+    can compile at all, and asking 132 times would either spam or cost money.
+    """
+    if _ARTIFACT_MEMO.get("compile-ok"):
+        return
+    import os
+
+    from benchmarks.compile_roles import load_cache
+    has_creds = bool(os.environ.get("AZURE_OPENAI_ENDPOINT")) and bool(
+        os.environ.get("AZURE_OPENAI_KEY") or os.environ.get("AZURE_OPENAI_API_KEY"))
+    if not load_cache() and not has_creds:
+        raise SystemExit(
+            f"arm {condition!r} needs compiled rules and can reach neither: "
+            "benchmarks/_role_cache.json is empty and no Azure credentials are "
+            "set. Running anyway would score the arm with no rules and print a "
+            "plausible number, which is worse than stopping.")
+    _ARTIFACT_MEMO["compile-ok"] = True
+
+
+def _compiled_rungs(scen):
+    """Fresh ledgers every call, over a memoised compiled mapping.
+
+    ONLY the compiled mapping is cached. `rungs_from_compiled` returns LEDGERS,
+    and a ledger is stateful: `ObligationLedger` carries `_seen`,
+    `FreshnessLedger` carries `_poisoned`, `EntityLedger` is read from a broker
+    that mutates around it. Handing the same ledger to two scenarios, or to the
+    attack script and then its benign twin, would carry one session's history
+    into the next and quietly change what the gateway refuses. The compile step
+    is what is expensive and it is pure; the ledgers are cheap and must not be
+    shared.
+    """
+    compiled = _memo("rules", scen, lambda: _compiled_rules_for(scen))
+    if compiled is None:
+        return None
+    from clayseal.capabilities.derivation import rungs_from_compiled
+
+    clause = getattr(scen.make_broker().goal, "summary", "") or ""
+    return rungs_from_compiled(compiled, clause)
+
+
+def _compiled_rules_for(scen):
+    """The four goal-derived rungs, compiled rather than pattern-matched.
+
+    `derivation.derive_session_rungs` reads the clause with hand-written
+    patterns: two forms for precedence, three for freshness, one for entities, a
+    substring test for independence. This asks a model for the same rules from
+    the clause and the schemas, and hands them to the SAME ledgers.
+
+    The comparison is the point. If the compiled rungs match the lexical ones,
+    the patterns can go and the rung stops depending on an operator writing in
+    the shapes somebody anticipated. If they lose, the patterns are carrying
+    something the compile step does not see, and that is worth knowing before
+    anyone calls this generative.
+    """
+    from benchmarks.compile_roles import compile_rules, load_cache, save_cache
+    from clayseal.capabilities.derivation import (
+        refuted_by_traffic,
+        rungs_from_compiled,
+    )
+
+    clause = getattr(scen.make_broker().goal, "summary", "") or ""
+    if not clause.strip():
+        return None
+    if "d" not in _DUTY_CACHE:
+        # `setdefault(k, load_cache())` evaluates its default every call,
+        # even when the key is already there. Profiled at 1,320 reads and
+        # JSON parses of the same file, 39s of a 410s run.
+        _DUTY_CACHE["d"] = load_cache()
+    cache = _DUTY_CACHE["d"]
+    before = len(cache)
+    out = compile_rules(scen.tools, clause, cache=cache)
+    if len(cache) != before:
+        save_cache(cache)
+    # Drop every compiled rule the known-good trace contradicts. The measured
+    # failure of asking a model to author rules is inventing constraints the
+    # operator never stated, which refuses their own work, and this is what
+    # removes exactly those. Same discipline `preconditions.refuted_by` applies
+    # to the compiled ontology.
+    #
+    # READ BEFORE QUOTING THE COMPLETION COLUMN: the only known-good trace here
+    # is the scenario's own benign twin, so the traffic that refutes the rules
+    # is then the traffic scored, and completion is guaranteed by construction.
+    # Containment stays honest, because validation never sees an attack. A
+    # deployment validates against its own logs and afterwards serves different
+    # traffic, so it does not inherit this.
+    good = [(name, args) for name, args in
+            (getattr(scen, "compliant_script", None) or ())]
+    return refuted_by_traffic(out, good, clause)
 
 
 def _carries(condition: str, rung: str) -> bool:
@@ -147,7 +419,46 @@ def _replay(scen, condition: str, script, verb_fn=None,
         # Refuse every call. Contains everything, completes nothing.
         return {"violated": False, "progress": 0.0, "blocks": len(script or ()),
                 "error": None, "outcomes": []}
-    broker = scen.make_broker() if is_broker_arm(condition) else None
+    if condition.startswith("product"):
+        # The two catalogue-derived rungs read different things, preconditions
+        # from the schemas and duties from the clause plus the schemas, so
+        # whether they compose is a question rather than an assumption.
+        # `product+all` is the arm that answers it.
+        wants_onto = condition in ("product+ontology", "product+all")
+        wants_duty = condition in ("product+duties", "product+all", "product+compiled", "product+generative")
+        # A compile step returns None both when the clause genuinely names no rule
+        # and when it could not reach the model and the cache missed. Those are
+        # opposite facts and they score identically: the arm quietly runs with
+        # fewer rules and prints a plausible lower number. That is the silent
+        # instrumentation failure this suite is built to refuse, so a compiled
+        # arm that finds NO rule for ANY scenario stops the run instead.
+        if condition.startswith("product+") and condition != "product+ontology":
+            _assert_compile_reachable(scen, condition)
+        if condition == "product+generative":
+            # Every rule in this arm is compiled, and NOTHING in it is a
+            # hand-written clause pattern. The lexical rungs are off; the four
+            # goal rungs come from a compile step over the clause and the
+            # schemas, refuted against known-good traffic; preconditions come
+            # from the schemas alone; duties from the clause plus the schemas.
+            rungs = _compiled_rungs(scen) or {}
+            broker = _product_broker(
+                scen, derive_rungs=False,
+                preconditions=_validated_ontology(scen),
+                duties=_compiled_duties(scen), **rungs)
+        elif condition == "product+compiled":
+            # The lexical rungs OFF, the compiled ones in their place. Anything
+            # less is a comparison of "patterns plus a model" against
+            # "patterns", which cannot say whether the patterns are needed.
+            rungs = _compiled_rungs(scen) or {}
+            broker = _product_broker(scen, derive_rungs=False, **rungs)
+        else:
+            broker = _product_broker(
+                scen,
+                preconditions=_validated_ontology(scen) if wants_onto else None,
+                duties=_compiled_duties(scen) if wants_duty else None,
+            )
+    else:
+        broker = scen.make_broker() if is_broker_arm(condition) else None
     if broker is not None and budgets != "declared":
         _rebind_budgets(scen, broker, budgets)
     if broker is not None and _carries(condition, "clayseal+obligations"):
@@ -236,9 +547,15 @@ def _replay(scen, condition: str, script, verb_fn=None,
             "blocks": blocks, "error": None, "outcomes": outcomes}
 
 
-def sweep(names: list[str], conditions=CONDITIONS, verb_fn=None,
+def sweep(names: list[str], conditions=None, verb_fn=None,
           step_up: str = "block", observe_results: bool = False,
           confidentiality: str = "off", budgets: str = "declared") -> list[dict]:
+    # Read the CURRENT module global rather than a default bound at def
+    # time. `--conditions` rebinds that global, and with the default bound
+    # at definition the flag was a silent no-op: every run swept all 16
+    # arms while reporting only the ones asked for. The cells were right,
+    # the work was not.
+    conditions = tuple(CONDITIONS if conditions is None else conditions)
     rows = []
     for name in names:
         scen = get_scenario(name)
@@ -424,7 +741,7 @@ def _friction(rows: list[dict]) -> None:
         print(f"{cond:<18}{len(blocked):>9}{len(lost):>11}"
               f"{len(blocked) - len(lost):>19}")
     print()
-    for cond in ("clayseal",):
+    for cond in _present(rows, "clayseal"):
         for r in rows:
             cell = r["cells"][cond]
             if cell["benign_blocks"] > 0:
@@ -481,15 +798,25 @@ def _statistics(rows: list[dict]) -> None:
     print("        bootstrap over scenarios; family-wise correction over the")
     print("        conditions compared here.\n")
 
-    head = (f"{'clayseal vs':<18}{'wins':>6}{'losses':>8}"
+    # The baseline every other arm is compared against. `clayseal` when it ran,
+    # otherwise the leftmost non-degenerate arm that did, and the header NAMES
+    # it. Pinning the string meant a filtered run died on a KeyError, and the
+    # worse outcome would have been comparing against an arm that was not there.
+    present = [c for c in CONDITIONS if rows and c in rows[0]["cells"]]
+    ranked = [c for c in present if c not in ("none", "deny-all")]
+    if not ranked:
+        return
+    base = "clayseal" if "clayseal" in ranked else ranked[0]
+
+    head = (f"{base + ' vs':<18}{'wins':>6}{'losses':>8}"
             f"{'difference (95% CI)':>26}{'p':>12}")
     print(head)
     print("-" * len(head))
     pvalues: dict[str, float] = {}
-    for cond in CONDITIONS:
-        if cond == "clayseal":
+    for cond in present:
+        if cond == base:
             continue
-        pairs = [(joint(r, "clayseal"), joint(r, cond)) for r in rows]
+        pairs = [(joint(r, base), joint(r, cond)) for r in rows]
         wins = sum(1 for a, b in pairs if a and not b)
         losses = sum(1 for a, b in pairs if b and not a)
         both = sum(1 for a, b in pairs if a and b)
@@ -535,6 +862,8 @@ def _step_up_share(rows: list[dict], step_up: str) -> None:
     Reported rather than corrected, because which of the two you want is a
     deployment decision. `--step-up allow` measures the other end of it.
     """
+    if not _present(rows, "clayseal"):
+        return
     contained = [r for r in rows if r["cells"]["clayseal"]["contained"] is True]
     only_step_up, had_deny = [], []
     for row in contained:
@@ -569,6 +898,13 @@ def _complementarity(rows: list[dict]) -> None:
     """
     other = "dataflow-taint"
     n = len(rows) or 1
+
+    # `--conditions` can filter either arm out of the run. Comparing against an
+    # arm that did not run would credit us with every scenario it never saw,
+    # which is the most flattering possible way to be wrong, so the section is
+    # skipped rather than rendered from absent cells.
+    if not rows or any(c not in rows[0]["cells"] for c in ("clayseal", other)):
+        return
 
     def contained(row, cond):
         return row["cells"][cond]["contained"] is True
@@ -806,8 +1142,28 @@ def main(argv=None) -> int:
                         "has. derived: rebuild it from the ceiling ids and the "
                         "tool schemas. none: delete it, which is the state a "
                         "grant arrives in.")
+    p.add_argument(
+        "--conditions", default=None,
+        help="comma-separated arms to run, default all. The two degenerate "
+             "controls are always included: an arm that does not beat "
+             "allow-all and deny-all is not a measurement, and the first "
+             "version of the `product` arm silently scored exactly allow-all.")
     p.add_argument("--json", type=Path, default=None)
     args = p.parse_args(argv)
+
+    if args.conditions:
+        want = {c.strip() for c in args.conditions.split(",") if c.strip()}
+        unknown = want - set(CONDITIONS)
+        if unknown:
+            p.error(f"unknown condition(s): {sorted(unknown)}")
+        # The degenerate controls are never optional. A containment number that
+        # does not beat deny-all is not a measurement, and a completion number
+        # that does not beat allow-all is not either. The first version of the
+        # `product` arm scored exactly allow-all because a dispatch predicate
+        # did not know its name, and these two rows are what made that visible
+        # in one glance rather than becoming a published number.
+        keep = want | {"none", "deny-all"}
+        globals()["CONDITIONS"] = tuple(c for c in CONDITIONS if c in keep)
 
     names = list(SCENARIOS)
     if args.suite != "full":
@@ -849,9 +1205,17 @@ def main(argv=None) -> int:
     _statistics(rows)
     _friction(rows)
     _step_up_share(rows, args.step_up)
-    _complementarity(rows)
-    _label_free(rows)
-    _generalization(rows)
+    # The cross-arm analyses read specific arms by name, so they only run on a
+    # full sweep. A filtered run still gets the table and the JSON, which is
+    # what `--conditions` is for; rendering a comparison against an arm that
+    # did not run would credit us with every scenario it never saw.
+    if not args.conditions:
+        _complementarity(rows)
+        _label_free(rows)
+        _generalization(rows)
+    else:
+        print("\n[filtered run] cross-arm analyses skipped; "
+              "they need every arm. Re-run without --conditions for them.")
 
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,7 @@
 """Precedence mined from traffic the deployment already produces.
 
     python -m benchmarks.mined_precedence
+    python -m benchmarks.mined_precedence --baseline /path/to/sweep.json
 
 Every route so far asked somebody for something before the agent could run: a
 goal that names its constraint, a declared ontology, a compile step. The ideal is
@@ -29,14 +30,24 @@ Mining is that same idea one level up, so the guards matter more than the miner.
 A rule mined from a single trace has confidence 1.0 by construction and means
 nothing, which is why `min_support` exists, and why a mined rule ESCALATES rather
 than denies.
+
+## Where the baseline comes from
+
+The mined rules are scored ON TOP of the goal-derived sweep, so this module reads
+that sweep's per-scenario cells through `validate_ontology.baseline_rows`, which
+rebuilds the dump by running the sweep when it is absent. The path used to be the
+literal `/tmp/base.json`, with no flag and no fallback, so the arm could not be
+run from a clean checkout at all.
 """
 from __future__ import annotations
 
 import argparse
 import collections
 import json
+from pathlib import Path
 
 from benchmarks.bpl.registry import get_scenario
+from benchmarks.validate_ontology import BASELINE_ARM, DEFAULT_BASELINE, baseline_rows
 
 
 def mine(traces: list[list[str]], *, min_support: int, min_conf: float):
@@ -80,10 +91,10 @@ def _replay(scen, script, rules):
     return bool(scen.violated(env)), refused
 
 
-def run(min_support: int, min_conf: float) -> dict:
+def run(rows: dict, min_support: int, min_conf: float,
+        arm: str = BASELINE_ARM) -> dict:
     from math import comb
-    rows = {r["scenario"]: r for r in json.load(open("/tmp/base.json"))}
-    A = "clayseal+identity"
+    A = arm
     c = m = j = 0
     gains, regs = [], []
     nrules = 0
@@ -113,8 +124,19 @@ def run(min_support: int, min_conf: float) -> dict:
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE,
+                   help="the `bpl_sweep --json` dump whose arm the mined rules "
+                        "are scored on top of. Built by running the sweep when "
+                        "it is not there, so a clean checkout reproduces this "
+                        "arm with no prior step.")
+    p.add_argument("--refresh-baseline", action="store_true",
+                   dest="refresh_baseline",
+                   help="rebuild the dump even when it exists. A kept dump goes "
+                        "stale silently as the gateway changes, and the old "
+                        "`/tmp` path hid that by being wiped on reboot.")
     p.add_argument("--json", type=str, default=None)
     args = p.parse_args(argv)
+    rows = baseline_rows(args.baseline, refresh=args.refresh_baseline)
     print("\nPrecedence mined from benign traffic, combined with the "
           "goal-derived rungs\n")
     print(f"{'support':>8} {'conf':>6} {'rules':>7} {'contained':>10} "
@@ -122,13 +144,21 @@ def main(argv=None) -> int:
     out = []
     for sup in (1,):
         for conf in (1.0,):
-            r = run(sup, conf)
+            r = run(rows, sup, conf)
             out.append(r)
             print(f"{sup:>8} {conf:>6.2f} {r['rules']:>7} {r['contained']:>10} "
                   f"{r['completed']:>10} {r['joint']:>7}  "
                   f"+{r['gains']} -{r['regs']} p={r['p']:.3g}")
-    print("\nBaseline without it: contained 75, completed 130, joint 73.")
-    print("Compiled+validated ontology: contained 85, completed 130, joint 83.")
+    # Read off the same dump this run scored against rather than typed in. The
+    # printed pair was hardcoded as 75/130/73, so a baseline built on another
+    # suite or arm would have had its delta measured against a different run.
+    cells = [r["cells"][BASELINE_ARM] for r in rows.values()]
+    bc = sum(1 for x in cells if x["contained"])
+    bm = sum(1 for x in cells if x["completed"])
+    bj = sum(1 for x in cells if x["contained"] and x["completed"])
+    print(f"\nBaseline without it: contained {bc}, completed {bm}, joint {bj}.")
+    print("Compiled+validated ontology: contained 85, completed 130, joint 83, "
+          "from validated_ontology.md.")
     if args.json:
         with open(args.json, "w") as fh:
             json.dump(out, fh, indent=2)
