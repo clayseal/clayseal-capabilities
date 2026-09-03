@@ -375,6 +375,50 @@ def _rebind_budgets(scen, broker, mode: str) -> None:
     if mode == "none":
         config.tracked = {}
         return
+    if mode.startswith("session"):
+        refuted = mode.endswith("+refuted")
+        idmode = "all" if "-identity" in mode else "off"
+        # ONE ceiling for the whole session, and no per-tool map at all.
+        #
+        # This is the configuration a real deployment can actually supply.
+        # `derived_budget_binding.md` established the two facts that make it
+        # work: across every scenario here that budgets value there is exactly
+        # ONE ceiling (34 of 34), and across 520 external tasks not one
+        # configures a budget of any kind. So the field an operator cannot
+        # write is also the field they do not need: with a single ceiling there
+        # is nothing to disambiguate, and every tool whose schema carries a
+        # quantity debits it.
+        #
+        # The operator sets one number when the session opens and is done. No
+        # tool-by-tool assignment, no ceiling ids, no maintenance as the
+        # catalogue changes.
+        from clayseal.capabilities.budget_binding import Ceiling, derive_tracked
+        ids = list(config.ceilings)
+        if len(ids) != 1:
+            # More than one ceiling means the operator DID express something
+            # this mode throws away. Scoring it here would report a number for
+            # a configuration nobody chose.
+            return
+        derived = derive_tracked([Ceiling(ids[0])], scen.tools,
+                                 strict=False, identity=idmode)
+        if refuted:
+            # A binding that known-good traffic contradicts is not a binding.
+            # The two this removes are the conceptual cost of a single counter:
+            # in `layering-hop-chain` and `round-trip-spend-wash` value moves in
+            # a circle, so one session-wide total counts the same money twice
+            # and refuses the operator's own work. Replaying their own traffic
+            # is what tells the ceiling which hops to stop counting.
+            from clayseal.capabilities.budget_binding import refute
+            derived, _ = refute(
+                derived, dict(config.ceilings), [scen.compliant_script or ()],
+                windowed=set(getattr(budget, "windows", None) or ()))
+        from clayseal.capabilities.value_budget import EffectSpec
+        config.tracked = {
+            b.tool: (EffectSpec(budget_id=b.budget_id, amount_arg=b.amount_arg,
+                                identity_args=b.identity_args)
+                     if b.identity_args else (b.amount_arg, b.budget_id))
+            for b in derived}
+        return
     from clayseal.capabilities.budget_binding import refute
     from clayseal.capabilities.value_budget import EffectSpec
     # Split the base reading from the refutation step. Matching on the whole
@@ -1131,7 +1175,8 @@ def main(argv=None) -> int:
                         "the sealed goal, uniformly, and see what the tier is "
                         "worth. Needs --observe-results to do anything.")
     p.add_argument("--budgets",
-                   choices=("declared", "derived", "derived-strict",
+                   choices=("declared", "session", "session+refuted",
+                            "session-identity+refuted", "derived", "derived-strict",
                             "derived-identity", "derived-named-identity",
                             "derived+refuted", "derived-identity+refuted",
                             "none"),
@@ -1140,8 +1185,10 @@ def main(argv=None) -> int:
                         "scenario author wrote it, which is what every "
                         "published number measures and what no real deployment "
                         "has. derived: rebuild it from the ceiling ids and the "
-                        "tool schemas. none: delete it, which is the state a "
-                        "grant arrives in.")
+                        "tool schemas. session: ONE ceiling for the whole "
+                        "session and no per-tool map, which is the only "
+                        "configuration a real deployment can supply. none: "
+                        "delete it, the state a grant arrives in.")
     p.add_argument(
         "--conditions", default=None,
         help="comma-separated arms to run, default all. The two degenerate "
