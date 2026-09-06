@@ -49,7 +49,9 @@ tools:
 
   # What each tool DOES. The verb decides which rules apply, and guessing it
   # from the name works on `send_email` and fails on `terraform_destroy`.
-  # One of: read, write, send, delete, execute.
+  # One of: read, write, send, transfer, call
+  # send_email is send. pay_vendor is transfer. terraform_destroy is write -
+  # say so; the name is classified as call, which skips the write rules.
   effects:
     your_read_tool: read
     your_write_tool: write
@@ -57,6 +59,15 @@ tools:
   # Tools that spend nothing and change nothing. Saying so here is what stops
   # lint asking you about them.
   harmless: [your_read_tool]
+
+  # Ordering and state, as withdrawals from the grant. Uncomment if you have
+  # one. `mutex` is the same-session form of "the agent that did A may not
+  # also do B". Two different people is an identity question this file cannot
+  # see.
+  # when:
+  #   - requires: [your_read_tool]
+  #     deny: [your_write_tool]
+  #     reason: "read first"
 
 paths:
   # Where file actions may happen. A tool whose path cannot be resolved is
@@ -73,9 +84,10 @@ paths:
 
 egress:
   # Where data may go. A domain grant is every mailbox on that domain, so name
-  # the addresses too if the real set is smaller.
+  # the addresses too if the real set is smaller. An injection that names
+  # another mailbox on the same domain is inside a domain-only grant.
   domains: [your-company.example]
-  recipients: []
+  recipients: []          # TODO name the mailboxes if the set is smaller
   bind_recipients: true
 
 budgets:
@@ -93,6 +105,15 @@ budgets:
   #   ceilings: {{refunds: "1000.00"}}
   #   tracked:
   #     issue_refund: {{arg: amount, budget: refunds}}
+
+# How sure a compiled rule has to be. Leave this commented until you have a
+# compiler (`ask` at build time). Uncommented, lint will remind you of that.
+#
+# compile:
+#   draws: 5
+#   k: 0.0001          # showed up in at least one answer
+#   # k_for:
+#   #   your_write_tool: 0.5
 """
 
 

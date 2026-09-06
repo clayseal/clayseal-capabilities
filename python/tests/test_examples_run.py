@@ -93,3 +93,18 @@ def test_the_example_policy_is_the_one_the_docs_name():
     policy = load_policy(REPO / "examples" / "policy.yaml")
     assert [f for f in policy.lint() if f.level == "error"] == []
     assert policy.allowed_tools
+
+
+def test_other_jobs_are_not_all_allowed():
+    """07 is the 'this is not just refunds' example. If every call is allowed,
+    the mutex, the path bound or the mailbox bound stopped firing."""
+    result = subprocess.run(
+        [sys.executable, str(REPO / "examples" / "07_other_jobs.py")],
+        cwd=REPO, capture_output=True, text=True, timeout=120, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    out = result.stdout
+    assert "refused" in out or "held" in out
+    assert ".env" in out
+    assert "mirror@" in out
+    assert "ALLOWED (should not have been)" not in out

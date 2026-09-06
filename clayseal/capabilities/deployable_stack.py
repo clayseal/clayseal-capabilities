@@ -225,6 +225,18 @@ class DeployableStack:
         # ledger to override one, or `derive_rungs=False` to build the base
         # gateway.
         derive_rungs: bool = True,
+        # Production derivation. A compiled mapping, or an `ask` callable that
+        # produces one, selected under `relative_loss` against `known_good`.
+        # When either is supplied the English clause patterns are not consulted:
+        # those are the ablation, not the product. See `derivation.seal`.
+        compiled_rungs: Any = None,
+        ask: Any = None,
+        tool_schemas: Any = None,
+        known_good: Any = None,
+        relative_loss: float | None = None,
+        draws: int = 1,
+        k: float | None = None,
+        k_for: Any = None,
         obligations: Any = None,
         # Catalogue-derived precedence. The ontology is not derived here, because
         # compiling one is a deployment-time job over the tool schemas with a
@@ -369,6 +381,11 @@ class DeployableStack:
         # Derive the rungs from the two trusted inputs, then let an explicitly
         # passed ledger win. An operator who built one by hand meant it; a
         # derived rule is a default, not an override.
+        #
+        # Production path: `seal` compiles, selects under a relative loss
+        # budget, and freezes. Lexical clause patterns run only when no
+        # compiled mapping and no `ask` were given, which is the ablation the
+        # paper reports as removable.
         rungs: dict[str, Any] = {
             "obligations": obligations,
             "preconditions": preconditions,
@@ -377,15 +394,31 @@ class DeployableStack:
             "freshness": freshness,
             "identity": identity,
         }
-        if derive_rungs:
-            from clayseal.capabilities.derivation import derive_session_rungs
+        catalog = allowed_tools or tool_catalog or set()
+        use_compiled = compiled_rungs is not None or ask is not None
+        if use_compiled or derive_rungs:
+            from clayseal.capabilities.derivation import seal
 
-            derived = derive_session_rungs(
-                goal, allowed_tools or tool_catalog or set()
+            derived = seal(
+                goal,
+                catalog,
+                compiled=compiled_rungs,
+                ask=ask,
+                tool_schemas=tool_schemas,
+                known_good=known_good,
+                relative_loss=relative_loss,
+                draws=draws,
+                k=k,
+                k_for=k_for,
+                lexical=derive_rungs and not use_compiled,
             )
             for name, rule in derived.items():
-                if rungs[name] is None:
+                if rungs.get(name) is None:
                     rungs[name] = rule
+            kept = getattr(derived, "kept_tools", None)
+            if kept is not None and allowed_tools is not None:
+                # YAML allow is the ceiling. Compile `k` can only narrow it.
+                allowed_tools = set(allowed_tools) & kept
 
         kwargs: dict[str, Any] = {
             **rungs,

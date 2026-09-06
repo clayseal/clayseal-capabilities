@@ -105,6 +105,18 @@ def test_step_three_the_wrapped_tools_enforce_that_policy(
     assert "evil.test" in stopped
 
 
+def test_the_starter_names_verbs_the_compiler_will_accept() -> None:
+    """A first-user who copies the comment into `tools.effects` has to succeed."""
+    from clayseal.capabilities.policy import KNOWN_VERBS
+    from clayseal.capabilities.starter import starter_policy
+
+    text = starter_policy()
+    assert "delete, execute" not in text
+    line = next(ln for ln in text.splitlines() if ln.startswith("  # One of:"))
+    named = {part.strip() for part in line.split(":", 1)[1].split(",")}
+    assert named == set(KNOWN_VERBS), named
+
+
 def test_the_guide_only_promises_commands_that_exist() -> None:
     """Every `clayseal ...` line in START.md has to be a real command.
 

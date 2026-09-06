@@ -1,7 +1,7 @@
 """The capability layer's public surface, resolved on first use.
 
 Importing this used to cost **89 ms** against a 31 ms bare interpreter, because
-it eagerly imported all 57 names below. That pulled `cryptography`'s SSH
+it eagerly imported all of the public names below. That pulled `cryptography`'s SSH
 serialization (25 ms, via `clayseal.core.signing`) and `asyncio` (17 ms, via
 `guardrail`) into every process that touched the package, including
 `clayseal policy lint`, which needs neither. Four of the 57 appear anywhere in
@@ -67,6 +67,12 @@ _EXPORTS: dict[str, str] = {
     # deployable_stack
     "DeployableStack": "deployable_stack",
     "StackDecision": "deployable_stack",
+    # derivation / compile / loss budget — the production seal path
+    "DerivedRungs": "derivation",
+    "compile_rules": "compile",
+    "select_tools_under_k": "compile",
+    "seal": "derivation",
+    "select_under_budget": "loss_budget",
     # guardrail
     "Guardrail": "guardrail",
     "GuardrailError": "guardrail",
@@ -146,6 +152,9 @@ if TYPE_CHECKING:
         verify_delegation_chain,
     )
     from clayseal.capabilities.deployable_stack import DeployableStack, StackDecision
+    from clayseal.capabilities.derivation import DerivedRungs, seal
+    from clayseal.capabilities.compile import compile_rules, select_tools_under_k
+    from clayseal.capabilities.loss_budget import select_under_budget
     from clayseal.capabilities.guardrail import (
         Guardrail,
         GuardrailError,
@@ -227,6 +236,7 @@ __all__ = [
     "CommitToken",
     "DelegationToken",
     "DeployableStack",
+    "DerivedRungs",
     "DynamoDBUsedTokenStore",
     "EntityBinding",
     "EntityLedger",
@@ -260,6 +270,7 @@ __all__ = [
     "call_budget_config_from_mandate",
     "capability_allows",
     "cedar_authorizer",
+    "compile_rules",
     "compile_task_scope",
     "default_capability_layer",
     "default_used_token_store",
@@ -279,6 +290,9 @@ __all__ = [
     "operation_for_action",
     "operation_for_mcp_tool",
     "register_capability_layer",
+    "seal",
+    "select_tools_under_k",
+    "select_under_budget",
     "session_budgets_from_mandate",
     "session_call_budget_from_mandate",
     "session_value_budget_from_mandate",

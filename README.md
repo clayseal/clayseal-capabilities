@@ -88,8 +88,8 @@ writes a commented one to start from, and `Guardrail.from_policy_file` loads it.
 
 The wrappers keep the name, docstring and signature of your originals, so any
 framework that introspects them sees the tool it saw before. That covers
-LangGraph, the OpenAI Agents SDK, CrewAI and hand-written loops, because they
-all agree that a tool is a named callable taking keyword arguments.
+LangGraph, the OpenAI Agents SDK, CrewAI and hand-written loops. Call the
+wrappers the same way you called the originals, positionally or by name.
 
 ## Or put it in front of an MCP server
 
@@ -632,7 +632,7 @@ want:
 
 - [Your first ten minutes](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/START.md) to go from the demo to your own agent
 - [Evidence](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md) for every measured number and the limit it does not cross
-- [API reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/API.md) for the 57 exported names, tiered by what
+- [API reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/API.md) for the exported names, tiered by what
   most integrations actually use
 - [Developer guide](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/DEV_GUIDE.md) to install it and wire it in
 - [Policy reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md) for what a policy file can say

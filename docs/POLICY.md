@@ -74,6 +74,65 @@ What happens to an action the floor cleared and the plan did not predict.
 An unknown name is refused rather than defaulted, because there is no safe
 posture to fall back to when the operator's intent is unreadable.
 
+### `relative_loss` and `rungs`
+
+```yaml
+relative_loss: 0.02          # 2% of known-good actions may be refused
+rungs:
+  precedence:
+    - before: checklist_item
+      after: commit_irreversible
+  entities:
+    - key: vendors
+      allowed: [Acme, Beta]
+```
+
+The production derivation. `rungs` is the compiled form of the sealed goal:
+the same mapping the ledgers already consume, written by a person or by a
+compile step that already ran. The gateway does not parse English on this
+path.
+
+`relative_loss` is the fraction of the operator's own known-good traffic
+those inferred rules may refuse. It is applied **once, at seal time**,
+against traces passed to `policy.build(known_good=...)`. A running budget
+at decision time is an attack. Mandate-stated constraints (ceilings,
+allow-lists, structured intent) are not in this selection; they are
+authority, not inference. `0` is full refutation: any rule that fires on
+known-good traffic is dropped.
+
+`clayseal policy lint` warns if `relative_loss` is set and `rungs` is empty,
+because the budget then has nothing to select.
+
+### `compile`
+
+```yaml
+compile:
+  draws: 5
+  k: 0.0001                 # showed up in at least one of five answers
+  k_for:
+    send_email: 0.5         # this tool has to show up in half of them
+```
+
+Limited steering. The compiler is asked `draws` times. A compiled rule, and
+a tool the compiler named, is kept only if it appeared in at least fraction
+`k` of those answers. A tool that never appeared has frequency 0 and is
+not granted for this session, even if `tools.allow` lists it. YAML `allow`
+is the ceiling; `k` can only narrow it.
+
+`k: 0.0001` is "appeared at least once" for any reasonable number of draws.
+Raise it when you want the compiler to be more sure. `k_for` is the same
+knob per tool, for the ones that should take more certainty (a wire, a
+production deploy).
+
+These only apply when `build()` (or `Guardrail.from_policy_file`) is given
+an `ask` callable. Without one, lint warns and the YAML tool list is the
+grant. Failed draws vote for nothing and still count in the denominator,
+so a compiler that answers once in five is not unanimous. `k: 0` would
+keep tools that never appeared; lint warns.
+
+`relative_loss` is the other half of the same tradeoff, measured against
+your own logs instead of against compiler agreement.
+
 ### `expires_at`
 
 ```yaml
@@ -501,6 +560,29 @@ injected `status: pending` widen a grant. That is the same argument
 `unless` is how "only if" is written. An unconfirmed precondition **withdraws**,
 because a precondition nobody has established is not one that has been met, so
 the tool is refused until the fact arrives.
+
+Ordering ("read the order before paying") is the same section:
+
+```yaml
+    - requires: [get_order]
+      deny: [pay_vendor]
+      reason: "AP 3.1: read the order before paying against it"
+```
+
+`requires` is withdrawal until those tools have run in this session. The
+gateway records that itself; a tool result cannot assert it.
+
+Two tools that must not both run in the same session (the session-shaped half
+of segregation of duties):
+
+```yaml
+    - mutex: [prepare_payment, approve_payment]
+      reason: "the agent that prepared a payment may not also approve it"
+```
+
+That is not WHO acts. Two different people is an identity question this layer
+cannot see, and a written rule of that form stays a TODO for a reviewer.
+`mutex` is what a single agent session can actually hold.
 
 The limitation is the ceilings' limitation. "Only cancel if pending" enforces as
 "deny cancel when the status is known and is not pending", so an adversary who

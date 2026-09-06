@@ -74,9 +74,18 @@ guard = Guardrail.from_policy_file("policy.yaml")
 tools = guard.wrap_all({"send_email": send_email, "read_ticket": read_ticket})
 ```
 
-Call them exactly as before. The wrappers keep the name, docstring and signature
-of your originals, so any framework that inspects them sees what it saw before.
-That covers LangGraph, the OpenAI Agents SDK, CrewAI and hand-written loops.
+Call them exactly as before, positionally or by name. The wrappers keep the
+name, docstring and signature of your originals, so any framework that inspects
+them sees what it saw before. That covers LangGraph, the OpenAI Agents SDK,
+CrewAI and hand-written loops.
+
+If the agent just read something that was not a tool return - a ticket pasted
+into the prompt, a RAG chunk - tell the gateway, or every destination looks
+equally well-sourced:
+
+```python
+guard.saw("tickets/T-1042.txt", ticket_body)
+```
 
 ## 4. Handle a refusal
 
@@ -99,6 +108,38 @@ except Refused as exc:
 except StepUpRequired as exc:
     return f"This needs a person to approve: {exc.reasons[0]}"
 ```
+
+## How sure the compiler has to be
+
+If you compile rules from a document (a handbook, a goal sentence) instead of
+writing every rule by hand, you can ask more than once and keep only what the
+answers agree on. That cutoff is `k` in the policy file.
+
+```yaml
+compile:
+  draws: 5
+  k: 0.0001          # showed up at least once
+  k_for:
+    send_email: 0.5  # this one has to show up in half the answers
+```
+
+A tool that never appeared is not granted for this session, even if it is on
+`tools.allow`. Raise `k` to be stricter; that is the same tradeoff as
+`relative_loss`, which is how many of your own good actions you will let
+inferred rules refuse. A draw that fails or will not parse votes for nothing
+and still counts, so a compiler that answers once in five is not unanimous.
+`python examples/06_how_sure.py` shows the knob with
+no key.
+
+A domain grant is every mailbox on that domain. If the real set is smaller,
+name the addresses under `egress.recipients`. An injection that names another
+mailbox at the same company is inside a domain-only grant; listing the
+mailboxes is what closes it. `clayseal policy lint` warns when a sending tool
+has a domain and no mailbox.
+
+`python examples/07_other_jobs.py` is the same adapter on a coding agent, a
+prepare/approve mutex, and a same-domain mailbox. The refund demo is not the
+only shape this holds.
 
 ## What to read next
 

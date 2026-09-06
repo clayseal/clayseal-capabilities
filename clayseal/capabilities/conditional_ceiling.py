@@ -395,6 +395,44 @@ def tool_guards_from_config(raw: Any, allowed: Iterable[str]) -> ConditionalTool
         # ALLOW decisions, so unlike a status field they are not something a
         # tool result can assert.
         requires = entry.get("requires")
+        mutex = entry.get("mutex")
+        known = {"if", "unless", "deny", "reason", "requires", "mutex"}
+        unknown = sorted(str(k) for k in entry if k not in known)
+        if unknown:
+            raise ValueError(
+                f"tools.when[{i}] has unknown keys {unknown}. "
+                f"Known: if, unless, requires, mutex, deny, reason. "
+                f"A rule about two different people (segregation of duties) "
+                f"cannot be a session grant; `mutex` is the same-session form "
+                f"(the agent that ran one tool may not run the other)."
+            )
+        if mutex is not None:
+            if requires is not None or entry.get("if") or entry.get("unless"):
+                raise ValueError(
+                    f"tools.when[{i}] mixes `mutex` with `if`/`unless`/"
+                    f"`requires`. Write mutex as its own rule."
+                )
+            if not isinstance(mutex, list) or len([t for t in mutex if t]) < 2:
+                raise ValueError(
+                    f"tools.when[{i}].mutex must list at least two tools that "
+                    f"must not both run in this session")
+            names = [str(t) for t in mutex if t]
+            stray = [t for t in names if t not in base]
+            if stray:
+                raise ValueError(
+                    f"tools.when[{i}].mutex names tools that are not in "
+                    f"tools.allow: {stray}")
+            reason = str(entry.get("reason") or (
+                "tools in this set may not both run in one session"))
+            for tool in names:
+                others = [t for t in names if t != tool]
+                guards.append(ToolGuard(
+                    when={called_fact(tool): True},
+                    deny=frozenset(others),
+                    reason=reason,
+                    unless=False,
+                ))
+            continue
         if requires is not None:
             if not isinstance(requires, list) or not requires:
                 raise ValueError(

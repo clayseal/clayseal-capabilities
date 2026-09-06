@@ -158,6 +158,19 @@ class Policy:
     pathless_tools: frozenset[str] = field(default_factory=frozenset)
     source: str | None = None
     unknown_keys: tuple[str, ...] = field(default_factory=tuple)
+    #: Fraction of known-good actions derived rules may refuse. Applied at
+    #: seal time, never at decision time. See `loss_budget.select_under_budget`.
+    relative_loss: float | None = None
+    #: Structured rung mapping, the production form of a compiled clause.
+    #: Same shape `rungs_from_compiled` already consumes.
+    compiled_rungs: dict[str, Any] | None = None
+    #: How many times to ask the compiler. 1 is a single answer.
+    compile_draws: int = 1
+    #: Fraction of those answers a tool or rule must appear in to be kept.
+    #: `None` means do not filter. `1e-4` is "appeared at least once".
+    compile_k: float | None = None
+    #: Per-tool floors, for tools that should need more agreement.
+    compile_k_for: dict[str, float] = field(default_factory=dict)
 
     def digest(self) -> str:
         """Stable hash over the document, for the audit trail.
@@ -202,6 +215,16 @@ class Policy:
         }
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         kwargs.update(overrides)
+        if self.compiled_rungs is not None:
+            kwargs.setdefault("compiled_rungs", self.compiled_rungs)
+        if self.relative_loss is not None:
+            kwargs.setdefault("relative_loss", self.relative_loss)
+        if self.compile_draws != 1:
+            kwargs.setdefault("draws", self.compile_draws)
+        if self.compile_k is not None:
+            kwargs.setdefault("k", self.compile_k)
+        if self.compile_k_for:
+            kwargs.setdefault("k_for", self.compile_k_for)
         stack = profile.build(self.goal, **kwargs)
         # The authority's identity travels with every decision it produced.
         object.__setattr__(stack, "policy_digest", self.digest())
@@ -246,6 +269,39 @@ class Policy:
                 f"ignored by this version: {', '.join(self.unknown_keys)}. "
                 f"A key that is silently dropped is authority the author thinks "
                 f"they granted.",
+            ))
+
+        if self.relative_loss is not None and not self.compiled_rungs:
+            out.append(Finding(
+                "warning", "loss-budget-idle",
+                "relative_loss is set but rungs is empty, so the budget has "
+                "nothing to select. Pass compiled rules in `rungs` or an `ask` "
+                "callable at build() together with known-good traces.",
+            ))
+
+        if self.compile_k is not None or self.compile_k_for or self.compile_draws > 1:
+            out.append(Finding(
+                "warning", "compile-k-needs-ask",
+                "compile.k / compile.draws only apply when build() is given an "
+                "`ask` callable. Without one, the YAML tool list is the grant "
+                "and these knobs do nothing.",
+            ))
+        if self.compile_k == 0.0:
+            out.append(Finding(
+                "warning", "compile-k-zero",
+                "compile.k is 0, so a tool the compiler never named still "
+                "counts as kept (frequency 0 meets a floor of 0). Use 0.0001 "
+                "to mean 'appeared at least once', which is the default.",
+            ))
+        stray_k = sorted(
+            t for t in self.compile_k_for
+            if self.allowed_tools is not None and t not in self.allowed_tools
+        )
+        if stray_k:
+            out.append(Finding(
+                "warning", "compile-k-unknown-tool",
+                f"compile.k_for names tools not in tools.allow: {', '.join(stray_k)}. "
+                f"A floor on a tool the agent cannot reach does nothing.",
             ))
 
         if not (self.goal.summary or "").strip():
@@ -543,6 +599,13 @@ class Policy:
             lines.append(f"value:   {dict(self.value_budget.config.ceilings)}")
         if self.call_budget is not None:
             lines.append(f"calls:   {dict(self.call_budget.config.ceilings)}")
+        if self.compile_k is not None or self.compile_draws > 1 or self.compile_k_for:
+            extra = (f"  k_for={self.compile_k_for}" if self.compile_k_for else "")
+            lines.append(
+                f"compile: draws={self.compile_draws}  "
+                f"k={self.compile_k if self.compile_k is not None else '(off)'}"
+                f"{extra}"
+            )
         return "\n".join(lines)
 
 
@@ -551,7 +614,7 @@ class Policy:
 # ---------------------------------------------------------------------- #
 _TOP_LEVEL = {
     "version", "goal", "profile", "expires_at", "tools", "paths", "egress",
-    "budgets", "resources", "deployment",
+    "budgets", "resources", "deployment", "relative_loss", "rungs", "compile",
 }
 
 
@@ -560,6 +623,11 @@ def load_policy(path: str | Path) -> Policy:
     p = Path(path)
     try:
         text = p.read_text()
+    except FileNotFoundError as exc:
+        raise PolicyError(
+            f"cannot read policy {p}: no such file. "
+            f"Create one with `clayseal policy new > {p}`."
+        ) from exc
     except OSError as exc:
         raise PolicyError(f"cannot read policy {p}: {exc}") from exc
     return load_policy_text(text, source=str(p))
@@ -600,8 +668,15 @@ def load_policy_text(text: str, *, source: str = "<policy>") -> Policy:
         raw = yaml.load(text, Loader=loader)  # noqa: S506 - checked safe above
     except yaml.YAMLError as exc:
         raise PolicyError(f"{source} is not valid YAML: {exc}") from exc
+    if raw is None:
+        raise PolicyError(
+            f"{source} is empty. Write one with `clayseal policy new > policy.yaml`."
+        )
     if not isinstance(raw, dict):
-        raise PolicyError(f"{source} must contain a mapping at the top level")
+        raise PolicyError(
+            f"{source} must be a YAML mapping (version, goal, tools, ...), "
+            f"not a {type(raw).__name__}. `clayseal policy new` writes a starter."
+        )
     return compile_policy(raw, source=source)
 
 
@@ -679,6 +754,9 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
     egress = _egress_from(raw.get("egress"))
     value_budget, call_budget = _budgets_from(raw.get("budgets"))
     value_budget = _bind_principal(raw.get("deployment"), value_budget)
+    relative_loss = _relative_loss_from(raw.get("relative_loss"))
+    compiled_rungs = _rungs_from(raw.get("rungs"), allowed_tools)
+    compile_draws, compile_k, compile_k_for = _compile_from(raw.get("compile"))
 
     unknown = tuple(sorted(k for k in raw if k not in _TOP_LEVEL))
 
@@ -699,7 +777,111 @@ def compile_policy(raw: dict[str, Any], *, source: str | None = None) -> Policy:
         pathless_tools=pathless,
         source=source,
         unknown_keys=unknown,
+        relative_loss=relative_loss,
+        compiled_rungs=compiled_rungs,
+        compile_draws=compile_draws,
+        compile_k=compile_k,
+        compile_k_for=compile_k_for,
     )
+
+
+def _compile_from(raw: Any) -> tuple[int, float | None, dict[str, float]]:
+    """`compile.draws`, `compile.k`, and `compile.k_for` from the document."""
+    if raw is None or raw == "":
+        return 1, None, {}
+    if not isinstance(raw, dict):
+        raise PolicyError(
+            f"compile must be a mapping with draws/k, not {type(raw).__name__}"
+        )
+    draws = 1
+    if raw.get("draws") is not None and raw.get("draws") != "":
+        try:
+            draws = int(raw["draws"])
+        except (TypeError, ValueError) as exc:
+            raise PolicyError(
+                f"compile.draws must be a positive integer, not {raw['draws']!r}"
+            ) from exc
+        if draws < 1:
+            raise PolicyError(
+                f"compile.draws must be a positive integer, not {draws}"
+            )
+    k = _relative_loss_from(raw.get("k"))
+    k_for: dict[str, float] = {}
+    extra = raw.get("k_for") or {}
+    if extra and not isinstance(extra, dict):
+        raise PolicyError(
+            f"compile.k_for must be a mapping of tool to fraction, not "
+            f"{type(extra).__name__}"
+        )
+    for tool, value in dict(extra).items():
+        parsed = _relative_loss_from(value)
+        if parsed is None:
+            raise PolicyError(
+                f"compile.k_for.{tool} must be a fraction in [0, 1], not {value!r}"
+            )
+        k_for[str(tool)] = parsed
+    unknown = sorted(key for key in raw if key not in {"draws", "k", "k_for"})
+    if unknown:
+        raise PolicyError(
+            f"compile has unknown keys {unknown}. Known: draws, k, k_for."
+        )
+    return draws, k, k_for
+
+
+def _relative_loss_from(raw: Any) -> float | None:
+    """The fraction of known-good actions derived rules may refuse."""
+    if raw is None or raw == "":
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError) as exc:
+        raise PolicyError(
+            f"relative_loss must be a fraction in [0, 1], not {raw!r}"
+        ) from exc
+    if value < 0.0 or value > 1.0:
+        raise PolicyError(
+            f"relative_loss must be a fraction in [0, 1], not {value}"
+        )
+    return value
+
+
+_RUNG_KEYS = frozenset({
+    "precedence", "invalidations", "entities",
+    "distinct_subjects", "idempotency",
+})
+
+
+def _rungs_from(raw: Any, allowed_tools: set[str] | None) -> dict[str, Any] | None:
+    """Structured rules, the production form of a compiled clause.
+
+    The gateway never parses English on this path. A person, or a compile
+    step that already ran, writes the mapping the ledgers already consume.
+    """
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise PolicyError(
+            "rungs must be a mapping of precedence / invalidations / entities"
+        )
+    stray = sorted(k for k in raw if k not in _RUNG_KEYS)
+    if stray:
+        raise PolicyError(
+            f"rungs has unknown keys {stray}; known: {sorted(_RUNG_KEYS)}"
+        )
+    names = allowed_tools or set()
+    from clayseal.capabilities.compile import sanitize_rules
+
+    # When the allow-list is empty the operator has not named tools yet; keep
+    # the mapping so a later override can supply them, but still shape it.
+    if names:
+        return sanitize_rules(raw, names)
+    return sanitize_rules(raw, {
+        *(str(r.get("before", "")) for r in (raw.get("precedence") or []) if isinstance(r, dict)),
+        *(str(r.get("after", "")) for r in (raw.get("precedence") or []) if isinstance(r, dict)),
+        *(str(v.get("establishes", "")) for v in (raw.get("invalidations") or []) if isinstance(v, dict)),
+        *(str(t) for v in (raw.get("invalidations") or []) if isinstance(v, dict)
+          for t in (v.get("invalidators") or [])),
+    } - {""})
 
 
 #: The verbs the floor understands. `read` is the only one it treats as

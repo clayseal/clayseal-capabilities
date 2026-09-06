@@ -139,11 +139,15 @@ class Guardrail:
         `terraform_destroy`, and a path argument the gateway cannot find means
         the path scope never applies.
         """
+        guard_kw = {}
+        for key in ("observe_results", "verbs", "path_args"):
+            if key in overrides:
+                guard_kw[key] = overrides.pop(key)
         return cls(
-            stack=policy.build() if stack is None else stack,
+            stack=policy.build(**overrides) if stack is None else stack,
             verbs=dict(policy.tool_verbs),
             path_args=dict(policy.path_args),
-            **overrides,
+            **guard_kw,
         )
 
     @classmethod
@@ -175,6 +179,43 @@ class Guardrail:
         from clayseal.capabilities.policy import compile_policy
 
         return cls.from_policy(compile_policy(document), **overrides)
+
+    def saw(self, source: str, text: str = "", *, trusted: bool = False) -> None:
+        """Tell the gateway the agent just read something.
+
+        Wrapping the tools reports what they RETURN. It cannot see a ticket
+        pasted into the prompt, a RAG chunk, or a file the agent read before
+        this Guardrail existed. Without that, every destination looks equally
+        well-sourced and the provenance tier has nothing to do.
+
+        `source` is an id you choose (`tickets/T-1042.txt`). `trusted=True`
+        is for something the user typed, not something a document said.
+        """
+        from clayseal.capabilities.monitor.action import ContextItem, TrustLevel
+
+        item = ContextItem(
+            item_id=str(source),
+            trust=TrustLevel.TRUSTED if trusted else TrustLevel.UNTRUSTED,
+            introduced_at_step=self._step,
+            summary=str(text or "")[:4000],
+        )
+        observe = getattr(self.stack, "observe_context", None)
+        if observe is not None:
+            observe(item)
+        if text:
+            # Index the tokens so a destination copied out of this document
+            # is attributed to it, the same way a wrapped tool's return is.
+            try:
+                self.stack.observe_output(str(source), str(text),
+                                         source_path=str(source))
+            except Exception:  # noqa: BLE001, S110 - observation grants no authority
+                pass
+
+    def observe_context(self, item: Any) -> None:
+        """Pass a `ContextItem` through. `saw` is the usual way in."""
+        observe = getattr(self.stack, "observe_context", None)
+        if observe is not None:
+            observe(item)
 
     # -- the decision ------------------------------------------------------ #
     def trace(self, traceparent: Any, tracestate: Any = None) -> None:
@@ -228,19 +269,25 @@ class Guardrail:
 
     # -- the wrappers ------------------------------------------------------ #
     def wrap(self, tool: str, fn: Callable[..., Any]) -> Callable[..., Any]:
-        """Guard one named callable, sync or async, keeping its signature."""
+        """Guard one named callable, sync or async, keeping its signature.
+
+        Accepts the same positional or keyword call the original did. A
+        wrapper that only took keywords made `refund("INV-1", 900)` a
+        TypeError, which is not a policy decision.
+        """
         if inspect.iscoroutinefunction(fn):
-            async def guarded_async(**kwargs: Any) -> Any:
-                await asyncio.to_thread(self.authorize, tool, kwargs)
-                result = await fn(**kwargs)
+            async def guarded_async(*args: Any, **kwargs: Any) -> Any:
+                bound = _arguments(fn, args, kwargs, tool)
+                await asyncio.to_thread(self.authorize, tool, bound)
+                result = await fn(*args, **kwargs)
                 await asyncio.to_thread(self.report, tool, result)
                 return result
 
             return _named(guarded_async, fn, tool)
 
-        def guarded(**kwargs: Any) -> Any:
-            self.authorize(tool, kwargs)
-            result = fn(**kwargs)
+        def guarded(*args: Any, **kwargs: Any) -> Any:
+            self.authorize(tool, _arguments(fn, args, kwargs, tool))
+            result = fn(*args, **kwargs)
             self.report(tool, result)
             return result
 
@@ -266,6 +313,43 @@ def _verb_of(tool: str) -> str:
     from clayseal.capabilities.tool_verbs import classify_verb
 
     return classify_verb(tool)
+
+
+def _arguments(fn: Callable[..., Any], args: tuple[Any, ...],
+               kwargs: dict[str, Any], tool: str) -> dict[str, Any]:
+    """Keyword view of a call, so authorize() sees the same names the function does.
+
+    Frameworks pass kwargs. Hand-written loops often pass positionals. The
+    wrapper has to accept both or 'call them exactly as before' is a lie the
+    first time someone writes `refund("INV-1", 900)`.
+    """
+    if not args:
+        return dict(kwargs)
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(
+            f"{tool} was called with positional arguments, but its signature "
+            f"could not be read. Pass keyword arguments, e.g. {tool}(name=...)."
+        ) from exc
+    try:
+        bound = sig.bind(*args, **kwargs)
+    except TypeError as exc:
+        raise TypeError(
+            f"{tool} was called in a way that does not match its signature: {exc}"
+        ) from exc
+    bound.apply_defaults()
+    out: dict[str, Any] = {}
+    for name, param in sig.parameters.items():
+        if name not in bound.arguments:
+            continue
+        value = bound.arguments[name]
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            if isinstance(value, Mapping):
+                out.update(value)
+        elif param.kind != inspect.Parameter.VAR_POSITIONAL:
+            out[name] = value
+    return out
 
 
 def _named(wrapper: Callable[..., Any], original: Callable[..., Any],

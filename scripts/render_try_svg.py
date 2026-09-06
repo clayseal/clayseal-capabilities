@@ -60,9 +60,12 @@ def capture() -> str:
     came back 304 bytes long and looked like a short demo.
     """
     parent, child = pty.openpty()
+    env = os.environ.copy()
+    env.pop("NO_COLOR", None)
     proc = subprocess.Popen(
         [sys.executable, "-m", "clayseal.capabilities.cli", "try", "--fast"],
         stdout=child, stderr=child, stdin=subprocess.DEVNULL, close_fds=True,
+        env=env,
     )
     os.close(child)
     chunks: list[bytes] = []

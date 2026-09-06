@@ -1,6 +1,6 @@
 # API reference
 
-`clayseal.capabilities` exports 69 names. **Four of them are the API most
+`clayseal.capabilities` exports 74 names. **Four of them are the API most
 integrations use**, and the rest exist for deployments that need to build the
 pieces themselves. This page is the map; the per-symbol detail lives in the
 module docstrings, which is where it stays correct.
@@ -18,7 +18,7 @@ from clayseal.capabilities import Guardrail, Refused, StepUpRequired
 
 | name | what it is |
 | --- | --- |
-| `Guardrail` | Wraps the tools you already have. `Guardrail.from_policy_file(path)` then `guard.wrap_all({...})`. The wrappers keep the name, docstring and signature of your originals, so a framework that introspects them sees what it saw before. |
+| `Guardrail` | Wraps the tools you already have. `Guardrail.from_policy_file(path)` then `guard.wrap_all({...})`. The wrappers keep the name, docstring and signature of your originals, and accept the same positional or keyword call the original did. `guard.saw(source, text)` reports a document the agent read that was not a tool return. |
 | `Refused` | Raised instead of running the tool. `.reasons` is the stable code tuple to match on; `str(exc)` is the explained form to hand back to an agent. |
 | `StepUpRequired` | Raised when the call needs a person. Deliberately NOT a subclass of `Refused`: a caller that treats them alike turns a supervised deployment into an autonomous one, or into one that cannot act at all. |
 | `GuardrailError` | Base of both, for `except` clauses that genuinely mean either. |
@@ -76,6 +76,42 @@ Same trust basis as the derived-count rung: the rule comes from the goal sealed 
 any untrusted content exists, never from tool output and never from an argument.
 Off unless a caller sets it, because deriving a rule from a sentence is
 inference, and an invented obligation refuses work nobody prohibited.
+
+## Seal-time compilation — the production path
+
+The English clause patterns above are the ablation. A deployment compiles
+rules from the sealed goal and the tool catalogue, selects them under a
+**relative loss budget** (the fraction of known-good actions it will accept
+as refused), and freezes the result before any untrusted content exists.
+Decision time still reads the same deterministic ledgers.
+
+| export | what it is |
+| --- | --- |
+| `seal` | The factory. Compile (or accept a compiled mapping), select under `relative_loss`, apply sealed structured intent. `lexical=True` is the ablation. |
+| `compile_rules` | Ask a model (the injected `ask` callable) for the four rungs, then drop any tool the catalogue was not shown. `draws` and `k` ask more than once and keep a rule or tool only if it appeared in at least fraction `k` of answers. `k_for` raises that floor per tool. No network in this package. |
+| `select_tools_under_k` | Frequency of each catalogue tool across compile draws. Tools below `k` are omitted, which means denied for the session. |
+| `select_under_budget` | Largest subset whose union refusal rate on known-good traces stays at or under the budget. `relative_loss=0` is full refutation. |
+| `DerivedRungs` | The mapping `from_goal` installs on the broker, plus `.derived` naming which rungs produced a rule. |
+
+```python
+from clayseal.capabilities import seal
+
+rungs = seal(
+    goal, catalog,
+    compiled=compiled_mapping,     # or ask=your_model
+    known_good=logs,               # (tool, args) a correct agent produced
+    relative_loss=0.02,
+    draws=5, k=0.0001,             # limited steering; omit to ask once
+)
+```
+
+The budget is applied once, at seal time. A running budget at decision time
+is an attack: the adversary issues lookalike-benign calls until the remainder
+is spent, then the attack. `k` is the same idea against compiler disagreement
+instead of against logs: freeze the surviving tools and rules before the
+session opens.
+
+See `examples/06_how_sure.py` for the knob with no model.
 
 ## Freshness: the justification an invalidator poisoned
 

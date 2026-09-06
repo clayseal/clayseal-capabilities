@@ -236,3 +236,38 @@ def test_requires_must_name_tools():
             "version: 1\ngoal: {id: g, summary: s}\n"
             "tools:\n  allow: [a, b]\n  when:\n    - requires: []\n"
             "      deny: [b]\n")
+
+
+MUTEX = """
+version: 1
+goal: {id: ap, summary: Prepare payments for someone else to approve}
+profile: supervised
+tools:
+  allow: [prepare_payment, approve_payment]
+  effects: {prepare_payment: write, approve_payment: write}
+  when:
+    - mutex: [prepare_payment, approve_payment]
+      reason: "the agent that prepared a payment may not also approve it"
+paths: {pathless: [prepare_payment, approve_payment]}
+budgets:
+  calls:
+    ceilings: {acts: 20}
+    tracked: {prepare_payment: acts, approve_payment: acts}
+"""
+
+
+def test_mutex_stops_the_same_session_doing_both():
+    policy = load_policy_text(MUTEX)
+    stack = policy.build()
+    assert _decide(stack, policy, "prepare_payment", 1).outcome == "allow"
+    second = _decide(stack, policy, "approve_payment", 2)
+    assert second.outcome == "deny"
+    assert "prepared" in " ".join(second.reasons)
+
+
+def test_an_unknown_when_key_names_what_is_legal():
+    with pytest.raises(PolicyError, match="mutex"):
+        load_policy_text(
+            "version: 1\ngoal: {id: g, summary: s}\n"
+            "tools:\n  allow: [a, b]\n  when:\n    - sod: [a, b]\n"
+            "      deny: [b]\n")

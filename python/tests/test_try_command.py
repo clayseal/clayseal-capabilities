@@ -76,3 +76,22 @@ def test_explain_names_the_layer_that_answered() -> None:
 
 def test_the_plain_tour_hides_the_reason_codes(tour) -> None:
     assert "value_budget_exceeded" not in tour.stdout
+
+
+def test_the_tour_points_at_policy_new_next() -> None:
+    """The next command after the demo is the one that does not need a server."""
+    result = subprocess.run(
+        [sys.executable, "-m", "clayseal.capabilities.cli", "try", "--fast"],
+        cwd=REPO, capture_output=True, text=True, timeout=120, check=False,
+    )
+    assert "clayseal policy new" in result.stdout
+
+
+def test_no_args_points_at_the_demo() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "clayseal.capabilities.cli"],
+        cwd=REPO, capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert result.returncode == 2
+    assert "clayseal try" in result.stderr
+    assert "usage:" in result.stdout.lower() or "usage:" in result.stderr.lower()

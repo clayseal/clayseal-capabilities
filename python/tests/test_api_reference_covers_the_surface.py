@@ -1,6 +1,6 @@
 """The API reference has to name every symbol the package exports.
 
-`clayseal.capabilities` exports 57 names and there was no reference for any of
+`clayseal.capabilities` exports a fixed public surface and there was no reference for any of
 them. A reference that covers some of them is worse than none in one specific
 way: a reader who finds 50 documented concludes the other 7 do not exist, rather
 than that nobody wrote them up.
@@ -71,6 +71,8 @@ _KNOWN_NON_EXPORTS = {
     "from_goal", "from_policy_file", "wrap_all", "would_allow", "reserve",
     "clayseal_core", "outcome", "layer", "reasons", "except",
     "InMemoryUsedTokenStore", "DEPLOYMENT_SHAPE", "API",
+    "relative_loss", "known_good", "draws", "k", "k_for", "ask",
+    "tool_freq", "named_any", "tool_schemas", "saw",
     # A method on the `UsedTokenStore` Protocol, not a top-level export. The
     # check flagged it correctly: it is not importable from the package, and the
     # right answer is to say so here rather than to stop checking method names.

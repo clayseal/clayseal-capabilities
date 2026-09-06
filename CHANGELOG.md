@@ -7,6 +7,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed: first-user traps found by running unlike jobs through the adapter
+
+A wrapper that only accepted keywords made `refund("INV-1", 900)` a TypeError.
+Failed compiler draws were dropped from the denominator, so one success in five
+looked unanimous. `clayseal` with no arguments printed argparse's "required:
+group". The starter listed `delete` and `execute` as verbs the compiler does
+not accept. `tools.when` had no spelling for "these two tools must not both
+run in this session", so a mutex came back as a complaint about `if`/`unless`.
+
+`Guardrail.wrap` now binds positionals through the original signature.
+`Guardrail.saw` reports a document the agent read that was not a tool return.
+Failed draws vote for nothing and still count. `clayseal` with no arguments
+points at `clayseal try`. `tools.when.mutex` is the same-session form of
+segregation of duties. `examples/07_other_jobs.py` runs a coding agent, that
+mutex, and a same-domain mailbox.
+
+
 ### Added: `clayseal try`, so the first thing anyone does is watch it work
 
 One command, no key and no configuration. It runs two attacks and shows the

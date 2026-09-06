@@ -13,6 +13,8 @@ python examples/01_gateway.py
 | [03_commit_token.py](03_commit_token.py) | Minting and verifying a commit token, which binds a decision to the exact arguments it was made about. |
 | [04_cross_provider_commit.py](04_cross_provider_commit.py) | The same flow against each of the five built-in identity providers, to show the seam is real. |
 | [05_from_a_document.py](05_from_a_document.py) | A written delegation-of-authority document and a tool catalogue becoming an enforced policy, including the rule this layer cannot hold: segregation of duties is about WHO acts, so it stays a TODO for a reviewer instead of going quiet. |
+| [06_how_sure.py](06_how_sure.py) | Asking the compiler five times and raising `k` so a tool that only showed up once is not granted. No key. |
+| [07_other_jobs.py](07_other_jobs.py) | The same adapter on three other jobs: a coding agent bounded to `src/`, prepare/approve mutex in one session, and a send to another mailbox on a granted domain. |
 
 Two support files, not examples: [refund.yaml](refund.yaml) is the policy
 `02` enforces, and [refund_server.py](refund_server.py) is the MCP server it runs.

@@ -10,7 +10,8 @@ example. This page says which document answers which question.
 | `clayseal try` | What does it actually do? One minute, no key, no setup. |
 | [START.md](START.md) | I have seen it work. How do I put it in front of my agent? |
 | [DEV_GUIDE.md](DEV_GUIDE.md) | How do I install it, wire it into my agent, and call the API? |
-| [POLICY.md](POLICY.md) | What can a policy file say, and what does each rule do? |
+| [POLICY.md](POLICY.md) | What can a policy file say, and what does each rule do? Including `compile.k`. |
+| [API.md](API.md) | The exported names, starting with the four most integrations use. |
 | [DEPLOYMENT_SHAPE.md](DEPLOYMENT_SHAPE.md) | Where does the gateway sit, and what does it need from the rest of my system? |
 | [PRIVACY.md](PRIVACY.md) | What data does it hold, where does it write, and what leaves the process? |
 

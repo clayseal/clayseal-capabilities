@@ -321,7 +321,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="clayseal",
         description="Authorize agent actions against a reviewable policy document.",
     )
-    sub = parser.add_subparsers(dest="group", required=True)
+    sub = parser.add_subparsers(dest="group", required=False)
 
     try_cmd = sub.add_parser(
         "try", help="watch the gateway stop two attacks, no setup")
@@ -450,7 +450,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if getattr(args, "group", None) is None:
+        parser.print_help()
+        print("\nStart here:  clayseal try", file=sys.stderr)
+        return 2
     if getattr(args, "command", None) and args.command and args.command[0] == "--":
         args.command = args.command[1:]
     try:

@@ -94,3 +94,27 @@ budgets:
   #     refunds: "5000.00"
   #   tracked:
   #     issue_refund: {arg: amount, budget: refunds}
+
+# Inferred rules, selected under a relative loss budget. The budget is a
+# fraction of known-good actions, applied at seal time against traces passed
+# to Guardrail / policy.build(known_good=...). Uncomment and fill when a
+# compile step (or a person) has produced structured rungs.
+#
+# relative_loss: 0.02
+# rungs:
+#   precedence:
+#     - before: list_tickets
+#       after: send_email
+#
+# How sure the compiler has to be. `draws` is how many times to ask. `k` is
+# the fraction of answers that must name a tool before this session may use
+# it. 0.0001 means "showed up at least once". Raise it to steer harder.
+# `k_for` raises the floor for one sensitive tool. These only apply when
+# build() is given an `ask` callable; without one they do nothing.
+#
+# compile:
+#   draws: 5
+#   k: 0.0001
+#   k_for:
+#     send_email: 0.5
+

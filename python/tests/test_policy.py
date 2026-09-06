@@ -6,6 +6,8 @@ worse than a refused one, because the operator believes a control exists.
 """
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from clayseal.capabilities.policy import (
@@ -231,6 +233,123 @@ def test_lint_names_keys_it_ignored():
     assert any(f.code == "unknown-keys" for f in policy.lint())
 
 
+def test_relative_loss_outside_unit_interval_is_refused():
+    with pytest.raises(PolicyError, match=r"\[0, 1\]"):
+        compile_policy(_doc(relative_loss=1.5))
+
+
+def test_relative_loss_and_structured_rungs_round_trip_to_the_stack():
+    policy = compile_policy(_doc(
+        tools={"allow": ["checklist_item", "commit_irreversible"],
+               "harmless": ["checklist_item", "commit_irreversible"],
+               "effects": {"checklist_item": "read",
+                           "commit_irreversible": "write"}},
+        relative_loss=0.0,
+        rungs={"precedence": [
+            {"before": "checklist_item", "after": "commit_irreversible"},
+        ]},
+    ))
+    assert policy.relative_loss == 0.0
+    assert policy.compiled_rungs["precedence"] == [
+        {"before": "checklist_item", "after": "commit_irreversible"},
+    ]
+    traces = [("checklist_item", {}), ("commit_irreversible", {})]
+    stack = policy.build(known_good=traces, entailment_judge=None)
+    assert stack.broker.obligations is not None
+
+
+def test_a_hallucinated_rung_tool_is_dropped_against_the_allow_list():
+    policy = compile_policy(_doc(
+        tools={"allow": ["checklist_item", "commit_irreversible"]},
+        rungs={"precedence": [
+            {"before": "invented", "after": "commit_irreversible"},
+            {"before": "checklist_item", "after": "commit_irreversible"},
+        ]},
+    ))
+    assert policy.compiled_rungs["precedence"] == [
+        {"before": "checklist_item", "after": "commit_irreversible"},
+    ]
+
+
+def test_lint_warns_when_a_loss_budget_has_nothing_to_select():
+    policy = compile_policy(_doc(relative_loss=0.02))
+    assert any(f.code == "loss-budget-idle" for f in policy.lint())
+
+
+def test_compile_k_outside_unit_interval_is_refused():
+    with pytest.raises(PolicyError, match=r"\[0, 1\]"):
+        compile_policy(_doc(compile={"k": 1.5}))
+
+
+def test_compile_draws_must_be_positive():
+    with pytest.raises(PolicyError, match="positive integer"):
+        compile_policy(_doc(compile={"draws": 0}))
+
+
+def test_compile_section_round_trips_to_the_stack_and_narrows_the_grant():
+    answers = [
+        json.dumps({
+            "precedence": [{"before": "checklist_item", "after": "pay_vendor"}],
+            "invalidations": [],
+            "entities": [],
+            "distinct_subjects": False,
+            "idempotency": False,
+        }),
+        json.dumps({
+            "precedence": [
+                {"before": "checklist_item", "after": "pay_vendor"},
+                {"before": "checklist_item", "after": "wire_funds"},
+            ],
+            "invalidations": [],
+            "entities": [],
+            "distinct_subjects": False,
+            "idempotency": False,
+        }),
+    ]
+    n = {"i": 0}
+
+    def ask(_system, _payload):
+        raw = answers[n["i"] % 2]
+        n["i"] += 1
+        return raw
+
+    tools = {
+        "allow": ["checklist_item", "pay_vendor", "wire_funds"],
+        "harmless": ["checklist_item"],
+        "effects": {"checklist_item": "read", "pay_vendor": "write",
+                    "wire_funds": "write"},
+        "pathless": ["checklist_item", "pay_vendor", "wire_funds"],
+    }
+    # pathless is under paths in real YAML
+    policy = compile_policy(_doc(
+        tools={"allow": tools["allow"], "harmless": tools["allow"],
+               "effects": tools["effects"]},
+        paths={"pathless": tools["pathless"]},
+        compile={"draws": 2, "k": 1.0},
+    ))
+    assert policy.compile_draws == 2
+    assert policy.compile_k == 1.0
+    schemas = [
+        {"function": {"name": t, "parameters": {"properties": {}}}}
+        for t in tools["allow"]
+    ]
+    stack = policy.build(ask=ask, tool_schemas=schemas, entailment_judge=None)
+    assert stack.broker.allowed_tools is not None
+    assert "wire_funds" not in stack.broker.allowed_tools
+    assert "pay_vendor" in stack.broker.allowed_tools
+
+
+def test_lint_warns_when_k_is_set_and_there_is_no_compiler():
+    policy = compile_policy(_doc(compile={"k": 0.0001}))
+    assert any(f.code == "compile-k-needs-ask" for f in policy.lint())
+
+
+def test_lint_warns_when_k_is_zero():
+    """k=0 keeps tools the compiler never named, which inverts the knob."""
+    policy = compile_policy(_doc(compile={"k": 0}))
+    assert any(f.code == "compile-k-zero" for f in policy.lint())
+
+
 def test_lint_puts_errors_before_warnings():
     policy = compile_policy(_doc(egress={"allow_all": True}))
     levels = [f.level for f in policy.lint()]
@@ -241,7 +360,7 @@ def test_lint_puts_errors_before_warnings():
 # Loading
 # --------------------------------------------------------------------------- #
 def test_a_missing_file_says_so_rather_than_raising_oserror(tmp_path):
-    with pytest.raises(PolicyError, match="cannot read policy"):
+    with pytest.raises(PolicyError, match="policy new"):
         load_policy(tmp_path / "nope.yaml")
 
 
@@ -255,7 +374,14 @@ def test_invalid_yaml_says_so(tmp_path):
 def test_a_top_level_list_is_refused(tmp_path):
     path = tmp_path / "list.yaml"
     path.write_text("- version: 1\n")
-    with pytest.raises(PolicyError, match="mapping at the top level"):
+    with pytest.raises(PolicyError, match="YAML mapping"):
+        load_policy(path)
+
+
+def test_an_empty_file_tells_you_how_to_write_one(tmp_path):
+    path = tmp_path / "policy.yaml"
+    path.write_text("")
+    with pytest.raises(PolicyError, match="policy new"):
         load_policy(path)
 
 

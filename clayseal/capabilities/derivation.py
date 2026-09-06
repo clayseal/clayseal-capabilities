@@ -38,7 +38,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-__all__ = ["derive_session_rungs", "rungs_from_compiled", "DerivedRungs"]
+__all__ = [
+    "derive_session_rungs",
+    "rungs_from_compiled",
+    "DerivedRungs",
+    "seal",
+]
 
 
 class DerivedRungs(dict):
@@ -203,9 +208,11 @@ def rungs_from_compiled(compiled: dict | None, clause: str) -> DerivedRungs:
         # summary sentence, and it applies here for the same reason.
         EntityBinding(str(e["key"]),
                       frozenset(str(v).lower().replace(" ", "")
-                                for v in e["allowed"]),
+                                for v in (e.get("allowed") or [])
+                                if not isinstance(v, bool)),
                       False, "compiled")
         for e in compiled.get("entities") or []
+        if isinstance(e, dict) and isinstance(e.get("allowed"), (list, tuple, set))
     ]
     distinct = bool(compiled.get("distinct_subjects"))
     idem = bool(compiled.get("idempotency"))
@@ -306,3 +313,84 @@ def _verb(tool: str) -> str:
     from clayseal.capabilities.tool_verbs import classify_verb
 
     return classify_verb(tool)
+
+
+def seal(
+    goal: Any,
+    catalog: set[str] | frozenset[str] | None = None,
+    *,
+    compiled: dict | None = None,
+    ask: Any | None = None,
+    tool_schemas: Any | None = None,
+    known_good: Any | None = None,
+    relative_loss: float | None = None,
+    draws: int = 1,
+    k: float | None = None,
+    k_for: dict | None = None,
+    lexical: bool = False,
+) -> DerivedRungs:
+    """The production derivation: compile, select under a loss budget, freeze.
+
+    An operator supplies the sealed goal, the catalogue, and a relative loss
+    budget (the fraction of known-good actions they will accept as refused).
+    Rules are compiled from those trusted inputs, selected so their union
+    refusal rate on the operator's own logs stays at or under the budget, and
+    handed to the same deterministic ledgers decision time already runs.
+    Nothing here is a regex over the operator's sentence unless `lexical=True`,
+    which is the ablation, not the product.
+
+    `draws` and `k` are limited steering: ask more than once, keep a rule
+    (and, when the compiler named tools, a tool) only if it appeared in at
+    least fraction `k` of answers. `k_for` raises that floor per tool.
+    Failed draws vote for nothing. Hand-written `compiled` is not filtered.
+
+    Structured intent is always applied: a list the operator sealed is
+    authority, not inference, and may deny even when no compiler is configured.
+    """
+    summary = str(getattr(goal, "summary", "") or "")
+    intent = getattr(goal, "structured_intent", None)
+    tools = set(catalog or ())
+
+    mapping = compiled
+    kept_tools = None
+    tool_freq: dict[str, float] = {}
+    if mapping is None and ask is not None:
+        from clayseal.capabilities.compile import compile_rules
+
+        mapping = compile_rules(
+            tool_schemas, summary, ask=ask, draws=draws, k=k, k_for=k_for,
+        )
+        if isinstance(mapping, dict) and mapping.get("named_any"):
+            tool_freq = dict(mapping.get("tool_freq") or {})
+            kept_tools = set(tool_freq)
+
+    if mapping and relative_loss is not None:
+        from clayseal.capabilities.loss_budget import select_under_budget
+
+        mapping = select_under_budget(
+            mapping, known_good or (), relative_loss, clause=summary,
+        )
+    elif mapping and known_good is not None:
+        mapping = refuted_by_traffic(mapping, list(known_good), summary)
+
+    out = (
+        rungs_from_compiled(mapping, summary) if mapping else
+        DerivedRungs(obligations=None, entities=None,
+                     freshness=None, identity=None)
+    )
+    out.kept_tools = kept_tools
+    out.tool_freq = tool_freq
+
+    if out.get("entities") is None:
+        from clayseal.capabilities.entities import EntityLedger, bindings_from_intent
+
+        bindings = bindings_from_intent(intent)
+        if bindings:
+            out["entities"] = EntityLedger(bindings=bindings)
+
+    if lexical:
+        derived = derive_session_rungs(goal, tools)
+        for name, rule in derived.items():
+            if out.get(name) is None:
+                out[name] = rule
+    return out
