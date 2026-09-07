@@ -233,6 +233,22 @@ def test_lint_names_keys_it_ignored():
     assert any(f.code == "unknown-keys" for f in policy.lint())
 
 
+def test_lint_warns_when_a_send_tool_is_not_pathless():
+    """The usual first-deploy miss: send_email still looks like a file tool."""
+    policy = compile_policy(_doc(
+        tools={"allow": ["send_email"], "effects": {"send_email": "send"},
+               "harmless": ["send_email"]},
+        paths={"allow": ["out/**"]},
+    ))
+    assert any(f.code == "send-not-pathless" for f in policy.lint())
+    fixed = compile_policy(_doc(
+        tools={"allow": ["send_email"], "effects": {"send_email": "send"},
+               "harmless": ["send_email"]},
+        paths={"allow": ["out/**"], "pathless": ["send_email"]},
+    ))
+    assert not any(f.code == "send-not-pathless" for f in fixed.lint())
+
+
 def test_relative_loss_outside_unit_interval_is_refused():
     with pytest.raises(PolicyError, match=r"\[0, 1\]"):
         compile_policy(_doc(relative_loss=1.5))

@@ -11,7 +11,6 @@ from clayseal.capabilities.derivation import refuted_by_traffic, seal
 from clayseal.capabilities.loss_budget import select_under_budget, union_loss
 from clayseal.capabilities.scoping.goal import GoalSpec
 
-
 PRECEDENCE = {
     "precedence": [{"before": "checklist_item", "after": "commit_irreversible"}],
     "invalidations": [],
@@ -131,8 +130,8 @@ def test_union_loss_does_not_let_a_refused_call_establish_state():
 
 def test_from_goal_with_compiled_rungs_never_reaches_a_clause_pattern():
     """Sabotage: if a regex fires, the production path is still parsing English."""
-    from clayseal.capabilities.deployable_stack import DeployableStack
     from clayseal.capabilities import obligations as ob
+    from clayseal.capabilities.deployable_stack import DeployableStack
 
     def boom(*_a, **_kw):
         raise AssertionError("lexical derive_obligations was reached")

@@ -2,14 +2,12 @@
 
 In the order someone actually uses them.
 
-    clayseal try                           see it work before reading anything
+    clayseal try --fast                    see it work before reading anything
+    clayseal howto                         how to write a policy and enforce it
     clayseal policy new  > policy.yaml     a starter policy to edit
-    clayseal policy lint   policy.yaml     what a reviewer should ask about
-    clayseal policy show   policy.yaml     what this document authorizes
-    clayseal proxy --policy policy.yaml -- npx @acme/mcp-server
-
-`lint` exits 1 on an error finding, so it works as a pre-merge gate on the file
-that grants the authority. That is the point of having the authority in a file.
+    clayseal policy lint   policy.yaml     errors until TODOs are gone
+    clayseal proxy --policy policy.yaml -- <mcp-server>
+    clayseal skill --write                 drop a Cursor/Claude skill here
 """
 from __future__ import annotations
 
@@ -21,10 +19,75 @@ from pathlib import Path
 from clayseal.capabilities.policy import PolicyError, load_policy
 
 
+def _cmd_policy_index(args: argparse.Namespace) -> int:
+    """`clayseal policy` with no subcommand: say how to start, not argparse's error."""
+    parser = getattr(args, "_policy_parser", None)
+    if parser is not None:
+        parser.print_help()
+    print("\nStart with:  clayseal policy new > policy.yaml", file=sys.stderr)
+    return 2
+
+
 def _cmd_try(args: argparse.Namespace) -> int:
     from clayseal.capabilities.onboarding import run
 
     return run(fast=args.fast, explain=args.explain)
+
+
+def _cmd_howto(args: argparse.Namespace) -> int:
+    from clayseal.capabilities.agent_guide import howto_text
+
+    print(howto_text(), end="")
+    return 0
+
+
+def _cmd_skill(args: argparse.Namespace) -> int:
+    """Print the skill, or write it where Cursor and Claude Code will find it."""
+    from clayseal.capabilities.agent_guide import (
+        consumer_agents_markdown,
+        skill_markdown,
+    )
+
+    text = skill_markdown()
+    if not args.write:
+        print(text, end="")
+        return 0
+
+    targets = (
+        Path(".cursor/skills/clayseal/SKILL.md"),
+        Path(".claude/skills/clayseal/SKILL.md"),
+    )
+    wrote = 0
+    for path in targets:
+        if path.exists() and not args.force:
+            print(f"{path} exists; pass --force to overwrite", file=sys.stderr)
+            continue
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
+        except OSError as exc:
+            print(f"clayseal: cannot write {path}: {exc}", file=sys.stderr)
+            continue
+        print(f"wrote {path}", file=sys.stderr)
+        wrote += 1
+
+    agents = Path("AGENTS.md")
+    if not agents.exists():
+        try:
+            agents.write_text(consumer_agents_markdown())
+        except OSError as exc:
+            print(f"clayseal: cannot write {agents}: {exc}", file=sys.stderr)
+        else:
+            print("wrote AGENTS.md", file=sys.stderr)
+            wrote += 1
+
+    if wrote == 0:
+        return 1
+    if Path("policy.yaml").exists():
+        print("next: clayseal policy lint policy.yaml", file=sys.stderr)
+    else:
+        print("next: clayseal policy new > policy.yaml", file=sys.stderr)
+    return 0
 
 
 def _cmd_show(args: argparse.Namespace) -> int:
@@ -61,10 +124,13 @@ def _cmd_new(args: argparse.Namespace) -> int:
             return 1
         path.write_text(text)
         print(f"wrote {path}", file=sys.stderr)
-        print(f"now edit the TODOs, then: clayseal policy lint {path}",
-              file=sys.stderr)
     else:
         print(text, end="")
+    # Hints stay on stderr so `> policy.yaml` still shows them.
+    print(f"now edit the TODOs, then: clayseal policy lint {name}",
+          file=sys.stderr)
+    print("rename the your_* tools; put real mailboxes in egress.recipients",
+          file=sys.stderr)
     return 0
 
 
@@ -214,6 +280,14 @@ def _cmd_proxy(args: argparse.Namespace) -> int:
         )
         return 2
 
+    if _looks_like_a_python_module(list(args.command)):
+        print(
+            "clayseal: that command ends in a .py file. If it is ordinary "
+            "Python functions and not an MCP server (JSON-RPC on stdio), wrap "
+            "them with Guardrail instead — see `clayseal howto`.",
+            file=sys.stderr,
+        )
+
     policy = load_policy(args.policy)
     findings = policy.lint()
     errors = [f for f in findings if f.level == "error"]
@@ -236,6 +310,13 @@ def _cmd_proxy(args: argparse.Namespace) -> int:
           f"under profile {policy.profile}", file=sys.stderr)
     proxy = McpProxy.from_policy(policy, gateway)
     return run_stdio_proxy(proxy, list(args.command))
+
+
+def _looks_like_a_python_module(command: list[str]) -> bool:
+    """`python tools.py`, not `python -m some.mcp` and not `npx @org/server`."""
+    if not command or "-m" in command:
+        return False
+    return Path(command[-1]).suffix == ".py"
 
 
 def _is_loopback(host: str) -> bool:
@@ -319,7 +400,17 @@ def _cmd_serve(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="clayseal",
-        description="Authorize agent actions against a reviewable policy document.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Authorize each agent tool call against a reviewable policy file.",
+        epilog=(
+            "Start here:\n"
+            "  clayseal try --fast\n"
+            "  clayseal howto\n"
+            "  clayseal policy new > policy.yaml\n"
+            "  clayseal policy lint policy.yaml\n"
+            "  # Python tools: wrap them — see `clayseal howto`\n"
+            "  clayseal proxy --policy policy.yaml -- <mcp-server>\n"
+        ),
     )
     sub = parser.add_subparsers(dest="group", required=False)
 
@@ -331,13 +422,46 @@ def build_parser() -> argparse.ArgumentParser:
                          help="name the layer that answered each call")
     try_cmd.set_defaults(func=_cmd_try)
 
-    serve_cmd = sub.add_parser(
-        "serve", help="run a policy in front of a Streamable HTTP MCP server",
+    howto_cmd = sub.add_parser(
+        "howto",
+        help="print how to write a policy and put it in front of an agent",
         description=(
-            "The remote transport. MCP 2026-07-28 recommends Streamable HTTP "
-            "and removes the session handshake, so a per-session ceiling counts "
-            "over nothing: bind one to a principal with `deployment.principal` "
-            "and a durable ledger, which `policy lint` will insist on."))
+            "The deploy runbook, from the installed package. An agent that ran "
+            "`pip install clayseal` does not have the git docs; run this instead."
+        ),
+    )
+    howto_cmd.set_defaults(func=_cmd_howto)
+
+    skill_cmd = sub.add_parser(
+        "skill",
+        help="print a Cursor/Claude skill; --write installs it in this project",
+        description=(
+            "The same runbook as `clayseal howto`, as a SKILL.md Cursor and "
+            "Claude Code will pick up. Without --write it prints to stdout. "
+            "With --write it lands in .cursor/skills/clayseal/ and "
+            ".claude/skills/clayseal/, and writes AGENTS.md if that file is "
+            "missing."
+        ),
+    )
+    skill_cmd.add_argument(
+        "--write", action="store_true",
+        help="write the skill into this directory",
+    )
+    skill_cmd.add_argument(
+        "--force", action="store_true",
+        help="overwrite an existing skill file",
+    )
+    skill_cmd.set_defaults(func=_cmd_skill)
+
+    serve_cmd = sub.add_parser(
+        "serve", help="HTTP MCP gateway (not Claude Desktop; use proxy for that)",
+        description=(
+            "Streamable HTTP. Claude Desktop and Cursor speak stdio — that is "
+            "`clayseal proxy`. Use this when the client is already HTTP. MCP "
+            "2026-07-28 removes the session handshake, so a per-session ceiling "
+            "counts over nothing: bind one to a principal with "
+            "`deployment.principal` and a durable ledger, which `policy lint` "
+            "will insist on."))
     serve_cmd.add_argument("--policy", required=True)
     serve_cmd.add_argument("--upstream", default=None,
                            help="URL of the MCP server to forward allowed calls to")
@@ -351,20 +475,47 @@ def build_parser() -> argparse.ArgumentParser:
               "this is for talking to a pre-2026 client and nothing else."))
     serve_cmd.set_defaults(func=_cmd_serve)
 
-    policy = sub.add_parser("policy", help="inspect a policy document")
-    policy_sub = policy.add_subparsers(dest="action", required=True)
+    policy = sub.add_parser(
+        "policy",
+        help="write, lint, or inspect a policy (start with: new)",
+    )
+    policy_sub = policy.add_subparsers(dest="action", required=False)
+    policy.set_defaults(func=_cmd_policy_index, _policy_parser=policy)
 
-    show = policy_sub.add_parser("show", help="print the compiled authority")
-    show.add_argument("policy")
-    show.set_defaults(func=_cmd_show)
+    new_cmd = policy_sub.add_parser(
+        "new",
+        help="write a commented starter policy you edit",
+        description=(
+            "Writes a policy with every section present and every line "
+            "explained. It is the answer to 'what do I do after the demo' when "
+            "you have no MCP server for `policy init` to read and no written "
+            "policy for `policy draft` to translate. It lints with errors until "
+            "you replace the TODOs, so an unedited file cannot reach production "
+            "quietly. Tools that do not take a file path must go under "
+            "paths.pathless or `clayseal proxy` will refuse them."
+        ),
+    )
+    new_cmd.add_argument("--out", default=None,
+                         help="write here instead of stdout")
+    new_cmd.add_argument("--goal-id", default="TODO-name-this-run")
+    new_cmd.add_argument("--days", type=int, default=30,
+                         help="how long the grant lives (default 30)")
+    new_cmd.add_argument("--force", action="store_true",
+                         help="overwrite an existing file")
+    new_cmd.set_defaults(func=_cmd_new)
 
-    lint = policy_sub.add_parser("lint", help="report what a reviewer should ask")
+    lint = policy_sub.add_parser(
+        "lint", help="errors until TODOs are gone; then warnings to read")
     lint.add_argument("policy")
     lint.add_argument(
         "--warnings-as-errors", action="store_true",
         help="exit non-zero on warnings too, for a stricter pre-merge gate",
     )
     lint.set_defaults(func=_cmd_lint)
+
+    show = policy_sub.add_parser("show", help="print what this file actually grants")
+    show.add_argument("policy")
+    show.set_defaults(func=_cmd_show)
 
     draft = policy_sub.add_parser(
         "draft",
@@ -384,27 +535,6 @@ def build_parser() -> argparse.ArgumentParser:
     draft.add_argument("--tools", default=None,
                        help="comma-separated tool names the agent may reach")
     draft.set_defaults(func=_cmd_draft)
-
-    new_cmd = policy_sub.add_parser(
-        "new",
-        help="write a commented starter policy you edit",
-        description=(
-            "Writes a policy with every section present and every line "
-            "explained. It is the answer to 'what do I do after the demo' when "
-            "you have no MCP server for `policy init` to read and no written "
-            "policy for `policy draft` to translate. It lints with errors until "
-            "you replace the TODOs, so an unedited file cannot reach production "
-            "quietly."
-        ),
-    )
-    new_cmd.add_argument("--out", default=None,
-                         help="write here instead of stdout")
-    new_cmd.add_argument("--goal-id", default="TODO-name-this-run")
-    new_cmd.add_argument("--days", type=int, default=30,
-                         help="how long the grant lives (default 30)")
-    new_cmd.add_argument("--force", action="store_true",
-                         help="overwrite an existing file")
-    new_cmd.set_defaults(func=_cmd_new)
 
     init = policy_sub.add_parser(
         "init",
@@ -431,12 +561,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     proxy = sub.add_parser(
         "proxy",
-        help="run an MCP server behind the gateway",
+        help="stdio MCP gateway for Claude Desktop / Cursor",
         description=(
-            "Speaks MCP on both sides: the agent connects to this process, this "
-            "process runs the real server. Every tools/call is authorized before "
-            "it is forwarded, and tools outside the policy are removed from the "
-            "advertised catalog."
+            "The agent connects to this process; this process runs the real "
+            "MCP server. Use this for Claude Desktop, Cursor, and any stdio "
+            "client. Every tools/call is authorized before it is forwarded, "
+            "and tools outside the policy are removed from the advertised "
+            "catalog. For HTTP clients, see `clayseal serve`."
         ),
     )
     proxy.add_argument("--policy", required=True)
@@ -455,7 +586,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if getattr(args, "group", None) is None:
         parser.print_help()
         print("\nStart here:  clayseal try", file=sys.stderr)
-        return 2
+        print("Next:        clayseal howto", file=sys.stderr)
+        return 0
     if getattr(args, "command", None) and args.command and args.command[0] == "--":
         args.command = args.command[1:]
     try:

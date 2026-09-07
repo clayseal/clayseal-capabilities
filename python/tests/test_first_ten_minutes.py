@@ -58,7 +58,8 @@ def test_step_two_it_lints_clean_once_the_todos_are_answered(
                       .replace("summary: TODO describe the job in one sentence",
                                "summary: Triage billing tickets and email ops")
                       .replace("your_read_tool", "read_ticket")
-                      .replace("your_write_tool", "send_email")
+                      .replace("your_send_tool", "send_email")
+                      .replace("your_refund_tool", "issue_refund")
                       .replace("id: TODO-name-this-run", "id: billing-triage"))
     lint = _run(["policy", "lint", str(policy)], workspace)
     assert lint.returncode == 0, lint.stdout + lint.stderr
@@ -76,7 +77,8 @@ def test_step_three_the_wrapped_tools_enforce_that_policy(
                       .replace("summary: TODO describe the job in one sentence",
                                "summary: Triage billing tickets and email ops@acme.example")
                       .replace("your_read_tool", "read_ticket")
-                      .replace("your_write_tool", "send_email")
+                      .replace("your_send_tool", "send_email")
+                      .replace("your_refund_tool", "issue_refund")
                       .replace("id: TODO-name-this-run", "id: billing-triage")
                       .replace("your-company.example", "acme.example"))
 
@@ -103,6 +105,65 @@ def test_step_three_the_wrapped_tools_enforce_that_policy(
     assert allowed.startswith("ok "), allowed
     assert stopped.startswith(("refused ", "held ")), stopped
     assert "evil.test" in stopped
+
+
+def test_step_three_named_recipients_and_a_refund_ceiling_both_bind(
+        workspace: Path) -> None:
+    """The path a rename-only first deploy actually takes.
+
+    Filling `egress.recipients` used to look broken: a sibling mailbox on the
+    granted domain was held with a provenance sentence, so the agent thought
+    the allow-list had not applied. The refund ceiling is the other half of
+    `clayseal try`, and wrapping it has to refuse the second spend.
+    """
+    policy = workspace / "policy.yaml"
+    policy.write_text(_run(["policy", "new"], workspace).stdout
+                      .replace("summary: TODO describe the job in one sentence",
+                               "summary: Triage billing tickets and email ops@acme.example")
+                      .replace("your_read_tool", "read_ticket")
+                      .replace("your_send_tool", "send_email")
+                      .replace("your_refund_tool", "issue_refund")
+                      .replace("id: TODO-name-this-run", "id: billing-triage")
+                      .replace("your-company.example", "acme.example")
+                      .replace("recipients: []", "recipients: [ops@acme.example]"))
+    lint = _run(["policy", "lint", str(policy)], workspace)
+    assert lint.returncode == 0, lint.stdout + lint.stderr
+
+    script = workspace / "billing.py"
+    script.write_text(
+        "from clayseal.capabilities import Guardrail, Refused, StepUpRequired\n"
+        "guard = Guardrail.from_policy_file('policy.yaml')\n"
+        "tools = guard.wrap_all({\n"
+        "    'read_ticket': lambda id: {'id': id},\n"
+        "    'send_email': lambda to, body: 'sent',\n"
+        "    'issue_refund': lambda invoice, amount: 'ok',\n"
+        "})\n"
+        "def act(fn, **kw):\n"
+        "    try:\n"
+        "        return 'ok ' + str(fn(**kw))\n"
+        "    except Refused as exc:\n"
+        "        return 'refused ' + exc.reasons[0]\n"
+        "    except StepUpRequired as exc:\n"
+        "        return 'held ' + exc.reasons[0]\n"
+        "print(act(tools['issue_refund'], invoice='INV-1', amount=900.0))\n"
+        "print(act(tools['issue_refund'], invoice='INV-2', amount=200.0))\n"
+        "print(act(tools['send_email'], to='ops@acme.example', body='x'))\n"
+        "print(act(tools['send_email'], to='finance@acme.example', body='x'))\n"
+        "print(act(tools['send_email'], to='evil@evil.test', body='x'))\n")
+    result = subprocess.run([sys.executable, str(script)], cwd=workspace,
+                            capture_output=True, text=True, timeout=120,
+                            check=False)
+    assert result.returncode == 0, result.stdout + result.stderr
+    first, second, ops, sibling, off_domain = result.stdout.strip().splitlines()
+    assert first.startswith("ok "), first
+    assert second.startswith("refused "), second
+    assert "value_budget" in second
+    assert ops.startswith("ok "), ops
+    assert sibling.startswith("held "), sibling
+    assert "egress.recipients" in sibling
+    assert "appears in no observation" not in sibling
+    assert off_domain.startswith(("refused ", "held ")), off_domain
+    assert "evil.test" in off_domain
 
 
 def test_the_starter_names_verbs_the_compiler_will_accept() -> None:
@@ -134,3 +195,10 @@ def test_the_guide_only_promises_commands_that_exist() -> None:
     for command in sorted(subcommands):
         top = command.split()[0]
         assert top in help_text, f"START.md names `clayseal {command}`, which does not exist"
+
+
+def test_the_getting_started_page_does_not_quote_paper_rates() -> None:
+    """Rates live in EVIDENCE.md. START is the first ten minutes."""
+    text = START.read_text()
+    assert "83.3" not in text
+    assert "18.9" not in text

@@ -25,7 +25,9 @@ from clayseal.capabilities import Guardrail, Refused, StepUpRequired
 
 The fourth thing most deployments touch is not a symbol at all — it is
 `clayseal proxy`, the CLI that puts the gateway in front of an MCP server with no
-code change. See [DEPLOYMENT_SHAPE.md](DEPLOYMENT_SHAPE.md).
+code change. See [DEPLOYMENT_SHAPE.md](DEPLOYMENT_SHAPE.md). An agent that
+installed from PyPI should run `clayseal howto` rather than fetch this page;
+`clayseal skill --write` leaves the same path in the project it is editing.
 
 ## One level down: the stack itself
 
@@ -55,9 +57,8 @@ releases on an exception, which is the direction that cannot overcharge.
 
 A budget bounds a running **total**. These bound a running **order**: an action
 that may not proceed until another has. "Full checklist before irreversible
-commit" is not expressible as a counter, and the scenarios stating that shape are
-where containment is lost, 83.3% where the grant states a countable limit against
-18.9% where it does not.
+commit" is not expressible as a counter. A budget bounds a running total; these
+bound a running order. Measurements live in [EVIDENCE.md](EVIDENCE.md).
 
 | export | what it is |
 | --- | --- |
@@ -111,7 +112,8 @@ is spent, then the attack. `k` is the same idea against compiler disagreement
 instead of against logs: freeze the surviving tools and rules before the
 session opens.
 
-See `examples/06_how_sure.py` for the knob with no model.
+See [examples/06_how_sure.py](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/06_how_sure.py)
+for the knob with no model.
 
 ## Freshness: the justification an invalidator poisoned
 

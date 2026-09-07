@@ -11,19 +11,27 @@ the first file is edited and never composed. What it does NOT do is grant
 anything real: the tools are named `your_*` and the goal says to replace it, so
 a file that reaches production unedited fails its own lint rather than quietly
 authorizing a tool nobody meant to name.
+
+The shape matches `clayseal try`: a read, a send, and a refund. Rename the
+`your_*` tools and keep non-file tools under `paths.pathless`.
 """
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
 TEMPLATE = """\
-# A Clay Seal policy. Everything here is a decision you are making about an
-# agent, so it is a file a person reviews and a pull request can gate.
+# A Clay Seal policy. Same job as `clayseal try`: read, email, refund.
+# A person reviews this file; a pull request can gate it.
 #
-#   clayseal policy lint  {name}     what a reviewer should ask about
+#   clayseal policy lint  {name}     errors until TODOs are gone; then warnings
 #   clayseal policy show  {name}     what it actually authorizes
 #
 # Edit every line marked TODO. The file lints with errors until you do.
+#
+# Two different stops, on purpose:
+#   Refused          the gateway said no (a spent budget, a tool not granted)
+#   StepUpRequired   a person should look (typical for off-list email when
+#                    profile is supervised). `clayseal try` prints this as HELD.
 version: 1
 
 goal:
@@ -31,7 +39,8 @@ goal:
   # One sentence saying what this session is for. It is sealed when the session
   # starts, so nothing the agent reads afterwards can widen it. Content checks
   # and destination provenance are both derived from this sentence, so a vague
-  # one weakens both.
+  # one weakens both. Naming a mailbox here is why that address can be used
+  # without guard.saw().
   summary: TODO describe the job in one sentence
 
 # After this the grant is dead and every action is refused. Short is safer.
@@ -45,19 +54,21 @@ profile: supervised
 tools:
   # Nothing outside this list is reachable. Behind `clayseal proxy` the others
   # are also withheld from the catalogue, so the agent is never told they exist.
-  allow: [your_read_tool, your_write_tool]
+  # Rename these to the tools you actually have.
+  allow: [your_read_tool, your_send_tool, your_refund_tool]
 
   # What each tool DOES. The verb decides which rules apply, and guessing it
   # from the name works on `send_email` and fails on `terraform_destroy`.
   # One of: read, write, send, transfer, call
-  # send_email is send. pay_vendor is transfer. terraform_destroy is write -
-  # say so; the name is classified as call, which skips the write rules.
+  # send_email is send. issue_refund / pay_vendor is transfer. write_file is
+  # write. terraform_destroy is write — say so; the name is classified as call.
   effects:
     your_read_tool: read
-    your_write_tool: write
+    your_send_tool: send
+    your_refund_tool: transfer
 
   # Tools that spend nothing and change nothing. Saying so here is what stops
-  # lint asking you about them.
+  # lint asking you about them (`unaccounted-tool`).
   harmless: [your_read_tool]
 
   # Ordering and state, as withdrawals from the grant. Uncomment if you have
@@ -66,54 +77,46 @@ tools:
   # see.
   # when:
   #   - requires: [your_read_tool]
-  #     deny: [your_write_tool]
+  #     deny: [your_refund_tool]
   #     reason: "read first"
 
 paths:
-  # Where file actions may happen. A tool whose path cannot be resolved is
-  # refused, so the failure is loud.
+  # Where file actions may happen. Unused by the try-shaped tools below.
+  # If you add a write-to-disk tool, put its argument under arg_names.
   allow: ["out/**"]
   deny: [".env", ".git/**", "**/*.pem"]
+  arg_names: {{}}
 
-  # Which argument carries the path. The gateway looks for file_path, path,
-  # filename and file on its own; anything else has to be named here.
-  arg_names: {{your_write_tool: path}}
-
-  # Tools that act on no path at all, like sending mail or calling an API.
-  pathless: []
+  # Tools that never touch a file. Email, refunds, and HTTP APIs go here.
+  # `clayseal proxy` refuses them with "no path argument was found" if you
+  # leave them out. The Python wrapper is more lenient; the proxy is not.
+  pathless: [your_read_tool, your_send_tool, your_refund_tool]
 
 egress:
-  # Where data may go. A domain grant is every mailbox on that domain, so name
-  # the addresses too if the real set is smaller. An injection that names
-  # another mailbox on the same domain is inside a domain-only grant.
+  # Where data may go. Keep the domain AND name the mailboxes. A domain-only
+  # grant is every mailbox on that domain. An empty recipients list is
+  # domain-only, not "no one may be emailed". A mailbox on the domain that is
+  # not in this list is HELD (StepUpRequired), not allowed.
   domains: [your-company.example]
-  recipients: []          # TODO name the mailboxes if the set is smaller
+  recipients: []
   bind_recipients: true
 
 budgets:
-  # The part that catches a sequence of individually legal calls. Without a
-  # ceiling on something countable, a run of authorized actions that adds up to
-  # something you would never approve has nothing to trip over.
+  # The part that catches a sequence of individually legal calls.
+  value:
+    ceilings: {{refunds: "1000.00"}}
+    tracked:
+      your_refund_tool: {{arg: amount, budget: refunds}}
   calls:
-    ceilings: {{writes: 20}}
-    tracked: {{your_write_tool: writes}}
+    ceilings: {{sends: 20}}
+    tracked: {{your_send_tool: sends}}
 
-  # For money, use a value budget instead, naming the argument that carries
-  # the amount:
-  #
-  # value:
-  #   ceilings: {{refunds: "1000.00"}}
-  #   tracked:
-  #     issue_refund: {{arg: amount, budget: refunds}}
-
-# How sure a compiled rule has to be. Leave this commented until you have a
-# compiler (`ask` at build time). Uncommented, lint will remind you of that.
+# How sure a compiled rule has to be. Leave this commented until you compile
+# from a document with `ask` at build time. k only narrows tools.allow.
 #
 # compile:
 #   draws: 5
-#   k: 0.0001          # showed up in at least one answer
-#   # k_for:
-#   #   your_write_tool: 0.5
+#   k: 0.0001
 """
 
 

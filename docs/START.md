@@ -5,6 +5,11 @@ STATUS: current
 From nothing installed to your own agent behind the gateway. Four steps, and
 each one ends with something you can see working.
 
+If you are a coding agent, run `clayseal howto` (it ships in the wheel) and
+follow it. Put non-file tools in `paths.pathless`. Use `clayseal proxy` for
+Claude Desktop / Cursor, not `clayseal serve`. `clayseal skill --write` leaves
+a skill in the project you are editing.
+
 If you want the reasoning behind any of it, [POLICY.md](POLICY.md) covers what a
 policy can say and [EVIDENCE.md](EVIDENCE.md) covers what it has been measured
 at. This page is just the path.
@@ -43,7 +48,9 @@ Lint exits non-zero while the TODOs are still there, so an unedited template
 cannot reach production quietly. Once they are gone you get warnings instead,
 and each one names a decision you have not made yet. They are worth reading.
 The one that matters most says a tool can spend and debits no budget, because a
-limit nothing counts against is not a limit.
+limit nothing counts against is not a limit. Fill `egress.recipients` with the
+mailboxes this job may use: a mailbox on the granted domain that is not in that
+list is held (`StepUpRequired`), not allowed.
 
 If you already run an MCP server, `clayseal policy init -- npx @your-org/server`
 reads its catalogue and fills in the tool names for you. If your organisation
@@ -64,6 +71,21 @@ Your agent connects to the proxy and the proxy runs the real server. A refused
 call is answered with a JSON-RPC error and the server never sees it. Tools your
 policy does not grant are removed from the catalogue, so the agent is never told
 they exist.
+
+Point Claude Desktop, Cursor, or `.cursor/mcp.json` at the proxy, not at the
+server:
+
+```json
+{
+  "mcpServers": {
+    "billing": {
+      "command": "clayseal",
+      "args": ["proxy", "--policy", "policy.yaml",
+               "--", "npx", "@your-org/mcp-server"]
+    }
+  }
+}
+```
 
 **Python functions in your own loop:**
 
@@ -128,8 +150,8 @@ A tool that never appeared is not granted for this session, even if it is on
 `relative_loss`, which is how many of your own good actions you will let
 inferred rules refuse. A draw that fails or will not parse votes for nothing
 and still counts, so a compiler that answers once in five is not unanimous.
-`python examples/06_how_sure.py` shows the knob with
-no key.
+[examples/06_how_sure.py](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/06_how_sure.py)
+shows the knob with no key.
 
 A domain grant is every mailbox on that domain. If the real set is smaller,
 name the addresses under `egress.recipients`. An injection that names another
@@ -137,18 +159,17 @@ mailbox at the same company is inside a domain-only grant; listing the
 mailboxes is what closes it. `clayseal policy lint` warns when a sending tool
 has a domain and no mailbox.
 
-`python examples/07_other_jobs.py` is the same adapter on a coding agent, a
+[examples/07_other_jobs.py](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/07_other_jobs.py)
+is the same adapter on a coding agent, a
 prepare/approve mutex, and a same-domain mailbox. The refund demo is not the
 only shape this holds.
 
 ## What to read next
 
 Write your limits as ceilings on something countable. That is the single thing
-that decides whether this helps you, and it is measured: where the rule names a
-countable limit the gateway holds 83.3% of the attacks in our suite, and where
-it does not, 18.9%. "No more than $1,000 of refunds per session" is enforced.
-"Do not do anything inappropriate" is not.
+that decides whether this helps you. "No more than $1,000 of refunds per
+session" is enforced. "Do not do anything inappropriate" is not.
 
-[EVIDENCE.md](EVIDENCE.md) has the rest of that, including where the gateway
+[EVIDENCE.md](EVIDENCE.md) has the measurements, including where the gateway
 fails and what it costs in refused good work. Read it before you rely on this
 for something that matters.

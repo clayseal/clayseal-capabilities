@@ -8,6 +8,9 @@ example. This page says which document answers which question.
 | Document | Answers |
 | --- | --- |
 | `clayseal try` | What does it actually do? One minute, no key, no setup. |
+| `clayseal howto` | The same path as START.md, printed by the installed CLI so an agent does not need this checkout. |
+| `clayseal skill --write` | Drops a Cursor / Claude skill into the project being edited. |
+| [AGENTS.md](../AGENTS.md) | What a coding agent should do with this repo, and how to deploy the library elsewhere. |
 | [START.md](START.md) | I have seen it work. How do I put it in front of my agent? |
 | [DEV_GUIDE.md](DEV_GUIDE.md) | How do I install it, wire it into my agent, and call the API? |
 | [POLICY.md](POLICY.md) | What can a policy file say, and what does each rule do? Including `compile.k`. |

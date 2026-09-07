@@ -473,6 +473,21 @@ class Policy:
                 f"which case a tool is in; the runtime can, and does.",
             ))
 
+        fileless = sorted(
+            t for t in (self.allowed_tools or ())
+            if self.verb_for(t) in ("send", "transfer")
+            and t not in self.pathless_tools
+        )
+        if fileless:
+            out.append(Finding(
+                "warning", "send-not-pathless",
+                f"{', '.join(fileless)} "
+                f"{'is' if len(fileless) == 1 else 'are'} send/transfer but not "
+                f"listed under paths.pathless. `clayseal proxy` refuses those "
+                f"calls with 'no path argument was found'. Add them to "
+                f"paths.pathless and remove them from paths.arg_names.",
+            ))
+
         unclassified = self.unclassified_tools()
         if unclassified:
             out.append(Finding(

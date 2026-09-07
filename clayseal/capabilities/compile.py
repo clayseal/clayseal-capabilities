@@ -31,10 +31,10 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 __all__ = [
+    "BUDGET_SYSTEM",
     "DEFAULT_K",
     "DUTY_SYSTEM",
     "RULES_SYSTEM",
-    "BUDGET_SYSTEM",
     "SESSION_SYSTEM",
     "compile_budgets",
     "compile_duties",
@@ -396,7 +396,7 @@ def sanitize_budgets(raw: Mapping[str, Any], names: set[str]) -> dict[str, Any]:
             limit = float(str(row.get("limit")).replace(",", ""))
         except (TypeError, ValueError):
             continue
-        if not tools or limit <= 0 or limit != limit:  # noqa: PLR0124 - NaN
+        if not tools or limit <= 0 or limit != limit:
             continue
         arg = str(row.get("arg") or "amount")
         ident = str(row.get("id") or f"value_{i}")
@@ -593,9 +593,9 @@ def select_tools_under_k(
     k = _unit(k, "k")
     extra = {str(t): _unit(v, f"k_for.{t}") for t, v in dict(k_for or {}).items()}
     n = len(draws)
-    freq = {t: 0.0 for t in catalogue}
+    freq = dict.fromkeys(catalogue, 0.0)
     if n:
-        counts = {t: 0 for t in catalogue}
+        counts = dict.fromkeys(catalogue, 0)
         for named in draws:
             for tool in named:
                 if tool in counts:

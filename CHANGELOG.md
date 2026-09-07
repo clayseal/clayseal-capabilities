@@ -7,6 +7,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-06
+
+### Added: `clayseal howto` and `clayseal skill`, so an agent can deploy it without a checkout
+
+A coding agent that ran `pip install clayseal` does not have `docs/START.md`.
+`clayseal howto` prints the install-to-proxy path from the wheel. `clayseal
+skill --write` drops the same path into `.cursor/skills/clayseal/` and
+`.claude/skills/clayseal/`, and writes `AGENTS.md` if the project does not
+have one. The copies at the repository root (`AGENTS.md`, `llms.txt`, the
+skill files) are the same strings, so GitHub and Cursor can find them without
+running anything.
+
+PyPI keywords now include prompt-injection, mcp-proxy, tool-calling, and the
+frameworks the wrap path names. The Documentation URL points at START.md.
+
+`clayseal --help` now prints the runbook as an epilog. `clayseal` with no
+arguments exits 0 (it is the welcome screen, not a failed invocation).
+`clayseal policy` with no subcommand points at `policy new`. `proxy` is
+labeled as the stdio gateway for Claude Desktop / Cursor; `serve` is labeled
+HTTP. A `send-not-pathless` lint warning catches the usual first-deploy miss:
+a send/transfer tool that `clayseal proxy` will refuse with "no path argument
+was found". `unaccounted-tool` now says `tools.harmless`. `policy new` writes
+the same shape as `clayseal try` (read, send, refund). `skill --write` points
+at `policy lint` when `policy.yaml` already exists. `policy new` prints the
+next edit on stderr even when the YAML goes to stdout (`> policy.yaml`).
+A same-domain mailbox missing from `egress.recipients` now says so in the
+hold reason, instead of only "appears in no observation this session".
+`howto` says to construct `Guardrail` once per session (a new one resets
+ceilings). `proxy` warns when the command after `--` is a `.py` file.
+`skill --write` prints a one-line error instead of a traceback when it
+cannot create `.cursor`. `ungoverned()` reads `tools.allow`, not
+`tools.effects`. The worked YAML in `howto` tracks send calls so paste-and-lint
+does not warn `unaccounted-tool` on `send_email`.
+
 ### Fixed: first-user traps found by running unlike jobs through the adapter
 
 A wrapper that only accepted keywords made `refund("INV-1", 900)` a TypeError.
@@ -113,8 +147,6 @@ is still open here and nothing is quoted from it.
 - The provenance reason string named its one source three times.
 - CI covers Python 3.11 and 3.12, which the metadata claimed and nothing ran,
   and one macOS job, which is the platform the syscall tier targets.
-
-## [0.6.0] - 2026-08-28
 
 The first release intended to be read by people outside this repository.
 

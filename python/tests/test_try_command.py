@@ -85,6 +85,7 @@ def test_the_tour_points_at_policy_new_next() -> None:
         cwd=REPO, capture_output=True, text=True, timeout=120, check=False,
     )
     assert "clayseal policy new" in result.stdout
+    assert "clayseal howto" in result.stdout
 
 
 def test_no_args_points_at_the_demo() -> None:
@@ -92,6 +93,7 @@ def test_no_args_points_at_the_demo() -> None:
         [sys.executable, "-m", "clayseal.capabilities.cli"],
         cwd=REPO, capture_output=True, text=True, timeout=30, check=False,
     )
-    assert result.returncode == 2
+    assert result.returncode == 0
     assert "clayseal try" in result.stderr
+    assert "clayseal howto" in result.stderr
     assert "usage:" in result.stdout.lower() or "usage:" in result.stderr.lower()

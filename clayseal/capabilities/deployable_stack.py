@@ -45,15 +45,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from clayseal.capabilities.broker import Outcome, SessionBroker
+from clayseal.capabilities.duties import duties_from_compiled
 from clayseal.capabilities.mandate_lint import (
     lint_mandate,
     require_clean,
 )
 from clayseal.capabilities.monitor.action import Action, Trajectory
-from clayseal.capabilities.monitor.ontology import ToolOntology
 from clayseal.capabilities.monitor.llm_clients import default_entailment_judge
+from clayseal.capabilities.monitor.ontology import ToolOntology
 from clayseal.capabilities.parameter_provenance import ParameterProvenance
-from clayseal.capabilities.duties import duties_from_compiled
 from clayseal.capabilities.preconditions import PreconditionLedger
 from clayseal.capabilities.scoping.goal import GoalSpec
 from clayseal.core import env
@@ -394,14 +394,13 @@ class DeployableStack:
             "freshness": freshness,
             "identity": identity,
         }
-        catalog = allowed_tools or tool_catalog or set()
         use_compiled = compiled_rungs is not None or ask is not None
         if use_compiled or derive_rungs:
             from clayseal.capabilities.derivation import seal
 
             derived = seal(
                 goal,
-                catalog,
+                set(allowed_tools or tool_catalog or ()),
                 compiled=compiled_rungs,
                 ask=ask,
                 tool_schemas=tool_schemas,

@@ -639,7 +639,7 @@ class EgressPolicy:
             if addressed:
                 for addr in extract_email_addresses(args):
                     if addr.lower() not in addressed:
-                        return False, f"recipient {addr!r} not on allow-list"
+                        return False, f"recipient {addr!r} is not in egress.recipients"
         return True, "egress within policy"
 
     def check_with_provenance(
@@ -752,14 +752,15 @@ class EgressPolicy:
                 for addr in extract_email_addresses(args):
                     if addr.lower() in addressed:
                         continue
+                    miss = f"recipient {addr!r} is not in egress.recipients"
                     if provenance is None:
-                        return "deny", f"recipient {addr!r} not on allow-list"
-                    trust, reason = provenance.check_destination(
+                        return "deny", miss
+                    trust, _reason = provenance.check_destination(
                         addr,
                         goal_named_objects=goal_named_objects,
                         authorized_tools=authorized_tools,
                     )
                     if trust in (DestinationTrust.ALLOW, DestinationTrust.STEP_UP):
-                        return "step_up", reason
-                    return "deny", reason or f"recipient {addr!r} not on allow-list"
+                        return "step_up", miss
+                    return "deny", miss
         return "allow", "egress within policy"

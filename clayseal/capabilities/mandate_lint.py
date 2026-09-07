@@ -165,7 +165,7 @@ def lint_mandate(
                 code="unaccounted-tool", severity="warning", subject=tool,
                 detail=("reachable, debits no budget, and not declared "
                         "harmless; nothing here can tell whether it has an "
-                        "effect. Track it or list it in declared_harmless"),
+                        "effect. Track it or list it under tools.harmless"),
                 escape="untracked sibling tool"))
 
     # 2. Key splitting. Two tools in one family against two budget ids means the
@@ -265,8 +265,9 @@ def lint_mandate(
                  "once sessions are gone")
                 if stateless else
                 ("counted per session, so a second session gets a second "
-                 "ceiling; bind to a principal ledger if the limit is meant "
-                 "to be an authority limit")),
+                 "ceiling. Fine for a first single-process deploy. Bind "
+                 "`deployment.principal` and a ledger path if this limit must "
+                 "survive a restart")),
             escape="session restart"))
 
     # 6. A derived binding on a consequential tool. Not a defect and not a

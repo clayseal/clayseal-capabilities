@@ -31,24 +31,25 @@ REPO_ONLY = ("docs/", "examples/", "benchmarks/", "python/", "scripts/")
 
 
 def test_the_cli_prints_no_path_that_needs_a_checkout() -> None:
-    """`clayseal try` is run by people who have installed, not cloned."""
-    result = subprocess.run(
-        [sys.executable, "-m", "clayseal.capabilities.cli", "try", "--fast"],
-        cwd=ROOT, capture_output=True, text=True, timeout=120, check=False,
-    )
-    assert result.returncode == 0, result.stderr
-
-    offenders = []
-    for line in result.stdout.splitlines():
-        for token in line.split():
-            bare = token.strip("'\"(),")
-            if bare.startswith("https://") or bare.startswith("http://"):
-                continue          # a URL is reachable from anywhere
-            if bare.startswith(REPO_ONLY):
-                offenders.append(bare)
-    assert not offenders, (
-        f"`clayseal try` names {offenders}, which a pip install does not have. "
-        f"Print a URL or a command instead.")
+    """These commands are run by people who have installed, not cloned."""
+    for argv in (["try", "--fast"], ["howto"], ["skill"], ["policy", "new"]):
+        result = subprocess.run(
+            [sys.executable, "-m", "clayseal.capabilities.cli", *argv],
+            cwd=ROOT, capture_output=True, text=True, timeout=120, check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        offenders = []
+        for stream in (result.stdout, result.stderr):
+            for line in stream.splitlines():
+                for token in line.split():
+                    bare = token.strip("'\"(),")
+                    if bare.startswith("https://") or bare.startswith("http://"):
+                        continue          # a URL is reachable from anywhere
+                    if bare.startswith(REPO_ONLY):
+                        offenders.append(bare)
+        assert not offenders, (
+            f"`clayseal {' '.join(argv)}` names {offenders}, which a pip "
+            f"install does not have. Print a URL or a command instead.")
 
 
 def test_the_readme_images_are_absolute() -> None:
@@ -99,3 +100,10 @@ def test_the_shipped_package_ships_what_it_promises() -> None:
     text = starter_policy()
     assert "version: 1" in text
     assert "TODO" in text, "the template must mark the decisions it cannot make"
+
+
+def test_the_readme_does_not_load_a_checkout_only_policy() -> None:
+    """PyPI readers hitting load_policy('examples/...') was the original trap."""
+    body = README.read_text()
+    assert 'load_policy("examples/' not in body
+    assert 'from_policy_file("examples/' not in body

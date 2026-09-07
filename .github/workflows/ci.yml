@@ -105,6 +105,16 @@ jobs:
         working-directory: /tmp/clean
         run: clayseal try --fast
 
+      # `howto` / `skill` / `policy new` are what a coding agent runs after
+      # `pip install`. They have to resolve from the wheel: `howto` imports
+      # `agent_guide`, which is easy to leave untracked in a checkout.
+      - name: The agent install path must work from the wheel
+        working-directory: /tmp/clean
+        run: |
+          clayseal howto
+          clayseal skill >/dev/null
+          clayseal policy new >/dev/null
+
       - name: Import every shipped module from the installed wheel
         working-directory: /tmp/clean
         run: |

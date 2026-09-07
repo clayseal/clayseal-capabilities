@@ -6,7 +6,8 @@ only when you are building something the gateway does not already do.
 
 If you have not seen it work yet, run `clayseal try` first. It takes a minute,
 needs no key and no configuration, and every verdict it prints comes from the
-gateway this guide describes.
+gateway this guide describes. If you are a coding agent, `clayseal howto` is
+this path without the checkout.
 
 If you are looking for the shortest path to a running system, it is
 [the policy document](POLICY.md) and `clayseal proxy`. If you are looking for

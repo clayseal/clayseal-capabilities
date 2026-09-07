@@ -127,14 +127,14 @@ def refuted_by(ontology: ToolOntology, traces: list[list[str]]) -> ToolOntology:
         for spec in ontology.specs.values():
             producible |= set(spec.establishes)
         for tool in trace:
-            spec = ontology.spec(tool)
-            if spec is None:
+            step = ontology.spec(tool)
+            if step is None:
                 continue
-            for fact in spec.preconditions:
+            for fact in step.preconditions:
                 if fact in producible and fact not in world:
-                    bad.setdefault(spec.tool, set()).add(fact)
-            world |= set(spec.establishes)
-            world -= set(spec.destroys)
+                    bad.setdefault(step.tool, set()).add(fact)
+            world |= set(step.establishes)
+            world -= set(step.destroys)
 
     if not bad:
         return ontology

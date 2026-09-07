@@ -145,6 +145,7 @@ if TYPE_CHECKING:
         trusted_minting_keys_from_env,
         verify_commit_token,
     )
+    from clayseal.capabilities.compile import compile_rules, select_tools_under_k
     from clayseal.capabilities.delegation import (
         DelegationToken,
         issue_delegation,
@@ -153,8 +154,6 @@ if TYPE_CHECKING:
     )
     from clayseal.capabilities.deployable_stack import DeployableStack, StackDecision
     from clayseal.capabilities.derivation import DerivedRungs, seal
-    from clayseal.capabilities.compile import compile_rules, select_tools_under_k
-    from clayseal.capabilities.loss_budget import select_under_budget
     from clayseal.capabilities.guardrail import (
         Guardrail,
         GuardrailError,
@@ -168,6 +167,7 @@ if TYPE_CHECKING:
         list_capability_layers,
         register_capability_layer,
     )
+    from clayseal.capabilities.loss_budget import select_under_budget
     from clayseal.capabilities.mandate import (
         Mandate,
         issue_mandate,

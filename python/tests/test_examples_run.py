@@ -87,7 +87,7 @@ def test_the_proxy_example_holds_the_ceiling_and_the_tool_never_runs():
 
 
 def test_the_example_policy_is_the_one_the_docs_name():
-    """README and DEV_GUIDE both point at `examples/policy.yaml`."""
+    """DEV_GUIDE points at `examples/policy.yaml`; it has to load and lint."""
     from clayseal.capabilities.policy import load_policy
 
     policy = load_policy(REPO / "examples" / "policy.yaml")

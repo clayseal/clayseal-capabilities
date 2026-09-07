@@ -39,9 +39,9 @@ import re
 from typing import Any
 
 __all__ = [
+    "DerivedRungs",
     "derive_session_rungs",
     "rungs_from_compiled",
-    "DerivedRungs",
     "seal",
 ]
 
@@ -53,6 +53,14 @@ class DerivedRungs(dict):
     a rule. A deployment that wants to know whether its goal text actually said
     anything enforceable reads that set, rather than guessing from behaviour.
     """
+
+    kept_tools: set[str] | None = None
+    tool_freq: dict[str, float]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.kept_tools = None
+        self.tool_freq = {}
 
     @property
     def derived(self) -> frozenset[str]:
@@ -172,7 +180,8 @@ def rungs_from_compiled(compiled: dict | None, clause: str) -> DerivedRungs:
                             freshness=None, identity=None)
 
     obligations = [
-        Obligation(gated=str(p["after"]), requires=frozenset({str(p["before"])}),
+        Obligation(gated=frozenset({str(p["after"])}),
+                   requires=frozenset({str(p["before"])}),
                    source=src)
         for p in compiled.get("precedence") or []
     ]

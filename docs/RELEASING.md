@@ -29,7 +29,9 @@ You have to do this once, by hand, before the first release can publish.
 The `clayseal` name on PyPI currently holds `0.1.2`, a partner installer that
 routed pip at a private Azure Artifacts feed. `0.6.0` supersedes it. Yank the
 old versions **after** `0.6.0` is up, not before, so the name is never
-installable-but-broken:
+installable-but-broken. Do **not** make the GitHub repository public while
+`pip install clayseal` still resolves to `0.1.2`: the README's first command
+would install the partner stub for every visitor.
 
 ```bash
 # only once 0.6.0 is published and installs cleanly
@@ -48,7 +50,7 @@ $EDITOR pyproject.toml            # version = "0.6.0"
 
 # 2. everything the CI gate checks, locally first
 pytest python/tests -q
-ruff check clayseal agentauth
+ruff check .
 python -m build --outdir dist/ .
 
 # 3. write the CHANGELOG entry, then commit
@@ -78,6 +80,28 @@ pip install --index-url https://test.pypi.org/simple/ \
 
 The extra index is needed because `cryptography` and `pyyaml` are not on
 TestPyPI.
+
+## Going public
+
+The GitHub **Change repository visibility → Public** button publishes whatever
+is on `main` *and* the README's `pip install clayseal`. Press it last, not
+first.
+
+1. Land the product on `main`. CI (`lint`, `types`, `test`, `wheel`) green.
+2. Finish the one-time setup above (`pypi` / `testpypi` environments, trusted
+   publishers). The tag workflow cannot upload without them.
+3. Dry-run: **Actions → Release → `testpypi`**.
+4. Tag `v0.6.0` and push it **while the repository is still private**. Trusted
+   publishing works on a private repo.
+5. Confirm `pip install clayseal==0.6.0` from a clean machine, then yank
+   `0.1.2`.
+6. Then press Public.
+
+`paper/arxiv.tex` on this repository names the authors. Making the repo public
+is the same class of deanonymization as arXiv. ICLR allows arXiv; it does not
+un-publish GitHub history. If anonymity still matters, wait, or post the named
+version on arXiv first. Hiding the file on `main` does not remove it from git
+history.
 
 ## What the workflow checks before it uploads
 

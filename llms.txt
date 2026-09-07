@@ -1,0 +1,30 @@
+# Clay Seal
+
+> Policy gateway for AI agents. Authorizes each tool call against a reviewable policy.yaml: the grant, running totals, argument provenance, and the rest of the session.
+
+## Start (run in order)
+
+1. `pip install clayseal`
+2. `clayseal try --fast` — demo, no key
+3. `clayseal howto` — full deploy runbook (ships in the wheel)
+4. `clayseal policy new > policy.yaml` then `clayseal policy lint policy.yaml`
+5. MCP: `clayseal proxy --policy policy.yaml -- <server>` (Claude Desktop / Cursor). Python: `Guardrail.wrap_all`.
+6. `clayseal skill --write` — drop a Cursor/Claude skill into this project
+
+Non-file tools (email, refunds, HTTP) must be listed under `paths.pathless`. Effects are only `read`, `write`, `send`, `transfer`, `call`. Do not use `clayseal serve` for Claude Desktop; that command is HTTP. A mailbox on the granted domain that is not in `egress.recipients` is held (`StepUpRequired`), not allowed.
+
+## Docs
+
+- [First ten minutes](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/START.md)
+- [Policy reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md)
+- [API](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/API.md) — `Guardrail`, `Refused`, `StepUpRequired`, `clayseal proxy`
+- [Developer guide](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/DEV_GUIDE.md)
+- [Evidence](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md)
+- [Threat model](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/THREAT_MODEL.md)
+- [Deployment shape](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/DEPLOYMENT_SHAPE.md)
+
+## Optional
+
+- [Repository](https://github.com/clayseal/clayseal-capabilities)
+- [Changelog](https://github.com/clayseal/clayseal-capabilities/blob/main/CHANGELOG.md)
+- [Security](https://github.com/clayseal/clayseal-capabilities/blob/main/SECURITY.md)

@@ -1,5 +1,5 @@
 {
-  "total": 94,
+  "total": 85,
   "per_file": {
     "clayseal/capabilities/behavior_baseline.py": 1,
     "clayseal/capabilities/broker.py": 3,
@@ -11,7 +11,6 @@
     "clayseal/capabilities/mcp_proxy.py": 1,
     "clayseal/capabilities/monitor/aml.py": 2,
     "clayseal/capabilities/monitor/behavior_tree.py": 1,
-    "clayseal/capabilities/monitor/consequence.py": 1,
     "clayseal/capabilities/monitor/intent_envelope.py": 3,
     "clayseal/capabilities/monitor/multiplicity.py": 1,
     "clayseal/capabilities/monitor/planner.py": 2,
@@ -28,7 +27,6 @@
     "clayseal/capabilities/sandbox/lowering.py": 1,
     "clayseal/capabilities/sandbox/staging.py": 5,
     "clayseal/capabilities/scoping/capability_scope.py": 3,
-    "clayseal/capabilities/staleness.py": 8,
     "clayseal/capabilities/trace.py": 1,
     "clayseal/capabilities/value_budget.py": 1,
     "clayseal/capabilities/velocity.py": 6,

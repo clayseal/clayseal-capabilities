@@ -37,7 +37,7 @@ def test_a_different_mailbox_on_an_allowed_domain_is_refused():
         "mcp:tool:send_email",
         {"to": "all-hands@acme-internal.com", "body": "PAYROLL: Ada=..."})
     assert not ok
-    assert "not on allow-list" in reason
+    assert "egress.recipients" in reason
 
 
 def test_an_off_domain_address_is_still_refused_by_the_domain_check():
@@ -155,6 +155,20 @@ def test_the_wrong_mailbox_is_refused_on_both_paths():
     ) == ("deny", "deny")
 
 
+def test_a_wrong_mailbox_names_recipients_on_the_provenance_path():
+    """Agents were reading the provenance sentence as a broken allow-list."""
+    from clayseal.capabilities.parameter_provenance import ParameterProvenance
+
+    verdict, reason = _mailbox_policy().check_with_provenance(
+        "mcp:tool:send_email",
+        {"to": "all-hands@acme-internal.com", "body": "PAYROLL: Ada=..."},
+        provenance=ParameterProvenance(),
+    )
+    assert verdict == "deny", reason
+    assert "egress.recipients" in reason
+    assert "appears in no observation" not in reason
+
+
 def test_a_policy_naming_no_addresses_is_unchanged_on_both_paths():
     """The gate stays where it was: enumerate no address and nothing narrows.
 
@@ -195,3 +209,5 @@ def test_a_grounded_wrong_mailbox_steps_up_rather_than_denying():
         goal_named_objects={"directory"},
     )
     assert verdict == "step_up", reason
+    assert "egress.recipients" in reason
+    assert "appears in no observation" not in reason

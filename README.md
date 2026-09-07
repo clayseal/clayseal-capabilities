@@ -20,6 +20,8 @@ the agent has already done.
 
 ## Start here
 
+If you are a coding agent, [skip to the deploy runbook](#if-you-are-an-agent).
+
 ```bash
 pip install clayseal
 clayseal try
@@ -37,6 +39,29 @@ a test fails if it drifts from what the command prints, so it cannot become a
 screenshot of something that used to work.
 
 Python 3.10 to 3.14. Two dependencies, `cryptography` and `pyyaml`.
+
+## If you are an agent
+
+Do this in the project you are editing, in order:
+
+```bash
+clayseal try --fast
+clayseal howto
+clayseal policy new > policy.yaml
+# rename your_* tools; put mailboxes in egress.recipients; then:
+clayseal policy lint policy.yaml
+clayseal skill --write
+```
+
+Python functions: `Guardrail.from_policy_file("policy.yaml").wrap_all({...})`
+and bind the wrappers. Keys must match `tools.allow`. Construct one
+`Guardrail` per session (a new one resets ceilings). Catch `Refused`
+(budget / not granted) and `StepUpRequired` (held — typical for off-list
+email). Non-file tools go in `paths.pathless`.
+
+Already an MCP server (Claude Desktop / Cursor): `clayseal proxy`, not
+`clayseal serve`. Do not point `proxy` at a plain `.py` file. `clayseal howto`
+is the runbook.
 
 ## Use it in two lines
 
@@ -59,7 +84,7 @@ guard = Guardrail.from_dict({
     "expires_at": "2030-01-01T00:00:00Z",
     "tools": {"allow": ["list_open_refunds", "issue_refund"],
               "harmless": ["list_open_refunds"],
-              "effects": {"list_open_refunds": "read", "issue_refund": "write"}},
+              "effects": {"list_open_refunds": "read", "issue_refund": "transfer"}},
     "paths": {"pathless": ["list_open_refunds", "issue_refund"]},
     "budgets": {"value": {"ceilings": {"refunds": "1000.00"},
                           "tracked": {"issue_refund": {"arg": "amount",
@@ -100,6 +125,21 @@ the server:
 clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server
 ```
 
+Or paste this into Claude Desktop's MCP config, Cursor's MCP settings, or
+`.cursor/mcp.json`. The agent talks to Clay Seal; Clay Seal talks to the server:
+
+```json
+{
+  "mcpServers": {
+    "billing": {
+      "command": "clayseal",
+      "args": ["proxy", "--policy", "policy.yaml",
+               "--", "npx", "@your-org/mcp-server"]
+    }
+  }
+}
+```
+
 Tools the policy does not grant are removed from the catalogue, so the agent is
 never told they exist.
 
@@ -119,10 +159,15 @@ expires_at: 2027-12-31T00:00:00Z
 tools:
   allow:    [list_open_refunds, issue_refund]
   harmless: [list_open_refunds]                 # a read spends nothing
-  effects:  {list_open_refunds: read, issue_refund: write}
+  effects:  {list_open_refunds: read, issue_refund: transfer}
 
 paths:
   pathless: [list_open_refunds, issue_refund]   # these act on invoices, not files
+
+egress:
+  domains: [acme.example]
+  recipients: [ops@acme.example]               # a domain alone is every mailbox
+  bind_recipients: true
 
 budgets:
   value:
@@ -133,8 +178,8 @@ budgets:
 
 Run `clayseal policy lint policy.yaml` before you ship. It catches the mistake
 that matters most: a tool that can spend money but debits no budget. On the file
-above it reports no errors and two warnings, both of which name a real decision
-you have not made yet.
+above it reports no errors and one warning (the ceiling is per session unless
+you bind a principal), which names a real decision you have not made yet.
 
 Full reference: [docs/POLICY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/POLICY.md).
 
@@ -399,8 +444,8 @@ budgets:
 ```
 
 ```bash
-clayseal policy show examples/policy.yaml   # what it authorizes
-clayseal policy lint examples/policy.yaml   # what a reviewer should ask about
+clayseal policy show policy.yaml   # what it authorizes
+clayseal policy lint policy.yaml   # what a reviewer should ask about
 ```
 
 `lint` exits non-zero on an error finding, so it works as a pre-merge gate. It
@@ -533,10 +578,20 @@ one method:
 
 ```python
 from clayseal.capabilities.monitor.action import Action
-from clayseal.capabilities.policy import load_policy
+from clayseal.capabilities.policy import compile_policy
 from clayseal.capabilities.tool_verbs import classify_verb
 
-gateway = load_policy("examples/policy.yaml").build()
+gateway = compile_policy({
+    "version": 1,
+    "goal": {"id": "billing",
+             "summary": "Triage tickets and email ops@acme-internal.com"},
+    "expires_at": "2030-01-01T00:00:00Z",
+    "tools": {"allow": ["read_ticket", "send_email"],
+              "harmless": ["read_ticket"],
+              "effects": {"read_ticket": "read", "send_email": "send"}},
+    "paths": {"pathless": ["read_ticket", "send_email"]},
+    "egress": {"domains": ["acme-internal.com"], "bind_recipients": True},
+}).build()
 
 agent_calls = [
     ("read_ticket", {"id": "T-1042"}),
@@ -555,7 +610,7 @@ for step, (tool, args) in enumerate(agent_calls):
     # run(tool, args)
 ```
 
-`examples/01_gateway.py` runs this end to end against a prompt injection planted
+`examples/01_gateway.py` (from a checkout) runs this end to end against a prompt injection planted
 in a ticket the agent was allowed to read. The fourth call is allowed and the
 fifth is held for a person.
 
@@ -631,6 +686,8 @@ session = get_identity_provider("oidc").build_session(
 want:
 
 - [Your first ten minutes](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/START.md) to go from the demo to your own agent
+- [Agent notes](https://github.com/clayseal/clayseal-capabilities/blob/main/AGENTS.md) if you are a coding agent deploying this
+- [llms.txt](https://github.com/clayseal/clayseal-capabilities/blob/main/llms.txt) for a machine-readable index
 - [Evidence](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md) for every measured number and the limit it does not cross
 - [API reference](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/API.md) for the exported names, tiered by what
   most integrations actually use

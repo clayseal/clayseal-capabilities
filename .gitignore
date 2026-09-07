@@ -66,10 +66,15 @@ certs/*.json
 # IDE / misc
 .idea/
 .vscode/
-.cursor/mcp.json
 *.swp
 *.log
 .DS_Store
+
+# Cursor: ignore local MCP/config; keep the skill so a clone has the deploy path.
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/clayseal/
+!.cursor/skills/clayseal/SKILL.md
 
 # Local experiment outputs (Devin red-team runs, gate JSON, clones)
 artifacts/
@@ -101,8 +106,12 @@ keys/signing/
 *.ed25519.pem
 *_private.pem
 
-# Claude Code session/tooling
-.claude/
+# Claude Code session/tooling. Contents ignored; the skill is the exception so
+# a clone has the deploy path without running `clayseal skill --write`.
+.claude/*
+!.claude/skills/
+!.claude/skills/clayseal/
+!.claude/skills/clayseal/SKILL.md
 SECURITY_AUDIT.md
 docs/*.aux
 docs/*.log
@@ -117,6 +126,10 @@ scratchpad/
 # the demo tests use tmp_path, so nothing reads the committed copy. 47 files of
 # generated workspaces, ticket corpora and guest scratch were checked in.
 .demo-runs/
+
+# Local lab, not the product. gitignoring it so `ruff check .` (the CI command)
+# does not fail on a machine that has the directory.
+demo/xp-power-demand-lab/
 
 # LaTeX build products
 paper/*.pdf

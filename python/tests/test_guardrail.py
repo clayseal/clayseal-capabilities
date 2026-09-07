@@ -123,6 +123,23 @@ def test_a_catalogue_the_policy_does_not_name_is_reported_up_front(tools):
     assert guard.ungoverned({**wrapped, "rm_rf": print}) == ["rm_rf"]
 
 
+def test_ungoverned_reads_the_allow_list_not_the_verb_map():
+    """An allow-list with no tools.effects used to report granted tools as ungoverned."""
+    policy = load_policy_text(
+        "version: 1\n"
+        "goal: {id: x, summary: triage tickets and email ops}\n"
+        "expires_at: 2030-01-01T00:00:00Z\n"
+        "tools:\n"
+        "  allow: [read_ticket, send_email]\n"
+        "  harmless: [read_ticket, send_email]\n"
+        "paths: {pathless: [read_ticket, send_email]}\n"
+    )
+    guard = Guardrail.from_policy(policy)
+    assert guard.verbs == {}
+    assert guard.ungoverned({"read_ticket": print, "rm_rf": print}) == ["rm_rf"]
+    assert guard.ungoverned({"read_ticket": print}) == []
+
+
 # ------------------------------------------------------ results feed back ---
 def test_the_result_reaches_the_gateway(tools):
     """Provenance, taint and every conditional fact read what a tool RETURNED.

@@ -120,6 +120,8 @@ class Guardrail:
     stack: Any
     verbs: dict[str, str] = field(default_factory=dict)
     path_args: dict[str, str] = field(default_factory=dict)
+    #: `tools.allow` from the policy. None means the document named no list.
+    allowed_tools: frozenset[str] | None = None
     #: Feed each result back to the gateway. Off only for a caller that reports
     #: results itself; leaving it off silently starves the provenance, taint and
     #: fact-driven tiers.
@@ -140,9 +142,14 @@ class Guardrail:
         the path scope never applies.
         """
         guard_kw = {}
-        for key in ("observe_results", "verbs", "path_args"):
+        for key in ("observe_results", "verbs", "path_args", "allowed_tools"):
             if key in overrides:
                 guard_kw[key] = overrides.pop(key)
+        if "allowed_tools" not in guard_kw:
+            allowed = getattr(policy, "allowed_tools", None)
+            guard_kw["allowed_tools"] = (
+                None if allowed is None else frozenset(allowed)
+            )
         return cls(
             stack=policy.build(**overrides) if stack is None else stack,
             verbs=dict(policy.tool_verbs),
@@ -295,18 +302,41 @@ class Guardrail:
 
     def wrap_all(self, tools: Mapping[str, Callable[..., Any]]
                  ) -> dict[str, Callable[..., Any]]:
-        """Guard a whole catalogue, which is the shape a framework hands you."""
+        """Guard a whole catalogue, which is the shape a framework hands you.
+
+        Bind the returned callables, not the originals. Catch `Refused` (give
+        the message to the model) and `StepUpRequired` (ask a person).
+        Construct the Guardrail once per session; a new one resets ceilings.
+        """
         return {name: self.wrap(name, fn) for name, fn in tools.items()}
+
+    def _allow_list(self) -> set[str] | None:
+        """The names `tools.allow` granted, or None if the policy named none."""
+        if self.allowed_tools is not None:
+            return set(self.allowed_tools)
+        broker = getattr(self.stack, "broker", None)
+        broker_allowed = getattr(broker, "allowed_tools", None) if broker else None
+        if broker_allowed is not None:
+            return set(broker_allowed)
+        if self.verbs:
+            return set(self.verbs)
+        return None
+
+    def _not_on_allow_list(self, tools: Mapping[str, Any]) -> list[str]:
+        allowed = self._allow_list()
+        if allowed is None:
+            return []
+        return sorted(name for name in tools if name not in allowed)
 
     def ungoverned(self, tools: Mapping[str, Any]) -> list[str]:
         """Tools the policy does not name, which will be refused when called.
 
         Worth asking BEFORE the run. A tool absent from `tools.allow` is denied
         at the floor, which is correct and is a confusing way to learn that a
-        catalogue and a policy disagree.
+        catalogue and a policy disagree. Reads `tools.allow`, not `tools.effects`,
+        so an allow-list with no verb declarations still reports honestly.
         """
-        allowed = getattr(self.stack, "allowed_tools", None) or set(self.verbs)
-        return sorted(name for name in tools if name not in allowed)
+        return self._not_on_allow_list(tools)
 
 
 def _verb_of(tool: str) -> str:

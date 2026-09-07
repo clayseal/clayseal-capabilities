@@ -18,6 +18,11 @@ under different module names". Plain `mypy` picks up the config and works.
 
 There are no private dependencies. If that stops being true, it is a bug.
 
+`AGENTS.md`, `llms.txt`, `.cursor/skills/clayseal/SKILL.md` and
+`.claude/skills/clayseal/SKILL.md` are copies of strings in
+`clayseal/capabilities/agent_guide.py`. Edit the module; a test fails if the
+files drift.
+
 The benchmark suite is a separate tier. It needs external corpora that
 `benchmarks/fetch_corpora.sh` pulls (about 1.1 GB), and tests that need them skip
 rather than fail. CI runs them nightly.
@@ -56,8 +61,8 @@ said.
 ## Style
 
 Ruff is pinned to correctness and security rules rather than inheriting defaults,
-because `ruff check clayseal` is a CI gate and an implicit rule set changes
-meaning whenever ruff releases. Style opinions are deliberately not gated. Line
+because `ruff check .` is a CI gate and an implicit rule set changes meaning
+whenever ruff releases. Style opinions are deliberately not gated. Line
 length is checked by eye.
 
 Prose in docstrings, docs, and commit messages: write plainly and state the

@@ -144,7 +144,8 @@ def _act_one(screen: Screen, *, explain: bool = False) -> int:
         "goal": {"id": "refund-run",
                  "summary": "Refund the invoices the customer disputed."},
         "expires_at": "2030-01-01T00:00:00Z",
-        "tools": {"allow": ["issue_refund"], "effects": {"issue_refund": "write"}},
+        "tools": {"allow": ["issue_refund"],
+                  "effects": {"issue_refund": "transfer"}},
         "paths": {"pathless": ["issue_refund"]},
         "budgets": {"value": {"ceilings": {"refunds": "1000.00"},
                               "tracked": {"issue_refund": {"arg": "amount",
@@ -295,13 +296,16 @@ def _what_now(screen: Screen) -> None:
     screen.say(f"      {screen.paint('the same two runs, with every layer that looked', DIM)}")
     screen.say()
     screen.say(f"  {screen.paint('clayseal policy new > policy.yaml', CLAY)}")
-    screen.say(f"      {screen.paint('a starter policy to edit, then lint', DIM)}")
+    screen.say(f"      {screen.paint('same job as this demo: read, email, refund', DIM)}")
+    screen.say()
+    screen.say(f"  {screen.paint('clayseal howto', CLAY)}")
+    screen.say(f"      {screen.paint('wrap Python tools, or proxy an MCP server', DIM)}")
     screen.say()
     screen.say(f"  {screen.paint('clayseal policy init -- npx @your-org/mcp-server', CLAY)}")
-    screen.say(f"      {screen.paint('draft a policy from a server you already run', DIM)}")
+    screen.say(f"      {screen.paint('only if you already run an MCP server', DIM)}")
     screen.say()
     screen.say(f"  {screen.paint('clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server', CLAY)}")
-    screen.say(f"      {screen.paint('put the gateway in front of it for real', DIM)}")
+    screen.say(f"      {screen.paint('MCP only — Python tools use wrap_all (howto)', DIM)}")
     screen.say()
     # A repo-relative path, printed by a command someone installed from PyPI,
     # names a file they do not have. It is the same mistake the README made

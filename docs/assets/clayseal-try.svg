@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="1472" viewBox="0 0 860 1472" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.4">
-<rect width="860" height="1472" rx="10" fill="#1b1a19"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="1532" viewBox="0 0 860 1532" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.4">
+<rect width="860" height="1532" rx="10" fill="#1b1a19"/>
 <rect width="860" height="34" rx="10" fill="#2a2827"/>
 <rect y="24" width="860" height="10" fill="#2a2827"/>
 <circle cx="21" cy="17" r="5.5" fill="#e07a6a"/>
@@ -48,11 +48,13 @@
 <text x="22" y="1172.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal try --explain</tspan></text>
 <text x="22" y="1192.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">the same two runs, with every layer that looked</tspan></text>
 <text x="22" y="1232.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal policy new &gt; policy.yaml</tspan></text>
-<text x="22" y="1252.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">a starter policy to edit, then lint</tspan></text>
-<text x="22" y="1292.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal policy init -- npx @your-org/mcp-server</tspan></text>
-<text x="22" y="1312.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">draft a policy from a server you already run</tspan></text>
-<text x="22" y="1352.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server</tspan></text>
-<text x="22" y="1372.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">put the gateway in front of it for real</tspan></text>
-<text x="22" y="1412.0" xml:space="preserve"><tspan fill="#8d8880">  Where it works and where it does not:</tspan></text>
-<text x="22" y="1432.0" xml:space="preserve"><tspan fill="#8d8880">  https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md</tspan></text>
+<text x="22" y="1252.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">same job as this demo: read, email, refund</tspan></text>
+<text x="22" y="1292.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal howto</tspan></text>
+<text x="22" y="1312.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">wrap Python tools, or proxy an MCP server</tspan></text>
+<text x="22" y="1352.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal policy init -- npx @your-org/mcp-server</tspan></text>
+<text x="22" y="1372.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">only if you already run an MCP server</tspan></text>
+<text x="22" y="1412.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server</tspan></text>
+<text x="22" y="1432.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">MCP only — Python tools use wrap_all (howto)</tspan></text>
+<text x="22" y="1472.0" xml:space="preserve"><tspan fill="#8d8880">  Where it works and where it does not:</tspan></text>
+<text x="22" y="1492.0" xml:space="preserve"><tspan fill="#8d8880">  https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md</tspan></text>
 </svg>
