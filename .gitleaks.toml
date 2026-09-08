@@ -40,6 +40,23 @@ regexes = [
 
 [[allowlists]]
 description = """
+Content-address CACHE KEYS, not credentials. The benchmark caches are keyed by
+`<arm>:<sha256 of the prompt>` so a changed prompt misses rather than silently
+reusing an old answer, and `generic-api-key` reads any 64-char hex after a colon
+as a secret. All 131 matches in `.original_gates_cache.json` are that shape, and
+the values behind them are lists of tool names from the scenarios.
+
+Scoped to the cache files AND to the digest shape, so a real credential sitting
+in one of these files would still be caught. This exempts a hash, not a file.
+"""
+regexes = ['''(?i)(authgraph|drift|progent|camel|monitor|binder|plan|role|ontology|gates):[0-9a-f]{64}''']
+paths = [
+  '''benchmarks/results/\.[a-z_]+_cache\.json''',
+  '''benchmarks/_[a-z_]+_cache\.json''',
+]
+
+[[allowlists]]
+description = """
 `private_key: Ed25519PrivateKey` is a TYPE ANNOTATION on a dataclass field, not
 key material. The rule matches the field name.
 """

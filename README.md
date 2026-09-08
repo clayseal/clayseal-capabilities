@@ -44,18 +44,9 @@ come from `_floor` in the same file.
 If you are a coding agent, [skip to the deploy runbook](#if-you-are-an-agent).
 
 ```bash
-git clone https://github.com/clayseal/clayseal-capabilities.git
-cd clayseal-capabilities
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
+pip install clayseal
 clayseal try
 ```
-
-> **`pip install clayseal` does not work yet.** That name on PyPI still serves an
-> unrelated 0.1.2 stub from before this project was open-sourced, and it will
-> tell you to request access rather than running anything. Install from source
-> until 0.6.0 is published; the two dependencies are `cryptography` and `pyyaml`,
-> so this is quick.
 
 `clayseal try` takes about a minute. It runs two attacks in front of you and
 shows the gateway stopping them. There is nothing to configure, no key to get
