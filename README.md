@@ -211,7 +211,7 @@ Full reference: [docs/POLICY.md](https://github.com/clayseal/clayseal-capabiliti
 
 ## See it stop the attack
 
-From a checkout. [examples/](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/) has five, each runnable with no key and
+From a checkout. [examples/](https://github.com/clayseal/clayseal-capabilities/blob/main/examples/) has seven, each runnable with no key and
 no network:
 
 ```bash
@@ -576,6 +576,8 @@ Every knob above tunes behaviour someone else chose. This is where "in our shop
 X is also forbidden" goes, without forking:
 
 ```python
+from clayseal.capabilities import GoalSpec
+from clayseal.capabilities.deployable_stack import DeployableStack
 from clayseal.capabilities.session_rules import SessionRuleHit
 
 def no_competitor_domains(action, session, *, goal_summary, egress_verbs):
@@ -583,6 +585,7 @@ def no_competitor_domains(action, session, *, goal_summary, egress_verbs):
         return SessionRuleHit("house-rules", "destination is a competitor domain")
     return None      # None means "this rule has nothing to say"
 
+goal = GoalSpec(query_id="refund-run", summary="Refund the disputed invoices.")
 stack = DeployableStack.from_goal(goal, house_rules=(no_competitor_domains,))
 ```
 
