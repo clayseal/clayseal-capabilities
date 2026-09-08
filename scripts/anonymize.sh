@@ -28,6 +28,15 @@ set -euo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:?usage: anonymize.sh <output-dir>}"
 NAME="sessiongate"
+# PERSONAL identifiers live outside this file. This script is published with the
+# system it anonymizes, so hardcoding a surname here prints the name in the one
+# place guaranteed to be read by anyone curious about the anonymization.
+#
+# scripts/.anonymize-identity is gitignored, one `pattern<TAB>replacement` per
+# line. Without it the project identifiers are still scrubbed and the script says
+# plainly that the personal ones were not supplied, rather than reporting a clean
+# scrub it did not perform.
+IDENTITY_FILE="${IDENTITY_FILE:-$SRC/scripts/.anonymize-identity}"
 URL="https://anonymous.4open.science/r/session-gateway"
 
 rm -rf "$OUT"; mkdir -p "$OUT"
@@ -60,8 +69,6 @@ find . -type f -not -path './.git/*' -print0 | xargs -0 grep -lI '' | xargs sed 
   -e "s|github\.com/clayseal|anonymous.4open.science|g" \
   -e "s|pypi\.org/project/clayseal[a-z-]*|pypi.org/project/session-gateway|g" \
   -e "s|clayseal/clayseal-capabilities|session-gateway|g" \
-  -e "s|pberlizov/[A-Za-z0-9._-]*|anonymous/session-gateway|g" \
-  -e "s|peterberlizov@gmail\.com|anonymous@example.com|g" \
   -e "s|Clay Seal contributors|the authors|g" \
   -e "s|Clay Seal|SessionGate|g" -e "s|clay-seal|session-gateway|g" \
   -e "s|ClaySeal|SessionGate|g" -e "s|CLAYSEAL|SESSIONGATE|g" -e "s|clayseal|$NAME|g" \
@@ -86,7 +93,20 @@ git add -A && git -c user.email=anonymous@example.com -c user.name=Anonymous \
 
 echo "=== residual identifying strings (tracked files) ==="
 fail=0
-for p in 'clay ?seal' 'clayseal' 'agentauth' 'pberlizov' 'peterberlizov' 'Berlizov'; do
+PATTERNS=('clay ?seal' 'clayseal' 'agentauth')
+if [ -f "$IDENTITY_FILE" ]; then
+  while IFS=$'\t' read -r pat rep; do
+    [ -z "$pat" ] && continue
+    find . -type f -not -path './.git/*' -print0 | xargs -0 grep -lI '' \
+      | xargs sed -i '' -e "s|$pat|$rep|g"
+    PATTERNS+=("$pat")
+  done < "$IDENTITY_FILE"
+else
+  echo "WARNING: no $IDENTITY_FILE, so PERSONAL identifiers were NOT scrubbed."
+  echo "         Project identifiers were. Do not submit this as anonymous."
+fi
+
+for p in "${PATTERNS[@]}"; do
   # `git grep` exits 1 when it finds NOTHING, and `set -o pipefail` propagates
   # that through the pipe, so under `set -e` a completely clean scrub aborted the
   # script before it could report success. The failure mode of the verification

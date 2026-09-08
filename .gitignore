@@ -156,3 +156,4 @@ demo/clayseal-ivisor/*
 !demo/clayseal-ivisor/sample_traces/**
 docs/ivisor_integration.md
 docs/sota_trajectory_control.md
+scripts/.anonymize-identity

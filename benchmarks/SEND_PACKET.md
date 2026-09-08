@@ -118,7 +118,7 @@ switches change it materially and both are now explicit rather than implied.
 - `results/head_to_head_injection.md`, `bpl_head_to_head.md`, `live_ladder.md`
 - `results/four_axes.md`, `composed_detector.md`, `agentdyn.md`
 - `results/syscall_tier.md`
-- `a business memo` (kept outside this repository) or `clayseal_benchmarks.tex` with Reproduce block
+- `clayseal_benchmarks.tex` with a Reproduce block
 - git SHA + `corpus_manifest.json` hashes
 
 Optional companion (evidence plane, not ASR):  

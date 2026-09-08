@@ -1006,10 +1006,8 @@ repository; every deletion is recoverable from history at `fe4efcf`.
   and the demo tests use `tmp_path`, so nothing read the committed copy. Now
   gitignored.
 
-- **Paper drafts and the fundraising memo (456K)** moved out of the code repo to
-  `a separate repository`: `a business memo`, `a business memo`,
-  `_results_table_draft.{tex,pdf,png}`. They are documents ABOUT the project
-  rather than documentation OF it. Two audit files check their claims against
+- **Paper drafts and business documents (456K)** moved out of the code repo.
+  They are documents ABOUT the project rather than documentation OF it. Two audit files check their claims against
   this code and note that the audited document is kept elsewhere.
 
 - **`notes/roadmap_v0.2.md`**, a roadmap for a version three releases old, and

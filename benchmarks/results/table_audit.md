@@ -384,9 +384,9 @@ figures are our own code, our own ablations, or unsourced.**
 
 | figure | source |
 | --- | --- |
-| ARGUS ~5 pts utility | `a business memo` line 49, arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
-| CaMeL ~7 pts utility | line 52, arXiv:2503.18813, 84 -> 77 on AgentDojo |
-| Progent ~19 pts utility | line 50, arXiv:2606.26479. Sourced but contradicted by our own head-to-head, which measures Progent's released code at 12.5 points on gpt-4o-mini |
+| ARGUS ~5 pts utility | arXiv:2605.03378, 92.5 -> 87.5 on AgentLure |
+| CaMeL ~7 pts utility | arXiv:2503.18813, 84 -> 77 on AgentDojo |
+| Progent ~19 pts utility | arXiv:2606.26479. Sourced but contradicted by our own head-to-head, which measures Progent's released code at 12.5 points on gpt-4o-mini |
 
 ### A real run of a third-party defense (1)
 
