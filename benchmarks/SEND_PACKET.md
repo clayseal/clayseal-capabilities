@@ -75,9 +75,16 @@ switches change it materially and both are now explicit rather than implied.
 10. Containment at an unconstrained false-block rate as a headline. Use
     detection @ fixed FPR (`benchmarks/opeval.py`); a control that blocks
     everything must score zero.
-11. Any containment number quoted without stating that `session_rules` was on.
-    The pack is corpus-derived; quoting a number it contributed to as a general
-    property of the system is the overfitting this packet exists to surface.
+11. Quoting a number measured with `session_rules=True` or `content_rules=True`
+    without saying so. Both packs are corpus-derived. `session_rules` is now OFF
+    in `DeployableStack.from_goal` and in both deployment profiles, and its
+    contribution to every scored population measured zero
+    (`results/corpus_rule_contribution.md`), so a number that needs it is a
+    number to re-measure rather than to quote. `content_rules` is the opposite
+    case and the more dangerous one: it is worth 19.7 points on SLEIGHT and 11.9
+    on AgentHarm, and worth them ONLY on the corpus each half was written
+    against, 0 on BPL (`results/content_rule_contribution.md`). It is off in
+    both deployment profiles for that reason.
 12. Quoting the in-scope content-staging containment without the `step-up=allow`
     row beside it. All of that containment is supervision; under a human who
     approves everything it is the floor's number.
