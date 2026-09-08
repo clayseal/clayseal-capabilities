@@ -58,6 +58,21 @@ rm -f CODE_OF_CONDUCT.md python/tests/test_canonical_repo_url.py
 rm -f docs/assets/clay-seal-logo.png docs/assets/clayseal-try.svg
 
 mv clayseal "$NAME"
+# The other two trees that carry the product name in a PATH. `.claude` is
+# excluded by the rsync above and `.cursor` was not, so the skill directory
+# survived under its real name; the `agentauth` namespace package likewise.
+# Neither is caught by the residual check below, which greps file CONTENTS.
+[ -d .cursor/skills/clayseal ] && mv .cursor/skills/clayseal ".cursor/skills/$NAME"
+# `.claude` is excluded wholesale by the rsync, correctly, because a working
+# copy of it can hold personal agent settings. That also dropped the one TRACKED
+# file under it, the product skill, so the artifact had a `.cursor` skill and no
+# `.claude` one and `test_agent_guide` failed on the asymmetry. Copy back exactly
+# the tracked file, nothing else.
+if [ -f "$SRC/.claude/skills/clayseal/SKILL.md" ]; then
+  mkdir -p ".claude/skills/$NAME"
+  cp "$SRC/.claude/skills/clayseal/SKILL.md" ".claude/skills/$NAME/SKILL.md"
+fi
+[ -d agentauth ] && mv agentauth external_identity
 mv "$NAME/capabilities/identity_adapters/agentauth.py" \
    "$NAME/capabilities/identity_adapters/external_identity.py"
 for f in toolemu advbench_agent; do
@@ -78,6 +93,24 @@ find . -type f -not -path './.git/*' -print0 | xargs -0 grep -lI '' | xargs sed 
   -e "s|AgentAuthIdentityProvider|ExternalIdentityProvider|g" \
   -e "s|AgentAuth|ExternalIdentity|g" -e "s|agentauth|external_identity|g"
 
+# Personal identifiers, from the gitignored identity file. This runs HERE, beside
+# the other substitutions and BEFORE the venv is built, and the placement is the
+# whole point: run after `python3 -m venv`, the pattern `pberlizov/...` rewrites
+# the paths the venv recorded about itself, and every test that shells out to the
+# CLI fails. Measured, that was 23 of them.
+PATTERNS=('clay ?seal' 'clayseal' 'agentauth')
+if [ -f "$IDENTITY_FILE" ]; then
+  while IFS=$'\t' read -r pat rep; do
+    [ -z "$pat" ] && continue
+    find . -type f -not -path './.git/*' -not -path './.venv*' -print0 \
+      | xargs -0 grep -lI '' | xargs sed -i '' -e "s|$pat|$rep|g"
+    PATTERNS+=("$pat")
+  done < "$IDENTITY_FILE"
+else
+  echo "WARNING: no $IDENTITY_FILE, so PERSONAL identifiers were NOT scrubbed."
+  echo "         Project identifiers were. Do not submit this as anonymous."
+fi
+
 # The docs-are-current tests read `git ls-files`, so the tree has to be a repo.
 git init -q .
 printf '\n.venv-anon/\n' >> .gitignore
@@ -91,21 +124,21 @@ python3 -m venv .venv-anon
 git add -A && git -c user.email=anonymous@example.com -c user.name=Anonymous \
     commit -q --amend --no-edit
 
+# PATHS, before contents. The content grep reported a clean scrub on an artifact
+# whose tree still held `.cursor/skills/clayseal/` and `agentauth/`, because
+# `git grep` searches what is IN files and never what they are CALLED. Reporting
+# a scrub that did not happen is the single failure this script exists to avoid.
+echo "=== residual identifying strings (tracked PATHS) ==="
+paths=$({ git ls-files | grep -iE 'clayseal|clay-seal|agentauth' || true; })
+if [ -n "$paths" ]; then
+  echo "$paths" | sed 's/^/  /'
+  echo "ANONYMIZATION INCOMPLETE: the tree names the product in a path"
+  exit 1
+fi
+echo "  none"
+
 echo "=== residual identifying strings (tracked files) ==="
 fail=0
-PATTERNS=('clay ?seal' 'clayseal' 'agentauth')
-if [ -f "$IDENTITY_FILE" ]; then
-  while IFS=$'\t' read -r pat rep; do
-    [ -z "$pat" ] && continue
-    find . -type f -not -path './.git/*' -print0 | xargs -0 grep -lI '' \
-      | xargs sed -i '' -e "s|$pat|$rep|g"
-    PATTERNS+=("$pat")
-  done < "$IDENTITY_FILE"
-else
-  echo "WARNING: no $IDENTITY_FILE, so PERSONAL identifiers were NOT scrubbed."
-  echo "         Project identifiers were. Do not submit this as anonymous."
-fi
-
 for p in "${PATTERNS[@]}"; do
   # `git grep` exits 1 when it finds NOTHING, and `set -o pipefail` propagates
   # that through the pipe, so under `set -e` a completely clean scrub aborted the
