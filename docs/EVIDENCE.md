@@ -16,8 +16,8 @@ a live model.
 
 ## What it measures
 
-Two tiers. The deterministic one needs no model, no key and no money, runs in
-seconds. Read it first.
+Two tiers. Read the deterministic one first: it runs in seconds and needs
+nothing you have to pay for.
 
 ```bash
 python -m benchmarks.bpl_sweep --suite full

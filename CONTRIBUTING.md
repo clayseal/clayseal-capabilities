@@ -90,8 +90,8 @@ whenever ruff releases. Style opinions are deliberately not gated. Line
 length is checked by eye.
 
 Prose in docstrings, docs, and commit messages: write plainly and state the
-finding. No marketing adjectives, no hedging, and no restating in three parallel
-clauses what one clause says. The commit log is a record of what was measured and
+finding. No marketing adjectives, and no restating in three parallel clauses what one
+clause says. The commit log is a record of what was measured and
 what changed, so a commit message that says what the change is worth more than
 one that says what files it touched.
 
