@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-2900%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-3300%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![PyPI](https://img.shields.io/badge/pip-clayseal-orange.svg)](https://pypi.org/project/clayseal/)
 
 **A policy gateway for AI agents. It stops the attack where every single call
@@ -376,8 +376,7 @@ frame. Tools outside the policy are also removed from the advertised catalog, so
 the agent does not plan around a tool it will then be refused.
 
 The syscall tier compiles an envelope's egress and path scope into a sandbox
-policy and takes back an unforgeable verdict stream
-([docs/ivisor_integration.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/ivisor_integration.md)). The reference backend
+policy and takes back an unforgeable verdict stream. The reference backend
 drives iVisor.
 
 **It catches one class nothing above it can.** A DNS tunnel encodes its payload

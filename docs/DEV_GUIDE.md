@@ -544,9 +544,9 @@ Swap the substrate by registering under the `agentauth.sandbox_backends` entry
 point group (or `register_plugin("sandbox_backends", name, obj)`) and resolving
 with `default_sandbox_backend(name)`.
 
-See [ivisor_integration.md](ivisor_integration.md) for the lowering table and
-the honest limits (subdomain narrowing, unenforced ports, `allow_all` refusal,
-why `data_export_bytes` still fails closed).
+The syscall tier lowers tool-level policy to a syscall boundary. Its honest
+limits are subdomain narrowing, unenforced ports, `allow_all` refusal, and why
+`data_export_bytes` still fails closed.
 
 ---
 
@@ -635,7 +635,6 @@ See [CHANGELOG.md](../CHANGELOG.md) for release notes.
 
 - [The policy document](POLICY.md)
 - [Threat model and key management](THREAT_MODEL.md)
-- [Syscall-level enforcement](ivisor_integration.md)
 - [cross_layer_integration.md](cross_layer_integration.md)
 - [Privacy and data handling](PRIVACY.md)
 - [Benchmark methodology and results](../benchmarks/README.md)

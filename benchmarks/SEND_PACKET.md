@@ -1,4 +1,11 @@
-# Clay Seal Capabilities, security-buyer send packet
+# The claim board: what may be said about these results, and what may not
+
+Every number this project publishes has a status and a caveat, and this file is
+where both live. Nothing here is marketing copy. It exists because the failure
+this work keeps finding is not dishonesty, it is a number written under deadline
+outliving the caveat written beside it, so the caveat is kept in the same place
+as the permission to quote the number. `benchmarks/check_claims.py` is the
+runnable half.
 
 Status enum: `ready` · `partial` · `blocked`. A claim is only citable when its
 status is `ready` and its caveat is attached. This is the MITRE-style honesty

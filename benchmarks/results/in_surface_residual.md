@@ -105,7 +105,7 @@ the entailment judge as a floor.
 
 A third mechanism exists and is out of scope for a lexical gateway: enforcing at
 the syscall boundary, where the kernel resolves the path and there is no command
-to parse. `docs/ivisor_integration.md` covers that direction. It would close the
+to parse. Enforcement at the syscall boundary covers that direction. It would close the
 `Bash` half of this residual and it does not help the AgentHarm half at all,
 because a search that is reconnaissance issues the same syscalls as a search
 that is work.

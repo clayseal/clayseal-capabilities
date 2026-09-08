@@ -167,6 +167,19 @@ def render_md(result: dict) -> str:
         + (f"; {result['n_non_events']} excluded as non-events)."
            if result["n_non_events"] else ")."),
         "",
+        # EMITTED, not hand-written. This paragraph lived in the .md only, so
+        # re-running the generator silently deleted it and `check_claims` caught
+        # a containment figure with no cost column. That is precisely the failure
+        # the linter exists for: a number outliving the caveat beside it. A
+        # caveat that a regeneration can erase is not attached to the number.
+        "**This tier has no benign arm, so it reports no false-block rate, and a "
+        "pass rate\non its own is not a containment result.** The replay carries "
+        "captured attack\ntraces only. There is no corpus of ordinary activity "
+        "here to be wrongly refused,\nso the cost side of this number is not "
+        "small, it is *unmeasured*. Read it as\n\"the evaluator agreed with the "
+        "trace on 6 of 6 events it could see\", and take the\ncost column from "
+        "the tiers that have one.",
+        "",
         "## The two layers catch different things",
         "",
         "The `iVisor deny` and `Clay deny` columns are the point of this table,",
