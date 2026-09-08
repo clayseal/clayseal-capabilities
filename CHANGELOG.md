@@ -7,6 +7,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-09-08
+
+### Fixed: the wheel pointed users at a directory that no longer exists
+
+`clayseal howto` told an agent not to start in `paper/`. `paper/` was removed
+from this repository, so the guidance named something a reader could not find.
+It now names `benchmarks/` and `demo/`, which do exist and are still not the
+product.
+
+### Changed: the logo is drawn rather than typed
+
+The banner seal was six punctuation marks pretending to be a curve. It is now
+rasterised onto the braille dot grid by `scripts/render_seal.py`, which draws
+the head as an ellipse and the eyes, nose and whiskers as shapes, so the art in
+the README picture and the art the command prints are the same art.
+
 ## [0.6.0] - 2026-09-06
 
 ### Added: `clayseal howto` and `clayseal skill`, so an agent can deploy it without a checkout

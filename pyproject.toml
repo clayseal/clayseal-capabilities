@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clayseal"
-version = "0.6.0"
+version = "0.6.1"
 description = "MCP gateway and Python guardrail that authorizes agent tool calls against a session policy. Stops prompt injection and aggregate attacks that per-call checks miss."
 readme = "README.md"
 license = { text = "MIT" }
