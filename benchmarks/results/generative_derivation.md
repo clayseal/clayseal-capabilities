@@ -113,14 +113,41 @@ policy does badly. Refutation against known-good traffic is what converts the
 second into something closer to the first, because a rule the operator's own
 traffic contradicts is removed before it can refuse anything.
 
+## The completion column, measured instead of assumed
+
+Every `+refuted` arm had the same hole and every results file said so: a
+scenario's only known-good trace is its own benign twin, so the traffic that
+refutes a rule is then the traffic scored, and the completion column could not
+fall. Containment was never affected, because refutation does not see attacks,
+but "no benign cost" was an identity rather than a measurement, and the joint
+metric exists precisely to stop that.
+
+There is no second trace per catalogue, so the holdout is temporal:
+`--refute-holdout` refutes on the FIRST HALF of the benign twin and scores all of
+it. A rule that only fires late is never refuted and can still cost a completion.
+
+| arm | refute on all (circular) | refute on prefix (holdout) |
+| --- | --- | --- |
+| `product` | 78 / 130 / 76 | 78 / 130 / 76 |
+| `product+all` | 90 / 130 / **88** | 90 / **128** / **88** |
+| `product+generative` | 90 / 130 / **88** | 90 / **128** / **88** |
+
+**The circularity was worth two benign completions and no joint.** Completion
+falls to 128 on `sterile-phase-nonessential` and `bid-rotation-cartel`, and both
+were uncontained anyway, so neither ever counted toward the joint score.
+Containment is unmoved at 90, which is what refutation never seeing an attack
+predicts.
+
+This is a weaker holdout than separate traffic would be, and it is the strongest
+one 132 catalogues with one benign trace each admit. What it establishes is
+narrow and worth having: the headline does not depend on the circular half.
+
 ## What may not be quoted
 
-**Completion 130 is guaranteed by construction on the refuted arms.** The only
-known-good trace for a scenario is its own benign twin, so the traffic that
-refutes the rules is then the traffic scored. Containment is honest, because
-refutation never sees an attack. A deployment validates against its own logs and
-afterwards serves different traffic, so it does not inherit this, but this suite
-cannot measure that and does not claim to.
+**Completion 130 is an identity on the refuted arms, and 128 is the measured
+number.** See the holdout above: refuting on a prefix and scoring the whole trace
+costs two completions and no joint. Quote 128 when the completion column is doing
+work in an argument.
 
 **The one regression is real.** `two-person-rule-bypass` is contained by the
 lexical arm and not by the generative one: its clause compiles a gated act and no

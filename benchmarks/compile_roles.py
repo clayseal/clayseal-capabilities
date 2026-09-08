@@ -57,7 +57,6 @@ import urllib.error
 import urllib.request
 
 from benchmarks._http import post_json
-
 from clayseal.capabilities.compile import (
     DUTY_SYSTEM,
     RULES_SYSTEM,

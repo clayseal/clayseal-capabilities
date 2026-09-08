@@ -61,7 +61,7 @@ have read as the largest single improvement in this work; it is the second-worst
 column on the board, behind only `deny-all`. **A gateway that treats every read
 as secret and every write as a leak is a gateway nobody can deploy**, which is
 the same finding the LLM-monitor baseline produced from the other direction
-(93.9% containment at 3.0% completion).
+(81.1% containment at 22.0% completion).
 
 ## What this does and does not settle
 

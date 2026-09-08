@@ -4,8 +4,11 @@ STATUS: SUPERSEDED. Every number below was produced with an EMPTY task
 description, because the harness read `scen.prompt` where the field is
 `user_prompt`. The monitor judged each call knowing nothing about the task and
 blocked a median of 14 benign calls per scenario. Re-measured correctly it
-contains 25 of 132 at 108 completed, joint 7, and catches 3 of the 57 attacks
-this stack misses. Kept for the record; do not cite the figures below.
+contains 107 of 132 at 29 completed, joint 22. BOTH earlier figures on this
+page are wrong: the 93.9% table below came from a run with a degraded backend,
+and the 25/108/7 correction that replaced it came from a second one, with 3,765
+of 4,727 calls errored. An errored call ALLOWS, so both runs scored the monitor
+as closer to allow-all than it is.
 
 ```bash
 export AZURE_OPENAI_ENDPOINT=... AZURE_OPENAI_KEY=...
@@ -32,14 +35,16 @@ re-spending.
 | arm | containment | completion | **joint** |
 | --- | ---: | ---: | ---: |
 | deny-all | 100% (132/132) | 0 of 132 | 0 of 132 |
-| **llm-monitor** | **93.9% (124/132)** | **3.0% (4/132)** | **0.8% (1/132)** |
+| **llm-monitor** (degraded run, DO NOT CITE) | 93.9% (124/132) | 3.0% (4/132) | 0.8% (1/132) |
+| **llm-monitor** (full cache, 0 errored) | **81.1% (107/132)** | **22.0% (29/132)** | **16.7% (22/132)** |
 | per-call authorization | 0.8% (1/132) | 100% (132/132) | 0.8% (1/132) |
 | dataflow taint | 31.8% (42/132) | 62.9% (83/132) | 11.4% (15/132) |
 | **Clay Seal** | 40.9% (54/132) | 98.5% (130/132) | **39.4% (52/132)** |
 
 3,063 calls, 0 errored.
 
-**The monitor is very nearly a deny-all.** It contains 93.9% by refusing 97% of
+**The monitor trades most of the legitimate work for containment.** On the
+reproducible run it contains 81.1% by refusing 78% of
 legitimate work. Read the containment column alone and it ranks second only to
 deny-all and far above this gateway; read the pair and it is a system that
 stops the attack by stopping everything.
@@ -80,3 +85,10 @@ benign work, and the gap on the joint metric is nine scenarios to one.
 - **Per-call, not per-trajectory.** This monitor judges each action with the
   history in view. A monitor that reviews a completed trajectory and retracts
   cannot be scored on this harness, because the harness runs actions forward.
+- **One named task, not a binder.** The published row is a median 21-word
+  task. It often omits the ceiling the structured grant carries
+  (`payout-splitting` never names $15,000). Only 12 of 132 scenarios have a
+  declared `Policy` object. That is not how security policy is written. The
+  production exam is `CLAYSEAL_MONITOR_BINDER` (a handbook of many documents)
+  or tau2's `policy.md` compiled at seal time, where automatic extraction binds
+  10 of 61 rule-shaped sentences. Neither is this table.

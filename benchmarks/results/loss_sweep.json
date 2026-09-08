@@ -1,0 +1,92 @@
+[
+  {
+    "n": 132,
+    "contained": 90,
+    "completed": 130,
+    "both": 88,
+    "contained_ci": "68.2% [59.8%, 75.5%]",
+    "completed_ci": "98.5% [94.6%, 99.6%]",
+    "both_ci": "66.7% [58.3%, 74.1%]",
+    "relative_loss": 0.0,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 0,
+      "p": 1.0
+    }
+  },
+  {
+    "n": 132,
+    "contained": 90,
+    "completed": 130,
+    "both": 88,
+    "contained_ci": "68.2% [59.8%, 75.5%]",
+    "completed_ci": "98.5% [94.6%, 99.6%]",
+    "both_ci": "66.7% [58.3%, 74.1%]",
+    "relative_loss": 0.02,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 0,
+      "p": 1.0
+    }
+  },
+  {
+    "n": 132,
+    "contained": 90,
+    "completed": 129,
+    "both": 87,
+    "contained_ci": "68.2% [59.8%, 75.5%]",
+    "completed_ci": "97.7% [93.5%, 99.2%]",
+    "both_ci": "65.9% [57.5%, 73.4%]",
+    "relative_loss": 0.05,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 1,
+      "p": 1.0
+    }
+  },
+  {
+    "n": 132,
+    "contained": 91,
+    "completed": 125,
+    "both": 85,
+    "contained_ci": "68.9% [60.6%, 76.2%]",
+    "completed_ci": "94.7% [89.5%, 97.4%]",
+    "both_ci": "64.4% [55.9%, 72.0%]",
+    "relative_loss": 0.1,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 3,
+      "p": 0.25
+    }
+  },
+  {
+    "n": 132,
+    "contained": 93,
+    "completed": 118,
+    "both": 80,
+    "contained_ci": "70.5% [62.2%, 77.6%]",
+    "completed_ci": "89.4% [83.0%, 93.6%]",
+    "both_ci": "60.6% [52.1%, 68.5%]",
+    "relative_loss": 0.2,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 8,
+      "p": 0.0078125
+    }
+  },
+  {
+    "n": 132,
+    "contained": 93,
+    "completed": 115,
+    "both": 77,
+    "contained_ci": "70.5% [62.2%, 77.6%]",
+    "completed_ci": "87.1% [80.3%, 91.8%]",
+    "both_ci": "58.3% [49.8%, 66.4%]",
+    "relative_loss": 1.0,
+    "vs_zero": {
+      "gains": 0,
+      "losses": 11,
+      "p": 0.0009765625
+    }
+  }
+]

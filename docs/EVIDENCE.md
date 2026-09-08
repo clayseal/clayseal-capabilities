@@ -48,7 +48,7 @@ throughout: at n=132 a zero has a 97.5% upper bound of 2.8%, and at n=12 it is
 | refuse everything | 0/12, 97.5% upper bound 26.5% | 0/24, 97.5% upper bound 14.2% | 0/132, 97.5% upper bound 2.8% |
 | per-call authorization, given the policy | 8.3% (1/12) | 0/24, 97.5% upper bound 14.2% | 0.8% (1/132) |
 | dataflow taint | 0/12, 97.5% upper bound 26.5% | 8.3% (2/24) | 11.4% (15/132) |
-| LLM monitor (`gpt-4.1-mini`, full trajectory) | 0 of 12 | — | 0.8% (1/132) |
+| LLM monitor (`gpt-4.1-mini`, full trajectory) | 16.7% (2/12) | — | 16.7% (22/132) |
 | **Clay Seal** | **75.0% (9/12)** | **41.7% (10/24)** | **39.4% (52/132)** |
 
 **Read 39.4% as an average over two different cases, not as a rate.** Where the
@@ -58,17 +58,27 @@ your own policy, so it is a condition you can check and not a rate you have to
 accept. [The split is below](#when-it-works-and-when-it-does-not).
 
 **The LLM monitor is the row to read twice.** Shown the same policy, the same
-history and the same proposed call, it contains **93.9%** of the attacks — second
-only to refusing everything, and far above this gateway's 40.9%. It does that by
-refusing **97% of the legitimate work**: 4 of 132 benign twins complete. On the
-conjunction it scores 1. A stronger model (`gpt-4.1`) over-blocks less, doubling
-completion at identical containment, and still scores 1 of 12 on the core set
-where the gateway scores 9
-([llm_monitor_baseline.md](../benchmarks/results/llm_monitor_baseline.md)).
+history and the same proposed call, it contains **81.1%** of the attacks, twice
+this gateway's 40.9%. It does that by refusing **78% of the legitimate work**: 29
+of 132 benign twins complete, against this gateway's 130. On the conjunction it
+scores 22 against 52.
 
 That is the argument for scoring the conjunction rather than containment. A
-benchmark reporting containment alone would rank an unusable monitor above a
-deployable gateway, and not narrowly.
+benchmark reporting containment alone would rank the monitor first and this
+gateway a distant second; the pair is what reverses it. Reproduce both columns
+with no API key, from the answers committed in this repository:
+
+```bash
+python -m benchmarks.bpl_sweep --suite full --conditions deny-all,llm-monitor,clayseal
+```
+
+It prints `0 new, 4727 cached, 0 errored`. Read the errored count: an errored
+call ALLOWS, so a run with a degraded backend scores the monitor as a near
+allow-all and flatters this gateway. An earlier version of this page quoted
+93.9% containment at 4 completions from exactly such a run, and the correction
+that replaced it quoted a second degraded run, 3,765 of 4,727 calls errored.
+Both are wrong and the numbers above supersede them
+([llm_monitor_baseline.md](../benchmarks/results/llm_monitor_baseline.md)).
 
 Per-call authorization scores 1 of 132, and the one it scores is the one worth
 understanding. `bulk-exfil`'s rule is a recipient allowlist, decidable from a

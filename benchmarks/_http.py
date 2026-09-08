@@ -35,7 +35,7 @@ from __future__ import annotations
 import urllib.error
 import urllib.request
 
-__all__ = ["post_json", "RedirectRefused"]
+__all__ = ["RedirectRefused", "post_json"]
 
 
 class RedirectRefused(urllib.error.URLError):
@@ -54,7 +54,7 @@ class RedirectRefused(urllib.error.URLError):
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     """Refuse every redirect rather than re-sending the auth header."""
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise RedirectRefused(code, newurl)
 
 
@@ -71,6 +71,7 @@ def post_json(url: str, *, data: bytes, headers: dict[str, str], timeout: float)
     """
     if not url.startswith("https://"):
         raise RuntimeError(f"refusing to send a credential over non-https: {url!r}")
-    req = urllib.request.Request(url, data=data, headers=headers)
-    # Scheme is pinned above, which is what S310 asks for.
-    return _OPENER.open(req, timeout=timeout)  # noqa: S310
+    # Scheme is pinned to https immediately above, which is what S310 asks for,
+    # and the opener refuses redirects so it cannot be moved off https later.
+    req = urllib.request.Request(url, data=data, headers=headers)  # noqa: S310
+    return _OPENER.open(req, timeout=timeout)

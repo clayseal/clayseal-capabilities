@@ -31,8 +31,9 @@ def _as_post_json(fake):
     only moves the patch to the seam the code actually uses.
     """
     def post_json(url, *, data, headers, timeout):
-        return fake(urllib.request.Request(url, data=data, headers=headers),
-                    timeout=timeout)
+        # Never opened: the fake returns a canned response object.
+        req = urllib.request.Request(url, data=data, headers=headers)  # noqa: S310
+        return fake(req, timeout=timeout)
     return post_json
 
 

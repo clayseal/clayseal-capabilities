@@ -50,12 +50,12 @@ The monitor judged every call knowing nothing about what the agent was supposed
 to be doing, so it blocked a median of 14 benign calls per scenario and its
 "containment" was refusal.
 
-Re-measured with the task description, the monitor contains **25 of 132** at 108
-completed, and **of the 57 attacks this stack misses it catches 3**. The claim
-this section rested on is withdrawn. Whether the residual is a representation gap
-is now an open question, and the evidence available points the other way: a
-capable model reasoning in natural language over the same trajectory finds
-almost none of what we miss.
+Re-measured against the full committed answer cache, with **0 errored calls**,
+the monitor contains **107 of 132 (81.1%)** at **29 completed**, joint **22**.
+That supersedes both earlier figures on this page. Reproduce with no API key:
+`python -m benchmarks.bpl_sweep --suite full --conditions deny-all,llm-monitor,clayseal`,
+and read the errored count it prints: an errored call ALLOWS, so a degraded
+backend scores the monitor as a near allow-all.
 
 Losses are concentrated:
 
