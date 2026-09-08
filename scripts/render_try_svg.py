@@ -126,7 +126,7 @@ def render(text: str) -> str:
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:.0f}" height="{h:.0f}" '
         f'viewBox="0 0 {w:.0f} {h:.0f}" font-family="ui-monospace, SFMono-Regular, '
-        f'Menlo, Consolas, monospace" font-size="13.4">',
+        f'Menlo, DejaVu Sans Mono, Consolas, monospace" font-size="13.4">',
         f'<rect width="{w:.0f}" height="{h:.0f}" rx="10" fill="{BG}"/>',
         f'<rect width="{w:.0f}" height="34" rx="10" fill="{CHROME}"/>',
         f'<rect y="24" width="{w:.0f}" height="10" fill="{CHROME}"/>',
