@@ -314,9 +314,13 @@ the measurements below show it is what decides whether this helps you.
 
 ## What it measures
 
-One command, no model, no key, no network, a few seconds:
+The scenarios and the sweep live in the repository rather than the wheel, so
+this needs a clone. It takes about ten seconds and reaches no network:
 
 ```bash
+git clone https://github.com/clayseal/clayseal-capabilities.git
+cd clayseal-capabilities
+pip install -e .
 python -m benchmarks.bpl_sweep --suite full
 ```
 

@@ -107,3 +107,32 @@ def test_the_readme_does_not_load_a_checkout_only_policy() -> None:
     body = README.read_text()
     assert 'load_policy("examples/' not in body
     assert 'from_policy_file("examples/' not in body
+
+
+def test_readme_commands_that_need_a_clone_show_the_clone() -> None:
+    """The fourth bug of this shape, and the first one in a shell block.
+
+    The README told readers to run `python -m benchmarks.bpl_sweep` a few lines
+    under `pip install clayseal`. `benchmarks/` is in the repository and not in
+    the wheel, so the command every visitor was invited to reproduce the
+    headline with raised ModuleNotFoundError for anyone who had followed the
+    install instruction. The existing tests here did not see it because they
+    read the CLI's output and the README's links, not the commands.
+
+    So: any fenced block invoking a module that only exists in a checkout has to
+    contain the `git clone` that puts it there.
+    """
+    blocks = re.findall(r"```(?:bash|sh|console)\n(.*?)```", README.read_text(), re.DOTALL)
+    assert blocks, "README lost its shell blocks"
+
+    repo_only_modules = {p.rstrip("/") for p in REPO_ONLY}
+    offenders = []
+    for block in blocks:
+        invoked = re.findall(r"python\d?\s+-m\s+([\w.]+)", block)
+        needs_clone = [m for m in invoked if m.split(".")[0] in repo_only_modules]
+        if needs_clone and "git clone" not in block:
+            offenders.append((needs_clone, block.strip().splitlines()[0]))
+
+    assert not offenders, (
+        "README shell blocks run checkout-only modules without showing the "
+        f"clone that provides them: {offenders}")

@@ -19,7 +19,7 @@
 <text x="22" y="272.0" xml:space="preserve"><tspan fill="#d29a72">    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢷⣤⣀⠀⠀⠀⠀⠀⠀⣀⣤⡾⠋</tspan></text>
 <text x="22" y="292.0" xml:space="preserve"><tspan fill="#d29a72">    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠛⠛⠿⠿⠛⠛⠋⠁</tspan></text>
 <text x="22" y="332.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d8d4cf" font-weight="600">Clay Seal</tspan><tspan fill="#d8d4cf">  </tspan><tspan fill="#8d8880">a policy gateway for AI agents</tspan></text>
-<text x="22" y="372.0" xml:space="preserve"><tspan fill="#d8d4cf">  Two attacks, about a minute, nothing installed and nothing sent.</tspan></text>
+<text x="22" y="372.0" xml:space="preserve"><tspan fill="#d8d4cf">  Two attacks in a few seconds, nothing installed and nothing sent.</tspan></text>
 <text x="22" y="392.0" xml:space="preserve"><tspan fill="#d8d4cf">  Every verdict below is decided live by the real gateway.</tspan></text>
 <text x="22" y="432.0" xml:space="preserve"><tspan fill="#8d8880">  ──────────────────────────────────────────────────────────────────────────</tspan></text>
 <text x="22" y="452.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d8d4cf" font-weight="600">1. Eleven calls that are each allowed</tspan></text>
@@ -61,7 +61,7 @@
 <text x="22" y="1492.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal policy init -- npx @your-org/mcp-server</tspan></text>
 <text x="22" y="1512.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">only if you already run an MCP server</tspan></text>
 <text x="22" y="1552.0" xml:space="preserve"><tspan fill="#d8d4cf">  </tspan><tspan fill="#d29a72">clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server</tspan></text>
-<text x="22" y="1572.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">MCP only — Python tools use wrap_all (howto)</tspan></text>
+<text x="22" y="1572.0" xml:space="preserve"><tspan fill="#d8d4cf">      </tspan><tspan fill="#8d8880">MCP only. Python tools use wrap_all (howto)</tspan></text>
 <text x="22" y="1612.0" xml:space="preserve"><tspan fill="#8d8880">  Where it works and where it does not:</tspan></text>
 <text x="22" y="1632.0" xml:space="preserve"><tspan fill="#8d8880">  https://github.com/clayseal/clayseal-capabilities/blob/main/docs/EVIDENCE.md</tspan></text>
 </svg>

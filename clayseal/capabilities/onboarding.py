@@ -124,7 +124,7 @@ def _hello(screen: Screen) -> None:
     screen.say(f"  {screen.paint('Clay Seal', BOLD)}"
                f"  {screen.paint('a policy gateway for AI agents', DIM)}")
     screen.say()
-    screen.say("  Two attacks, about a minute, nothing installed and nothing sent.")
+    screen.say("  Two attacks in a few seconds, nothing installed and nothing sent.")
     screen.say("  Every verdict below is decided live by the real gateway.")
     screen.say()
 
@@ -320,7 +320,7 @@ def _what_now(screen: Screen) -> None:
     screen.say(f"      {screen.paint('only if you already run an MCP server', DIM)}")
     screen.say()
     screen.say(f"  {screen.paint('clayseal proxy --policy policy.yaml -- npx @your-org/mcp-server', CLAY)}")
-    screen.say(f"      {screen.paint('MCP only — Python tools use wrap_all (howto)', DIM)}")
+    screen.say(f"      {screen.paint('MCP only. Python tools use wrap_all (howto)', DIM)}")
     screen.say()
     # A repo-relative path, printed by a command someone installed from PyPI,
     # names a file they do not have. It is the same mistake the README made
