@@ -150,7 +150,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - run: pip install ruff
+      # PINNED. `pip install ruff` takes whatever is newest, so a ruff release
+      # that adds a rule turns main red with no commit of ours in between, and
+      # it also means a contributor's local ruff disagrees with the gate. This
+      # job went red exactly that way: 0.16.5 locally passed what 0.16.6 in CI
+      # failed. Bump it deliberately, in a commit that also fixes whatever the
+      # new version finds.
+      - run: pip install ruff==0.16.6
       # The whole repository, not just the shipped package.
       #
       # This used to be `ruff check clayseal`, on the reasoning that the

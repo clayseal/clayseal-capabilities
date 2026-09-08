@@ -167,9 +167,9 @@ def _validated_ontology_uncached(scen):
     in validation ever sees an attack. A deployment validates against its own
     logs and then serves different traffic, so it does not inherit this.
     """
+    from benchmarks.precondition_rung import specs_for
     from clayseal.capabilities.monitor.ontology import ToolOntology
     from clayseal.capabilities.preconditions import refuted_by
-    from benchmarks.precondition_rung import specs_for
 
     specs = specs_for(scen)
     if not specs:
@@ -311,10 +311,7 @@ def _compiled_rules_for(scen):
     anyone calls this generative.
     """
     from benchmarks.compile_roles import compile_rules, load_cache, save_cache
-    from clayseal.capabilities.derivation import (
-        refuted_by_traffic,
-        rungs_from_compiled,
-    )
+    from clayseal.capabilities.derivation import refuted_by_traffic
 
     clause = getattr(scen.make_broker().goal, "summary", "") or ""
     if not clause.strip():
