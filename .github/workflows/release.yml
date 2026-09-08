@@ -26,7 +26,7 @@ on:
         required: true
         default: testpypi
         type: choice
-        options: [testpypi, pypi]
+        options: [testpypi, pypi, mcp-registry]
 
 jobs:
   # The tag is not evidence. Build first, and refuse to publish anything the
@@ -140,3 +140,45 @@ jobs:
       - uses: actions/download-artifact@v4
         with: {name: dist, path: dist/}
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # The MCP Registry is metadata only: it points at the PyPI package, so it can
+  # only run after that package exists. Same trust model as the upload above,
+  # an OIDC identity exchanged for a short-lived token, no secret in the repo.
+  #
+  # Ownership is proved by an `mcp-name` token in the PyPI description, which
+  # for this project is README.md. If that token and server.json's `name`
+  # disagree, publishing fails here rather than shipping a wrong entry.
+  # Runs after `pypi` on a tag. `mcp-registry` as the dispatch target registers
+  # a release that is already on PyPI, without trying to upload it twice, which
+  # PyPI refuses.
+  mcp-registry:
+    needs: [build, pypi]
+    if: >-
+      always() && needs.build.result == 'success' &&
+      (needs.pypi.result == 'success' ||
+       (github.event_name == 'workflow_dispatch' && inputs.target == 'mcp-registry'))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # server.json carries a version of its own, and a stale one would register
+      # an entry pointing at a release that is not this one.
+      - name: server.json must name the version being released
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          jq -e --arg v "$TAG" '.version == $v and .packages[0].version == $v' server.json >/dev/null || {
+            echo "::error::server.json does not name $TAG"; jq '.version, .packages[0].version' server.json; exit 1; }
+
+      - name: Authenticate
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        run: ./mcp-publisher publish
