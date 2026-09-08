@@ -81,27 +81,41 @@ pip install --index-url https://test.pypi.org/simple/ \
 The extra index is needed because `cryptography` and `pyyaml` are not on
 TestPyPI.
 
-## Going public
+## Cutting a release
 
-The GitHub **Change repository visibility → Public** button publishes whatever
-is on `main` *and* the README's `pip install clayseal`. Press it last, not
-first.
+A tag is the whole release. Push `vX.Y.Z` and the workflow builds and uploads.
+The part that is easy to get wrong is what the tag *contains*.
 
-1. Land the product on `main`. CI (`lint`, `types`, `test`, `wheel`) green.
-2. Finish the one-time setup above (`pypi` / `testpypi` environments, trusted
-   publishers). The tag workflow cannot upload without them.
-3. Dry-run: **Actions → Release → `testpypi`**.
-4. Tag `v0.6.0` and push it **while the repository is still private**. Trusted
-   publishing works on a private repo.
-5. Confirm `pip install clayseal==0.6.0` from a clean machine, then yank
-   `0.1.2`.
-6. Then press Public.
+1. Land everything on `main` with CI (`lint`, `types`, `test`, `wheel`) green.
+2. Check what a `pip install` user would actually get:
 
-`paper/arxiv.tex` on this repository names the authors. Making the repo public
-is the same class of deanonymization as arXiv. ICLR allows arXiv; it does not
-un-publish GitHub history. If anonymity still matters, wait, or post the named
-version on arXiv first. Hiding the file on `main` does not remove it from git
-history.
+   ```bash
+   git diff <previous-tag>..main -- clayseal/ pyproject.toml
+   ```
+
+   Anything under `clayseal/` is shipped. 0.6.1 exists because 0.6.0 was tagged
+   before two such changes, so the wheel printed a different banner than the
+   README's picture and pointed readers at a directory that had been deleted.
+3. Bump `version` in `pyproject.toml` and add the `CHANGELOG.md` entry.
+4. Build and run the artifact in an empty virtualenv, not your dev one:
+
+   ```bash
+   python -m build --wheel --outdir /tmp/wheelcheck
+   python -m venv /tmp/vcheck && /tmp/vcheck/bin/pip install /tmp/wheelcheck/*.whl
+   /tmp/vcheck/bin/clayseal try --fast
+   ```
+
+   A dev checkout has the repository on `sys.path` and every dependency already
+   installed, so it cannot tell you whether the wheel declares what it needs.
+5. Tag, push the tag, and push `main`. Then confirm both refs moved:
+
+   ```bash
+   git ls-remote --heads origin
+   ```
+
+   `git push origin <branch> main` will happily push `main` at its old commit
+   if you forgot to fast-forward it, and says nothing.
+6. Install from PyPI on a clean machine and run it once.
 
 ## What the workflow checks before it uploads
 

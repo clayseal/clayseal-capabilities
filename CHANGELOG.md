@@ -2602,8 +2602,8 @@ tests exercised the shapes their author had in mind.
 - **The syscall tier says what it costs.** The README's most differentiating
   claim linked to a repository that returns 404, and the path is macOS only by
   construction. The seam, the reference backend and the gap are now each named.
-- Internal memos moved from `docs/` to `notes/`, with a README saying they are a
-  record rather than documentation. An investor memo shipping beside a developer
+- Internal memos moved out of `docs/`, with a README saying they are a record
+  rather than documentation. A business document shipping beside a developer
   guide reads as an accident.
 - The committed 182 MB virtualenv (`.venv-h2h`, 7,474 of 8,280 tracked files) is
   untracked and `.gitignore` covers `.venv*/`. Removing it from history is a

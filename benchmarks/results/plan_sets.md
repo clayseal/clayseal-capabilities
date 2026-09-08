@@ -62,7 +62,7 @@ request contains the breach. **No distance metric over plans conditioned on the
 task can flag a violation that the task endorses**, whatever the generator, K, or
 feature set. That is a property of the setup and not of this implementation.
 
-This is the sycophancy path the paper's introduction describes, in its purest
+This is the sycophancy path described in the introduction above, in its purest
 form: the agent is not deviating, and the instruction is the problem.
 
 ## Where it does work, and what is untested

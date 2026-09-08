@@ -82,8 +82,8 @@ python -m benchmarks.live.bpl_live --scenario payout-splitting \
   --runs 8 --seed 0
 
 # The frozen leaderboard set
-./scripts/paper/run_bpl_core_h2h.sh
-# or: RUNS=100 SUITE=core ./scripts/paper/run_bpl_core_h2h.sh
+./scripts/run_bpl_core_h2h.sh
+# or: RUNS=100 SUITE=core ./scripts/run_bpl_core_h2h.sh
 ```
 
 ### Sample size and seeds

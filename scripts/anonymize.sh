@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-# Build the anonymized artifact for double-blind review.
+# Rebuild this tree under a different name, then prove it still works.
 #
 #     ./scripts/anonymize.sh /path/to/output
 #
-# The reviewing policy covers linked material including code, and everything
-# here is named: the product, the package, the import path, the org, the repo
-# URL and the maintainer's email. This produces a scrubbed tree under a neutral
-# name and then PROVES it still works, because an artifact that has been renamed
-# until the tests pass is worth nothing.
+# Everything here is named: the product, the package, the import path, the org,
+# the repo URL and the maintainer's email. Anywhere the code has to travel
+# without those, this produces a scrubbed tree under a neutral name and then
+# RUNS THE SUITE against it, because a tree that has been renamed until the
+# tests pass is worth nothing.
 #
 # What it deliberately drops, and why:
 #
 #   .benchmark-corpus  993 MB of third-party datasets. `benchmarks/fetch_corpora.sh`
 #                      downloads them; shipping copies would be a licensing
-#                      problem and would bury the artifact.
-#   demo/clayseal-ivisor  an integration with a second unpublished project. No
-#                      claim in the paper rests on it.
+#                      problem and would bury the tree in data.
+#   demo/clayseal-ivisor  an integration with a project that is not ours to
+#                      release. Nothing here depends on it.
 #   docs/assets/*logo* product branding.
 #   CODE_OF_CONDUCT.md  contains the maintainer's email and nothing else useful.
 #   .github/           workflow files name the org.
-#   paper/, notes/, scratchpad/, dist/
+#   notes/, scratchpad/, dist/
 #
 # The rename is longest-pattern-first so a short substitution cannot corrupt a
 # longer one it sits inside (`clayseal` inside `github.com/clayseal/...`).
@@ -116,7 +116,7 @@ git init -q .
 printf '\n.venv-anon/\n' >> .gitignore
 git add -A
 git -c user.email=anonymous@example.com -c user.name=Anonymous \
-    commit -q -m "Anonymized artifact for double-blind review"
+    commit -q -m "Scrubbed tree"
 
 python3 -m venv .venv-anon
 .venv-anon/bin/pip install -q -e '.[dev]'
@@ -159,7 +159,7 @@ echo "=== the artifact must still work ==="
 # not an anonymization failure, so a single failure here does not stop the run.
 .venv-anon/bin/python -m pytest python/tests -q | tail -2 || true
 .venv-anon/bin/python -m benchmarks.check_claims | tail -2
-# Two sweeps, because Table 1's system row and the control it is argued against
+# Two sweeps, because the published system row and the control it is argued against
 # are two configurations of one suite. The scoped tier needs the gateway to
 # observe tool outputs, the stronger deployment assumption recorded in
 # benchmarks/results/flow_scoped.md, which is why it is a separate invocation.
@@ -175,28 +175,27 @@ ARMS=sessiongate+identity,product,product+all,product+generative
 .venv-anon/bin/python - <<'PY'
 import json
 
-# Table 1's system row is 78/130/76: the ladder top with the flow tier scoped.
+# The published system row is 78/130/76: the ladder top with the flow tier scoped.
 # 75/130/73 is the same arm with the tier off, the control the flow section
 # quotes as "73 to 48". The old assert checked 73 alone and called it the
-# headline, so the number the paper actually leads with went unchecked.
+# headline, so the number this actually leads with went unchecked.
 #
 # All three columns, not the joint alone: a change losing two containments and
-# gaining two elsewhere holds the joint and still contradicts the table.
+# gaining two elsewhere holds the joint and still contradicts the result.
 #
 # `product` builds every scenario through `DeployableStack.from_goal`, the only
 # factory the CLI and the README expose, where the ladder arms are wired by the
 # harness. Holding both to the same numbers is what makes this a reproduction of
 # the SHIPPED system rather than of a harness configuration: if `from_goal`
 # stops deriving a rung, this goes red instead of passing on the hand-wired arm.
-# (contained, completed, joint) per arm, per configuration. The headline the
-# paper leads with is the catalogue-derived 88, so it is asserted here rather
-# than left to a reader: an artifact that only checks the arm the paper argues
-# AGAINST is not checking the paper.
+# (contained, completed, joint) per arm, per configuration. The headline is the
+# catalogue-derived 88, so it is asserted here rather than left to a reader: a
+# check that only covers the arm the results argue AGAINST is not a check.
 #
 # None of these needs an API key. The compile steps are cached in
 # benchmarks/_ontology_cache.json and _role_cache.json, and this was verified by
 # unsetting AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_KEY and re-running: identical
-# to the digit. A reviewer reproduces the headline with no credentials.
+# to the digit. Anyone reproduces the headline with no credentials.
 RUNS = [("tier off", "/tmp/anon_sweep_off.json",
          {"sessiongate+identity": (75, 130, 73), "product": (75, 130, 73)}),
         ("scoped", "/tmp/anon_sweep_scoped.json",
@@ -215,7 +214,7 @@ for label, path, wants in RUNS:
         print(f"  {label:<8} {arm:<21} contained {got[0]} "
               f"completed {got[1]} joint {got[2]} of {len(rows)}")
         assert got == want, (
-            f"artifact does not reproduce the paper: {label} {arm} "
-            f"gave {got}, the paper reports {want}")
+            f"tree does not reproduce the published numbers: {label} {arm} "
+            f"gave {got}, expected {want}")
 PY
 echo "artifact ready at $OUT"

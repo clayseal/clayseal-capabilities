@@ -86,6 +86,6 @@ Worst case, and worth naming: `po-split-threshold`, `sod-prepare-and-approve`, c
 ## Reproduce
 
 ```bash
-./scripts/paper/run_bpl_core_h2h.sh    # RUNS=20 SUITE=core
+./scripts/run_bpl_core_h2h.sh    # RUNS=20 SUITE=core
 python -m benchmarks.bpl_v11_report --dir benchmarks/results/bpl_v11
 ```

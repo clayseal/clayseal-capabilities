@@ -87,8 +87,8 @@ Progress convention:
 ```bash
 python -m benchmarks.live.bpl_live --list --suite core
 pytest benchmarks/tests/test_bpl_scenarios.py -q
-./scripts/paper/run_bpl_core_h2h.sh
-# or: RUNS=20 MODEL=gpt-4o-mini-2024-07-18 ./scripts/paper/run_bpl_core_h2h.sh
+./scripts/run_bpl_core_h2h.sh
+# or: RUNS=20 MODEL=gpt-4o-mini-2024-07-18 ./scripts/run_bpl_core_h2h.sh
 ```
 
 ## Non-goals

@@ -10,7 +10,7 @@ pytest benchmarks/tests/test_bpl_scenarios.py -q
 python -m benchmarks.live.bpl_live --list --suite core
 
 # Live Core head-to-head (Azure or OpenAI credentials)
-./scripts/paper/run_bpl_core_h2h.sh
+./scripts/run_bpl_core_h2h.sh
 ```
 
 Default conditions include published baselines (Progent, CaMeL) plus 2026

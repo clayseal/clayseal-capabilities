@@ -49,7 +49,7 @@ binding work only where the tool name happened to carry the key's word, so a
 matching closes all three at no cost on the suite. The suite hid the gap because
 every tool in it is named after the thing it pays.
 
-Neither remaining escape is fixed, and both are in the paper's limitations.
+Neither remaining escape is fixed, and both are stated limitations.
 
 ## The experiment found an ordering bug in our own rung
 

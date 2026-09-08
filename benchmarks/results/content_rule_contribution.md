@@ -49,7 +49,7 @@ thing deciding.
 comes from the 27 structural rules and none from the cues. Every point on
 AgentHarm comes from the cues and none from the structural rules. Neither half
 transfers to the other corpus. On BPL the pack was **invoked 54 times and fired
-0**, so it contributes nothing to any number in the paper's Table 1.
+0**, so it contributes nothing to any published number.
 
 A rule that earns 19.7 points on the corpus it was written against and 0.0 on the
 next corpus over is not a defence. It is a record of what somebody already saw.
@@ -83,11 +83,10 @@ body whenever the word is absent from the sealed goal, and a pharmacy, a
 compliance team and a demolition contractor all write those words in the ordinary
 course of business.
 
-## What this does to the paper
+## What this does to the published figures
 
-`paper/body.tex` reports SLEIGHT at 31.0% and AgentHarm at 6.3% as evidence of
-where the mechanism does **not** work. Those numbers were produced with the pack
-on, so the honest reading is that the true out-of-the-box figure on unlike
-traffic is lower still, and the limitation the paper states is understated rather
-than overstated. That is the safe direction, and it should be said rather than
-left for a reader to find.
+SLEIGHT at 31.0% and AgentHarm at 6.3% are reported as evidence of where the
+mechanism does **not** work. Those numbers were produced with the pack on, so the
+honest reading is that the true out-of-the-box figure on unlike traffic is lower
+still, and the stated limitation is understated rather than overstated. That is
+the safe direction, and it should be said rather than left for a reader to find.

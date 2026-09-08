@@ -52,8 +52,8 @@ this cannot silently come apart again.
 
 `product` is at exact parity with the hand-wired ladder, +0 / -0.
 
-With the scoped flow tier, the configuration Table 1 of the paper reports, the
-`product` arm is **78 / 130 / 76**, matching that table row for row, and the
+With the scoped flow tier, which is the published configuration, the
+`product` arm is **78 / 130 / 76**, matching it row for row, and the
 catalogue-derived rungs take it to **90 / 130 / 88**
 ([role_binding.md](role_binding.md)).
 

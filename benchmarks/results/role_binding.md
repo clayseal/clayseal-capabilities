@@ -12,7 +12,7 @@ python -m benchmarks.bpl_sweep --suite full --confidentiality scoped \
 
 [generalizing_derivation.md](generalizing_derivation.md) records route 1 as dead:
 `"approver"` resolves to the drafting tool in **6 of 6** configurations, so the
-rungs stay lexical. `paper/body.tex` reproduces that conclusion.
+rungs stay lexical.
 
 Read the setup before inheriting it. Those six cells are two bi-encoders from one
 MiniLM family, both under 22M parameters, compared by cosine similarity across

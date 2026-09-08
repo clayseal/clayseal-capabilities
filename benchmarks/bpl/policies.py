@@ -3,7 +3,7 @@
 Kept here rather than inside each scenario builder for three reasons.
 
 **A reviewer can read the whole leaderboard's rules on one screen.** That is the
-table the paper prints, and a rule buried in a closure three modules away is a
+table this benchmark prints, and a rule buried in a closure three modules away is a
 rule nobody checks.
 
 **The oracle and the policy stay independently written.** If the policy were

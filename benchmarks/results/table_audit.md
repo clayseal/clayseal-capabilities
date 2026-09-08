@@ -399,7 +399,7 @@ figures are our own code, our own ablations, or unsourced.**
 | row | figure | what it actually is |
 | --- | --- | --- |
 | RedCode-Exec | `0% (RBAC / capability token)` | our `CapabilityTokenEngine`, and 0% only because `redcode.py` line 312 assigns every event the single resource `workspace`; 98.7% when the resource names the target |
-| AgentDojo (live) | `Progent 11-17%` | no Progent artifact anywhere under `benchmarks/results`; `progent` is not an ablation in `run_matrix.py`. Worse for Progent than the 4.2% our own investor memo cites |
+| AgentDojo (live) | `Progent 11-17%` | no Progent artifact anywhere under `benchmarks/results`; `progent` is not an ablation in `run_matrix.py`. Worse for Progent than the 4.2% our own materials cite |
 | AgentDojo (replay) | `77.9% below binding` | our own tool-allowlist rung on the 77-task slice |
 | IPI / ATB / ... | `0-40% below binding` | the best of our own allowlist and capability-token rungs across four corpora |
 | Business-process | `approx 100% viol. (Progent / CaMeL)` | fifteen-line branches we wrote in `bpl_live.py` lines 133 and 146, published under two companies' names. The most exposed cell in the table |

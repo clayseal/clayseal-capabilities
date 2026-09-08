@@ -126,5 +126,5 @@ deployment and not of the algorithm:
    model reads the sealed goal and the tool schema, both fixed at the prompt, and
    never a tool output. The objection is cost and determinism, not safety.
 
-The rungs stay lexical. The limitation stays in the paper, and it is now a
+The rungs stay lexical. The limitation stands, and it is now a
 measured limitation with four routes priced rather than an admission.

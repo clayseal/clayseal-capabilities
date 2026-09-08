@@ -17,7 +17,7 @@ python -m benchmarks.bpl_sweep --suite full --confidentiality scoped \
 | `none` (allow-all) | 0 | 132 | 0 |
 | `deny-all` | 132 | 0 | 0 |
 | `clayseal` base | 57 | 130 | 55 |
-| `product`, the paper's Table 1 | 78 | 130 | 76 |
+| `product`, the published configuration | 78 | 130 | 76 |
 | `product+all`, hand-written clause patterns kept | 90 | 130 | **88** |
 | **`product+generative`, no clause pattern anywhere** | **90** | **130** | **88** |
 

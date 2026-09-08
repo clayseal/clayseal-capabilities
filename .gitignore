@@ -130,16 +130,10 @@ paper/*.out
 paper/*.bbl
 paper/*.blg
 
-# Not part of the open-source distribution. Kept locally, simply not tracked.
-#
-# paper/    a double-blind submission whose named build carries the authors, and
-#           the venue's policy covers linked material including code, so shipping
-#           it beside the system it describes defeats scripts/anonymize.sh.
-# notes/    internal roadmap and competitive thinking, not user documentation.
-# The iVisor demo APPLICATION integrates a separate unpublished project that is
-# not ours to release; anonymize.sh already drops it for the same reason. Its
-# captured sample traces ARE tracked, because benchmarks/syscall_tier.py replays
-# them and run_all.sh calls it.
+# Not part of the open-source distribution. Kept locally, simply not tracked:
+# writing that is not user documentation, and an integration with a project that
+# is not ours to release. That demo's captured sample traces ARE tracked, because
+# benchmarks/syscall_tier.py replays them and run_all.sh calls it.
 paper/
 notes/
 demo/clayseal-ivisor/*
@@ -148,4 +142,3 @@ demo/clayseal-ivisor/*
 docs/ivisor_integration.md
 docs/sota_trajectory_control.md
 scripts/.anonymize-identity
-scripts/paper/

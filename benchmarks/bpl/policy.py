@@ -66,7 +66,7 @@ class Rule:
 
     kind: RuleKind
     #: One sentence, in the operator's voice. This is what goes to conditions
-    #: that consume policy as text, and into the paper's scenario table.
+    #: that consume policy as text, and into the scenario table.
     statement: str
     params: dict[str, Any] = field(default_factory=dict)
 

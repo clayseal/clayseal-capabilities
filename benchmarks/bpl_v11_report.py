@@ -263,7 +263,7 @@ def render(rows: dict, runs: int) -> str:
     a("## Reproduce")
     a("")
     a("```bash")
-    a("./scripts/paper/run_bpl_core_h2h.sh    # RUNS=20 SUITE=core")
+    a("./scripts/run_bpl_core_h2h.sh    # RUNS=20 SUITE=core")
     a("python -m benchmarks.bpl_v11_report --dir benchmarks/results/bpl_v11")
     a("```")
     return "\n".join(out)

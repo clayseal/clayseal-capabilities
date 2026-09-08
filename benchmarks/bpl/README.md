@@ -100,7 +100,7 @@ contains every `clayseal_expected: open` research case. See `SUITES.yaml`
 | **research_quarantine** | `--suite research_quarantine` | Paradox; not a ClaySeal score |
 | **full** | `--suite full` | Entire pack (appendix) |
 
-Live Core H2H: `./scripts/paper/run_bpl_core_h2h.sh` · details: `EVALUATE.md`.
+Live Core H2H: `./scripts/run_bpl_core_h2h.sh` · details: `EVALUATE.md`.
 
 ## Adding a scenario
 
