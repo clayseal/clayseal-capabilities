@@ -7,6 +7,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-09-08
+
+### Added: an MCP Registry entry, so `clayseal proxy` is discoverable from a client
+
+`server.json` describes the stdio gateway to the MCP Registry, which the client
+directories read from. The registry proves ownership of a PyPI package by
+looking for an `mcp-name` token in the package description, so the README now
+carries one in an HTML comment.
+
 ## [0.6.1] - 2026-09-08
 
 ### Fixed: the wheel pointed users at a directory that no longer exists

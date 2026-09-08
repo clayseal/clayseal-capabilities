@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.clayseal/clayseal",
+  "title": "Clay Seal",
+  "description": "Authorizes MCP tool calls against a session policy, not one call at a time.",
+  "version": "0.6.2",
+  "repository": {
+    "url": "https://github.com/clayseal/clayseal-capabilities",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "clayseal",
+      "version": "0.6.2",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

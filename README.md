@@ -1,5 +1,7 @@
 # Clay Seal
 
+<!-- mcp-name: io.github.clayseal/clayseal -->
+
 <img src="https://raw.githubusercontent.com/clayseal/clayseal-capabilities/main/docs/assets/clay-seal-logo.png" alt="Clay Seal logo" width="420">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
