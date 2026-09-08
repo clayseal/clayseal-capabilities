@@ -25,14 +25,18 @@ RED = "\033[38;5;167m"
 AMBER = "\033[38;5;179m"
 OFF = "\033[0m"
 
-#: The logo, at terminal resolution: a seal in profile facing right, eye and
-#: whiskers on the snout, body sweeping down to a flat base.
+#: The logo, at terminal resolution: a seal hauled out on a rock, head raised
+#: and facing right. Eye, snout, whiskers, and the tail flippers it actually
+#: needs to read as a seal rather than as a blob with an eye.
 SEAL = r"""
-            _.--._
-        _.-'      \
-      .'     o     |
-     |          ~~ |
-     '-.__________.'
+        __
+      .'  '.
+     /  o   \_
+    |    >    '.
+     \  '''     '-._
+      '.            '.
+        '-.__________.'
+           \__/  \__/
 """
 
 
