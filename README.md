@@ -7,8 +7,7 @@
 [![Tests](https://img.shields.io/badge/tests-3300%2B%20passing-brightgreen.svg)](.github/workflows/ci.yml)
 [![PyPI](https://img.shields.io/badge/pip-clayseal-orange.svg)](https://pypi.org/project/clayseal/)
 
-**A policy gateway for AI agents. It stops the attack where every single call
-is legitimate and the sequence is not.**
+**Incorporating business-process-logic constraints into AI systems.**
 
 Your agent has a $1,000 refund ceiling. It issues eleven refunds of $900. Every
 call is inside the per-refund limit, so every per-call check passes, and $9,900
