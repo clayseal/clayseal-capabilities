@@ -269,5 +269,13 @@ ignore_missing_imports = true
 # for benchmark debt.
 
 [tool.pytest.ini_options]
+# Markers so a subset is selectable. With 3,300+ tests across 160 files, `-k` on
+# a filename substring was the only selector, which is guesswork when 39 files
+# touch SessionBroker.
+markers = [
+    "floor: the refusal decision itself (SessionBroker._floor and _authorize_locked)",
+    "broker: anything constructing or driving a SessionBroker",
+    "slow: takes more than a second; deselect with -m 'not slow'",
+]
 testpaths = ["python/tests"]
 pythonpath = ["."]

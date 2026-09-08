@@ -1,7 +1,6 @@
 # Rust
 /target/
 # Detached zkVM crate builds into its own target dir (RISC Zero toolchain output)
-crates/agent-receipts-zkvm/target/
 **/*.rs.bk
 
 # Python
@@ -36,20 +35,12 @@ coverage.json
 coverage.xml
 htmlcov/
 lcov.info
-target/llvm-cov/
-dashboard/coverage/
 
 # Backend identity service
-backend/.venv/
-backend/.venv-test/
-backend/agents.db
-backend/audit.jsonl
 backend/.env
 
 # Node / dashboard
 node_modules/
-dashboard/node_modules/
-dashboard/dist/
 
 # Local dev
 .env
@@ -157,3 +148,4 @@ demo/clayseal-ivisor/*
 docs/ivisor_integration.md
 docs/sota_trajectory_control.md
 scripts/.anonymize-identity
+scripts/paper/

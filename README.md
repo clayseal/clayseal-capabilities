@@ -18,14 +18,44 @@ Clay Seal sits in front of your tools and judges each call against the whole
 session: the grant, the running totals, where the arguments came from, and what
 the agent has already done.
 
+## Contents
+
+| | |
+| --- | --- |
+| [Start here](#start-here) | install and watch it stop two attacks |
+| [Use it in two lines](#use-it-in-two-lines) | wrap tools you already have |
+| [In front of an MCP server](#or-put-it-in-front-of-an-mcp-server) | no code change |
+| [Write the policy](#write-the-policy) | the grant an operator seals |
+| [How it works](#how-it-works) | the six layers, in the order they run |
+| [What it measures](#what-it-measures) | the numbers, and what they are not |
+| [Where the boundary is](#where-the-boundary-is) | what this does not do |
+| [Documentation](#documentation) | [docs/START.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/START.md) first, then [docs/](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/README.md) |
+| [Build from source](#build-from-source) | and run the tests |
+
+**Working on the code?** [docs/INTEGRATION.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/INTEGRATION.md) names which
+modules the shipped gateway actually executes, which is the fastest way to tell
+the live path from the parts that are not wired in. The decision itself is
+`SessionBroker._authorize_locked` in
+[clayseal/capabilities/broker.py](https://github.com/clayseal/clayseal-capabilities/blob/main/clayseal/capabilities/broker.py); most refusals
+come from `_floor` in the same file.
+
 ## Start here
 
 If you are a coding agent, [skip to the deploy runbook](#if-you-are-an-agent).
 
 ```bash
-pip install clayseal
+git clone https://github.com/clayseal/clayseal-capabilities.git
+cd clayseal-capabilities
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
 clayseal try
 ```
+
+> **`pip install clayseal` does not work yet.** That name on PyPI still serves an
+> unrelated 0.1.2 stub from before this project was open-sourced, and it will
+> tell you to request access rather than running anything. Install from source
+> until 0.6.0 is published; the two dependencies are `cryptography` and `pyyaml`,
+> so this is quick.
 
 `clayseal try` takes about a minute. It runs two attacks in front of you and
 shows the gateway stopping them. There is nothing to configure, no key to get
@@ -39,6 +69,11 @@ a test fails if it drifts from what the command prints, so it cannot become a
 screenshot of something that used to work.
 
 Python 3.10 to 3.14. Two dependencies, `cryptography` and `pyyaml`.
+
+> **On names.** The directory is `agentauth-capabilities`, the package is
+> `clayseal`, and the import is `clayseal.capabilities`. The project was renamed
+> at 0.6; `agentauth` still imports as a deprecation shim. See
+> [Naming](#naming) at the end for the detail.
 
 ## If you are an agent
 
@@ -701,6 +736,7 @@ For reporting a vulnerability see [SECURITY.md](https://github.com/clayseal/clay
 [docs/MIGRATION.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/MIGRATION.md). Corpora and their licences:
 [THIRD_PARTY.md](https://github.com/clayseal/clayseal-capabilities/blob/main/THIRD_PARTY.md). Cutting a release:
 [docs/RELEASING.md](https://github.com/clayseal/clayseal-capabilities/blob/main/docs/RELEASING.md).
+
 
 ## Naming
 

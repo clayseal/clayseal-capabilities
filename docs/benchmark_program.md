@@ -100,9 +100,11 @@ would have claimed disclosing the policy helps the defender.
 
 Partitions attack events into `surface-leaving` and `in-surface` without
 consulting any engine, so a containment headline can be read against the mix
-that produced it. Pooled over 3,410 events the full stack contains 82.1%, not
-the 100% the surface-leaving column alone suggests. See
-[results/rigor_pass.md](../benchmarks/results/rigor_pass.md).
+that produced it. The stack contains 100% of what leaves the granted
+surface and 38.7% of what stays inside it, so the surface-leaving column alone
+is not the headline. See
+[results/coverage.md](../benchmarks/results/coverage.md), which carries the
+per-corpus mix the two columns are averaged over.
 
 ## Tier: long trajectory
 

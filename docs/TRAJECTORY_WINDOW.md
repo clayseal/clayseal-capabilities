@@ -14,9 +14,9 @@ Four structures grow per call. One was fixed in 0.6:
 
 | structure | site | state |
 | --- | --- | --- |
-| `_trajectory.actions` | `broker.py:1255` | open |
-| `_trajectory.context` | `broker.py:636` — rebuilt by **copy** each observation, so O(N) time too | open |
-| the envelope phase memo | `intent_envelope.py:508`, `tuple(steps)`, one entry per action, re-allocated per call | open |
+| `_trajectory.actions` | `SessionBroker._observe` in `broker.py`, `self._trajectory.actions.append` | open |
+| `_trajectory.context` | `SessionBroker` in `broker.py`, `self._trajectory.context = [*self._trajectory.context, item]` — rebuilt by **copy** each observation, so O(N) time too | open |
+| the envelope phase memo | the memo key in `intent_envelope.py` built from `tuple(steps)`, one entry per action, re-allocated per call | open |
 | `ScopingMetrics._overhead_samples` | `scoping/metrics.py` | **fixed in 0.6** — bounded deque + exact counters |
 
 `DecisionLog` is already bounded (`decision_log.py:102-155`, `max_records=10_000`
@@ -34,10 +34,10 @@ window changes verdicts.
 The failure directions differ, which is what makes a naive window dangerous
 rather than merely lossy:
 
-- **Fails open.** `check_secret_flow`'s taint bit (`sealed_plan.py:598-602`) — evict
+- **Fails open.** `check_secret_flow`'s taint bit in `sealed_plan.py` — evict
   the `.env` read and the session is silently un-tainted. A phase `max` count
   resets, so `Deviation.OVER_COUNT` stops being raised and the step-up at
-  `broker.py:1290` never fires.
+  the `Deviation.OVER_COUNT` check in `broker.py` never fires.
 - **Fails closed.** A phase `min` landmark goes unmet, so everything after it
   raises `Deviation.OUT_OF_ORDER` — a wave of false denials on precisely the long
   sessions the window exists to serve.

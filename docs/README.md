@@ -27,6 +27,7 @@ example. This page says which document answers which question.
 | [CONTROLS.md](CONTROLS.md) | Which compliance controls does its evidence support? |
 | [benchmarks/README.md](../benchmarks/README.md) | How is it measured? |
 | [benchmarks/results/README.md](../benchmarks/results/README.md) | What do the measurements say? |
+| [demo/README.md](../demo/README.md) | A research demo pairing the gateway with a syscall sandbox. **Not the product**; `examples/` is the runnable illustration. |
 
 ## How it works inside
 
@@ -35,6 +36,8 @@ checking a claim, not to use the library.
 
 | Document | Subject |
 | --- | --- |
+| [INTEGRATION.md](INTEGRATION.md) | **Which modules the shipped gateway actually runs, and which are not wired in.** Read this before concluding a module is dead. |
+| [TRAJECTORY_WINDOW.md](TRAJECTORY_WINDOW.md) | How the session trajectory is bounded so memory does not grow without limit |
 | [intent_envelope_design.md](intent_envelope_design.md) | How a sealed goal becomes a set of checkable constraints |
 | [intent_envelope_generation.md](intent_envelope_generation.md) | How that envelope is built from the goal text |
 | [dynamic_sandbox.md](dynamic_sandbox.md) | The behavioural layer that watches a session over time |
@@ -46,6 +49,8 @@ How the numbers were produced and where they can mislead.
 
 | Document | Subject |
 | --- | --- |
+| [MIGRATION.md](MIGRATION.md) | Moving to 0.6 from an earlier version, including the `agentauth` rename |
+| [RELEASING.md](RELEASING.md) | How a release is cut and published |
 | [benchmark_program.md](benchmark_program.md) | What each benchmark tier is for |
 | [METHODOLOGY_MEMO.md](METHODOLOGY_MEMO.md) | Choices made when measuring, and why |
 | [methodology_audit.md](methodology_audit.md) | Where the utility metric can mislead |

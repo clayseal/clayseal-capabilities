@@ -7,7 +7,7 @@ git clone https://github.com/clayseal/clayseal-capabilities.git
 cd clayseal-capabilities
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest python/tests -q          # 2900+ tests, under a minute
+pytest python/tests -q          # 3366 tests, about a minute
 ruff check .                    # the whole repo, not just the library
 python scripts/mypy_ratchet.py  # type findings may fall, not rise
 ```
@@ -26,6 +26,30 @@ files drift.
 The benchmark suite is a separate tier. It needs external corpora that
 `benchmarks/fetch_corpora.sh` pulls (about 1.1 GB), and tests that need them skip
 rather than fail. CI runs them nightly.
+
+## Where the code is
+
+Five hops from the public API to the decision, because the layers delegate:
+
+| you want to change | look at |
+| --- | --- |
+| **the refusal decision** | `SessionBroker._authorize_locked`, `clayseal/capabilities/broker.py` |
+| **most refusals** (expiry, scope, egress, budget) | `SessionBroker._floor`, same file. Its `hard` return value is what picks deny over step-up |
+| the public wrapper the README shows | `clayseal/capabilities/guardrail.py` |
+| the factory a deployment calls | `DeployableStack.from_goal`, `clayseal/capabilities/deployable_stack.py` |
+| a single rung | one module per rung: `obligations.py`, `freshness.py`, `entities.py`, `identity.py`, `duties.py`, `preconditions.py` |
+
+`grep -rn "def authorize" clayseal/` returns eleven hits and nine of them look
+plausible. The list above is the live path; **[docs/INTEGRATION.md](docs/INTEGRATION.md)
+is the audit that says which modules the shipped gateway executes and which are
+not wired in.** Read it before concluding a module is dead.
+
+Two directories are easy to confuse. `examples/` is the runnable illustration the
+README points at. `demo/` is a research demo for a separate project and is not
+the product.
+
+Tests for the decision path are in `python/tests/test_broker.py`. To run a
+subset, `pytest python/tests -q -k broker` is the usual selector.
 
 ## The two things worth knowing before you open a PR
 

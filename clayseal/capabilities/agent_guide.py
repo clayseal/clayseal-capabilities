@@ -278,7 +278,7 @@ including running totals and argument provenance.
 - **Installing Clay Seal into some other app** → "Deploy into another project"
 - **Changing this library** → "Changing this repository"
 
-Do not start in `paper/` or `benchmarks/`. Those are not the product.
+Do not start in `benchmarks/` or `demo/`. Neither is the product.
 
 ## Deploy into another project
 
@@ -317,7 +317,8 @@ file path go in `paths.pathless`.
 - Do not point the CLI, README, or anything a `pip install` user sees at
   checkout-only paths. Use a GitHub URL or a command that ships in the wheel
   (`clayseal howto`, `clayseal policy new`).
-- Product docs live under `docs/`. `paper/` is a separate artefact; do not mix
+- Product docs live under `docs/`. `benchmarks/` carries the measurement
+  record and its own docs; do not mix
   its numbers into the README or the CLI.
 - `AGENTS.md`, `llms.txt`, and the skill files are generated from
   `clayseal/capabilities/agent_guide.py`. Edit that module and copy, or the
