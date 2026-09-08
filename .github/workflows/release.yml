@@ -182,3 +182,43 @@ jobs:
 
       - name: Publish
         run: ./mcp-publisher publish
+
+  # Five tags existed with no Release object behind any of them, so the
+  # repository sidebar said "no releases" while PyPI served 0.6.2. A tag is
+  # invisible on GitHub; a Release is what shows in the sidebar, carries an
+  # Atom feed, and is what "Watch -> Releases" notifies on.
+  github-release:
+    needs: pypi
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # The notes are the CHANGELOG section for this version, so there is one
+      # place to write them and no second copy to drift.
+      - name: Take the release notes from CHANGELOG.md
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          python - "$VERSION" <<'PY' > notes.md
+          import re, sys, pathlib
+          version = sys.argv[1]
+          body = pathlib.Path("CHANGELOG.md").read_text()
+          match = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[)",
+                            body, re.S | re.M)
+          if not match:
+              sys.exit(f"CHANGELOG.md has no section for {version}")
+          notes = match.group(1).strip()
+          # GitHub rejects a body over 125,000 characters.
+          if len(notes) > 100_000:
+              notes = (notes[:100_000].rsplit("\n", 1)[0]
+                       + f"\n\nTruncated. Full entry in CHANGELOG.md.")
+          print(notes)
+          PY
+          test -s notes.md
+
+      - name: Publish the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --latest
