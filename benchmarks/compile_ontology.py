@@ -54,6 +54,8 @@ import pathlib
 import urllib.error
 import urllib.request
 
+from benchmarks._http import post_json
+
 CACHE = pathlib.Path(__file__).with_name("_ontology_cache.json")
 DEPLOYMENT = os.environ.get("CLAYSEAL_MONITOR_DEPLOYMENT", "gpt-4.1-mini")
 
@@ -99,10 +101,9 @@ def _ask(payload: str) -> str:
         "temperature": 0, "max_tokens": 1400,
     }).encode()
     # The scheme is pinned to https above, which is what S310 asks for.
-    req = urllib.request.Request(  # noqa: S310
-        url, data=body, headers={"Content-Type": "application/json",
-                                 "api-key": key})
-    with urllib.request.urlopen(req, timeout=90) as r:  # noqa: S310
+    with post_json(url, data=body,
+                   headers={"Content-Type": "application/json", "api-key": key},
+                   timeout=90) as r:
         return json.loads(r.read())["choices"][0]["message"]["content"]
 
 

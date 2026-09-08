@@ -45,6 +45,8 @@ import pathlib
 import urllib.error
 import urllib.request
 
+from benchmarks._http import post_json
+
 CACHE = pathlib.Path(__file__).with_name("_plan_cache.json")
 DEPLOYMENT = os.environ.get("CLAYSEAL_MONITOR_DEPLOYMENT", "gpt-4.1-mini")
 K = 5
@@ -86,10 +88,9 @@ def _ask(payload: str) -> str:
                      {"role": "user", "content": payload}],
         "temperature": 0.7, "max_tokens": 1200,
     }).encode()
-    req = urllib.request.Request(  # noqa: S310  scheme pinned above
-        url, data=body, headers={"Content-Type": "application/json",
-                                 "api-key": key})
-    with urllib.request.urlopen(req, timeout=90) as r:  # noqa: S310
+    with post_json(url, data=body,
+                   headers={"Content-Type": "application/json", "api-key": key},
+                   timeout=90) as r:
         return json.loads(r.read())["choices"][0]["message"]["content"]
 
 
